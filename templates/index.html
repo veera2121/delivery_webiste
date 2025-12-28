@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Restaurant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style> 
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f7daf5;
+            margin: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 35px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        
+
+      
+
+        /* CATEGORY FILTERS */
+        .filters {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 18px;
+            border-radius: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: .2s;
+        }
+        .filter-btn:hover {
+            background: #fc8019;
+            color: white;
+        }
+
+    .hero {
+  padding: 150px 15px;
+  background: #f8f8f8;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 16px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+/* Desktop heights */
+.hero-center {
+  height: 500px;
+}
+
+.hero-side {
+  height: 500px;
+}
+
+/* 📱 Mobile layout */
+@media (max-width: 768px) {
+  .hero-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "center center"
+      "left right";
+  }
+
+  .hero-center {
+    grid-area: center;
+    height: 320px;
+  }
+
+  .hero-side.left {
+    grid-area: left;
+    height: 320px;
+  }
+
+  .hero-side.right {
+    grid-area: right;
+    height: 320px;
+  }
+}
+ 
+
+  /* ================================
+   RESET & BASE
+================================ */
+
+
+/* ================================
+   RESET & BASE
+================================ */
+
+
+/* ================================
+   CENTER CONTAINER
+================================ */
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: clamp(20px, 5vw, 1cm);
+} 
+
+/* ================================
+   GLASSMORPHISM HEADER
+================================ */
+.app-header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 120px;              /* 👈 header height */
+    z-index: 9999;
+
+    background-image: url("/static/images/bannerrr.svg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    border-bottom: 1px solid rgba(248, 181, 222, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+
+
+.app-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent !important;
+}
+
+/* ================================
+   HEADER LEFT
+================================ */
+.header-left .brand {
+    font-size: 35px;
+    font-weight: 900;
+    color: #000000;
+    letter-spacing: 0.5px;
+}
+
+/* ================================
+   HEADER RIGHT
+================================ */
+.header-right {
+    display: flex;
+    align-items: center;2
+    gap: 10px; 
+    right:-10px;
+}
+
+.header-right > * {
+    display: flex;
+    align-items: center;
+    height: 42px; /* uniform height */
+    right:-10px;
+}
+
+/* HEADER LINKS */
+.header-link {
+    text-decoration: none;
+    color: #030303;
+    font-weight: 900;
+    padding: 0 12px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+}
+
+.header-link:hover {
+    color: #ff4d00;
+}
+
+/* HEADER BUTTON */
+.header-btn {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    right: 10px;
+    background: #ff4d00;
+    color: #fff;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* ================================
+   LOCATION DROPDOWN (GLASS STYLE)
+================================ */
+.location-box {
+    position: relative;
+    height: 42px;
+}
+
+.location-box select {
+    height: 42px;
+    line-height: 42px;
+    padding: 0 36px 0 18px;
+
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    border-radius: 30px;
+    
+
+    background: #286950;
+    backdrop-filter: blur(10px);
+
+    font-size: 14px;
+    font-weight: 900;
+    color: #000000;
+    cursor: pointer;
+
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+/* Dropdown arrow */
+
+.location-box ::after {
+    background: rgba(255, 255, 255, 0.65);
+}
+
+/* SEARCH BOX – HEADER STYLE */
+.search-box {
+    position: relative;
+    height: 42px; /* match header buttons */
+    display: flex;
+    align-items: center;
+    color: #000000;
+    
+}
+#search::placeholder {
+    color: #000;          /* placeholder text */
+    opacity: 1;           /* IMPORTANT: prevents default grey */
+}
+.search-box input {
+    height: 100%;
+    width: 150px; /* adjust as needed */
+    padding: 0 14px;
+    border-radius: 30px;
+    border: 1px solid rgba(255,255,255,0.4);
+    background:#286950;
+    backdrop-filter: blur(10px);
+    font-size: 14px;
+      font-weight: 900;
+    color: #000000;
+    outline: none;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  
+}
+
+/* SEARCH BOX HOVER EFFECT */
+.search-box input:hover {
+    background: rgba(255, 255, 255, 0.65);
+}
+
+/* ================================
+   HERO SECTION
+================================ */
+
+/* ================================
+   MOBILE RESPONSIVE
+================================ */
+@media (max-width: 768px) {
+    .app-header{
+        height: 100px;
+           position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 9999;
+
+    background-image: url("/static/images/annerr2.svg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 17px;
+    }
+
+    /* Hide links except Login & Location */
+    .header-link,
+    
+    .location-box select,
+     .header-btn,
+     .header-cart-button,
+     .search-box
+     { /* hide search on mobile */
+        display: none;
+    }
+
+    /* Location dropdown smaller */
+    .location-box select {
+        height: 34px;
+        font-size: 10px;
+        padding: 0 28px 0 14px;
+    }
+
+    /* Login button smaller */
+    .header-btn { 
+        position: relative;
+        top:30px;
+        height: 34px;
+        font-size: 13px;
+        padding: 0 18px; 
+        font-weight: 300;
+    }
+
+    /* Reduce hero image height */
+    .hero-image img {
+        height: 45vh;
+        border-radius: 14px;
+    }
+
+    /* Optional: smaller container padding */
+    .container {
+        padding: 12px;
+    }
+}
+
+
+
+/* =========================
+   RESTAURANTS SECTION
+========================= */
+.restaurants-section {
+    padding: 40px 16px;
+    background: #d5bee4;
+    overflow: visible;
+     /* allow vertical scroll */
+}
+
+.restaurants-section h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: #222;
+    text-align: center;
+}
+
+/* =========================
+   SCROLLABLE ROW
+========================= */
+.restaurant-row {
+    display: flex;
+    gap: 16px;
+
+    overflow-x: auto;
+    overflow-y: visible;   /* allow page scroll */
+
+    padding: 12px 16px 24px;
+    margin-bottom: 32px;
+
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+
+    -webkit-overflow-scrolling: touch;
+
+    touch-action: pan-x;   /* ONLY horizontal swipe */
+}
+
+
+/* Hide scrollbar */
+.restaurant-row::-webkit-scrollbar {
+    display: none;
+}
+
+/* =========================
+   CARD
+========================= */
+.card {
+    flex: 0 0 auto;
+    width: 280px; /* Desktop: 3 cards visible */
+
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    overflow: visible;
+
+    transition: transform 0.3s ease;
+    cursor: pointer;
+
+    scroll-snap-align: start;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+/* =========================
+   CARD CONTENT
+========================= */
+.content {
+    padding: 16px;
+}
+
+.restaurant-name {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #222;
+}
+
+/* Veg / Non-Veg */
+.veg-badge,
+.nonveg-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.veg-badge {
+    background: #4caf50;
+    color: #fff;
+}
+
+.nonveg-badge {
+    background: #f44336;
+    color: #fff;
+}
+
+/* Details */
+.details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+.popular {
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: #777;
+}
+
+.free-delivery {
+    font-size: 13px;
+    margin-bottom: 10px;
+    color: #ff5722;
+}
+
+/* Button */
+.view-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #ff5722;
+    color: #fff;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background 0.3s ease;
+}
+
+.view-btn:hover {
+    background: #e64a19;
+}
+.card {
+    position: relative;   /* ⭐ MUST */
+}
+
+/* BADGES */
+.info-box {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+
+    z-index: 20;
+    padding: 6px 10px;
+
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.not-deliverable {
+    background: #d32f2f;
+}
+
+.closed-box {
+    background: #455a64;
+}
+
+.offer-box {
+    background: linear-gradient(45deg, #ff9800, #ff5722);
+}
+
+/* Disabled card */
+.card.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.disabled-btn {
+    background: #9e9e9e;
+    cursor: not-allowed;
+}
+
+/* =========================
+   MOBILE RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+
+    .restaurant-row {
+        gap: 16px;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .card {
+        width: calc(100vw - 32px); /* FULL card, no half cut */
+    }
+}
+/* =========================
+   FOOD CATEGORIES SECTION
+========================= */
+.category-section {
+    padding: 20px 16px;
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+
+    background-image: url("/static/images/category-1.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+
+
+
+.category-section h2 {
+    font-size: 22px;
+    margin-bottom: 12px;
+    color: #222;
+    font-weight: 700;
+}
+
+/* =========================
+   HORIZONTAL SCROLL ROW
+========================= */
+.category-row {
+    display: flex;
+    gap: 14px;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    padding-bottom: 12px;
+
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    touch-action: pan-x;
+
+    scroll-snap-type: x mandatory;
+}
+
+/* Hide scrollbar */
+.category-row::-webkit-scrollbar {
+    display: none;
+}
+
+/* =========================
+   CATEGORY CARD
+========================= */
+.category-card {
+    flex: 0 0 auto;
+
+    width: 180px;
+    height: 150px;
+
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+
+    overflow: hidden;
+    cursor: pointer;
+    scroll-snap-align: start;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+/* =========================
+   CATEGORY IMAGE
+========================= */
+.category-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 14px 14px 0 0;
+}
+
+/* =========================
+   CATEGORY LABEL (BELOW IMAGE)
+========================= */
+.category-card span {
+    margin-top: auto;
+
+    width: 100%;
+    padding: 8px 6px;
+
+    font-size: 14px;
+    font-weight: 600;
+    color: #222;
+
+    text-align: center;
+    background: #126d56;
+}
+
+/* =========================
+   MOBILE VIEW
+========================= */
+@media (max-width: 768px) { 
+    .category-section {
+    padding: 20px 16px;
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+
+    background-image: url("/static/images/category-2.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+    .category-row {
+        padding-left: 16px;
+        gap: 16px;
+    }
+
+    .category-card {
+        width: 60vw;
+        height: 170px;
+    }
+
+    .category-card img {
+        height: 135px;
+    }
+
+    .category-card span {
+        font-size: 16px;
+        padding: 10px;
+    }
+}
+
+/* ===== TRENDING SECTION ===== */
+.trending-section {
+    padding: 20px 16px;
+    background: #becce0;
+}
+
+.trending-section h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: #222;
+}
+
+/* ===== GRID ===== */
+.trending-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+}
+
+/* ===== FOOD CARD ===== */
+.food-card {
+    position: relative;
+    background: #074132;
+    border-radius: 14px;
+    padding: 18px;              /* more inner space */
+    min-height: 200px;          /* 🔥 increase card height */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* spreads content nicely */
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+
+.food-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== TRENDING BADGE ===== */
+.food-card .badge {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    background: #ff4d4d;
+    color: #fff;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+/* ===== FOOD NAME ===== */
+.food-card h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 10px 0 6px;
+    color: #111;
+}
+
+/* ===== PRICE ===== */
+.food-card p {
+    font-size: 14px;
+    font-weight: 900;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
+
+/* ===== RESTAURANT NAME ===== */
+.food-card small {
+    font-size: 12px;
+    color: #969696;
+    font-weight: bolder;
+}
+
+/* ===== MOBILE OPTIMIZATION ===== */
+@media (max-width: 480px) {
+    .trending-section h2 {
+        font-size: 18px;
+    }
+
+    .food-card {
+        padding: 12px;
+    }
+}
+.banner {
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+/* IMAGE ITSELF */
+.banner img { 
+    padding-bottom: 40px;
+    width: 100%;
+    height: auto;          /* 🔥 KEY FOR MOBILE */
+    display: block;
+    object-fit: contain;   /* Shows full image */
+}
+
+
+
+/* =========================
+   FOOTER
+========================= */
+.app-footer {
+    background: #0f172a; /* dark navy */
+    color: #e5e7eb;
+    padding: 40px 20px 20px;
+    margin-top: 40px;
+}
+
+/* TOP SECTION */
+.footer-top {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+/* BRAND */
+.footer-brand h3 {
+    font-size: 20px;
+    margin-bottom: 8px;
+    color: #38bdf8;
+}
+
+.footer-brand p {
+    font-size: 14px;
+    color: #cbd5f5;
+    line-height: 1.5;
+}
+
+/* LINKS */
+.footer-links h4 {
+    font-size: 15px;
+    margin-bottom: 10px;
+    color: #facc15;
+}
+
+.footer-links a {
+    display: block;
+    font-size: 14px;
+    color: #e5e7eb;
+    text-decoration: none;
+    margin-bottom: 6px;
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: #38bdf8;
+}
+
+/* BOTTOM BAR */
+.footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 14px;
+    text-align: center;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+    .app-footer {
+        padding: 30px 16px 16px;
+    }
+
+    .footer-top {
+        gap: 20px;
+    }
+}
+
+/* ===== MOBILE NAV WRAPPER ===== */
+
+html {
+  scroll-padding-bottom: 60px;
+  scroll-behavior: smooth;
+}
+
+body {
+  padding-bottom: 46px; /* slightly more than bottom-nav height */
+}
+
+/* Mobile only */
+/* Mobile only */
+/* MOBILE SEARCH BAR */
+.mobile-search {
+    display: none;
+    position: sticky;
+    top: 60px; /* height of header */
+    z-index: 99999;
+    background: #fff;
+    padding: 10px 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* ACTIVE STATE */
+.mobile-search.active {
+    display: block;
+}
+
+/* INPUT */
+.mobile-search input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* MOBILE ONLY */
+@media (min-width: 769px) {
+    .mobile-search {
+        display: none !important;
+    }
+}
+.mobile-search {
+    display: none;
+    position: fixed;
+    top: 56px; /* height of header */
+    z-index: 999;
+    background: #fff;
+    padding: 10px 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+.mobile-search.active {
+    display: block;
+}
+
+.mobile-search input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.page-content {
+  padding-top: var(--header-height);
+}
+.desktop-header .desktop-login {
+    display: none; /* hide by default */
+}
+
+@media (min-width: 769px) {
+    .desktop-header .desktop-login {
+        display: block; /* show on desktop */
+    }
+}
+.offer-box {
+    background: #fff3cd;
+    border: 1px dashed #ff9800;
+    color: #b45309;
+    font-weight: 600;
+}
+.search-warning {
+    background: #fff3cd;
+    color: #856404;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 10px 0;
+    font-size: 14px;
+}
+
+.hidden {
+    display: none;
+}
+.card.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.info-box {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    z-index: 2;
+}
+
+.not-deliverable {
+    background: #c0392b;
+    color: #fff;
+}
+
+.closed-box {
+    background: #2c3e50;
+    color: #fff;
+}
+
+.offer-box {
+    background: #f39c12;
+    color: #000;
+}
+
+.disabled-btn {
+    background: #777;
+    cursor: not-allowed;
+}
+
+    </style>
+</head>
+<body> 
+          {% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %} 
+<header class="app-header">
+  <div class="container">
+    <!-- LEFT -->
+    <div class="header-left">
+      <span class="brand">Foodzy</span>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="header-right">
+      <div class="location-box">
+    
+
+       <select id="locationFilter" onchange="changeLocation('desktop')">
+        <option value="">Select Location</option>
+        {% for loc in all_locations %}
+            <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>
+            {{ loc }}
+            </option>
+        {% endfor %}
+        </select>
+
+
+
+ <!-- SEARCH -->
+   <div class="search-box desktop-search">
+    <input type="text" id="search" placeholder="Search restaurants...">
+</div>
+
+    <a href="{{ url_for('myorders') }}" class="header-link">Orders</a>
+     <a href="javascript:void(0);" class="header-link" id="header-cart-button">
+    🛒 Cart
+    <span class="cart-count" id="header-cart-count">0</span>
+</a>
+
+    <!-- Desktop Header -->
+<div class="desktop-header">
+    <!-- Other header content -->
+
+    <!-- Login/Profile Button -->
+    <div class="desktop-login">
+        <a href="{{ url_for('profile') }}" class="header-btn">Profile</a>
+    </div>
+</div>
+
+
+   
+</div>
+
+  </div>
+</header> 
+
+<!-- Search Bar (Hidden by default) -->
+<!-- index.html -->
+<!-- Mobile search bar **outside header** -->
+<div class="search-box mobile-search" id="mobileSearch">
+    <input type="text" id="mobileSearchInput" placeholder="Search restaurants...">
+</div>
+<!-- MOBILE LOCATION FILTER -->
+
+
+<section id="home" class="hero">
+  <div class="hero-grid">
+
+    <!-- Left Tall Image -->
+    <div class="hero-side left">
+      <img src="{{ url_for('static', filename='images/delivery.png') }}" alt="Side Food 1">
+    </div>
+
+    <!-- Center Big Image -->
+    <div class="hero-center">
+      <img src="{{ url_for('static', filename='images/biryaniimg.png') }}" alt="Main Food">
+    </div>
+
+    <!-- Right Tall Image -->
+    <div class="hero-side right">
+      <img src="{{ url_for('static', filename='images/delivery2.png') }}" alt="Side Food 2">
+    </div>
+
+  </div>
+</section>
+
+
+
+
+<section class="category-section">
+    <h2>Food Categories</h2>
+
+    <div class="category-row">
+        <div class="category-card">
+            <img src="{{ url_for('static', filename='images/biryani.jpg') }}">
+            <span> Chicken Biryani</span>
+        </div>
+
+        <div class="category-card">
+            <img src="{{ url_for('static', filename='images/mutton_biryani.jpg') }}">
+            <span>Mutton Biryani</span>
+        </div>
+
+        <div class="category-card">
+            <img src="{{ url_for('static', filename='images/veg _biryani.jpg') }}">
+            <span>Veg Biryani</span>
+        </div>
+
+        <div class="category-card">
+            <img src="{{ url_for('static', filename='images/prawns_biryani.jpg') }}">
+            <span>Prawns Biryani</span>
+        </div>
+
+        <div class="category-card">
+            <img src="{{ url_for('static', filename='images/starters.jpg') }}">
+            <span>Starters</span>
+        </div>
+
+        <div class="category-card">
+            <img src="{{ url_for('static', filename='images/noodles.jpg') }}">
+            <span>Noodles</span>
+        </div> 
+         <div class="category-card">
+            <img src="{{ url_for('static', filename='images/ice_cream.jpg') }}">
+            <span>Ice Cream</span>
+        </div>
+         <div class="category-card">
+            <img src="{{ url_for('static', filename='images/Beverages.jpg') }}">
+            <span>Beverages</span>
+        </div>
+    </div>
+</section>
+<section class="restaurants-section" id="restaurantsSection">
+  <div class="container" id="restaurants">
+    <!-- Restaurants will load here -->
+  </div>
+</section>
+
+
+
+
+
+<div class="banner">
+    <img src="/static/images/bannerimg.svg" alt="Banner">
+</div>
+
+
+
+<!-- 🔥 TRENDING SECTION (STATIC ON LOCATION CHANGE) -->
+<div id="trending-wrapper">
+</div>
+<footer class="app-footer">
+    <div class="footer-top">
+        <div class="footer-brand">
+            <h3>🍽️ FoodieHub</h3>
+            <p>Fresh food from your favorite restaurants, delivered fast.</p>
+        </div>
+
+        <div class="footer-links">
+            <h4>Explore</h4>
+            <a href="#">Restaurants</a>
+            <a href="#">Trending</a>
+            <a href="#">Offers</a>
+            <a href="#">Categories</a>
+        </div>
+
+        <div class="footer-links">
+            <h4>Company</h4>
+            <a href="#">About Us</a>
+            <a href="#">Contact</a>
+            <a href="#">Careers</a>
+            <a href="#">Partner With Us</a>
+        </div>
+
+        <div class="footer-links">
+            <h4>Support</h4>
+            <a href="#">Help Center</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms & Conditions</a>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>© 2025 FoodieHub. All rights reserved.</p>
+    </div>
+</footer>
+
+
+<script>
+     
+function filterRestaurants(query) {   
+    
+
+
+    // 🚫 Block search if location not selected
+    if (!selectedLocation) {
+        document.getElementById("search-warning")?.classList.remove("hidden");
+        return;
+    }
+
+    document.getElementById("search-warning")?.classList.add("hidden");
+
+    query = query.toLowerCase();
+    let firstMatch = null;
+
+    document.querySelectorAll(".restaurant-row").forEach(row => {
+        let anyVisible = false;
+
+        row.querySelectorAll(".card").forEach(card => {
+            const match = card.innerText.toLowerCase().includes(query);
+            card.style.display = match ? "" : "none";
+
+            if (match && !firstMatch) firstMatch = card;
+            if (match) anyVisible = true;
+        });
+
+        row.style.display = anyVisible ? "flex" : "none";
+    });
+
+    if (firstMatch) {
+        const headerHeight =
+            document.querySelector(".app-header")?.offsetHeight || 0;
+
+        const top =
+            firstMatch.getBoundingClientRect().top +
+            window.scrollY -
+            headerHeight -
+            window.innerHeight / 4;
+
+        window.scrollTo({ top, behavior: "smooth" });
+    }
+}  
+document.getElementById("search")?.addEventListener("keyup", e =>
+    filterRestaurants(e.target.value)
+);
+
+document.getElementById("mobileSearchInput")?.addEventListener("keyup", e =>
+    filterRestaurants(e.target.value)
+);
+
+</script> 
+<script>
+
+
+</script>
+
+<script>
+/* ================= LOAD CARTS ================= */
+let carts = JSON.parse(localStorage.getItem("carts")) || {};
+
+/* ================= UPDATE DESKTOP HEADER CART ================= */
+function updateHeaderCart() {
+    const headerCartCount = document.getElementById("header-cart-count");
+    const headerCartButton = document.getElementById("header-cart-button");
+
+    // Find restaurant with items
+    let activeRestaurantId = Object.keys(carts).find(id => carts[id]?.items?.length > 0);
+
+    if (activeRestaurantId) {
+        // Total quantity
+        let totalQty = carts[activeRestaurantId].items.reduce((sum, item) => sum + item.quantity, 0);
+        if (headerCartCount) headerCartCount.innerText = totalQty;
+
+        // Redirect to cart page
+        if (headerCartButton) {
+            headerCartButton.onclick = () => {
+                window.location.href = `/cart/${activeRestaurantId}`;
+            };
+        }
+    } else {
+        // No items in cart
+        if (headerCartCount) headerCartCount.innerText = 0;
+        if (headerCartButton) {
+            headerCartButton.onclick = () => alert("Your cart is empty!");
+        }
+    }
+}
+
+/* ================= ADD ITEM TO CART ================= */
+function addItemToCart(name, price, restaurantId, restaurantName, qty = 1) {
+    if (!carts[restaurantId]) {
+        carts[restaurantId] = {
+            restaurantName: restaurantName,
+            items: []
+        };
+    }
+
+    const cart = carts[restaurantId];
+    const existing = cart.items.find(i => i.name === name);
+
+    if (existing) existing.quantity += qty;
+    else cart.items.push({ name, price, quantity: qty });
+
+    localStorage.setItem("carts", JSON.stringify(carts));
+    updateHeaderCart();
+    showAddedAnimation(`${qty} × ${name} added`);
+}
+
+/* ================= ADD ANIMATION ================= */
+function showAddedAnimation(text) {
+    const anim = document.createElement("div");
+    anim.innerText = text;
+    anim.style.position = "fixed";
+    anim.style.bottom = "90px";
+    anim.style.left = "50%";
+    anim.style.transform = "translateX(-50%)";
+    anim.style.background = "#10b981";
+    anim.style.color = "#fff";
+    anim.style.padding = "10px 16px";
+    anim.style.borderRadius = "20px";
+    anim.style.fontSize = "14px";
+    anim.style.zIndex = "9999";
+    document.body.appendChild(anim);
+    setTimeout(() => anim.remove(), 1600);
+}
+
+/* ================= INIT ================= */
+updateHeaderCart();
+
+// Optional: Expose a global function to refresh header cart after adding items
+window.refreshCartButton = updateHeaderCart;
+
+document.querySelectorAll(".add-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const name = btn.dataset.name;
+        const price = parseFloat(btn.dataset.price);
+        const restaurantId = btn.dataset.restaurantId;
+        const restaurantName = btn.dataset.restaurantName;
+        const qtyBox = btn.closest(".menu-card")?.querySelector(".qty-box");
+        const qty = qtyBox ? parseInt(qtyBox.value) || 1 : 1;
+
+        addItemToCart(name, price, restaurantId, restaurantName, qty);
+    });
+});
+</script>  
+<script>
+
+</script>
+<script>
+
+
+
+
+
+// ==================== FILTER RESTAURANTS ====================
+function filterRestaurants(query) {
+    // 🚫 Block search if location not selected
+    if (!selectedLocation) {
+        showSearchPopup();
+        return;
+    }
+
+    query = query.trim().toLowerCase();
+    let firstMatch = null;
+
+    document.querySelectorAll(".restaurant-row").forEach(row => {
+        let anyVisible = false;
+
+        row.querySelectorAll(".card").forEach(card => {
+            const match = card.innerText.toLowerCase().includes(query);
+            card.style.display = match ? "" : "none";
+
+            if (match && !firstMatch) firstMatch = card;
+            if (match) anyVisible = true;
+        });
+
+        row.style.display = anyVisible ? "flex" : "none";
+    });
+
+    // Smooth scroll to first matched card
+    if (firstMatch) {
+        const headerHeight = document.querySelector(".app-header")?.offsetHeight || 0;
+        const top = firstMatch.getBoundingClientRect().top + window.scrollY - headerHeight - window.innerHeight / 4;
+        window.scrollTo({ top, behavior: "smooth" });
+    }
+}
+
+// Attach search inputs
+document.getElementById("search")?.addEventListener("keyup", e => filterRestaurants(e.target.value));
+document.getElementById("mobileSearchInput")?.addEventListener("keyup", e => filterRestaurants(e.target.value));
+
+// ==================== LOCATION MODAL ====================
+
+
+let selectedLocation = localStorage.getItem("selectedLocation") || "";
+// Modal logic
+document.addEventListener("DOMContentLoaded", () => {
+    const modal = document.getElementById("locationModal");
+    const okBtn = document.getElementById("locationModalOk");
+    const restaurantsSection = document.getElementById("restaurants");
+
+    if (!modal || !okBtn || !restaurantsSection) return;
+
+    // Hide restaurants initially if no location
+    if (!selectedLocation) restaurantsSection.style.display = "none";
+
+    // Show modal only if no location selected
+    if (!selectedLocation) modal.style.display = "flex";
+
+    okBtn.addEventListener("click", () => {
+        // Get selected location from desktop or mobile
+        const desktopSelect = document.getElementById("locationFilter");
+        const mobileSelect = document.getElementById("mobileLocationSelect");
+        const value = (desktopSelect?.value || mobileSelect?.value || "").trim();
+
+        if (!value) {
+            alert("⚠️ Please select a location first!");
+            return;
+        }
+
+        // Update global state
+        selectedLocation = value;
+
+        // Hide modal & show restaurants
+        modal.style.display = "none";
+        restaurantsSection.style.display = "block";
+
+        // Trigger AJAX load for the selected location
+        if (desktopSelect) changeLocation("desktop");
+        if (mobileSelect) changeLocation("mobile");
+    });
+});
+
+// ==================== CHANGE LOCATION ====================
+function changeLocation(type) {
+    const select = type === "mobile"
+        ? document.getElementById("mobileLocationSelect")
+        : document.getElementById("locationFilter");
+
+    if (!select) return;
+
+    const location = select.value.trim();
+    if (!location) return;
+
+    selectedLocation = location;
+
+    // ✅ Save to localStorage (persists refresh & reopen)
+    localStorage.setItem("selectedLocation", location);
+
+    // Close mobile dropdown
+    if (type === "mobile") {
+        document.getElementById("mobileLocationDropdown")
+            ?.classList.remove("active");
+    }
+
+    // AJAX load restaurants
+    fetch(`/?location=${encodeURIComponent(location)}`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(res => res.text())
+    .then(html => {
+        const section = document.getElementById("restaurants");
+        section.innerHTML = html;
+        section.scrollIntoView({ behavior: "smooth" });
+    });
+}
+navigator.geolocation.getCurrentPosition(function(position) {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+
+    console.log("User latitude:", lat);
+    console.log("User longitude:", lng);
+
+    fetch("/set_location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lat, lng })
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log("Location saved response:", data);
+    });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const savedLocation = localStorage.getItem("selectedLocation");
+    if (!savedLocation) return;
+
+    // Set dropdown values
+    const desktop = document.getElementById("locationFilter");
+    const mobile = document.getElementById("mobileLocationSelect");
+
+    if (desktop) desktop.value = savedLocation;
+    if (mobile) mobile.value = savedLocation;
+
+    // Auto-load restaurants
+    fetch(`/?location=${encodeURIComponent(savedLocation)}`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(res => res.text())
+    .then(html => {
+        document.getElementById("restaurants").innerHTML = html;
+    });
+});
+
+
+</script>
+
+
+{% endblock %}
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Assign Delivery Person</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Assign Delivery Person - Order {{ order.order_id }}</h1>
+    <form method="POST">
+      <label>Select Delivery Person:</label>
+      <select name="delivery_person_id" required>
+        {% for dp in delivery_persons %}
+          <option value="{{ dp.id }}" {% if order.delivery_person_id == dp.id %}selected{% endif %}>
+            {{ dp.name }} ({{ dp.phone }})
+          </option>
+        {% endfor %}
+      </select>
+      <button type="submit">Assign</button>
+    </form>
+    <a href="{{ url_for('admin_dashboard') }}">Back to Dashboard</a>
+  </div>
+</body>
+</html>

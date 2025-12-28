@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delivery Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  /* =====================
+   GLOBAL
+===================== */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Inter, system-ui, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    color: #333;
+}
+
+.container {
+    max-width: 1300px;
+    margin: 20px auto;
+    padding: 15px;
+}
+
+h1 {
+    color: #ff5722;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* =====================
+   BUTTONS
+===================== */
+.btn {
+    background: linear-gradient(135deg, #2196f3, #42a5f5);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 700;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+/* =====================
+   TABLE (DESKTOP)
+===================== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+thead {
+    background: linear-gradient(135deg, #ff5722, #ff7043);
+    color: #fff;
+}
+
+th, td {
+    padding: 12px;
+    font-size: 13px;
+    text-align: center;
+}
+
+tbody tr {
+    transition: 0.2s;
+}
+
+tbody tr:hover {
+    background: #fff3e0;
+}
+
+/* =====================
+   ITEMS LIST
+===================== */
+ul {
+    margin: 0;
+    padding-left: 15px;
+    text-align: left;
+}
+
+ul li {
+    font-size: 12px;
+}
+
+/* =====================
+   INPUTS & SELECT
+===================== */
+.otp-input,
+select {
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.otp-input:focus,
+select:focus {
+    outline: none;
+    border-color: #ff5722;
+    box-shadow: 0 0 6px rgba(255, 87, 34, 0.3);
+}
+
+/* =====================
+   DELIVER BUTTON
+===================== */
+.deliver-btn {
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    width: 100%;
+    font-size: 15px;
+}
+
+/* =====================
+   ERROR
+===================== */
+.otp-error {
+    color: #f44336;
+    font-size: 12px;
+    display: none;
+}
+
+/* =====================
+   MAP & CALL
+===================== */
+.map-btn,
+.call-btn {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.map-btn {
+    background: linear-gradient(135deg, #03a9f4, #29b6f6);
+}
+
+.call-btn {
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+}
+
+/* =====================
+   TOAST
+===================== */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    right: 20px;
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    color: #fff;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-weight: 700;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: 0.3s;
+    z-index: 9999;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* =====================
+   MOBILE CARD UI + HIGHLIGHTS
+===================== */
+@media (max-width: 768px) {
+
+    /* Mobile card layout */
+    table {
+        display: block;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    thead {
+        display: none;
+    }
+
+    tbody, tr {
+        display: block;
+        width: 100%;
+    }
+
+    tr {
+        background: #fff;
+        margin-bottom: 15px;
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    td {
+        display: block;
+        font-size: 14px;
+        padding: 6px 0;
+        border: none;
+        text-align: left;
+    }
+
+    /* Show labels */
+    td::before {
+        content: attr(data-label) " : ";
+        font-weight: 700;
+        color: #555;
+    }
+
+    /* 🔥 Order ID */
+    td[data-label="Order ID"] {
+        color: #ff5722;
+        font-weight: 800;
+        font-size: 16px;
+    }
+
+    /* 💰 Money */
+    td[data-label="Total"],
+    td[data-label="Delivery Charge"] {
+        color: #2e7d32;
+        font-weight: 700;
+    }
+
+    /* 📍 Address */
+    td[data-label="Address"] {
+        background: #f9fafb;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        margin: 6px 0;
+    }
+
+    /* 📞 Phone */
+    td[data-label="Phone"],
+    td[data-label="Alt Phone"] {
+        color: #1565c0;
+        font-weight: 600;
+    }
+
+    /* 🍽 Items */
+    td[data-label="Items"] ul li {
+        font-size: 13px;
+        color: #444;
+    }
+
+    /* 🚚 Status */
+    td[data-label="Status"] {
+        font-weight: 700;
+        color: #6a1b9a;
+    }
+
+    /* ⚠️ Note */
+    td[data-label="Note"] {
+        color: #e65100;
+        font-weight: 600;
+    }
+
+    /* Buttons */
+    .map-btn,
+    .call-btn {
+        margin-top: 6px;
+        padding: 10px 14px;
+        font-size: 14px;
+        border-radius: 10px;
+    }
+
+    /* Confirm button */
+    .deliver-btn {
+        margin-top: 10px;
+        font-size: 16px;
+        padding: 14px;
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(67, 160, 71, 0.35);
+    }
+}
+.filter-bar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
+}
+
+.filter-bar input,
+.filter-bar select{
+  flex:1;
+  min-width:140px;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  font-size:14px;
+}
+
+.filter-bar button{
+  background:#ff5722;
+  color:#fff;
+  border:none;
+  padding:10px 16px;
+  border-radius:10px;
+  font-weight:600;
+}
+
+</style>
+
+
+
+</head>
+
+<body>
+<div class="container">
+
+<h1>Delivery Dashboard - {{ session.delivery_person_name }}</h1>
+
+<a href="{{ url_for('delivery_history') }}" class="btn">History</a>
+<a href="{{ url_for('delivery_logout') }}" class="btn">Logout</a>
+
+<h2>Assigned Orders</h2>
+<div class="filter-bar">
+  <input type="text" id="searchInput" placeholder="🔍 Order ID / Customer / Phone">
+
+<select id="statusFilter">
+  <option value="">All Status</option>
+  <option value="Pending">Pending</option>
+  <option value="Out for Delivery">Out for Delivery</option>
+  <option value="Delivered">Delivered</option>
+  <option value="Cancelled">Cancelled</option>
+  <option value="Customer Not Available">Customer Not Available</option>
+</select>
+
+
+  <select id="paymentFilter">
+    <option value="">All Payments</option>
+    <option value="COD">COD</option>
+    <option value="Online">Online</option>
+  </select>
+
+  <button onclick="clearFilters()">Clear</button>
+</div>
+
+
+ 
+<table>
+<thead>
+<tr>
+  <th>Order ID</th>
+  <th>Date & Time</th>
+  <th>Restaurant</th>
+  <th>Customer</th>
+  <th>Phone</th>
+  <th>Alt Phone</th>
+  <th>Address</th>
+  <th>Order Type</th>
+  <th>Items</th>
+  <th>Total</th>
+  <th>Delivery Charge</th>
+  <th>Delivery Note</th>
+  <th>Map</th>
+  <th>Call</th>
+  <th>Status</th>
+  <th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+{% for order in orders %}
+<tr
+  data-order-id="{{ order.id }}"
+  data-search="{{ order.order_id }} {{ order.customer_name }} {{ order.phone }}"
+  data-status="{{ order.status }}"
+  data-payment="{{ order.payment_type or '' }}"
+>
+
+<td data-label="Order ID">{{ order.order_id }}</td>
+
+<td data-label="Date & Time">
+  {{ order.created_at.strftime('%d-%m-%Y %I:%M %p') }}
+</td>
+
+<td data-label="Restaurant">{{ order.restaurant.name }}</td>
+<td data-label="Customer">{{ order.customer_name }}</td>
+<td data-label="Phone">{{ order.phone }}</td>
+<td data-label="Alt Phone">{{ order.alt_phone or '-' }}</td>
+
+<td data-label="Address">
+  {{ order.house_no }},
+  {{ order.landmark }},
+  {{ order.city }},
+  {{ order.state }} - {{ order.pincode }}
+</td>
+
+<td data-label="Order Type">{{ order.order_type }}</td>
+
+<td data-label="Items">
+<ul>
+{% for item in order.items %}
+  <li>{{ item.item_name }} × {{ item.quantity }} – ₹{{ item.price }}</li>
+{% endfor %}
+</ul>
+</td>
+
+<td data-label="Total">₹{{ order.get_final_total() }}</td>
+<td data-label="Delivery Charge">₹{{ order.delivery_charge }}</td>
+<td data-label="Note">{{ order.delivery_note or '-' }}</td>
+
+<td data-label="Map">
+{% if order.map_link %}
+  <a href="{{ order.map_link }}" target="_blank" class="map-btn">Map</a>
+{% else %}
+  <span style="color:red">No Location</span>
+{% endif %}
+</td>
+
+<td data-label="Call">
+  <a href="tel:{{ order.phone }}" class="call-btn">Call</a>
+</td>
+
+<td data-label="Status">
+  {{ order.status }}
+{% if order.status == 'Delivered' and order.delivered_time %}
+  <br>
+  <small style="color:green">
+    {{ order.delivered_time.strftime('%d-%m-%Y %I:%M %p') }}<br>
+    Payment: {{ order.payment_type }}
+  </small>
+{% endif %}
+</td>
+
+<td data-label="Action">
+{% if order.status != 'Delivered' %}
+<form class="deliver-form" data-order-id="{{ order.id }}">
+  <input type="text" class="otp-input" placeholder="Enter OTP" required>
+  <div class="otp-error"></div>
+
+  <select required>
+    <option value="">Payment Type</option>
+    <option value="COD">COD</option>
+    <option value="Online">Online</option>
+  </select>
+
+  <button class="deliver-btn">Confirm</button>
+</form>
+
+<button type="button"
+  onclick="markNotDelivered({{ order.id }})"
+  style="margin-top:6px;background:#f44336;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;">
+  Customer Not Available
+</button>
+{% else %}
+<span style="color:green;font-weight:bold">✔ Delivered</span>
+{% endif %}
+</td>
+
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+
+
+<!-- SINGLE TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+document.querySelectorAll(".deliver-form").forEach(form=>{
+form.addEventListener("submit",async e=>{
+e.preventDefault()
+
+const orderId=form.dataset.orderId
+const otp=form.querySelector(".otp-input").value
+const pay=form.querySelector("select").value
+const err=form.querySelector(".otp-error")
+
+err.style.display="none"
+
+const fd=new FormData()
+fd.append("entered_otp",otp)
+fd.append("payment_type",pay)
+
+const res=await fetch(`/confirm_delivery/${orderId}`,{method:"POST",body:fd})
+const data=await res.json()
+
+if(!data.success){
+err.textContent="❌ Incorrect OTP"
+err.style.display="block"
+return
+}
+
+showToast("✔ Order Delivered Successfully")
+setTimeout(()=>location.reload(),800)
+})
+})
+
+function showToast(msg){
+const t=document.getElementById("toast")
+t.textContent=msg
+t.classList.add("show")
+setTimeout(()=>t.classList.remove("show"),3000)
+}
+</script>
+<script>
+async function markNotDelivered(orderId) {
+  const reason = prompt("Reason (Customer not available / Phone switched off):");
+
+  if (!reason) return;
+
+  try {
+    const res = await fetch(`/delivery/not-delivered/${orderId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ reason })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("Restaurant notified successfully");
+      location.reload();
+    } else {
+      alert(data.message || "Failed");
+    }
+
+  } catch (e) {
+    alert("Server error");
+  }
+}
+</script>
+<script>
+function applyFilters(){
+  const search = document.getElementById("searchInput").value.toLowerCase();
+  const status = document.getElementById("statusFilter").value.toLowerCase();
+  const payment = document.getElementById("paymentFilter").value.toLowerCase();
+
+  document.querySelectorAll("tbody tr").forEach(row=>{
+    const rowSearch = (row.dataset.search || "").toLowerCase();
+    const rowStatus = (row.dataset.status || "").toLowerCase();
+    const rowPayment = (row.dataset.payment || "").toLowerCase();
+
+    let visible = true;
+
+    // SEARCH FILTER
+    if(search && !rowSearch.includes(search)) visible = false;
+
+    // STATUS FILTER
+    if(status && rowStatus !== status) visible = false;
+
+    // PAYMENT FILTER
+    if(payment && rowPayment !== payment) visible = false;
+
+    row.style.display = visible ? "" : "none";
+  });
+}
+
+// Attach events
+document.getElementById("searchInput").addEventListener("keyup", applyFilters);
+document.getElementById("statusFilter").addEventListener("change", applyFilters);
+document.getElementById("paymentFilter").addEventListener("change", applyFilters);
+
+// CLEAR BUTTON
+function clearFilters(){
+  document.getElementById("searchInput").value="";
+  document.getElementById("statusFilter").value="";
+  document.getElementById("paymentFilter").value="";
+  applyFilters();
+}
+</script>
+
+</body>
+</html>

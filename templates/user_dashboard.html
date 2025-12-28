@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Dashboard</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+    padding: 20px;
+}
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.order-card {
+    background: #fafafa;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+}
+.order-card h3 {
+    margin: 0 0 10px 0;
+}
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+}
+.status {
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>Your Orders</h1>
+
+{% if orders %}
+  {% for order in orders %}
+  <div class="order-card">
+    <h3>Order #{{ order.id }} - {{ order.customer_name }}</h3>
+    <p>Status: <span class="status">{{ order.status }}</span></p>
+    <p>Placed on: {{ order.created_at.strftime('%d-%m-%Y %H:%M') }}</p>
+    <h4>Items:</h4>
+    {% for item in order.items %}
+      <div class="order-item">
+        <span>{{ item.item_name }} × {{ item.quantity }}</span>
+        <span>₹{{ item.price * item.quantit*

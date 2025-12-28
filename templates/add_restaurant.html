@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Restaurant & User</title>
+</head>
+<body>
+  <h1>Add Restaurant & Login</h1>
+  <a href="{{ url_for('admin_dashboard') }}">Back to Admin Dashboard</a>
+  
+  <form method="POST">
+    <h3>Restaurant Details</h3>
+
+    <label>Restaurant Name</label><br>
+    <input type="text" name="name" placeholder="Restaurant Name" required><br><br>
+
+    <label>Phone</label><br>
+    <input type="text" name="phone" placeholder="Phone"><br><br>
+
+    <label>Email</label><br>
+    <input type="email" name="email" placeholder="Email"><br><br>
+
+    <label>Address</label><br>
+    <input type="text" name="address" placeholder="Address"><br><br>
+
+    <!-- ⭐ REPLACED DROPDOWN → TEXT INPUT FOR EXACT LOCATION -->
+    <label>Location</label><br>
+    <input type="text" name="location" placeholder="Eg: Ameerpet, BTM Layout, Andheri" required><br><br>
+
+    <!-- Existing Field -->
+    <label>Google Sheet URL (Published CSV Link)</label><br>
+    <input type="text" name="sheet_url"
+       placeholder="https://docs.google.com/spreadsheets/d/e/XXXX/pub?output=csv"
+       required><br><br>
+
+    <h3>Admin Login (for this restaurant)</h3>
+
+    <label>Admin Username</label><br>
+    <input type="text" name="admin_username" placeholder="admin123" required><br><br>
+
+    <label>Admin Password</label><br>
+    <input type="password" name="admin_password" required><br><br>
+
+    <button type="submit">Add Restaurant</button>
+  </form>
+</body>
+</html>

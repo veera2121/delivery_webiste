@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ session['restaurant_name'] }} Dashboard</title>
+<style>
+/* ===== GLOBAL STYLES ===== */
+* { box-sizing: border-box; margin:0; padding:0; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg,#f4f7fa,#e9eef5); color:#333; }
+
+/* ===== DASHBOARD CONTAINER ===== */
+.dashboard-container {
+    max-width: 1300px;
+    margin: 30px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 20px 45px rgba(0,0,0,0.08);
+}
+
+/* ===== HEADINGS ===== */
+h2 { font-size: 26px; margin-bottom: 8px; }
+h3 { font-size: 18px; margin-bottom: 15px; color:#666; }
+
+/* ===== TOP LINKS ===== */
+.top-links { display:flex; flex-wrap:wrap; gap:15px; margin-bottom:25px; }
+.top-links a {
+    padding:12px 20px; border-radius:12px; color:#fff; font-weight:700; transition:0.3s; text-decoration:none;
+}
+.top-links a.delivery-boys { background: linear-gradient(135deg,#43a047,#66bb6a); }
+.top-links a.logout { background: linear-gradient(135deg,#e53935,#ef5350); }
+.top-links a:hover { transform:scale(1.05); box-shadow:0 10px 25px rgba(0,0,0,0.2); }
+
+/* ===== FILTERS ===== */
+.filters, .filter-inline { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+.filters input, .filters select, .filter-inline input, .filter-inline select {
+    padding:10px 14px; border-radius:10px; border:1px solid #ccc; font-size:14px; transition:0.3s;
+}
+.filters input:focus, .filters select:focus, .filter-inline input:focus, .filter-inline select:focus {
+    outline:none; border-color:#ff5722; box-shadow:0 0 10px rgba(255,87,34,0.25);
+}
+
+/* ===== TABLE STYLES ===== */
+.table-wrapper { overflow-x:auto; margin-bottom:30px; }
+table { width:100%; border-collapse:collapse; border-radius:14px; overflow:hidden; }
+thead { background: linear-gradient(135deg,#ff5722,#ff7043); color:#fff; position:sticky; top:0; z-index:2; }
+th, td { padding:14px; text-align:center; font-size:14px; }
+tbody tr { transition:0.2s ease; }
+tbody tr:nth-child(even) { background:#fafafa; }
+tbody tr:hover { background:#fff3e0; }
+
+/* ===== STATUS BADGES ===== */
+.status { padding:6px 14px; border-radius:30px; font-size:12px; font-weight:700; color:#fff; display:inline-block; }
+.status.Pending { background:#ff9800; }
+.status.Preparing { background:#2196f3; }
+.status.Ready { background:#9c27b0; }
+.status["Out for Delivery"], .status["Out-for-Delivery"] { background:#ffeb3b; color:#333; }
+.status.Delivered { background:#4caf50; }
+.status.Cancelled { background:#f44336; }
+
+/* ===== PAYMENT BADGES ===== */
+.payment-badge { padding:6px 14px; border-radius:30px; font-size:12px; font-weight:700; color:#fff; display:inline-block; }
+.payment-badge.COD { background:#ff9800; }
+.payment-badge.Online { background:#4caf50; }
+.payment-badge.NotCollected { background:#9e9e9e; }
+
+/* ===== BUTTONS ===== */
+.assign-btn { background: linear-gradient(135deg,#2196f3,#42a5f5); color:#fff; padding:6px 12px; border-radius:8px; cursor:pointer; }
+.update-btn { background: linear-gradient(135deg,#ff5722,#ff7043); color:#fff; padding:6px 12px; border-radius:8px; cursor:pointer; }
+
+/* ===== NEW ORDER BADGE ===== */
+.new-order-badge {
+    position: fixed; top:20px; right:20px;
+    background: linear-gradient(135deg,#ff5722,#ff7043);
+    color:#fff; padding:14px 22px; border-radius:14px; font-weight:700;
+    box-shadow:0 10px 25px rgba(0,0,0,0.3);
+    display:none; z-index:9999;
+}
+/* Feedback column reason in red */
+td[data-label="Feedback"] {
+    color: red;
+    font-weight: 600;
+}
+/* Feedback badge */
+.feedback-badge {
+    display: inline-block;
+    background-color: #f44336; /* red background */
+    color: white;              /* text color */
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    max-width: 200px;          /* optional: prevent very long text */
+    white-space: nowrap;       /* keep in single line */
+    overflow: hidden;
+    text-overflow: ellipsis;   /* show ... if too long */
+    text-align: center;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width:768px){
+    table { display:block; }
+    thead { display:none; }
+    tbody, tr, td { display:block; width:100%; }
+    tr { background:#fafafa; border-radius:12px; margin-bottom:15px; padding:10px; }
+    td { text-align:right; padding-left:50%; position:relative; margin-bottom:5px; }
+    td::before { content:attr(data-label); position:absolute; left:15px; font-weight:700; text-align:left; }
+}
+</style>
+</head>
+<body>
+<div class="dashboard-container">
+<h2>Welcome, {{ session['restaurant_name'] }}</h2>
+<div id="newOrderBadge" class="new-order-badge">🔔 New Order Received!</div>
+
+<!-- TOP LINKS -->
+<!-- TOP LINKS -->
+<div class="top-links">
+    <a href="{{ url_for('delivery_boys_cod_summary') }}" class="delivery-boys">
+        Delivery Boys COD
+    </a>
+
+      <a href="{{ url_for('manage_offers', restaurant_id=session['restaurant_id']) }}">
+    🔥 Manage Offers
+</a>
+
+
+
+    <!-- NEW LINK FOR EDITING RESTAURANT CARD -->
+    <a href="{{ url_for('edit_restaurant_card', restaurant_id=session['restaurant_id']) }}"
+       style="background:#4caf50;color:white;">
+       ✏️ Edit Restaurant Card
+    </a>
+
+    <a href="{{ url_for('restaurant_reports') }}"
+       style="background:#673ab7;color:white;">
+        📊 Reports
+    </a>
+
+    <a href="{{ url_for('restaurant_logout') }}" class="logout">
+        Logout
+    </a>
+</div>
+
+
+<!-- FILTERS -->
+<div class="filter-inline">
+    <input type="text" id="searchInput" placeholder="Search Order ID, Customer, Phone">
+    <input type="date" id="fromDate">
+    <input type="date" id="toDate">
+    <select id="statusFilter">
+        <option value="">All Status</option>
+        <option value="Pending">Pending</option>
+        <option value="Preparing">Preparing</option>
+        <option value="Ready">Ready</option>
+        <option value="Out for Delivery">Out for Delivery</option>
+        <option value="Delivered">Delivered</option>
+        <option value="Cancelled">Cancelled</option>
+    </select>
+    <button id="searchBtn">Search</button>
+    <button id="clearFilters">Clear</button>
+</div>
+
+<!-- STATS TABLE --> 
+ 
+<h3>Today's Overview</h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+    <th>Today Orders</th><th>Delivered Today</th><th>Pending Today</th>
+    <th>Cancelled Today</th><th>Active Orders</th><th>Today Earnings</th>
+    <th>COD Amount</th><th>Online Amount</th><th>Weekly Orders</th>
+    <th>Weekly Earnings</th><th>Weekly Delivered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+    <td>{{ stats.today_orders }}</td>
+    <td>{{ stats.delivered_today }}</td>
+    <td>{{ stats.pending_today }}</td>
+    <td>{{ stats.cancelled_today }}</td>
+    <td>{{ stats.active_orders }}</td>
+    <td>₹{{ stats.today_earnings }}</td>
+    <td>₹{{ stats.today_cod_amount }}</td>
+    <td>₹{{ stats.today_online_amount }}</td>
+    <td>{{ stats.weekly_orders }}</td>
+    <td>₹{{ stats.weekly_earnings }}</td>
+    <td>{{ stats.weekly_delivered_orders }}</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- ORDERS TABLE -->
+{% for category in ['Today','Yesterday','Older'] %}
+<h3>{{ category }} Orders</h3>
+{% set filtered_orders = orders|selectattr("day_category","equalto",category)|list %}
+{% if filtered_orders %}
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+<th>Order ID</th>
+<th>Customer</th>
+<th>Items</th>
+<th>Qty×Price</th>
+<th>Total</th>
+<th>Status</th>
+<th>Placed</th>
+<th>Location</th>
+<th>Assign Delivery</th>
+<th>Update Status</th>
+<th>Payment</th>
+<th>Cancel Reason</th>
+<th>Feedback</th>
+</tr>
+</thead>
+<tbody>
+{% for order in filtered_orders %}
+<tr data-status="{{ order.status }}">
+<td data-label="Order ID">{{ order.order_id }}</td>
+<td data-label="Customer">{{ order.customer_name }}<br>{{ order.phone }}</td>
+<td data-label="Items">
+{% for item in order.items %}• {{ item.item_name }}<br>{% endfor %}
+</td>
+<td data-label="Qty×Price">
+{% for item in order.items %}{{ item.quantity }} × ₹{{ item.price }}<br>{% endfor %}
+</td>
+<td data-label="Total" style="text-align:left;">
+    <strong>Items:</strong> ₹{{ order.items_total }}<br>
+    <strong>Delivery:</strong> ₹{{ order.delivery_charge or 0 }}<br>
+    <strong>Discount:</strong> ₹{{ order.discount or 0 }}{% if order.coupon_used %} ({{ order.coupon_used }}){% endif %}<br>
+    <strong>R-Offer:</strong> ₹{{ order.restaurant_offer_discount or 0 }}<br>
+
+    <hr style="margin:4px 0;">
+
+    <strong>Total:</strong> ₹{{ order.final_total }}
+</td>
+<td data-label="Status"><span class="status {{ order.status }}">{{ order.status }}</span></td>
+<td data-label="Placed">{{ order.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+<td data-label="Location">
+    {{ order.house_no }}, {{ order.landmark }}, {{ order.city }}, {{ order.state }} - {{ order.pincode }}
+    {% if order.map_link %}
+        <br><a href="{{ order.map_link }}" target="_blank" class="map-btn">Map</a>
+    {% else %}
+        <br><span style="color:red;">No Location</span>
+    {% endif %}
+</td>
+
+<td data-label="Assign Delivery">
+<form method="POST" action="{{ url_for('assign_delivery', order_id=order.id) }}">
+<select name="delivery_person_id" required>
+<option value="">Select</option>
+{% for dp in delivery_persons %}
+<option value="{{ dp.id }}" {% if order.delivery_person_id==dp.id %}selected{% endif %}>{{ dp.name }}</option>
+{% endfor %}
+</select>
+<button type="submit" class="assign-btn">Assign</button>
+</form>
+</td>
+
+<td data-label="Update Status">
+<form method="POST" action="{{ url_for('update_status', order_id=order.id) }}">
+<select name="status">
+<option value="Pending" {% if order.status=='Pending' %}selected{% endif %}>Pending</option>
+<option value="Preparing" {% if order.status=='Preparing' %}selected{% endif %}>Preparing</option>
+<option value="Ready" {% if order.status=='Ready' %}selected{% endif %}>Ready</option>
+<option value="Out for Delivery" {% if order.status=='Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
+<option value="Delivered" {% if order.status=='Delivered' %}selected{% endif %}>Delivered</option>
+<option value="Cancelled" {% if order.status=='Cancelled' %}selected{% endif %}>Cancelled</option>
+</select>
+<button type="submit" class="update-btn">Update</button>
+</form>
+</td>
+
+<td data-label="Payment">
+{% if order.payment_type=='COD' %}<span class="payment-badge COD">COD</span>
+{% elif order.payment_type=='Online' %}<span class="payment-badge Online">Online</span>
+{% else %}<span class="payment-badge NotCollected">Not Collected</span>{% endif %}
+</td>
+
+<td data-label="Cancel Reason">{{ order.cancel_reason or '-' }}</td>
+<td data-label="Feedback">
+    {% if order.not_delivered_reason %}
+        <span class="feedback-badge">{{ order.not_delivered_reason }}</span>
+    {% else %}
+        <span style="color: gray;">-</span>
+    {% endif %}
+</td>
+
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p>No {{ category.lower() }} orders.</p>
+{% endif %}
+{% endfor %}
+
+<script>
+// ===== FILTERS =====
+function applyFilters() {
+    const searchValue = document.getElementById("searchInput").value.trim().toLowerCase();
+    const statusValue = document.getElementById("statusFilter").value.trim().toLowerCase();
+    const rows = document.querySelectorAll("tbody tr");
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const rowStatus = (row.getAttribute("data-status")||"").toLowerCase();
+        row.style.display = ((searchValue && !text.includes(searchValue)) || (statusValue && rowStatus!=statusValue)) ? "none" : "";
+    });
+}
+document.getElementById("searchBtn").addEventListener("click", applyFilters);
+document.getElementById("clearFilters").addEventListener("click", function(){
+    document.getElementById("searchInput").value="";
+    document.getElementById("statusFilter").value="";
+    applyFilters();
+});
+document.getElementById("searchInput").addEventListener("keyup", e=>{if(e.key==="Enter") applyFilters();});
+
+// ===== NEW ORDER SOUND & POPUP =====
+let lastOrderCount = {{ orders|length }};
+const notifySound = new Audio("/static/sounds/neworder.mp3");
+function showPopup(msg){
+    const badge = document.getElementById("newOrderBadge");
+    badge.innerHTML = msg;
+    badge.style.display="block";
+    setTimeout(()=>badge.style.display="none",4000);
+}
+setInterval(()=>{
+    fetch(window.location.href).then(r=>r.text()).then(html=>{
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html,"text/html");
+        const updatedTables = doc.querySelectorAll("table tbody");
+        const currentTables = document.querySelectorAll("table tbody");
+        updatedTables.forEach((ut,i)=>currentTables[i].innerHTML = ut.innerHTML);
+
+        const newRows = doc.querySelectorAll("tbody tr");
+        const newCount = newRows.length;
+        if(newCount > lastOrderCount){
+            notifySound.play();
+            showPopup("🔔 New Order Received!");
+        }
+        lastOrderCount = newCount;
+    }).catch(console.error);
+},8000);
+</script>
+</body>
+</body>
+</html>

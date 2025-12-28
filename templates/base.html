@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}My App{% endblock %}</title>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <style>
+    /* ===== FIXED BOTTOM NAV ===== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+
+      width: 100%;
+      height: 47px;
+      z-index: 99999;
+    }
+
+    /* ===== FULL WIDTH BAR ===== */
+    .button-container {
+      width: 100%;
+      height: 100%;
+
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+
+      background: #8a0b79;
+    }
+
+    /* ===== NAV BUTTON ===== */
+    .nav-btn {
+      flex: 1;
+      height: 100%;
+
+      background: none;
+      border: none;
+      outline: none;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      color: #fff;
+      font-size: 11px;
+
+      cursor: pointer;
+      transition: background 0.2s ease;
+      position: relative;
+      text-decoration: none;
+    }
+
+    /* ICON */
+    .nav-btn .icon {
+      font-size: 16px;
+      margin-bottom: 2px;
+    }
+
+    /* ACTIVE STATE */
+    .nav-btn.active {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* TAP FEEDBACK */
+    .nav-btn:active {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+
+    /* HIDE DESKTOP */
+    @media (min-width: 769px) {
+      .bottom-nav {
+        display: none;
+      }
+    }
+
+    body {
+      padding-bottom: 46px; /* slightly more than bottom-nav height */
+    } 
+    .cart-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+}
+
+.cart-modal.hidden {
+  display: none;
+}
+
+.cart-modal-box {
+  width: 90%;
+  max-width: 320px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  text-align: center;
+  animation: popupScale 0.2s ease;
+}
+
+.cart-modal-box h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.cart-modal-box p {
+  font-size: 13px;
+  color: #555;
+}
+
+.cart-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.cart-modal-actions button {
+  flex: 1;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background: #eee;
+}
+
+.btn-confirm {
+  background: #10b981;
+  color: #fff;
+}
+
+@keyframes popupScale {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+/* ================= MOBILE BOTTOM CART ONLY ================= */
+.bottom-nav .cart-count {
+  position: absolute;
+  top: 2px;
+  right: 20px;
+  background: red;
+  color: white;
+  font-size: 10px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ================= DESKTOP HEADER CART ================= */
+#header-cart-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#header-cart-count {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  background: #ff2b2b;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  line-height: 18px;
+  text-align: center;
+  border-radius: 50%;
+}
+
+/* Hide badge when zero */
+#header-cart-count[data-count="0"] {
+  display: none;
+}
+@media (max-width: 768px) {
+ #header-cart-button { /* hide search on mobile */
+        display: none;
+    }
+  }
+  /* SEARCH BAR DEFAULT */
+/* Desktop: search visible */
+.search-box {
+    display: block;
+}
+
+/* Mobile: hide search initially */
+@media (max-width: 768px) {
+    .search-box {
+        display: none;
+        padding: 10px 12px;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .search-box.active {
+        display: block;
+    }
+}
+/* Hide desktop search on mobile */
+@media (max-width: 768px) {
+    .mobile-search {
+        display: none;
+        position: fixed;
+        top: 99px; /* header height */
+        left: 0;
+        right: 0;
+        z-index: 10000;
+
+        background: #fff;
+        padding: 10px 12px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .mobile-search.active {
+        display: block;
+    }
+}
+
+.cart-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+}
+
+.cart-modal.hidden {
+  display: none;
+}
+
+.cart-modal-box {
+  width: 90%;
+  max-width: 320px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  text-align: center;
+  animation: popupScale 0.2s ease;
+}
+
+.cart-modal-box h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.cart-modal-box p {
+  font-size: 14px;
+  color: #555;
+}
+
+.cart-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.cart-modal-actions button {
+  flex: 1;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background: #eee;
+}
+
+.btn-confirm {
+  background: #10b981;
+  color: #fff;
+}
+
+@keyframes popupScale {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+html {
+    scroll-behavior: smooth;
+}
+.mobile-location-wrapper {
+    position: fixed;
+    top: 50px;
+    right: 9px;
+    z-index: 100000;
+}
+
+.location-icon {
+    font-size: 22px;
+    background: #237c57;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+}
+
+.mobile-location-dropdown {
+    display: none;
+    position: absolute;
+    top: 52px;
+    right: 0;
+    background: #fff;
+    padding: 8px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    min-width: 180px;
+    transition: all 0.3s ease;
+}
+
+.mobile-location-dropdown.active {
+    display: block;
+}
+
+.mobile-location-dropdown select {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    outline: none;
+}
+
+@media (min-width: 769px) {
+    .mobile-location-wrapper {
+        display: none !important;
+    }
+}
+
+/* ===== LOCATION POPUP (SAFE, ISOLATED) ===== */
+
+.loc-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loc-popup-hidden {
+  display: none;
+}
+
+.loc-popup-card {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 14px;
+  width: 320px;
+  text-align: center;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+}
+
+.loc-popup-card select {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 25px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+/* blur only page content */
+.page-content-blur {
+  filter: blur(6px);
+  pointer-events: none;
+}
+.flash-wrapper {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: 90%;
+    max-width: 500px;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.alert-danger {
+    background: #ffe5e5;
+    color: #b00020;
+    border: 1px solid #ffb3b3;
+}
+
+.alert-success {
+    background: #e6fffa;
+    color: #00695c;
+    border: 1px solid #9ff0e5;
+}
+
+
+
+  </style>
+</head>
+<body>
+
+
+  <!-- Main content for each page -->
+ <!-- Main content for each page -->
+<div class="page-content">
+  {% block content %}{% endblock %}
+</div> 
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-wrapper">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% if request.endpoint == 'home' %}
+<!-- MOBILE LOCATION ICON --> 
+<!-- Mobile Dropdown (base.html) -->
+
+  <div class="mobile-location-wrapper">
+        <button id="locationToggle" class="location-icon" type="button">
+          <i class="fa-solid fa-compass"></i>
+        </button>
+
+        <div class="mobile-location-dropdown" id="mobileLocationDropdown">
+          <select id="mobileLocationSelect" onchange="changeLocation('mobile')">
+            <option value="">Select Location</option>
+            {% for loc in all_locations %}
+              <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>
+                {{ loc }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+     </div>
+
+
+
+
+{% endif %}   <!-- ✅ FIX #1 -->
+
+
+<!-- Bottom Navigation Bar -->
+<nav class="bottom-nav">
+  <div class="button-container">
+
+    <a href="{{ url_for('home') }}" class="nav-btn {% if request.endpoint == 'home' %}active{% endif %}">
+      <i class="icon fa fa-home"></i>
+      <span>Home</span>
+    </a>
+
+    <a href="javascript:void(0);" class="nav-btn" id="searchBtn">
+      <i class="icon fa fa-search"></i>
+      <span>Search</span>
+    </a>
+
+    <a href="javascript:void(0);" class="nav-btn cart" id="cart-button">
+      <i class="icon fa fa-shopping-cart"></i>
+      <span class="cart-count" id="cart-count-display">0</span>
+      <span>Cart</span>
+    </a>
+
+    <a href="{{ url_for('profile') }}" class="nav-btn {% if request.endpoint == 'profile' %}active{% endif %}">
+      <i class="icon fa fa-user"></i>
+      <span>Profile</span>
+    </a>
+
+  </div>
+</nav>
+
+
+{% if restaurant %}
+<!-- Empty Cart Modal -->
+<div id="emptyCartModal" class="cart-modal hidden">
+    <div class="cart-modal-box">
+        <h3>🛒 Your Cart is Empty!</h3>
+        <p>Add some delicious food to get started.</p>
+        <div class="cart-modal-actions">
+            <button class="btn-cancel" onclick="closeEmptyCartModal()">Close</button>
+            <button class="btn-confirm" onclick="goToHome()">Browse Restaurants</button>
+        </div>
+    </div>
+</div>
+\
+
+<script>
+const RESTAURANT_ID = "{{ restaurant.id }}";
+</script>
+{% endif %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Cart buttons
+    const mobileCartButton = document.getElementById("cart-button");
+    const desktopCartButton = document.getElementById("header-cart-button");
+
+    // Cart count displays
+    const cartCountDisplay = document.getElementById("cart-count-display"); // mobile
+    const headerCartCount = document.getElementById("header-cart-count");     // desktop
+
+    // Load carts from localStorage
+    let carts = JSON.parse(localStorage.getItem("carts")) || {};
+
+    // Get total items in all carts
+    function getTotalItems() {
+        let total = 0;
+        for (const rid in carts) {
+            total += carts[rid].items.reduce((sum, item) => sum + item.quantity, 0);
+        }
+        return total;
+    }
+
+    // Get the last restaurant ID with items
+    function getLastRestaurantId() {
+        const keys = Object.keys(carts).reverse();
+        for (const rid of keys) {
+            if (carts[rid].items.length > 0) return rid;
+        }
+        return null;
+    }
+
+    // Function to open empty cart modal
+    window.openEmptyCartModal = function() {
+        const modal = document.getElementById("emptyCartModal");
+        if (modal) modal.classList.remove("hidden");
+    }
+
+    // Function to close empty cart modal
+    window.closeEmptyCartModal = function() {
+        const modal = document.getElementById("emptyCartModal");
+        if (modal) modal.classList.add("hidden");
+    }
+
+    // Cart button click handler
+    function handleCartClick(e) {
+        e.preventDefault();
+        const lastRid = getLastRestaurantId();
+        if (lastRid) {
+            window.location.href = `/cart/${lastRid}`;
+        } else {
+            openEmptyCartModal();
+        }
+    }
+
+    // Update cart buttons and counts
+    function updateCartButtons() {
+        const totalQty = getTotalItems();
+        if (cartCountDisplay) cartCountDisplay.innerText = totalQty;
+        if (headerCartCount) headerCartCount.innerText = totalQty;
+
+        if (mobileCartButton) mobileCartButton.onclick = handleCartClick;
+        if (desktopCartButton) desktopCartButton.onclick = handleCartClick;
+    }
+
+    // Initial update
+    updateCartButtons();
+
+    // Expose refresh function for after adding items
+    window.refreshCartButton = function() {
+        carts = JSON.parse(localStorage.getItem("carts")) || {};
+        updateCartButtons();
+    };
+
+    // ================= SEARCH BAR =================
+     
+    const searchBtn = document.getElementById("searchBtn");
+
+    if (!searchBtn) return;
+
+    searchBtn.addEventListener("click", () => {
+        const mobileSearch = document.getElementById("mobileSearch");
+        const input = document.getElementById("mobileSearchInput");
+
+        // If not home, go home & open search
+        if (window.location.pathname !== "/") {
+            window.location.href = "/?openSearch=1";
+            return;
+        }
+
+        // Toggle search
+        mobileSearch.classList.toggle("active");
+        document.body.classList.toggle("search-open");
+
+        if (mobileSearch.classList.contains("active")) {
+            // 🔥 scroll page below header + search
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+            setTimeout(() => input.focus(), 200);
+        }
+    });
+
+    // Auto-open from redirect
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("openSearch") === "1") {
+        const mobileSearch = document.getElementById("mobileSearch");
+        const input = document.getElementById("mobileSearchInput");
+
+        mobileSearch.classList.add("active");
+        document.body.classList.add("search-open");
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setTimeout(() => input.focus(), 200);
+    }
+});
+</script>
+
+<script>
+/* ================= EMPTY CART MODAL ACTIONS ================= */
+
+function openEmptyCartModal() {
+    const modal = document.getElementById("emptyCartModal");
+    if (modal) modal.classList.remove("hidden");
+}
+
+function closeEmptyCartModal() {
+    const modal = document.getElementById("emptyCartModal");
+    if (modal) modal.classList.add("hidden");
+}
+
+function goToHome() {
+    closeEmptyCartModal();
+
+    // If already on home page → smooth scroll
+    if (window.location.pathname === "/") {
+        const section = document.getElementById("restaurants");
+        if (section) {
+            section.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+        }
+    } 
+    // If on another page → redirect with hash
+    else {
+        window.location.href = "/#restaurants";
+    }
+} 
+</script>
+<script>
+
+
+
+
+
+// On selecti
+document.addEventListener("DOMContentLoaded", () => {
+    const toggle = document.getElementById("locationToggle");
+    const dropdown = document.getElementById("mobileLocationDropdown");
+
+    if (!toggle || !dropdown) return;
+
+    // Toggle dropdown on button click
+    toggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle("active"); // open/close
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", () => dropdown.classList.remove("active"));
+
+    // Prevent dropdown from closing if clicked inside
+    dropdown.addEventListener("click", e => e.stopPropagation());
+});
+</script>
+
+</script> 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const savedLocation = localStorage.getItem("selected_location");
+
+  if (savedLocation) {
+    const modal = document.getElementById("locationModal");
+    if (modal) modal.style.display = "none";
+
+    loadRestaurants(savedLocation);
+  }
+});
+
+function confirmLocation() {
+  const select = document.getElementById("locationSelect");
+  const location = select ? select.value : "";
+
+  if (!location) {
+    alert("Please select a location");
+    return;
+  }
+
+  localStorage.setItem("selected_location", location);
+
+  const modal = document.getElementById("locationModal");
+  if (modal) modal.style.display = "none";
+
+  loadRestaurants(location);
+}
+
+function loadRestaurants(location) {
+  fetch(`/?location=${encodeURIComponent(location)}`, {
+    headers: {
+      "X-Requested-With": "XMLHttpRequest"
+    }
+  })
+    .then(response => response.text())
+    .then(html => {
+      const container = document.getElementById("restaurants");
+      const section = document.getElementById("restaurantsSection");
+
+      if (container) container.innerHTML = html;
+      if (section) section.style.display = "block";
+    })
+    .catch(err => {
+      console.error("Error loading restaurants:", err);
+    });
+}
+</script>
+<script>
+setTimeout(() => {
+    document.querySelectorAll(".alert").forEach(el => el.remove());
+}, 3000);
+</script>
+
+
+
+
+
+<!-- Empty Cart Modal -->
+<div id="emptyCartModal" class="cart-modal hidden">
+    <div class="cart-modal-box">
+        <h3>🛒 Your Cart is Empty!</h3>
+        <p>Add some delicious food to get started.</p>
+        <div class="cart-modal-actions">
+            <button class="btn-cancel" onclick="closeEmptyCartModal()">Close</button>
+            <button class="btn-confirm" onclick="goToHome()">Browse Restaurants</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- LOCATION POPUP (FIRST TIME ONLY) -->
+<div id="locationPopupOverlay" class="loc-popup-overlay loc-popup-hidden">
+  <div class="loc-popup-card">
+    <h3>📍 Select your location</h3>
+
+    <select id="locationPopupSelect" onchange="onPopupLocationSelect(this.value)">
+      <option value="">Select Location</option>
+      {% for loc in all_locations %}
+        <option value="{{ loc }}">{{ loc }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
+</body>
+</html>

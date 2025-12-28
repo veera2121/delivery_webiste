@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Restaurant User</title>
+</head>
+<body>
+  <h1>Add Restaurant User</h1>
+  <a href="{{ url_for('admin_dashboard') }}">Back to Admin Dashboard</a>
+  
+  <form method="POST">
+    <label>Username:</label>
+    <input type="text" name="username" required><br><br>
+
+    <label>Password:</label>
+    <input type="password" name="password" required><br><br>
+
+    <label>Restaurant:</label>
+    <select name="restaurant_id" required>
+      {% for r in restaurants %}
+        <option value="{{ r.id }}">{{ r.name }}</option>
+      {% endfor %}
+    </select><br><br>
+
+    <button type="submit">Create User</button>
+  </form>
+</body>
+</html>

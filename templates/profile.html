@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+
+<style> 
+
+.profile-wrapper {
+    min-height: 85vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    color: #ff5252;
+}
+
+.profile-card {
+    width: 100%;
+    max-width: 440px;
+    background: #abe9e6;
+    border-radius: 18px;
+    padding: 26px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+}
+
+/* Header */
+.profile-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.profile-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b, #ff922b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5df7e2;
+    font-size: 34px;
+    font-weight: 600;
+    margin: 0 auto 12px;
+}
+
+.profile-header h2 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.profile-header span {
+    font-size: 14px;
+    color: #777;
+}
+
+/* Info rows */
+.profile-info {
+    margin-top: 20px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.info-row label {
+    font-size: 14px;
+    color: #666;
+}
+
+.info-row p {
+    font-size: 14px;
+    font-weight: 500;
+    color: #222;
+}
+
+/* Buttons */
+.profile-actions {
+    margin-top: 24px;
+}
+
+.profile-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.btn-primary {
+    background: #ff6b6b;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: #ff5252;
+}
+
+.btn-outline {
+    border: 1px solid #ddd;
+    color: #333;
+}
+
+.btn-outline:hover {
+    background: #eda3f0;
+}
+
+/* Mobile optimization */
+@media (max-width: 480px) {
+    .profile-card {
+        padding: 32px;
+    }
+}
+</style>
+
+<div class="profile-wrapper">
+
+{% if not logged_in %}
+    <div class="profile-card">
+        <div class="profile-header">
+            <div class="profile-avatar">?</div>
+            <h2>You are not logged in</h2>
+            <span>Please login to continue</span>
+        </div>
+
+        <a href="{{ url_for('users.login') }}" class="profile-btn btn-primary">
+            Login
+        </a>
+    </div>
+
+{% else %}
+    <div class="profile-card">
+
+        <!-- HEADER -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                {{ customer.name[0] }}
+            </div>
+            <h2>{{ customer.name }}</h2>
+            <span>Customer Account</span>
+        </div>
+
+        <!-- INFO -->
+        <div class="profile-info">
+            <div class="info-row">
+                <label>Email</label>
+                <p>{{ customer.email }}</p>
+            </div>
+
+            <div class="info-row">
+                <label>Phone</label>
+                <p>{{ customer.mobile }}</p>
+            </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <a href="{{ url_for('myorders') }}" class="profile-btn btn-outline">
+    Track My Orders
+</a>
+
+
+            <a href="{{ url_for('logout') }}" class="profile-btn btn-primary">
+                Logout
+            </a>
+        </div>
+
+    </div>
+{% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,9 @@
+<form method="POST">
+    <label>Name:</label>
+    <input type="text" name="name" value="{{ restaurant.name }}" required>
+    
+    <label>Google Sheet URL (optional):</label>
+    <input type="text" name="sheet_url" value="{{ restaurant.sheet_url }}">
+    
+    <button type="submit">Update Restaurant</button>
+</form>

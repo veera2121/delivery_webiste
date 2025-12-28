@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restaurant Reports</title>
+
+<style>
+body {
+  font-family: "Inter", sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* ===== FILTER FORM ===== */
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+select, input, button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0056b3;
+}
+
+/* ===== TABLE ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+th, td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+th {
+  background: #007bff;
+  color: #fff;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* ===== BADGES ===== */
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #fff;
+}
+.badge-green { background: #28a745; }
+.badge-red { background: #dc3545; }
+.badge-blue { background: #17a2b8; }
+
+/* ===== MOBILE VIEW ===== */
+@media (max-width: 768px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+    width: 100%;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tr {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  td {
+    text-align: right;
+    position: relative;
+    padding-left: 50%;
+    border: none;
+    border-bottom: 1px solid #eee;
+  }
+
+  td::before {
+    position: absolute;
+    left: 10px;
+    top: 12px;
+    font-weight: bold;
+    text-align: left;
+  }
+
+  td:nth-of-type(1)::before { content: "Restaurant"; }
+  td:nth-of-type(2)::before { content: "Period"; }
+  td:nth-of-type(3)::before { content: "Total Orders"; }
+  td:nth-of-type(4)::before { content: "Delivered"; }
+  td:nth-of-type(5)::before { content: "Cancelled"; }
+  td:nth-of-type(6)::before { content: "Earnings"; }
+}
+</style>
+</head>
+
+<body>
+<div class="container">   
+    
+
+<h1>📊 Restaurant Reports</h1>
+<div style="margin-bottom:20px;">
+    <a href="{{ url_for('admin_dashboard') }}"
+       style="
+            display:inline-block;
+            padding:10px 18px;
+            background:#2c3e50;
+            color:white;
+            text-decoration:none;
+            border-radius:6px;
+            font-weight:bold;
+       ">
+        ← Back to Super Dashboard
+    </a>
+</div>
+
+<!-- ===== FILTER FORM ===== -->
+<form method="GET">
+  <select name="restaurant_id">
+
+    <option value="">All Restaurants</option>
+    {% for r in restaurants %}
+      <option value="{{ r.id }}"
+        {% if request.args.get('restaurant_id') == r.id|string %}selected{% endif %}>
+        {{ r.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <select name="type">
+    <option value="day" {% if report_type=='day' %}selected{% endif %}>Day Wise</option>
+    <option value="week" {% if report_type=='week' %}selected{% endif %}>Week Wise</option>
+  </select>
+
+  <input type="date" name="from" value="{{ request.args.get('from','') }}">
+  <input type="date" name="to" value="{{ request.args.get('to','') }}">
+
+  <button type="submit">Apply</button> 
+    <a href="{{ url_for('admin_reports') }}"
+     style="padding:6px 12px;
+            background:#e74c3c;
+            color:white;
+            border-radius:5px;
+            text-decoration:none;">
+     ❌ Clear
+  </a>
+
+</form> 
+
+<h2 style="margin-top:20px;">Restaurant Earnings Summary</h2>
+
+<table border="1" cellpadding="10" cellspacing="0" width="100%">
+<thead style="background:#f4f4f4;">
+<tr>
+    <th>Restaurant</th>
+    <th>Items Earning (₹)</th>
+    <th>Delivery Charges (₹)</th>
+    <th>Coupon Discount (₹)</th>
+    <th>R-Offer (₹)</th>
+    <th>Total Earning (₹)</th>
+</tr>
+</thead>
+
+<tbody>
+{% if summary %}
+{% for row in summary %}
+<tr>
+    <td>{{ row.restaurant }}</td>
+
+    <td>₹{{ "%.2f"|format(row.items_total or 0) }}</td>
+
+    <td>₹{{ "%.2f"|format(row.delivery_total or 0) }}</td>
+
+    <td>-₹{{ "%.2f"|format(row.coupon_discount_total or 0) }}</td>
+
+    <td>-₹{{ "%.2f"|format(row.restaurant_offer_total or 0) }}</td>
+
+    <td>
+        <strong>
+            ₹{{ "%.2f"|format(
+                (row.items_total or 0)
+                + (row.delivery_total or 0)
+                - (row.coupon_discount_total or 0)
+                - (row.restaurant_offer_total or 0)
+            ) }}
+        </strong>
+    </td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+    <td colspan="6" style="text-align:center;">No data available</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+
+<!-- ===== REPORT TABLE ===== -->
+<!-- ===== REPORT TABLE ===== -->
+
+<table border="1" cellpadding="10" cellspacing="0" width="100%">
+<thead style="background:#f4f4f4;">
+<tr>
+  <th>Restaurant</th>
+  <th>Date</th>
+  <th>Total Orders</th>
+  <th>Delivered</th>
+  <th>Cancelled</th>
+  <th>Items Total (₹)</th>
+  <th>Delivery Total (₹)</th>
+  <th>Coupon Discount (₹)</th>
+  <th>R-Offer (₹)</th>
+  <th>Grand Total (₹)</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in reports %}
+<tr>
+  <td><strong>{{ r.restaurant }}</strong></td>
+
+  <td>
+    {{ r.period.strftime('%d/%m/%Y') if r.period is not string else r.period }}
+  </td>
+
+  <td>{{ r.total_orders }}</td>
+
+  <td><span class="badge badge-green">{{ r.delivered }}</span></td>
+
+  <td><span class="badge badge-red">{{ r.cancelled }}</span></td>
+
+  <td>₹{{ "%.2f"|format(r.items_total or 0) }}</td>
+
+  <td>₹{{ "%.2f"|format(r.delivery_total or 0) }}</td>
+
+  <td>-₹{{ "%.2f"|format(r.coupon_discount_total or 0) }}</td>
+
+  <td>-₹{{ "%.2f"|format(r.restaurant_offer_total or 0) }}</td>
+
+  <td>
+    <strong>
+      ₹{{ "%.2f"|format(
+        (r.items_total or 0)
+        + (r.delivery_total or 0)
+        - (r.coupon_discount_total or 0)
+        - (r.restaurant_offer_total or 0)
+      ) }}
+    </strong>
+  </td>
+</tr>
+{% else %}
+<tr>
+  <td colspan="10" style="text-align:center;">No data found</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+</div>
+</body>
+</html>

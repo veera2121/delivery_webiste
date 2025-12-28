@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Delivery Person</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Add Delivery Person</h1>
+
+    <!-- Display flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+<form method="POST">
+
+  <label>Restaurant:</label>
+  <select name="restaurant_id" required>
+    <option value="">Select Restaurant</option>
+    {% for r in restaurants %}
+      <option value="{{ r.id }}">{{ r.name }}</option>
+    {% endfor %}
+  </select><br><br>
+
+  <label>Name:</label>
+  <input type="text" name="name" required><br><br>
+
+  <label>Phone:</label>
+  <input type="text" name="phone" required><br><br>
+
+  <label>Password:</label>
+  <input type="password" name="password" required><br><br>
+
+  <button type="submit">Add Delivery Person</button>
+</form>
+
+
+    <br>
+    <a href="{{ url_for('admin_dashboard') }}">Back to Dashboard</a>
+  </div>
+</body>
+</html>

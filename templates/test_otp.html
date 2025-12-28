@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OTP Test</title>
+</head>
+<body>
+
+<h2>Send OTP</h2>
+<form action="/send-otp" method="POST">
+    <input type="text" name="mobile" placeholder="Enter mobile number" required>
+    <button type="submit">Send OTP</button>
+</form>
+
+<hr>
+
+<h2>Verify OTP</h2>
+<form action="/verify-otp" method="POST">
+    <input type="text" name="mobile" placeholder="Enter mobile number" required>
+    <input type="text" name="otp" placeholder="Enter OTP" required>
+    <button type="submit">Verify OTP</button>
+</form>
+
+</body>
+</html>

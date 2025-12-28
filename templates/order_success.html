@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Placed</title>
+</head>
+<body>
+
+<h2>✅ Order Placed Successfully!</h2>
+<p>Thank you for ordering.</p>
+
+<a href="{{ url_for('home') }}">Go Home</a>
+
+<script>
+    localStorage.removeItem("cart");
+</script>
+<script>
+const RESTAURANT_ID = {{ restaurant_id }};
+
+let carts = JSON.parse(localStorage.getItem("cart")) || {};
+
+if (carts[RESTAURANT_ID]) {
+    delete carts[RESTAURANT_ID];
+    localStorage.setItem("cart", JSON.stringify(carts));
+}
+</script>
+
+</body>
+</html>

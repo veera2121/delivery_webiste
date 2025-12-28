@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Offers</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 30px; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,.1); }
+        h2 { margin-bottom: 20px; }
+        .active-offer { background: #e8f5e9; padding: 15px; border-left: 5px solid #4caf50; margin-bottom: 20px; border-radius: 6px; }
+        .offer-card { background: #fafafa; padding: 15px; margin-top: 15px; border-radius: 8px; border-left: 4px solid #2196f3; }
+        .offer-actions { margin-top: 10px; display: flex; gap: 10px; }
+        .edit-btn { background: #2196f3; color: #fff; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 14px; }
+        .delete-btn { background: #f44336; color: #fff; padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🍽 Manage Offers – {{ restaurant.name }}</h2>
+
+    <!-- Active Offer -->
+    {% if active_offer %}
+        <div class="active-offer">
+            <strong>✅ Current Active Offer</strong><br>
+            <b>{{ active_offer.title }}</b><br>
+            {{ active_offer.description }}<br>
+            <small>
+                Valid till 
+                {% if active_offer.end_date %}
+                    {{ active_offer.end_date.strftime("%d %b %Y") }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </small>
+        </div>
+    {% else %}
+        <p style="color:#999;">No active offer currently</p>
+    {% endif %}
+
+    <!-- Add Offer Button -->
+    <a href="{{ url_for('add_offer', restaurant_id=restaurant.id) }}" class="edit-btn">➕ Add New Offer</a>
+
+    <!-- All Offers -->
+    <h3 style="margin-top:40px;">📋 All Offers</h3>
+    {% for offer in offers %}
+        <div class="offer-card">
+            <b>{{ offer.title }}</b><br>
+            {{ offer.description }}<br>
+            Type: {{ offer.offer_type }} | Value: {{ offer.offer_value }} | Min Order: ₹{{ offer.min_order_amount }}<br>
+
+            <!-- Safe Date Display -->
+            {% if offer.start_date %}{{ offer.start_date.strftime("%d %b %Y") }}{% else %}N/A{% endif %}
+             → 
+            {% if offer.end_date %}{{ offer.end_date.strftime("%d %b %Y") }}{% else %}N/A{% endif %}
+            |
+            {% if offer.is_active %}<b style="color:green;">ACTIVE</b>{% else %}<b style="color:red;">INACTIVE</b>{% endif %}
+
+            <div class="offer-actions"> 
+                 <!-- Toggle Active / Inactive -->
+                    <form method="POST"
+                        action="{{ url_for('toggle_offer_status', offer_id=offer.id) }}">
+                        {% if offer.is_active %}
+                            <button class="delete-btn" style="background:#ff9800;">
+                                🚫 Deactivate
+                            </button>
+                        {% else %}
+                            <button class="edit-btn" style="background:#4caf50;">
+                                ✅ Activate
+                            </button>
+                        {% endif %}
+                    </form>
+                                <!-- Edit Button -->
+                <a href="{{ url_for('edit_offer', offer_id=offer.id) }}" class="edit-btn">✏ Edit</a>
+
+                <!-- Delete Button -->
+                <form method="POST" action="{{ url_for('delete_offer', offer_id=offer.id) }}" onsubmit="return confirm('Delete this offer?')">
+                    <button class="delete-btn">🗑 Delete</button>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Restaurant Reports</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f8f9fa;
+    padding: 20px;
+}
+
+h1, h2 {
+    margin-bottom: 10px;
+}
+
+a.button, button {
+    padding: 8px 14px;
+    background: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a.button:hover, button:hover {
+    background: #2980b9;
+}
+
+form {
+    margin: 15px 0;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.card h2 {
+    margin: 0;
+}
+
+.discount-text {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.positive-text {
+    color: #2ecc71;
+    font-weight: bold;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+
+thead {
+    background: #f1f1f1;
+}
+
+small {
+    font-size: 12px;
+    color: #555;
+}
+</style>
+</head>
+
+<body>
+<h1>📊 Restaurant Reports & Analytics</h1>
+
+<a href="{{ url_for('restaurant_dashboard') }}" class="button">← Back to Dashboard</a>
+
+<form method="POST">
+    <input type="date" name="from_date" value="{{ from_date }}">
+    <input type="date" name="to_date" value="{{ to_date }}">
+    <button type="submit">Apply</button>
+    <a href="{{ url_for('restaurant_reports') }}"
+       class="button"
+       style="background:#e74c3c;">❌ Clear</a>
+</form>
+
+<!-- ================= SUMMARY CARDS ================= -->
+<div class="cards">
+
+    <div class="card">
+        <h2>{{ total_orders }}</h2>
+        Total Orders
+    </div>
+
+    <div class="card">
+        <h2>{{ delivered_orders }}</h2>
+        Delivered
+    </div>
+
+    <div class="card">
+        <h2>{{ cancelled_orders }}</h2>
+        Cancelled
+    </div>
+
+    <div class="card">
+        <h2>₹{{ "%.2f"|format(total_items_total or 0) }}</h2>
+        Items Total
+    </div>
+
+    <div class="card">
+        <h2>₹{{ "%.2f"|format(total_delivery_total or 0) }}</h2>
+        Delivery Total
+    </div>
+
+    <!-- 🔴 COUPON DISCOUNT CARD -->
+    <div class="card">
+        <h2 class="discount-text">
+            ↓ -₹{{ "%.2f"|format((total_coupon_discount or 0) | abs) }}
+        </h2>
+        Coupon Discount
+        <br>
+        <small>
+            (
+            {{
+              "%.1f"|format(
+                ((total_coupon_discount or 0) / (total_items_total or 1)) * 100
+              )
+            }}%
+            )
+        </small>
+    </div>
+
+    <!-- 🟢 RESTAURANT OFFER DISCOUNT CARD -->
+    <div class="card">
+        <h2 class="discount-text">
+            ↓ -₹{{ "%.2f"|format((total_restaurant_offer_discount or 0) | abs) }}
+        </h2>
+        Restaurant Offer Discount
+        <br>
+        <small>
+            (
+            {{
+              "%.1f"|format(
+                ((total_restaurant_offer_discount or 0) / (total_items_total or 1)) * 100
+              )
+            }}%
+            )
+        </small>
+    </div>
+
+    <!-- 🟢 GRAND TOTAL -->
+    <div class="card">
+        <h2 class="positive-text">
+            ↑ ₹{{ "%.2f"|format(total_earnings or 0) }}
+        </h2>
+        Grand Total
+    </div>
+
+    <div class="card">
+        <h2>₹{{ "%.2f"|format(cod_amount or 0) }}</h2>
+        COD
+    </div>
+
+    <div class="card">
+        <h2>₹{{ "%.2f"|format(online_amount or 0) }}</h2>
+        Online
+    </div>
+
+</div>
+
+<!-- ================= DAY WISE TABLE ================= -->
+<h2>📅 Day-wise Summary</h2>
+
+<table>
+<thead>
+<tr>
+    <th>Date</th>
+    <th>Total Orders</th>
+    <th>Delivered</th>
+    <th>Cancelled</th>
+    <th>Items Total (₹)</th>
+    <th>Delivery Total (₹)</th>
+    <th>Coupon Discount (₹)</th>
+    <th>Restaurant Offer Discount (₹)</th>
+    <th>Grand Total</th>
+</tr>
+</thead>
+
+<tbody>
+{% for day, data in daywise.items() %}
+<tr>
+    <td>{{ day }}</td>
+    <td>{{ data.orders }}</td>
+    <td>{{ data.delivered }}</td>
+    <td>{{ data.cancelled }}</td>
+
+    <td>₹{{ "%.2f"|format(data.items_total or 0) }}</td>
+    <td>₹{{ "%.2f"|format(data.delivery_total or 0) }}</td>
+
+    <!-- 🔴 COUPON DISCOUNT -->
+    <td class="discount-text">
+        ↓ -₹{{ "%.2f"|format((data.coupon_discount or 0) | abs) }}
+        <br>
+        <small>
+            (
+            {{
+              "%.1f"|format(
+                ((data.coupon_discount or 0) / (data.items_total or 1)) * 100
+              )
+            }}%
+            )
+        </small>
+    </td>
+
+    <!-- 🟢 RESTAURANT OFFER DISCOUNT -->
+    <td class="discount-text">
+        ↓ -₹{{ "%.2f"|format((data.restaurant_offer_discount or 0) | abs) }}
+        <br>
+        <small>
+            (
+            {{
+              "%.1f"|format(
+                ((data.restaurant_offer_discount or 0) / (data.items_total or 1)) * 100
+              )
+            }}%
+            )
+        </small>
+    </td>
+
+    <!-- 🟢 GRAND TOTAL -->
+    <td class="positive-text">
+        ↑ ₹{{ "%.2f"|format(data.grand_total or 0) }}
+    </td>
+</tr>
+{% else %}
+<tr>
+    <td colspan="9" style="text-align:center;">No data available</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+</body>
+</html>

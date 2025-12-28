@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Edit Offer" if is_edit else "Add Offer" }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+  <h2>{{ "✏ Edit Offer" if is_edit else "➕ Add Offer" }} – {{ restaurant.name }}</h2>
+
+  <form method="POST">
+
+    <div class="form-group">
+      <label>Offer Title</label>
+      <input type="text" name="title" class="form-control" placeholder="FLAT 50 OFF"
+             value="{{ offer.title if offer else '' }}" required>
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <textarea name="description" class="form-control" placeholder="On orders above ₹299">{{ offer.description if offer else '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Offer Type</label>
+      <select name="offer_type" id="offer_type" class="form-control" required>
+        <option value="flat" {% if offer and offer.offer_type=='flat' %}selected{% endif %}>Flat Discount</option>
+        <option value="percent" {% if offer and offer.offer_type=='percent' %}selected{% endif %}>Percentage</option>
+        <option value="free_delivery" {% if offer and offer.offer_type=='free_delivery' %}selected{% endif %}>Free Delivery</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="offer_value_group">
+      <label>Offer Value</label>
+      <input type="number" name="offer_value" class="form-control" step="0.01"
+             value="{{ offer.offer_value if offer else '' }}">
+    </div>
+
+    <div class="form-group">
+      <label>Minimum Order Amount</label>
+      <input type="number" name="min_order_amount" class="form-control" step="0.01"
+             value="{{ offer.min_order_amount if offer else '' }}">
+    </div>
+
+    <div class="form-group">
+      <label>Start Date</label>
+      <input type="date" name="start_date" class="form-control"
+             value="{{ offer.start_date|date('Y-m-d') if offer else '' }}">
+    </div>
+
+    <div class="form-group">
+      <label>End Date</label>
+      <input type="date" name="end_date" class="form-control"
+             value="{{ offer.end_date|date('Y-m-d') if offer else '' }}">
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">{{ "Update Offer" if is_edit else "Add Offer" }}</button>
+      <a href="{{ url_for('manage_offers', restaurant_id=restaurant.id) }}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  function toggleOfferValue() {
+    const type = document.getElementById("offer_type").value;
+    document.getElementById("offer_value_group").style.display =
+      type === "free_delivery" ? "none" : "block";
+  }
+
+  document.getElementById("offer_type").addEventListener("change", toggleOfferValue);
+  toggleOfferValue();
+</script>
+
+{% endblock %}
