@@ -426,7 +426,7 @@ def place_order():
     email = request.form.get("email")
     alt_phone = request.form.get("alt_phone")
     payment_type = request.form.get("payment_type")
-    
+
     address_type = request.form.get("address_type")
     house_no = request.form.get("house_no")
     landmark = request.form.get("landmark")
@@ -459,12 +459,9 @@ def place_order():
     items_total = sum(int(quantities[i]) * float(prices[i]) for i in range(len(item_names)))
 
     # -------- DELIVERY CHARGE --------
-    delivery_charge = float(request.form.get("delivery_charge") or 30)
-    if items_total >= 499:
-        delivery_charge = 0  # free delivery
-        free_delivery_msg = "🎉 Free delivery applied"
-    else:
-        free_delivery_msg = f"Add ₹{499 - items_total} more for free delivery"
+    delivery_charge = restaurant.delivery_charge or 0
+    if restaurant.free_delivery_limit and items_total >= restaurant.free_delivery_limit:
+        delivery_charge = 0
 
     # -------- SYNC SESSION --------
     session["phone"] = phone
@@ -473,25 +470,34 @@ def place_order():
     # -------- RESTAURANT OFFER --------
     offer_discount = 0
     offer_used = None
-    active_offer = RestaurantOffer.query.filter_by(restaurant_id=restaurant_id, is_active=True).first()
-    if active_offer:
-    # Check if offer already used by this phone/fingerprint (any status)
-    previous_offer_order = Order.query.filter(
-        Order.restaurant_id == restaurant_id,
-        ((Order.phone == phone) | (Order.device_fingerprint == device_fingerprint)),
-        Order.restaurant_offer_id == active_offer.id
+    previous_offer_order = None
+    active_offer = RestaurantOffer.query.filter_by(
+        restaurant_id=restaurant_id, is_active=True
     ).first()
 
-    if not previous_offer_order and items_total >= active_offer.min_order_amount:
-        offer_used = active_offer
-        offer_type = active_offer.offer_type.lower()
-        if offer_type == "percent":
-            offer_discount = (items_total * active_offer.offer_value) / 100
-        elif offer_type == "flat":
-            offer_discount = active_offer.offer_value
-        elif offer_type == "free_delivery":
-            delivery_charge = 0
+    if active_offer:
+        # Check if offer already used
+        previous_offer_order = Order.query.filter(
+            Order.restaurant_id == restaurant_id,
+            ((Order.phone == phone) | (Order.device_fingerprint == device_fingerprint)),
+            Order.restaurant_offer_id == active_offer.id
+        ).first()
 
+        # Only apply offer if not used before and items_total >= min_order_amount
+        min_order = active_offer.min_order_amount or 0
+        if not previous_offer_order and items_total >= min_order:
+            offer_used = active_offer
+            offer_type = active_offer.offer_type.lower()
+
+            if offer_type == "percent":
+                offer_discount = (items_total * active_offer.offer_value) / 100
+            elif offer_type == "flat":
+                offer_discount = active_offer.offer_value
+            elif offer_type == "free_delivery":
+                # Free delivery offer threshold
+                threshold = min_order or restaurant.free_delivery_limit
+                if items_total >= threshold:
+                    delivery_charge = 0
 
     # -------- COUPON --------
     coupon_discount = 0
@@ -510,20 +516,6 @@ def place_order():
     # -------- TOTAL DISCOUNT & FINAL TOTAL --------
     total_discount = offer_discount + coupon_discount
     final_total = round(items_total + delivery_charge - total_discount, 2)
-
-    # -------- DEBUG PRINT --------
-    print("===== PLACE ORDER FINAL CHECK =====")
-    print("Restaurant ID:", restaurant_id)
-    print("Phone:", phone)
-    print("Fingerprint:", device_fingerprint)
-    print("Items total:", items_total)
-    print("Delivery charge:", delivery_charge)
-    print("Active offer:", active_offer.id if active_offer else None)
-    print("Offer discount:", offer_discount)
-    print("Coupon used:", coupon_used)
-    print("Coupon discount:", coupon_discount)
-    print("Final total:", final_total)
-    print("===================================")
 
     # -------- GENERATE OTP --------
     order_otp = generate_otp()
@@ -555,7 +547,7 @@ def place_order():
         otp=order_otp
     )
     db.session.add(new_order)
-    db.session.commit()  # generate ID immediately so offer is locked
+    db.session.commit()
 
     # -------- SET ORDER CODE --------
     new_order.order_id = generate_order_code(new_order.id)
@@ -575,7 +567,6 @@ def place_order():
 
     flash(f"Order placed successfully! Order ID: {new_order.order_id}", "success")
     return redirect(url_for("myorders", restaurant_id=restaurant_id))
-
 
 # ------------------ SUPER ADMIN ------------------
 @app.route("/admin/login", methods=["GET", "POST"])
@@ -1098,36 +1089,6 @@ def assign_delivery(order_id):
     flash("Delivery person assigned successfully.", "success")
     return redirect(url_for("restaurant_dashboard"))
 
-
-@app.route("/verify_delivery_otp/<int:order_id>", methods=["POST"])
-def verify_delivery_otp(order_id):
-    order = Order.query.get(order_id)
-    if not order:
-        flash("Order not found!", "danger")
-        return redirect(url_for("tracking_page"))
-
-    entered_otp = request.form.get("otp", "").strip()
-    if not entered_otp:
-        flash("Please enter the OTP", "warning")
-        return redirect(url_for("tracking_page"))
-
-    mobile_e164 = "+91" + order.phone
-
-    try:
-        verification_check = twilio_client.verify.services(TWILIO_VERIFY_SID).verification_checks.create(
-            to=mobile_e164,
-            code=entered_otp
-        )
-        if verification_check.status == "approved":
-            order.status = "Delivered"
-            db.session.commit()
-            flash("Delivery confirmed!", "success")
-        else:
-            flash("Invalid OTP", "danger")
-    except Exception as e:
-        flash(f"OTP verification failed: {str(e)}", "danger")
-
-    return redirect(url_for("tracking_page"))
 
 
 @app.route("/admin/restaurant/edit/<int:restaurant_id>", methods=["GET", "POST"])
@@ -1874,7 +1835,7 @@ def edit_restaurant_card(restaurant_id):
             restaurant.opening_time = datetime.strptime(opening_time_str, "%H:%M").time()
         if closing_time_str:
             restaurant.closing_time = datetime.strptime(closing_time_str, "%H:%M").time()
-
+    
         db.session.commit()
         flash("Restaurant card updated successfully!", "success")
         return redirect(url_for("restaurant_dashboard", restaurant_id=restaurant.id))
@@ -1928,45 +1889,55 @@ def get_active_offer_for_restaurant(restaurant_id, device_fingerprint=None):
         "min_order_amount": offer.min_order_amount if offer else 0,
         "already_used": already_used
     }
+from flask import request, jsonify, session
+from models import Order, RestaurantOffer
 
 @app.route("/check_restaurant_offer", methods=["POST"])
 def check_restaurant_offer():
-    data = request.json
+    data = request.get_json()
     restaurant_id = data.get("restaurant_id")
-    device_fingerprint = data.get("device_fingerprint")
     phone = data.get("phone")
+    device_fingerprint = data.get("device_fingerprint")
 
+    if not phone:
+        return jsonify({
+            "allowed": False,
+            "message": "Enter your mobile number to unlock restaurant offers"
+        })
+
+    # Fetch active offer for the restaurant
     active_offer = RestaurantOffer.query.filter_by(
         restaurant_id=restaurant_id,
         is_active=True
     ).first()
 
     if not active_offer:
-        return jsonify({"allowed": False, "message": "No active offer"})
-
-    used = Order.query.filter(
-        Order.restaurant_id == restaurant_id,
-        Order.status == "Delivered",
-        (
-            (Order.device_fingerprint == device_fingerprint) |
-            (Order.phone == phone)
-        )
-    ).first()
-
-    if used:
         return jsonify({
             "allowed": False,
-            "message": "Offer already used on this device"
+            "message": "No active offer available for this restaurant"
         })
 
+    # Check if user/device already used this offer (any order)
+    previous_offer_order = Order.query.filter(
+        Order.restaurant_id == restaurant_id,
+        ((Order.phone == phone) | (Order.device_fingerprint == device_fingerprint)),
+        Order.restaurant_offer_id == active_offer.id
+    ).first()
+
+    if previous_offer_order:
+        return jsonify({
+            "allowed": False,
+            "message": "You have already used this restaurant offer"
+        })
+
+    # Return offer details
     return jsonify({
         "allowed": True,
-        "offer_type": active_offer.offer_type,
         "offer_value": active_offer.offer_value,
+        "offer_type": active_offer.offer_type,
         "min_order": active_offer.min_order_amount,
         "title": active_offer.title
     })
-
 
 import requests
 

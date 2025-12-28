@@ -920,8 +920,9 @@ button[type="submit"]:active {
     <input type="hidden" name="order_type" value="delivery">
 
     <!-- ✅ Dynamic delivery charge -->
-    <input type="hidden" name="delivery_charge" id="delivery-charge-input" value="{{ restaurant.delivery_charge }}">
-    <span>Delivery: ₹<span id="delivery-charge">{{ restaurant.delivery_charge }}</span></span>
+        <input type="hidden" id="base-delivery" value="{{ restaurant.delivery_charge }}">
+        <input type="hidden" id="free-delivery-min" value="{{ restaurant.free_delivery_limit or 0 }}">
+
 
     <!-- Map & Device Info -->
     <input type="hidden" name="map_link" id="map_link">
@@ -986,9 +987,11 @@ button[type="submit"]:active {
                 <span>₹<span id="items-total">0</span></span>
             </div>
             <div class="total-row">
-                <span>Delivery Charge</span>
+            <span>Delivery Charge</span>
+            <span>₹<span id="delivery-charge">0</span></span>
             </div>
-            <div class="total-row">
+
+                    <div class="total-row">
                 <span>Discount</span>
                 <span>- ₹<span id="discount">0</span></span>
             </div>
@@ -1043,13 +1046,20 @@ document.getElementById("device_fingerprint").value = btoa([
 
 
 
+
+
 /* ============================================================
    CONFIG
 ============================================================ */
 const RESTAURANT_ID = {{ restaurant.id }};
 const RESTAURANT_NAME = "{{ restaurant.name }}";
-const BASE_DELIVERY = 30;
-const FREE_DELIVERY_LIMIT = 499;
+const BASE_DELIVERY = parseFloat(
+    document.getElementById("base-delivery").value || 0
+);
+const FREE_DELIVERY_LIMIT = parseFloat(
+    document.getElementById("free-delivery-min").value || 0
+);
+
 
 /* ============================================================
    CART INIT
@@ -1125,38 +1135,46 @@ function changeQty(i, delta) {
     localStorage.setItem("carts", JSON.stringify(carts));
     renderCart();
 }
-
+let freeDeliveryReason = "";
 /* ============================================================
    UPDATE TOTALS (NO USER MESSAGES HERE)
 ============================================================ */
 function updateTotals() {
     const itemsTotal = cart.items.reduce((s, i) => s + i.price * i.quantity, 0);
-    let delivery = itemsTotal >= FREE_DELIVERY_LIMIT ? 0 : BASE_DELIVERY;
 
-    // Restaurant Offer
+    currentDeliveryCharge = BASE_DELIVERY;
+    freeDeliveryReason = "";
+
+    // 1️⃣ Restaurant free delivery limit
+    if (FREE_DELIVERY_LIMIT > 0 && itemsTotal >= FREE_DELIVERY_LIMIT) {
+        currentDeliveryCharge = 0;
+        freeDeliveryReason = "limit";
+    }
+
+    // 2️⃣ Restaurant offer
+    offerDiscount = 0;
     if (offerApplied && !offerAlreadyUsed && itemsTotal >= minOrder) {
-        if (offerType === "percent") offerDiscount = (itemsTotal * restaurantOffer) / 100;
-        else if (offerType === "flat") offerDiscount = restaurantOffer;
-        else if (offerType === "free_delivery") delivery = 0;
-    } else {
-        offerDiscount = 0;
+        if (offerType === "percent") {
+            offerDiscount = (itemsTotal * restaurantOffer) / 100;
+        } else if (offerType === "flat") {
+            offerDiscount = restaurantOffer;
+        } else if (offerType === "free_delivery") {
+            currentDeliveryCharge = 0;
+            freeDeliveryReason = "offer";
+        }
     }
 
     const totalDiscount = couponDiscount + offerDiscount;
+    const finalTotal = itemsTotal + currentDeliveryCharge - totalDiscount;
 
     document.getElementById("items-total").innerText = itemsTotal.toFixed(2);
-    document.getElementById("delivery-charge").innerText = delivery.toFixed(2);
+    document.getElementById("delivery-charge").innerText = currentDeliveryCharge.toFixed(2);
     document.getElementById("discount").innerText = totalDiscount.toFixed(2);
-    document.getElementById("final-total").innerText =
-        (itemsTotal - totalDiscount + delivery).toFixed(2);
-
-    document.getElementById("delivery-charge-input").value = delivery;
-    document.getElementById("coupon-discount-input").value = couponDiscount;
-    document.getElementById("restaurant-offer-discount-input").value = offerDiscount;
-    document.getElementById("offer-used").value = offerDiscount > 0 ? offerTitle : "";
+    document.getElementById("final-total").innerText = finalTotal.toFixed(2);
 
     autoDeliveryMessage(itemsTotal);
 }
+
 
 /* ============================================================
    AUTO DELIVERY MESSAGE
@@ -1166,15 +1184,26 @@ function autoDeliveryMessage(itemsTotal) {
 
     const msg = document.getElementById("delivery-msg");
 
-    if (itemsTotal >= FREE_DELIVERY_LIMIT) {
-        msg.innerText = "🚚 Free delivery applied";
+    if (currentDeliveryCharge === 0) {
+        if (freeDeliveryReason === "offer") {
+            msg.innerText = "🎉 Free delivery unlocked by offer";
+        } else {
+            msg.innerText = "🚚 Free delivery applied";
+        }
         msg.className = "soft-success";
-    } else {
+        return;
+    }
+
+    if (FREE_DELIVERY_LIMIT > 0) {
         msg.innerText =
             `Add ₹${(FREE_DELIVERY_LIMIT - itemsTotal).toFixed(0)} more for free delivery`;
         msg.className = "soft-info";
+    } else {
+        msg.innerText = "";
     }
 }
+
+
 
 /* ============================================================
    APPLY COUPON
@@ -1329,18 +1358,7 @@ function setMapLink() {
 }
 </script>
 <script>
-fetch("/place_order", {
-    method: "POST",
-    body: formData
-})
-.then(res => res.json())
-.then(data => {
-    if (!data.success) {
-        alert(data.message);
-        return;
-    }
-    // success flow
-});
+
 </script>
 {% endblock %}
 
@@ -1349,3 +1367,4 @@ fetch("/place_order", {
  
 </body>
 </html>
+

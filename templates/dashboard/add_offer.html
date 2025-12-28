@@ -23,13 +23,21 @@
       <select name="offer_type" id="offer_type" class="form-control" required>
         <option value="flat">Flat Discount</option>
         <option value="percent">Percentage</option>
-        <option value="free_delivery">Free Delivery</option>
+        
       </select>
     </div>
 
+    <!-- Offer Value (used only for flat/percent) -->
     <div class="form-group" id="offer_value_group">
       <label>Offer Value</label>
       <input type="number" name="offer_value" class="form-control" step="0.01" placeholder="50">
+    </div>
+
+    <!-- Optional custom free delivery threshold -->
+    <div class="form-group" id="free_delivery_limit_group">
+      <label>Custom Free Delivery Limit (optional)</label>
+      <input type="number" name="custom_free_delivery_limit" class="form-control" step="0.01" placeholder="{{ restaurant.free_delivery_limit }}">
+      <small>If left empty, restaurant's default free delivery limit (₹{{ restaurant.free_delivery_limit }}) will be used.</small>
     </div>
 
     <div class="form-group">
@@ -56,41 +64,22 @@
 </div>
 
 <script>
-  function toggleOfferValue() {
-    const type = document.getElementById("offer_type").value;
-    document.getElementById("offer_value_group").style.display =
-      type === "free_delivery" ? "none" : "block";
-  }
+function toggleOfferFields() {
+  const type = document.getElementById("offer_type").value;
+  document.getElementById("offer_value_group").style.display = (type === "free_delivery") ? "none" : "block";
+  document.getElementById("free_delivery_limit_group").style.display = (type === "free_delivery") ? "block" : "none";
+}
 
-  document.getElementById("offer_type").addEventListener("change", toggleOfferValue);
-  toggleOfferValue();
+document.getElementById("offer_type").addEventListener("change", toggleOfferFields);
+toggleOfferFields();
 </script>
 
 <style>
-.dashboard-page {
-  max-width: 600px;
-  margin: 40px auto;
-  padding: 20px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,.1);
-}
-
+.dashboard-page { max-width: 600px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
 .form-group { margin-bottom: 15px; }
 .form-control { width: 100%; padding: 8px; }
-
-.form-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  text-decoration: none;
-}
-
+.form-actions { display: flex; gap: 10px; }
+.btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; text-decoration: none; }
 .btn-primary { background: #007bff; color: #fff; }
 .btn-secondary { background: #6c757d; color: #fff; }
 </style>

@@ -15,7 +15,7 @@ def generate_otp():
     return str(secrets.randbelow(900000) + 100000)  # 6-digit
 # ---------------- LOGIN / SIGNUP ----------------
 from flask import Blueprint, render_template, request, session, flash, redirect, url_for
-from app import twilio_client, TWILIO_VERIFY_SID
+
 
 users_bp = Blueprint("users", __name__, template_folder="../../templates")
 

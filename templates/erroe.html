@@ -527,3 +527,33 @@ function openReplaceCartModal(oldRestaurant, newRestaurant, item) {
 {% endblock %}
 </body>
 </html>
+@app.route("/verify_delivery_otp/<int:order_id>", methods=["POST"])
+def verify_delivery_otp(order_id):
+    order = Order.query.get(order_id)
+    if not order:
+        flash("Order not found!", "danger")
+        return redirect(url_for("tracking_page"))
+
+    entered_otp = request.form.get("otp", "").strip()
+    if not entered_otp:
+        flash("Please enter the OTP", "warning")
+        return redirect(url_for("tracking_page"))
+
+    mobile_e164 = "+91" + order.phone
+
+    try:
+        verification_check = twilio_client.verify.services(TWILIO_VERIFY_SID).verification_checks.create(
+            to=mobile_e164,
+            code=entered_otp
+        )
+        if verification_check.status == "approved":
+            order.status = "Delivered"
+            db.session.commit()
+            flash("Delivery confirmed!", "success")
+        else:
+            flash("Invalid OTP", "danger")
+    except Exception as e:
+        flash(f"OTP verification failed: {str(e)}", "danger")
+
+    return redirect(url_for("tracking_page"))
+
