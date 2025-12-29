@@ -534,6 +534,7 @@ def place_order():
     return redirect(url_for("myorders", restaurant_id=restaurant_id))
 
 # ------------------ SUPER ADMIN ------------------
+@csrf.exempt
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
