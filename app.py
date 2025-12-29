@@ -14,27 +14,28 @@ from sqlalchemy import or_, case
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash, check_password_hash
 
-
-
-from models import db 
-# ------------------ APP ------------------
-app = Flask(
-    __name__,
-    static_folder="static",       # your static folder
-    static_url_path="/static"     # URL path for static files
+from users.routes import users_bp
+from models import (
+    db, Restaurant, RestaurantUser, MenuItem, Order,
+    OrderItem, DeliveryPerson, FoodItem, OTP,
+    CouponUsage, RestaurantOffer, Customer
 )
+# ------------------ APP ------------------
+app = Flask(__name__)
 app.config["SECRET_KEY"] = "my-super-secret-key-123"
-app.config["WTF_CSRF_ENABLED"] = False
 
-# ------------------ DATABASE ------------------
-# ------------------ DATABASE ------------------
+# ------------------ DATABASE (RAILWAY POSTGRES) ------------------
+import os
+
 db_url = os.getenv("DATABASE_URL")
+
 if db_url:
     if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     print("✅ Using PostgreSQL database")
 else:
+    print("⚠️ Using LOCAL SQLite database")
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     INSTANCE_PATH = os.path.join(BASE_DIR, "instance")
     os.makedirs(INSTANCE_PATH, exist_ok=True)
@@ -44,22 +45,17 @@ else:
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+app.config["WTF_CSRF_ENABLED"] = False
+
+
+
+
 # ------------------ INIT EXTENSIONS ------------------
-db.init_app(app)        # ✅ THIS IS THE FIX
+db.init_app(app)
 csrf = CSRFProtect(app)
 migrate = Migrate(app, db)
 
-
-
-
-from models import (
-    Restaurant, RestaurantUser, MenuItem, Order,
-    OrderItem, DeliveryPerson, FoodItem, OTP,
-    CouponUsage, RestaurantOffer, Customer
-)
-
 # ------------------ BLUEPRINTS ------------------
-from users.routes import users_bp
 app.register_blueprint(users_bp, url_prefix="/users")
 
 # ------------------ UTILS ------------------
@@ -86,7 +82,6 @@ def haversine(lat1, lon1, lat2, lon2):
 # ------------------ ADMIN CONFIG ------------------
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password123"
-app = Flask(__name__, static_folder="static", static_url_path="/static")
 
 from flask import request
 from flask import request, session, render_template
@@ -2037,11 +2032,12 @@ def system_health():
         now=datetime.now()
     )
 
+@app.route("/db-test")
+def db_test():
+    from sqlalchemy import text
+    db.session.execute(text("SELECT 1"))
+    return "PostgreSQL Connected ✅"
 
-
-@app.route("/test-icon")
-def test_icon():
-    return app.send_static_file("icons/icon-192.png")
 
 # ------------------ DB INIT ------------------
 
