@@ -367,18 +367,21 @@ form button:hover {
       {% endfor %}
     </ul>
 
-    {% set items_total = order.items_total or 0 %}
-    {% set delivery = order.delivery_charge or 0 %}
-    {% set discount = order.discount or 0 %}
-    {% set coupon_amount = order.coupon_used or 0 %}
-    {% set final_total = items_total + delivery - discount %}
+            <p><strong>Items Total:</strong> ₹{{ order.subtotal }}</p>
 
-    <p><strong>Items Total:</strong> ₹{{ items_total }}</p>
-    <p><strong>Delivery Charge:</strong> ₹{{ delivery }}</p>
-    <p><strong>Discount:</strong> ₹{{ discount }}</p>
-    <p><strong>Coupon Applied:</strong> ₹{{ coupon_amount }}</p>
-    <p><strong>Final Total:</strong> ₹{{ final_total }}</p>
-    <p style="font-size:13px;color:#666;">(Including delivery charges)</p>
+        <p><strong>Delivery Charge:</strong> ₹{{ order.delivery_charge or 0 }}</p>
+
+        {% if order.discount_amount and order.discount_amount > 0 %}
+        <p class="discount">
+          <strong>Discount{% if order.offer_title %} ({{ order.offer_title }}){% endif %}:</strong>
+          - ₹{{ order.discount_amount }}
+        </p>
+        {% endif %}
+
+        <p><strong>Final Total:</strong> ₹{{ order.final_amount }}</p>
+
+        <p style="font-size:13px;color:#666;">(Including delivery charges)</p>
+
 
     <!-- DELIVERY PERSON -->
     {% if order.delivery_person %}
