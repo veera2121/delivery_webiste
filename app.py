@@ -20,21 +20,36 @@ from models import (
     OrderItem, DeliveryPerson, FoodItem, OTP,
     CouponUsage, RestaurantOffer, Customer
 )
-
 # ------------------ APP ------------------
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "my-super-secret-key-123"
 
-# ------------------ DATABASE ------------------
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-INSTANCE_PATH = os.path.join(BASE_DIR, "instance")
-os.makedirs(INSTANCE_PATH, exist_ok=True)
+# ------------------ DATABASE (RAILWAY POSTGRES) ------------------
+import os
 
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    "sqlite:///" + os.path.join(INSTANCE_PATH, "restaurants.db")
-)
+db_url = os.getenv("DATABASE_URL")
+
+if db_url:
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+    print("✅ Using PostgreSQL database")
+else:
+    print("⚠️ Using LOCAL SQLite database")
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    INSTANCE_PATH = os.path.join(BASE_DIR, "instance")
+    os.makedirs(INSTANCE_PATH, exist_ok=True)
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        "sqlite:///" + os.path.join(INSTANCE_PATH, "restaurants.db")
+    )
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 app.config["WTF_CSRF_ENABLED"] = False
+
+
+
+
 # ------------------ INIT EXTENSIONS ------------------
 db.init_app(app)
 csrf = CSRFProtect(app)
@@ -42,10 +57,6 @@ migrate = Migrate(app, db)
 
 # ------------------ BLUEPRINTS ------------------
 app.register_blueprint(users_bp, url_prefix="/users")
-
-# ------------------ CREATE TABLES (FIXES YOUR ERROR) ------------------
-with app.app_context():
-    db.create_all()
 
 # ------------------ UTILS ------------------
 def generate_otp():
@@ -2021,6 +2032,11 @@ def system_health():
         now=datetime.now()
     )
 
+@app.route("/db-test")
+def db_test():
+    from sqlalchemy import text
+    db.session.execute(text("SELECT 1"))
+    return "PostgreSQL Connected ✅"
 
 
 # ------------------ DB INIT ------------------
