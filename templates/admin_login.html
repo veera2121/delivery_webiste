@@ -1,18 +1,124 @@
 <!doctype html>
 <html lang="en">
-<head>
+<head> 
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+
   <meta charset="UTF-8">
   <title>Admin Login</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Inter", system-ui, sans-serif;
+      background: linear-gradient(135deg, #047263, #279999);
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px 26px;
+      width: 100%;
+      max-width: 360px;
+      border-radius: 14px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 22px;
+      color: #111827;
+    }
+
+    form input {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+    }
+
+    form input:focus {
+      outline: none;
+      border-color: #ff5722;
+      box-shadow: 0 0 0 3px rgba(255,87,34,0.2);
+    }
+
+    /* PASSWORD WRAPPER */
+    .password-wrapper {
+      position: relative;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 14px;
+      color: #ff5722;
+      user-select: none;
+      font-weight: 600;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #ff7043, #ff5722);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(255,87,34,0.35);
+    }
+  </style>
 </head>
+
 <body>
   <div class="container">
     <h1>Admin Login</h1>
+
     <form method="POST">
-      <input type="text" name="username" placeholder="Username" required><br>
-      <input type="password" name="password" placeholder="Password" required><br>
+      <input type="text" name="username" placeholder="Username" required>
+
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" placeholder="Password" required>
+        <span class="toggle-password" onclick="togglePassword()">Show</span>
+      </div>
+
       <button type="submit">Login</button>
     </form>
   </div>
+
+  <script>
+    function togglePassword() {
+      const pwd = document.getElementById("password");
+      const toggle = document.querySelector(".toggle-password");
+
+      if (pwd.type === "password") {
+        pwd.type = "text";
+        toggle.textContent = "Hide";
+      } else {
+        pwd.type = "password";
+        toggle.textContent = "Show";
+      }
+    }
+  </script>
 </body>
 </html>

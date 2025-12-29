@@ -2,34 +2,64 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery Person Login</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <div class="container">
-    <h1>Delivery Login</h1>
 
+<div class="page-center">
+
+  <div class="form-container">
+
+    <h2 class="form-title">🚴 Delivery Login</h2>
+
+    <!-- FLASH MESSAGES INSIDE CARD -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <ul>
-        {% for category, message in messages %}
-          <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
-        </ul>
+        <div class="flash-wrapper">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
       {% endif %}
     {% endwith %}
 
-    <form method="POST">
-      <label>Phone:</label>
-      <input type="text" name="phone" required><br><br>
+    <form method="POST" class="form">
 
-      <label>Password:</label>
-      <input type="password" name="password" required><br><br>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" name="phone" placeholder="Enter phone number" required>
+      </div>
 
-      <button type="submit">Login</button>
+      <div class="form-group password-group">
+        <label>Password</label>
+        <input type="password" name="password" id="password" placeholder="Enter password" required>
+        <span class="toggle-password" onclick="togglePassword()">👁</span>
+      </div>
+
+      <button type="submit" class="form-submit-btn">
+        Login
+      </button>
+
     </form>
 
-    <p><a href="{{ url_for('home') }}">Back to Home</a></p>
+    <p class="back-link">
+      <a href="{{ url_for('home') }}">← Back to Home</a>
+    </p>
+
   </div>
+
+</div>
+
+<script>
+function togglePassword() {
+  const pwd = document.getElementById("password");
+  pwd.type = pwd.type === "password" ? "text" : "password";
+}
+</script>
+
 </body>
 </html>
