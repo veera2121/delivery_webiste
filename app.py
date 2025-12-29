@@ -15,11 +15,8 @@ from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from users.routes import users_bp
-from models import (
-    db, Restaurant, RestaurantUser, MenuItem, Order,
-    OrderItem, DeliveryPerson, FoodItem, OTP,
-    CouponUsage, RestaurantOffer, Customer
-)
+
+from models import db 
 # ------------------ APP ------------------
 app = Flask(
     __name__,
@@ -51,6 +48,15 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)        # ✅ THIS IS THE FIX
 csrf = CSRFProtect(app)
 migrate = Migrate(app, db)
+
+
+
+
+from models import (
+    Restaurant, RestaurantUser, MenuItem, Order,
+    OrderItem, DeliveryPerson, FoodItem, OTP,
+    CouponUsage, RestaurantOffer, Customer
+)
 
 # ------------------ BLUEPRINTS ------------------
 from users.routes import users_bp
