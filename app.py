@@ -387,10 +387,10 @@ from datetime import datetime, timedelta
 from models import Order, OrderItem, RestaurantOffer, Restaurant
 from utils import generate_otp, generate_order_code
 from sqlalchemy import func
-
 @app.route("/place_order", methods=["POST"])
 def place_order():
-    # -------- BASIC DETAILS --------
+
+    # ================= BASIC DETAILS =================
     name = request.form.get("name")
     phone = request.form.get("phone")
     email = request.form.get("email")
@@ -409,7 +409,10 @@ def place_order():
     map_link = request.form.get("map_link")
     device_fingerprint = request.form.get("device_fingerprint")
 
-    # -------- ITEMS --------
+    apply_offer = request.form.get("apply_offer") == "true"
+    apply_coupon = request.form.get("apply_coupon") == "true"
+
+    # ================= ITEMS =================
     item_names = request.form.getlist("item_name[]")
     quantities = request.form.getlist("quantity[]")
     prices = request.form.getlist("price[]")
@@ -420,77 +423,80 @@ def place_order():
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
 
-    # -------- CHECK RESTAURANT OPEN --------
+    # ================= RESTAURANT OPEN CHECK =================
     if not is_restaurant_open(restaurant):
-        flash("Restaurant is currently closed. Please try again later.", "danger")
+        flash("Restaurant is currently closed.", "danger")
         return redirect(url_for("menu", restaurant_id=restaurant_id))
 
-    # -------- CALCULATE ITEMS TOTAL --------
-    items_total = sum(int(quantities[i]) * float(prices[i]) for i in range(len(item_names)))
+    # ================= ITEMS TOTAL =================
+    items_total = sum(
+        int(quantities[i]) * float(prices[i])
+        for i in range(len(item_names))
+    )
 
-    # -------- DELIVERY CHARGE --------
+    # ================= DELIVERY CHARGE =================
     delivery_charge = restaurant.delivery_charge or 0
     if restaurant.free_delivery_limit and items_total >= restaurant.free_delivery_limit:
         delivery_charge = 0
 
-    # -------- SYNC SESSION --------
+    # ================= SESSION =================
     session["phone"] = phone
     session["device_fingerprint"] = device_fingerprint
 
-    # -------- RESTAURANT OFFER --------
+    # ================= RESTAURANT OFFER =================
     offer_discount = 0
     offer_used = None
-    previous_offer_order = None
-    active_offer = RestaurantOffer.query.filter_by(
-        restaurant_id=restaurant_id, is_active=True
-    ).first()
 
-    if active_offer:
-        # Check if offer already used
-        previous_offer_order = Order.query.filter(
-            Order.restaurant_id == restaurant_id,
-            ((Order.phone == phone) | (Order.device_fingerprint == device_fingerprint)),
-            Order.restaurant_offer_id == active_offer.id
-        ).first()
+    offer_data = get_active_offer_for_restaurant(
+        restaurant_id,
+        device_fingerprint
+    )
 
-        # Only apply offer if not used before and items_total >= min_order_amount
-        min_order = active_offer.min_order_amount or 0
-        if not previous_offer_order and items_total >= min_order:
-            offer_used = active_offer
-            offer_type = active_offer.offer_type.lower()
+    if (
+        apply_offer and
+        offer_data["id"] and
+        not offer_data["already_used"] and
+        items_total >= offer_data["min_order_amount"]
+    ):
+        offer_used = RestaurantOffer.query.get(offer_data["id"])
 
-            if offer_type == "percent":
-                offer_discount = (items_total * active_offer.offer_value) / 100
-            elif offer_type == "flat":
-                offer_discount = active_offer.offer_value
-            elif offer_type == "free_delivery":
-                # Free delivery offer threshold
-                threshold = min_order or restaurant.free_delivery_limit
-                if items_total >= threshold:
-                    delivery_charge = 0
+        if offer_data["offer_type"] == "percent":
+            offer_discount = (items_total * offer_data["offer_value"]) / 100
 
-    # -------- COUPON --------
+        elif offer_data["offer_type"] == "flat":
+            offer_discount = offer_data["offer_value"]
+
+        elif offer_data["offer_type"] == "free_delivery":
+            delivery_charge = 0
+
+    # ================= COUPON (ONLY IF OFFER NOT APPLIED) =================
     coupon_discount = 0
     coupon_used = None
-    apply_coupon = request.form.get("apply_coupon")
+
     delivered_orders = Order.query.filter(
         ((Order.phone == phone) | (Order.device_fingerprint == device_fingerprint)),
         func.lower(Order.status) == "delivered"
     ).count()
+
     first_time_user = delivered_orders == 0
 
-    if offer_discount == 0 and apply_coupon == "true" and first_time_user and items_total >= 199:
+    if (
+        offer_discount == 0 and
+        apply_coupon and
+        first_time_user and
+        items_total >= 199
+    ):
         coupon_discount = min(items_total * 0.30, 60)
         coupon_used = "FIRST30"
 
-    # -------- TOTAL DISCOUNT & FINAL TOTAL --------
+    # ================= FINAL TOTAL =================
     total_discount = offer_discount + coupon_discount
     final_total = round(items_total + delivery_charge - total_discount, 2)
 
-    # -------- GENERATE OTP --------
+    # ================= OTP =================
     order_otp = generate_otp()
 
-    # -------- CREATE ORDER --------
+    # ================= CREATE ORDER =================
     new_order = Order(
         restaurant_id=restaurant_id,
         customer_name=name,
@@ -516,14 +522,15 @@ def place_order():
         map_link=map_link,
         otp=order_otp
     )
+
     db.session.add(new_order)
     db.session.commit()
 
-    # -------- SET ORDER CODE --------
+    # ================= ORDER CODE =================
     new_order.order_id = generate_order_code(new_order.id)
     db.session.commit()
 
-    # -------- ADD ORDER ITEMS --------
+    # ================= ORDER ITEMS =================
     for i in range(len(item_names)):
         qty = int(quantities[i])
         if qty > 0:
@@ -533,10 +540,12 @@ def place_order():
                 quantity=qty,
                 price=float(prices[i])
             ))
+
     db.session.commit()
 
     flash(f"Order placed successfully! Order ID: {new_order.order_id}", "success")
     return redirect(url_for("myorders", restaurant_id=restaurant_id))
+
 
 # ------------------ SUPER ADMIN ------------------
 @csrf.exempt
@@ -1862,7 +1871,6 @@ def get_active_offer_for_restaurant(restaurant_id, device_fingerprint=None):
     }
 from flask import request, jsonify, session
 from models import Order, RestaurantOffer
-
 @app.route("/check_restaurant_offer", methods=["POST"])
 def check_restaurant_offer():
     data = request.get_json()
@@ -1876,39 +1884,31 @@ def check_restaurant_offer():
             "message": "Enter your mobile number to unlock restaurant offers"
         })
 
-    # Fetch active offer for the restaurant
-    active_offer = RestaurantOffer.query.filter_by(
-        restaurant_id=restaurant_id,
-        is_active=True
-    ).first()
+    offer_data = get_active_offer_for_restaurant(
+        restaurant_id,
+        device_fingerprint
+    )
 
-    if not active_offer:
+    if not offer_data["id"]:
         return jsonify({
             "allowed": False,
             "message": "No active offer available for this restaurant"
         })
 
-    # Check if user/device already used this offer (any order)
-    previous_offer_order = Order.query.filter(
-        Order.restaurant_id == restaurant_id,
-        ((Order.phone == phone) | (Order.device_fingerprint == device_fingerprint)),
-        Order.restaurant_offer_id == active_offer.id
-    ).first()
-
-    if previous_offer_order:
+    if offer_data["already_used"]:
         return jsonify({
             "allowed": False,
             "message": "You have already used this restaurant offer"
         })
 
-    # Return offer details
     return jsonify({
         "allowed": True,
-        "offer_value": active_offer.offer_value,
-        "offer_type": active_offer.offer_type,
-        "min_order": active_offer.min_order_amount,
-        "title": active_offer.title
+        "offer_value": offer_data["offer_value"],
+        "offer_type": offer_data["offer_type"],
+        "min_order": offer_data["min_order_amount"],
+        "title": offer_data["title"]
     })
+
 
 import requests
 

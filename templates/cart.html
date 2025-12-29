@@ -367,11 +367,8 @@ body {
     <input type="hidden" name="map_link" id="map_link">
     <input type="hidden" name="device_fingerprint" id="device_fingerprint">
 
-    <!-- Coupon & Discount -->
+    <input type="hidden" name="apply_offer" id="apply_offer_input" value="false">
     <input type="hidden" name="apply_coupon" id="apply_coupon_input" value="false">
-    <input type="hidden" name="coupon_discount" id="coupon-discount-input" value="0">
-    <input type="hidden" name="restaurant_offer_discount" id="restaurant-offer-discount-input" value="0">
-    <input type="hidden" name="offer_used" id="offer-used" value="">
 
     <!-- Cart Items -->
     <div id="cart-items" class="cart-list"></div>
@@ -746,6 +743,7 @@ async function applyRestaurantOffer() {
     }
 
     offerApplied = true;
+    document.getElementById("apply_offer_input").value = "true";
     restaurantOffer = data.offer_value;
     offerType = data.offer_type;
     minOrder = data.min_order;
