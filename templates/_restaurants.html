@@ -8,8 +8,7 @@
         r.opening_time <= now <= r.closing_time
     ) %}
 
-{# 🔹 FORCE OPEN FOR TESTING #}
-{% set is_open = true %}
+       
 
     <div class="card
         {% if not r.deliverable or not is_open %} disabled {% endif %}"
