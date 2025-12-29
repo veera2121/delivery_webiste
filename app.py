@@ -30,14 +30,14 @@ app.config["SECRET_KEY"] = "my-super-secret-key-123"
 app.config["WTF_CSRF_ENABLED"] = False
 
 # ------------------ DATABASE ------------------
+# ------------------ DATABASE ------------------
 db_url = os.getenv("DATABASE_URL")
 if db_url:
     if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
+        db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     print("✅ Using PostgreSQL database")
 else:
-    print("⚠️ Using LOCAL SQLite database")
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     INSTANCE_PATH = os.path.join(BASE_DIR, "instance")
     os.makedirs(INSTANCE_PATH, exist_ok=True)
@@ -48,7 +48,7 @@ else:
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # ------------------ INIT EXTENSIONS ------------------
-db = SQLAlchemy(app)        # Only one db instance
+db.init_app(app)        # ✅ THIS IS THE FIX
 csrf = CSRFProtect(app)
 migrate = Migrate(app, db)
 
