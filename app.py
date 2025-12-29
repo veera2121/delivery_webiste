@@ -32,7 +32,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = (
     "sqlite:///" + os.path.join(INSTANCE_PATH, "restaurants.db")
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
+app.config["WTF_CSRF_ENABLED"] = False
 # ------------------ INIT EXTENSIONS ------------------
 db.init_app(app)
 csrf = CSRFProtect(app)
