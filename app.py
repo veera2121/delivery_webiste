@@ -82,6 +82,7 @@ def haversine(lat1, lon1, lat2, lon2):
 # ------------------ ADMIN CONFIG ------------------
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password123"
+app = Flask(__name__, static_folder="static", static_url_path="/static")
 
 from flask import request
 from flask import request, session, render_template
@@ -2037,7 +2038,15 @@ def db_test():
     from sqlalchemy import text
     db.session.execute(text("SELECT 1"))
     return "PostgreSQL Connected ✅"
+from flask import send_from_directory
 
+@app.route("/test-css")
+def test_css():
+    return send_from_directory("static/css", "style.css")
+
+@app.route("/test-icon")
+def test_icon():
+    return app.send_static_file("icons/icon-192.png")
 
 # ------------------ DB INIT ------------------
 

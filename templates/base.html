@@ -512,6 +512,9 @@ html {
   </div>
 </nav>
 
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<meta name="theme-color" content="#ff5722">
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 
 {% if restaurant %}
 <!-- Empty Cart Modal -->
@@ -763,7 +766,17 @@ setTimeout(() => {
     document.querySelectorAll(".alert").forEach(el => el.remove());
 }, 3000);
 </script>
-
+<!-- PWA -->
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/static/service-worker.js")
+      .then(reg => console.log("✅ Service Worker Registered:", reg.scope))
+      .catch(err => console.error("❌ Service Worker Failed:", err));
+  });
+}
+</script>
 
 
 
