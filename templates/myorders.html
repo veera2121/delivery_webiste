@@ -367,20 +367,40 @@ form button:hover {
       {% endfor %}
     </ul>
 
-                  <p><strong>Items Total:</strong> ₹{{ order.subtotal or 0 }}</p>
+            <!-- total calculation -->
+            <p><strong>Items Total:</strong> ₹{{ order.items_total or 0 }}</p>
 
-          <p><strong>Delivery Charge:</strong> ₹{{ order.delivery_charge or 0 }}</p>
+            <p><strong>Delivery Charge:</strong> ₹{{ order.delivery_charge or 0 }}</p>
 
-          {% if order.discount_amount and order.discount_amount > 0 %}
-          <p class="discount">
-            <strong>Discount{% if order.offer_title %} ({{ order.offer_title }}){% endif %}:</strong>
-            - ₹{{ order.discount_amount }}
-          </p>
-          {% else %}
-          <p><strong>Discount:</strong> ₹0</p>
-          {% endif %}
+            {% if order.restaurant_offer_discount and order.restaurant_offer_discount > 0 %}
+              <p class="discount">
+                <strong>Restaurant Offer Discount:</strong>
+                - ₹{{ order.restaurant_offer_discount }}
+              </p>
+            {% endif %}
 
-          <p><strong>Final Total:</strong> ₹{{ order.final_amount or 0 }}</p>
+            {% if order.discount and order.discount > 0 %}
+              <p class="discount">
+                <strong>Coupon Discount:</strong>
+                - ₹{{ order.discount }}
+              </p>
+            {% endif %}
+
+            {% set total_discount = (order.restaurant_offer_discount or 0) + (order.discount or 0) %}
+            <p>
+              <strong>Total Discount:</strong>
+              - ₹{{ total_discount }}
+            </p>
+
+            <hr>
+
+            <p class="final-amount">
+              <strong>Final Total:</strong>
+              ₹{{ order.final_total or 0 }}
+            </p>
+
+
+
 
 
     <!-- DELIVERY PERSON -->
