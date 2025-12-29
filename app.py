@@ -55,7 +55,6 @@ csrf = CSRFProtect(app)
 import os
 from twilio.rest import Client
 
-
 # 4️⃣ Example route
 @app.route('/')
 def index():
@@ -1998,11 +1997,65 @@ def save_location():
     data = request.get_json()
     session["lat"] = data.get("lat")
     session["lng"] = data.get("lng")
-    return jsonify({"status": "saved"})
+    return jsonify({"status": "saved"})   
+@app.route("/system_health")
+def system_health():
+    from datetime import datetime
+
+    restaurants = Restaurant.query.all()
+    health_data = []
+
+    # Simulated cart
+    test_items_total = 200 * 2 + 100 * 1  # = 500
+
+    for r in restaurants:
+        # 🔹 BACKEND CALCULATION (TRUTH)
+        backend = calculate_totals(r, test_items_total)
+
+        # 🔹 FRONTEND SIMULATION (what JS SHOULD do)
+        frontend_delivery = r.delivery_charge or 0
+
+        if r.free_delivery_limit and test_items_total >= r.free_delivery_limit:
+            frontend_delivery = 0
+
+        frontend_final = round(
+            test_items_total
+            + frontend_delivery
+            - (backend["offer_discount"] + backend["coupon_discount"]),
+            2
+        )
+
+        # 🔍 COMPARE
+        if backend["final_total"] == frontend_final:
+            health_data.append({
+                "restaurant": r.name,
+                "status": "green",
+                "problem": ""
+            })
+        else:
+            health_data.append({
+                "restaurant": r.name,
+                "status": "red",
+                "problem": (
+                    f"Frontend mismatch | "
+                    f"Expected {backend['final_total']} "
+                    f"but JS shows {frontend_final}"
+                )
+            })
+
+    return render_template(
+        "system_health.html",
+        health_data=health_data,
+        now=datetime.now()
+    )
+
+
 
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)
+# Your routes here...
 
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
