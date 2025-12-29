@@ -420,7 +420,7 @@ select:focus {
 </ul>
 </td>
 
-<td data-label="Total">₹{{ order.get_final_total() }}</td>
+<td data-label="Total">₹{{ order.final_total }}</td>
 <td data-label="Delivery Charge">₹{{ order.delivery_charge }}</td>
 <td data-label="Note">{{ order.delivery_note or '-' }}</td>
 

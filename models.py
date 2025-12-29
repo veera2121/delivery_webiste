@@ -180,7 +180,7 @@ class Order(db.Model):
         delivery = self.delivery_charge or 0
         discount = self.discount or 0
         return round(items_total + delivery - discount, 2)
-
+    
 # ----------------- Order Item -----------------
 class OrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
