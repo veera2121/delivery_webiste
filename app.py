@@ -21,14 +21,16 @@ from models import (
     CouponUsage, RestaurantOffer, Customer
 )
 # ------------------ APP ------------------
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder="static",       # your static folder
+    static_url_path="/static"     # URL path for static files
+)
 app.config["SECRET_KEY"] = "my-super-secret-key-123"
+app.config["WTF_CSRF_ENABLED"] = False
 
-# ------------------ DATABASE (RAILWAY POSTGRES) ------------------
-import os
-
+# ------------------ DATABASE ------------------
 db_url = os.getenv("DATABASE_URL")
-
 if db_url:
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
@@ -45,17 +47,13 @@ else:
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-app.config["WTF_CSRF_ENABLED"] = False
-
-
-
-
 # ------------------ INIT EXTENSIONS ------------------
-db.init_app(app)
+db = SQLAlchemy(app)        # Only one db instance
 csrf = CSRFProtect(app)
 migrate = Migrate(app, db)
 
 # ------------------ BLUEPRINTS ------------------
+from users.routes import users_bp
 app.register_blueprint(users_bp, url_prefix="/users")
 
 # ------------------ UTILS ------------------
@@ -2038,11 +2036,6 @@ def db_test():
     from sqlalchemy import text
     db.session.execute(text("SELECT 1"))
     return "PostgreSQL Connected ✅"
-from flask import send_from_directory
-
-@app.route("/test-css")
-def test_css():
-    return send_from_directory("static/css", "style.css")
 
 @app.route("/test-icon")
 def test_icon():
