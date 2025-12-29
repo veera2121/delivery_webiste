@@ -66,6 +66,9 @@ def haversine(lat1, lon1, lat2, lon2):
 
     c = 2 * math.asin(math.sqrt(a))
     return R * c
+# ------------------ ADMIN CONFIG ------------------
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "password123"
 
 from flask import request
 from flask import request, session, render_template
