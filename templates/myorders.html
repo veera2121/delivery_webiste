@@ -105,6 +105,24 @@ form button:active {
   font-size: 14px;
   line-height: 1.5;
 }
+/* ===== ORDER HEADER ===== */
+.order-header {
+  margin-bottom: 10px;
+}
+
+.order-id {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ff5722;
+}
+
+.restaurant-name {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
 
 /* ===== STATUS BADGE ===== */
 .status-badge {
@@ -333,7 +351,11 @@ form button:hover {
   {% for order in orders %}
   <div class="order-card">
 
-    <h3>Order ID: {{ order.order_id }} — {{ order.restaurant.name }}</h3>
+   <div class="order-header">
+  <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
+  <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
+</div>
+
 
     <p><strong>Customer:</strong> {{ order.customer_name }}</p>
     <p><strong>Phone:</strong> {{ order.phone }} | <strong>Email:</strong> {{ order.email }}</p>
