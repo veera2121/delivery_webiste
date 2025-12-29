@@ -2,18 +2,13 @@
 {% for r in restaurants %}
 
     {# 🔹 OPEN STATUS #}
-    {# ================================
-   TEMPORARY FORCE OPEN (TESTING)
-   Remove this after testing
-================================ #}
-{% set is_open = true %}  {# 🔴 FORCE ALL RESTAURANTS OPEN #}
-{#
+    
     {% set is_open = (
         r.opening_time and r.closing_time and
         r.opening_time <= now <= r.closing_time
     ) %}
 
-    #}  
+       
 
     <div class="card
         {% if not r.deliverable or not is_open %} disabled {% endif %}"
