@@ -150,7 +150,21 @@ html, body {
     border-bottom: 1px solid rgba(248, 181, 222, 0.4);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
+.brand {
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #31a07b;
 
+  text-shadow:
+    1px 1px 0 #000000,
+    2px 2px 0 #000000,
+    3px 3px 0 #000000,
+    4px 4px 6px rgba(0,0,0,0.3);
+
+  text-transform: uppercase;
+  transition: transform 0.3s ease, text-shadow 0.3s ease;
+}
 
 
 .app-header .container {
@@ -166,8 +180,9 @@ html, body {
 .header-left .brand {
     font-size: 35px;
     font-weight: 900;
-    color: #000000;
+  
     letter-spacing: 0.5px;
+    left: -10px;
 }
 
 /* ================================
@@ -175,7 +190,7 @@ html, body {
 ================================ */
 .header-right {
     display: flex;
-    align-items: center;2
+    align-items: center;
     gap: 10px; 
     right:-10px;
 }
@@ -307,6 +322,7 @@ html, body {
     background-position: center;
     background-repeat: no-repeat;
     }
+
 
     .header-right {
         display: flex;
@@ -1015,7 +1031,7 @@ body {
   <div class="container">
     <!-- LEFT -->
     <div class="header-left">
-      <span class="brand">Foodzy</span>
+      <span class="brand">RuchiGo</span>
     </div>
 
     <!-- RIGHT -->

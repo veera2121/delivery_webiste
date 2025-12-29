@@ -390,13 +390,14 @@ html {
 }
 .flash-wrapper {
     position: fixed;
-    top: 80px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     z-index: 9999;
     width: 90%;
     max-width: 500px;
 }
+
 
 .alert {
     padding: 12px 16px;
@@ -417,6 +418,20 @@ html {
     border: 1px solid #9ff0e5;
 }
 
+@keyframes pop {
+    from {
+        transform: translate(-50%, -60%) scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.flash-wrapper {
+    animation: pop 0.25s ease-out;
+}
 
 
   </style>

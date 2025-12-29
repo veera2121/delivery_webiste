@@ -1,559 +1,150 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ restaurant.name }} - Menu</title>
 
-<style>
-/* ---------- GENERAL ---------- */
-body {
-    font-family: "Poppins", sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #fafafa;
-    padding-bottom: 60px;
-}
-
-/* HEADER */
-.header {
-    background: linear-gradient(90deg, #ff4d4d, #ff2b2b);
-    padding: 20px;
-    color: white;
-    font-size: 26px;
-    font-weight: 600;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-/* TOP LINKS */
-.top-links {
-    margin: 18px;
-    text-align: center;
-    font-size: 15px;
-}
-.top-links a {
-    margin: 0 12px;
-    text-decoration: none;
-    color: #ff2b2b;
-    font-weight: 600;
-}
-
-/* CATEGORY BAR */
-.top-cat-wrapper {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background: white;
-    padding: 12px 16px;
-    display: flex;
-    gap: 14px;
-    overflow-x: auto;
-    white-space: nowrap;
-    border-bottom: 1px solid #eee;
-}
-.top-cat {
-    background: #f0f0f0;
-    padding: 10px 20px;
-    border-radius: 30px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    border: 1px solid #ddd;
-    transition: 0.3s;
-}
-.top-cat:hover {
-    background: #ff2b2b;
-    color: white;
-    transform: scale(1.05);
-}
-
-/* CATEGORY TITLE */
-.category-title {
-    font-size: 24px;
-    font-weight: 700;
-    margin: 35px 20px 15px;
-    color: #222;
-    border-left: 5px solid #ff2b2b;
-    padding-left: 10px;
-}
-
-/* MENU GRID */
-.menu-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 22px;
-    padding: 0 20px 40px;
-}
-
-/* MENU CARD */
-.menu-card {
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-    overflow: hidden;
-    transition: 0.3s;
-}
-.menu-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 10px 28px rgba(0,0,0,0.15);
-}
-.menu-card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-}
-.card-body {
-    padding: 15px;
-}
-.item-name {
-    font-weight: 700;
-    font-size: 18px;
-    color: #333;
-}
-.item-price {
-    font-size: 17px;
-    font-weight: 600;
-    color: #28a745;
-    margin: 8px 0;
-}
-.item-desc {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 12px;
-    height: 40px;
-    overflow: hidden;
-}
-.add-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 12px;
-}
-.add-btn {
-    background: #ff2b2b;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    color: white;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.2s;
-}
-.add-btn:hover {
-    background: #d10000;
-    transform: scale(1.05);
-}
-.qty-box {
-    width: 60px;
-    padding: 7px;
-    border: 1px solid #bbb;
-    border-radius: 8px;
-    font-size: 14px;
-}
-.out-stock {
-    color: #d10000;
-    font-weight: 700;
-    font-size: 16px;
-    padding: 10px 0;
-}
-
-/* FLOATING CART */
-.floating-cart {
-    position: fixed;
-    bottom: 50px;
-    right: 20px;
-    background: #16b9b1;
-    color: white;
-    font-size: 20px;
-    padding: 15px 20px;
-    border-radius: 50px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-    text-decoration: none;
-    font-weight: 700;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    z-index: 3000;
-    transition: 0.3s;
-}
-.floating-cart:hover {
-    background: #d10000;
-    transform: scale(1.1);
-}
-#cart-count {
-    background: white;
-    color: #ff2b2b;
-    padding: 4px 8px;
-    border-radius: 20px;
-    font-size: 16px;
-    font-weight: 700;
-}
-/* ================= REPLACE CART MODAL ================= */
-
-.cart-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100000;
-  backdrop-filter: blur(3px);
-}
-
-/* Hidden state */
-.cart-modal.hidden {
-  display: none;
-}
-
-/* Modal box */
-.cart-modal-box {
-  width: 90%;
-  max-width: 340px;
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 20px 18px;
-  text-align: center;
-  animation: scaleIn 0.25s ease;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-}
-
-/* Title */
-.cart-modal-box h3 {
-  margin: 0 0 8px;
-  font-size: 17px;
-  font-weight: 600;
-  color: #111;
-}
-
-/* Description */
-.cart-modal-box p {
-  font-size: 14px;
-  color: #555;
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* Highlight restaurant name */
-.highlight-restaurant {
-  font-weight: 600;
-  color: #e11d48;
-}
-
-/* Buttons container */
-.cart-modal-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 18px;
-}
-
-/* Buttons */
-.cart-modal-actions button {
-  flex: 1;
-  border: none;
-  padding: 11px 0;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-/* Cancel button */
-.btn-cancel {
-  background: #f1f1f1;
-  color: #333;
-}
-
-.btn-cancel:active {
-  transform: scale(0.96);
-}
-
-/* Replace button */
-.btn-confirm {
-  background: #10b981;
-  color: #ffffff;
-  box-shadow: 0 6px 14px rgba(16, 185, 129, 0.35);
-}
-
-.btn-confirm:active {
-  transform: scale(0.96);
-}
-
-/* Animation */
-@keyframes scaleIn {
-  from {
-    transform: scale(0.85);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-</style>
-</head>
-<body>
-
-{% extends "base.html" %}
-
-{% block title %}Menu{% endblock %}
-
-{% block content %}
-
-<!-- HEADER -->
-<div class="header">{{ restaurant.name }} - Menu</div>
-
-<!-- LINKS -->
-<div class="top-links">
-    <a href="{{ url_for('home') }}">← Back</a>
-</div>
-
-<!-- CATEGORY BAR -->
-<div class="top-cat-wrapper">
-    {% for category, items in menu_by_category.items() %}
-        {% if items %}
-        <div class="top-cat" onclick="scrollToCategory('{{ category }}')">{{ category }}</div>
-        {% endif %}
-    {% endfor %}
-</div>
-
-<!-- REPLACE CART MODAL -->
-<div id="cartModal" class="cart-modal hidden">
-  <div class="cart-modal-box">
-    <h3>Replace Cart?</h3>
-    <p>Your cart already contains items from <span id="old-restaurant-name" class="highlight-restaurant"></span>.</p>
-    <div class="cart-modal-actions">
-      <button id="cancelReplace" class="btn-cancel">Cancel</button>
-      <button id="confirmReplace" class="btn-confirm">Replace</button>
-    </div>
-  </div>
-</div>
-
-<!-- MENU GRID -->
-{% for category, items in menu_by_category.items() %}
-    {% if items %}
-    <div id="{{ category }}" class="category-title">{{ category }}</div>
-    <div class="menu-grid">
-        {% for item in items %}
-        <div class="menu-card">
-            <img src="{{ item.image_url }}" alt="{{ item.name }}">
-            <div class="card-body">
-                <div class="item-name">{{ item.name }}</div>
-                <div class="item-price">₹{{ item.price }}</div>
-                <div class="item-desc">{{ item.description }}</div>
-
-                {% if item.availability.lower() == 'yes' %}
-                <div class="add-section">
-                    <input type="number" min="1" value="1" class="qty-box">
-                    <button class="add-btn"
-                            data-name="{{ item.name }}"
-                            data-price="{{ item.price }}"
-                            data-restaurant-id="{{ restaurant.id }}"
-                            data-restaurant-name="{{ restaurant.name }}">Add +</button>
-                </div>
-                {% else %}
-                <p class="out-stock">Out of Stock</p>
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-{% endfor %}
-
-<!-- FLOATING CART BUTTON -->
-<a href="{{ url_for('cart_page', restaurant_id=restaurant.id) }}" class="floating-cart">
-    🛒 <span id="cart-count">0</span>
-</a> 
-
-
-<script>
-const RESTAURANT_ID = "{{ restaurant.id }}";
-const RESTAURANT_NAME = "{{ restaurant.name }}";
-
-/* ================= LOAD CARTS ================= */
-let carts = JSON.parse(localStorage.getItem("carts")) || {};
-
-/* ================= SAVE CARTS ================= */
-function saveCarts() {
-    localStorage.setItem("carts", JSON.stringify(carts));
-}
-
-/* ================= CART COUNT ================= */
-function updateCartCount() {
-    const cart = carts[RESTAURANT_ID] || { items: [] };
-    const totalQty = cart.items.reduce((s, i) => s + i.quantity, 0);
-    const badge = document.getElementById("cart-count");
-    if (badge) badge.innerText = totalQty;
-}
-
-/* ================= ADD ANIMATION ================= */
-function showAddedAnimation(text) {
-    const anim = document.createElement("div");
-    anim.innerText = text;
-    anim.style.position = "fixed";
-    anim.style.bottom = "90px";
-    anim.style.left = "50%";
-    anim.style.transform = "translateX(-50%)";
-    anim.style.background = "#10b981";
-    anim.style.color = "#fff";
-    anim.style.padding = "10px 16px";
-    anim.style.borderRadius = "20px";
-    anim.style.fontSize = "14px";
-    anim.style.zIndex = "9999";
-    document.body.appendChild(anim);
-    setTimeout(() => anim.remove(), 1600);
-}
-
-/* ================= REPLACE MODAL ================= */
-function showReplaceModal(onConfirm) {
-    const modal = document.getElementById("cartModal");
-    const cancelBtn = document.getElementById("cancelReplace");
-    const confirmBtn = document.getElementById("confirmReplace");
-    const oldNameSpan = document.getElementById("old-restaurant-name");
-
-    if (!modal) return;
-
-    const cartsData = JSON.parse(localStorage.getItem("carts")) || {};
-    const existingRestaurantId = Object.keys(cartsData).find(
-        id => cartsData[id]?.items?.length > 0
-    );
-    const existingName = cartsData[existingRestaurantId]?.restaurantName || "another restaurant";
-    oldNameSpan.textContent = existingName;
-
-    modal.classList.remove("hidden");
-
-    cancelBtn.onclick = () => modal.classList.add("hidden");
-    confirmBtn.onclick = () => {
-        modal.classList.add("hidden");
-        onConfirm();
-    };
-}
-
-/* ================= ADD ITEM FUNCTION ================= */
-function addItemToCart(name, price, qty) {
-    if (!carts[RESTAURANT_ID]) {
-        carts[RESTAURANT_ID] = { items: [], restaurantName: RESTAURANT_NAME };
-    }
-
-    const cart = carts[RESTAURANT_ID];
-    const existing = cart.items.find(i => i.name === name);
-
-    if (existing) existing.quantity += qty;
-    else cart.items.push({ name, price, quantity: qty });
-
-    cart.restaurantName = RESTAURANT_NAME; // Ensure restaurant name is saved
-    saveCarts();
-    updateCartCount();
-    if (window.refreshCartButton) window.refreshCartButton();
-
-    showAddedAnimation(`${qty} × ${name} added`);
-}
-
-/* ================= ADD TO CART BUTTONS ================= */
-document.querySelectorAll(".add-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-        const name = btn.dataset.name;
-        const price = parseFloat(btn.dataset.price);
-        const qtyBox = btn.closest(".menu-card")?.querySelector(".qty-box");
-        const qty = qtyBox ? parseInt(qtyBox.value) || 1 : 1;
-
-        const otherRestaurantIds = Object.keys(carts).filter(
-            id => id !== RESTAURANT_ID && carts[id]?.items?.length > 0
-        );
-
-        if (otherRestaurantIds.length > 0) {
-            showReplaceModal(() => {
-                carts = {}; // clear old restaurant cart
-                addItemToCart(name, price, qty);
-            });
-            return;
-        }
-
-        addItemToCart(name, price, qty);
-    });
-});
-
-/* ================= FLOATING CART BUTTON ================= */
-const floatingCart = document.querySelector(".floating-cart");
-if (floatingCart) {
-    floatingCart.addEventListener("click", e => {
-        const cart = carts[RESTAURANT_ID] || { items: [] };
-        if (cart.items.length === 0) {
-            e.preventDefault();
-            alert("Your cart is empty!");
-        } else {
-            window.location.href = `/cart/${RESTAURANT_ID}`;
-        }
-    });
-}
-
-/* ================= INIT ================= */
-updateCartCount();
-
-/* ================= OPTIONAL: CUSTOM REPLACE MODAL ================= */
-function openReplaceCartModal(oldRestaurant, newRestaurant, item) {
-    const modal = document.getElementById("replaceCartModal");
-    modal.classList.add("active");
-
-    document.getElementById("replace-text").innerText =
-        `Your cart has items from "${oldRestaurant}". Replace it with items from "${newRestaurant}"?`;
-
-    document.getElementById("replace-yes").onclick = () => {
-        const newCart = {
-            [RESTAURANT_ID]: {
-                restaurantId: RESTAURANT_ID,
-                restaurantName: RESTAURANT_NAME,
-                items: [{ name: item.name, price: item.price, quantity: item.qty }]
-            }
-        };
-
-        localStorage.setItem("carts", JSON.stringify(newCart));
-        modal.classList.remove("active");
-
-        updateCartCount();
-        if (window.refreshCartButton) window.refreshCartButton();
-    };
-
-    document.getElementById("replace-no").onclick = () => {
-        modal.classList.remove("active");
-    };
-}
-</script>
-
-{% endblock %}
-</body>
-</html>
-@app.route("/verify_delivery_otp/<int:order_id>", methods=["POST"])
-def verify_delivery_otp(order_id):
-    order = Order.query.get(order_id)
-    if not order:
-        flash("Order not found!", "danger")
-        return redirect(url_for("tracking_page"))
-
-    entered_otp = request.form.get("otp", "").strip()
-    if not entered_otp:
-        flash("Please enter the OTP", "warning")
-        return redirect(url_for("tracking_page"))
-
-    mobile_e164 = "+91" + order.phone
-
-    try:
-        verification_check = twilio_client.verify.services(TWILIO_VERIFY_SID).verification_checks.create(
-            to=mobile_e164,
-            code=entered_otp
-        )
-        if verification_check.status == "approved":
-            order.status = "Delivered"
-            db.session.commit()
-            flash("Delivery confirmed!", "success")
-        else:
-            flash("Invalid OTP", "danger")
-    except Exception as e:
-        flash(f"OTP verification failed: {str(e)}", "danger")
-
-    return redirect(url_for("tracking_page"))
-
+@app.route("/place_order", methods=["POST"])
+def place_order():
+    # -------- BASIC DETAILS --------
+    name = request.form.get("name")
+    phone = request.form.get("phone")
+    email = request.form.get("email")
+    alt_phone = request.form.get("alt_phone")
+    payment_type = request.form.get("payment_type")
+
+    address_type = request.form.get("address_type")
+    house_no = request.form.get("house_no")
+    landmark = request.form.get("landmark")
+    city = request.form.get("city")
+    state = request.form.get("state")
+    pincode = request.form.get("pincode")
+    delivery_note = request.form.get("delivery_note")
+
+    restaurant_id = int(request.form.get("restaurant_id"))
+    map_link = request.form.get("map_link")
+    device_fingerprint = request.form.get("device_fingerprint")
+
+    # -------- ITEMS --------
+    item_names = request.form.getlist("item_name[]")
+    quantities = request.form.getlist("quantity[]")
+    prices = request.form.getlist("price[]")
+
+    if not item_names:
+        flash("Cart is empty", "danger")
+        return redirect("/")
+
+    restaurant = Restaurant.query.get_or_404(restaurant_id)
+
+    # -------- CHECK RESTAURANT OPEN --------
+    if not is_restaurant_open(restaurant):
+        flash("Restaurant is currently closed. Please try again later.", "danger")
+        return redirect(url_for("menu", restaurant_id=restaurant_id))
+
+    # -------- CALCULATE ITEMS TOTAL --------
+    items_total = sum(int(quantities[i]) * float(prices[i]) for i in range(len(item_names)))
+
+    # -------- DELIVERY CHARGE --------
+    delivery_charge = restaurant.delivery_charge or 0
+    if restaurant.free_delivery_limit and items_total >= restaurant.free_delivery_limit:
+        delivery_charge = 0
+
+    # -------- SYNC SESSION --------
+    session["phone"] = phone
+    session["device_fingerprint"] = device_fingerprint
+
+    # -------- RESTAURANT OFFER --------
+    offer_discount = 0
+    offer_used = None
+    previous_offer_order = None
+    active_offer = RestaurantOffer.query.filter_by(
+        restaurant_id=restaurant_id, is_active=True
+    ).first()
+
+    if active_offer:
+        # Check if offer already used
+        previous_offer_order = Order.query.filter(
+            Order.restaurant_id == restaurant_id,
+            ((Order.phone == phone) | (Order.device_fingerprint == device_fingerprint)),
+            Order.restaurant_offer_id == active_offer.id
+        ).first()
+
+        # Only apply offer if not used before and items_total >= min_order_amount
+        min_order = active_offer.min_order_amount or 0
+        if not previous_offer_order and items_total >= min_order:
+            offer_used = active_offer
+            offer_type = active_offer.offer_type.lower()
+
+            if offer_type == "percent":
+                offer_discount = (items_total * active_offer.offer_value) / 100
+            elif offer_type == "flat":
+                offer_discount = active_offer.offer_value
+            elif offer_type == "free_delivery":
+                # Free delivery offer threshold
+                threshold = min_order or restaurant.free_delivery_limit
+                if items_total >= threshold:
+                    delivery_charge = 0
+
+    # -------- COUPON --------
+    coupon_discount = 0
+    coupon_used = None
+    apply_coupon = request.form.get("apply_coupon")
+    delivered_orders = Order.query.filter(
+        ((Order.phone == phone) | (Order.device_fingerprint == device_fingerprint)),
+        func.lower(Order.status) == "delivered"
+    ).count()
+    first_time_user = delivered_orders == 0
+
+    if offer_discount == 0 and apply_coupon == "true" and first_time_user and items_total >= 199:
+        coupon_discount = min(items_total * 0.30, 60)
+        coupon_used = "FIRST30"
+
+    # -------- TOTAL DISCOUNT & FINAL TOTAL --------
+    total_discount = offer_discount + coupon_discount
+    final_total = round(items_total + delivery_charge - total_discount, 2)
+
+    # -------- GENERATE OTP --------
+    order_otp = generate_otp()
+
+    # -------- CREATE ORDER --------
+    new_order = Order(
+        restaurant_id=restaurant_id,
+        customer_name=name,
+        phone=phone,
+        email=email,
+        alt_phone=alt_phone,
+        house_no=house_no,
+        landmark=landmark,
+        city=city,
+        state=state,
+        pincode=pincode,
+        address_type=address_type,
+        delivery_note=delivery_note,
+        payment_type=payment_type,
+        device_fingerprint=device_fingerprint,
+        items_total=items_total,
+        discount=coupon_discount,
+        restaurant_offer_discount=offer_discount,
+        restaurant_offer_id=offer_used.id if offer_used else None,
+        delivery_charge=delivery_charge,
+        final_total=final_total,
+        coupon_used=coupon_used,
+        map_link=map_link,
+        otp=order_otp
+    )
+    db.session.add(new_order)
+    db.session.commit()
+
+    # -------- SET ORDER CODE --------
+    new_order.order_id = generate_order_code(new_order.id)
+    db.session.commit()
+
+    # -------- ADD ORDER ITEMS --------
+    for i in range(len(item_names)):
+        qty = int(quantities[i])
+        if qty > 0:
+            db.session.add(OrderItem(
+                order_id=new_order.id,
+                item_name=item_names[i],
+                quantity=qty,
+                price=float(prices[i])
+            ))
+    db.session.commit()
+
+    flash(f"Order placed successfully! Order ID: {new_order.order_id}", "success")
+    return redirect(url_for("myorders", restaurant_id=restaurant_id))

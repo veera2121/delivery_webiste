@@ -1,35 +1,60 @@
+import os
+import math
+import secrets
+import uuid
+from datetime import datetime, timedelta
+
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timedelta
-import secrets
-from utils import apply_restaurant_offer
-import math
-from google.oauth2.service_account import Credentials
-import gspread
-import pandas as pd
-from collections import defaultdict
-from sqlalchemy import or_
-from werkzeug.security import generate_password_hash, check_password_hash
-from models import Restaurant, MenuItem
-from flask_migrate import Migrate
-from models import db 
-# ------------------ IMPORT MODELS ------------------
-from flask import Flask, Blueprint, render_template, request, redirect, url_for, session, flash
-from models import db,  Restaurant, RestaurantUser, MenuItem, Order, OrderItem, DeliveryPerson ,FoodItem, OTP, CouponUsage, RestaurantOffer
-from sqlalchemy.orm import joinedload
-import os
-from sqlalchemy import case
-from flask_wtf import FlaskForm
 from flask_wtf import CSRFProtect
+from flask_migrate import Migrate
+from sqlalchemy import or_, case
+from sqlalchemy.orm import joinedload
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from users.routes import users_bp
+from models import (
+    db, Restaurant, RestaurantUser, MenuItem, Order,
+    OrderItem, DeliveryPerson, FoodItem, OTP,
+    CouponUsage, RestaurantOffer, Customer
+)
 
-from models import Customer, OTP, db
+# ------------------ APP ------------------
+app = Flask(__name__)
+app.config["SECRET_KEY"] = "my-super-secret-key-123"
 
-import math
+# ------------------ DATABASE ------------------
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+INSTANCE_PATH = os.path.join(BASE_DIR, "instance")
+os.makedirs(INSTANCE_PATH, exist_ok=True)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    "sqlite:///" + os.path.join(INSTANCE_PATH, "restaurants.db")
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# ------------------ INIT EXTENSIONS ------------------
+db.init_app(app)
+csrf = CSRFProtect(app)
+migrate = Migrate(app, db)
+
+# ------------------ BLUEPRINTS ------------------
+app.register_blueprint(users_bp, url_prefix="/users")
+
+# ------------------ CREATE TABLES (FIXES YOUR ERROR) ------------------
+with app.app_context():
+    db.create_all()
+
+# ------------------ UTILS ------------------
+def generate_otp():
+    return str(secrets.randbelow(900000) + 100000)
+
+def generate_order_id(order_db_id):
+    unique_part = uuid.uuid4().hex[:6].upper()
+    return f"ORD-{order_db_id}-{unique_part}"
 
 def haversine(lat1, lon1, lat2, lon2):
-    R = 6371  # Earth radius in KM
-
+    R = 6371
     lat1, lon1, lat2, lon2 = map(float, [lat1, lon1, lat2, lon2])
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
 
@@ -42,65 +67,6 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * math.asin(math.sqrt(a))
     return R * c
 
-# 1️⃣ Create the Flask app
-app = Flask(__name__)
-
-# 2️⃣ Configure the app
-app.config['SECRET_KEY'] = 'my-super-secret-key-123'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///restaurants.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# 3️⃣ Initialize extensions
-csrf = CSRFProtect(app)
-import os
-from twilio.rest import Client
-
-# 4️⃣ Example route
-@app.route('/')
-def index():
-    return "Flask app is running!"
-
-
-def generate_otp():
-    return str(secrets.randbelow(900000) + 100000)
-import uuid
-
-def generate_order_id(order_db_id):
-    """
-    Creates a unique order ID like: ORD-1234-ABCD
-    """
-    unique_part = uuid.uuid4().hex[:6].upper()
-    return f"ORD-{order_db_id}-{unique_part}"
-
-# ------------------ APP ------------------
-app = Flask(__name__)
-app.config["SECRET_KEY"] = "change_this_secret"
-
-# Register the Blueprint
-app.register_blueprint(users_bp, url_prefix="/users")
-# ------------------ DATABASE ------------------
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-INSTANCE_PATH = os.path.join(BASE_DIR, "instance")
-os.makedirs(INSTANCE_PATH, exist_ok=True)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(INSTANCE_PATH, "orders.db")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-
-db.init_app(app)
-# ------------------ MIGRATION ------------------
-migrate = Migrate(app, db)  # <-- ADD THIS HERE, after db is initialized
-
-# ------------------ ADMIN CONFIG ------------------
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "password123"
-
-
-
-def create_app():
-    app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///restaurants.db'
-  # bind it here
-    return app
 from flask import request
 from flask import request, session, render_template
  # make sure you have this function or library

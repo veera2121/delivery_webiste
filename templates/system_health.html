@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}System Health{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+  <h2>System Health Check</h2>
+  <div class="health-grid">
+    {% for h in health_data %}
+      <div class="health-card" style="background: {% if h.status=='green' %}#d4edda{% else %}#f8d7da{% endif %}">
+        <h3>{{ h.restaurant }}</h3>
+        <p>Status: {% if h.status=='green' %}✅ OK{% else %}❌ Error{% endif %}</p>
+        {% if h.problem %}
+          <p>{{ h.problem }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(250px,1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+.health-card {
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
+}
+</style>
+{% endblock %}

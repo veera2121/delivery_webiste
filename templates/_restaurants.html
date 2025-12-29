@@ -2,12 +2,12 @@
 {% for r in restaurants %}
 
     {# 🔹 OPEN STATUS #}
-    {#
+    
     {% set is_open = (
         r.opening_time and r.closing_time and
         r.opening_time <= now <= r.closing_time
     ) %}
-#}
+
 {# 🔹 FORCE OPEN FOR TESTING #}
 {% set is_open = true %}
 
@@ -24,7 +24,7 @@
                 🚫 Not delivering to your location
             </div>
         {% endif %}
-          {#
+          
         {# ⏰ STATUS MESSAGE #}
         {% if not r.opening_time or not r.closing_time %}
             <div class="info-box closed-box">
@@ -43,7 +43,7 @@
             </div>
 
         {% endif %}
-             #} 
+             
         {# 🔥 OFFER #}
         {% if r.active_offer and r.deliverable and is_open %}
             <div class="info-box offer-box">
