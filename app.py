@@ -14,7 +14,7 @@ from sqlalchemy import or_, case
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from users.routes import users_bp
+
 
 from models import db 
 # ------------------ APP ------------------
@@ -2037,11 +2037,7 @@ def system_health():
         now=datetime.now()
     )
 
-@app.route("/db-test")
-def db_test():
-    from sqlalchemy import text
-    db.session.execute(text("SELECT 1"))
-    return "PostgreSQL Connected ✅"
+
 
 @app.route("/test-icon")
 def test_icon():
