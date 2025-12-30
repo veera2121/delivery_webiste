@@ -1,9 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ session['restaurant_name'] }} Dashboard</title>
+{% extends "base.html" %}
+
+
+
+{# 🚫 Disable bottom navigation on this page #}
+{% block bottom_nav %}{% endblock %}
+
+{% block content %}
+
+
+
 <style>
 /* ===== GLOBAL STYLES ===== */
 * { box-sizing: border-box; margin:0; padding:0; }
@@ -164,8 +169,7 @@ td[data-label="Feedback"] {
 
 
 </style>
-</head>
-<body>
+
 <div class="dashboard-container">
 <h2>Welcome, {{ session['restaurant_name'] }}</h2>
 <div id="newOrderBadge" class="new-order-badge">🔔 New Order Received!</div>
@@ -424,6 +428,4 @@ setInterval(()=>{
     }).catch(console.error);
 },8000);
 </script>
-</body>
-</body>
-</html>
+{% endblock %}

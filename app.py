@@ -2039,6 +2039,25 @@ def db_test():
     return "PostgreSQL Connected ✅"
 
 
+@app.errorhandler(404)
+def page_not_found(e):
+    # Fetch all active offers
+    active_offers = RestaurantOffer.query.filter_by(is_active=True).all()
+    
+    return render_template("404.html", offers=active_offers), 404
+# 🔹 Optional: handle other common errors
+@app.errorhandler(500)
+def server_error(e):
+    return render_template("404.html"), 500 
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return redirect(url_for("promotions"))
+
+@app.route("/promotions")
+def promotions():
+    return render_template("promotions.html")
+
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------

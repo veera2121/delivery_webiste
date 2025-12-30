@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}My App{% endblock %}</title>
 
   <!-- Font Awesome Icons -->
@@ -9,7 +10,13 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 <meta name="theme-color" content="#ff5722">
+<button id="installApp" class="install-fab">
+  📲 Install App
+</button>
+
+
   <style>
+
     /* ===== FIXED BOTTOM NAV ===== */
     .bottom-nav {
       position: fixed;
@@ -433,16 +440,42 @@ html {
 .flash-wrapper {
     animation: pop 0.25s ease-out;
 }
-
-#installBtn {
-  padding: 12px 20px;
-  background: #ff5722;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
+:root {
+  --install-btn-bottom: 100px;   /* 🔥 CHANGE THIS VALUE ONLY */
 }
+.install-fab {                       /* ① Main floating button class */
+  display: none;                     /* ② Initially hidden; will show via JS */
+  position: fixed;                   /* ③ Fixed on screen (doesn’t scroll) */
+  right: 18px;                       /* ④ Distance from right edge of screen */
+  bottom: var(--install-btn-bottom); /* ⑤ Distance from bottom of screen (controlled via CSS variable) */
+  z-index: 9999;                     /* ⑥ Layer above most content so it’s clickable */
+
+  padding: 10px 15px;                /* ⑦ Space inside the button (vertical 12px, horizontal 18px) */
+  background: linear-gradient(135deg, #096d54, #18c297); /* ⑧ Button background gradient */
+  color: #ffffff;                     /* ⑨ Text color of button (📲 Install App) */
+  border: none;                       /* ⑩ No border around button */
+  border-radius: 30px;                /* ⑪ Rounded corners (pill-shaped) */
+
+  font-size: 15px;                    /* ⑫ Font size of text */
+  font-weight: 900;                   /* ⑬ Font weight (boldness) */
+  cursor: pointer;                    /* ⑭ Cursor changes to pointer on hover */
+
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25); /* ⑮ Shadow under button */
+  transition: transform 0.2s ease, box-shadow 0.2s ease; /* ⑯ Smooth hover animation */
+}
+
+.install-fab:hover {                  /* ⑰ Hover effect */
+  transform: translateY(-2px);        /* ⑱ Slight lift when hovered */
+  box-shadow: 0 14px 30px rgba(0,0,0,0.35); /* ⑲ Slightly larger shadow on hover */
+}
+
+/* Mobile tuning */
+@media (max-width: 768px) {          /* ⑳ Applies only to mobile devices */
+  :root {
+    --install-btn-bottom: 80px;      /* ㉑ Distance from bottom of screen for mobile */
+  }
+}
+
 
 
   </style> 
@@ -450,6 +483,7 @@ html {
 </head>
 <body>
 
+ 
 
   <!-- Main content for each page -->
  <!-- Main content for each page -->
@@ -495,8 +529,7 @@ html {
 
 {% endif %}   <!-- ✅ FIX #1 -->
 
-
-<!-- Bottom Navigation Bar -->
+{% block bottom_nav %}
 <nav class="bottom-nav">
   <div class="button-container">
 
@@ -523,10 +556,7 @@ html {
 
   </div>
 </nav>
-
-<button id="installApp" style="display:none;">
-  📲 Install App
-</button>
+{% endblock %}
 
 {% if restaurant %}
 <!-- Empty Cart Modal -->

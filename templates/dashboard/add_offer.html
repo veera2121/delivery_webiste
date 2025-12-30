@@ -1,8 +1,21 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <head>
+    <style>
+.dashboard-page { max-width: 600px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
+.form-group { margin-bottom: 15px; }
+.form-control { width: 100%; padding: 8px; }
+.form-actions { display: flex; gap: 10px; }
+.btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; text-decoration: none; }
+.btn-primary { background: #007bff; color: #fff; }
+.btn-secondary { background: #6c757d; color: #fff; }
+</style>
 
-{% block title %}Add Offer{% endblock %}
-
-{% block content %}
+  </head>
+  <body>
 <div class="dashboard-page">
   <h2>➕ Add Offer – {{ restaurant.name }}</h2>
 
@@ -74,13 +87,6 @@ document.getElementById("offer_type").addEventListener("change", toggleOfferFiel
 toggleOfferFields();
 </script>
 
-<style>
-.dashboard-page { max-width: 600px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
-.form-group { margin-bottom: 15px; }
-.form-control { width: 100%; padding: 8px; }
-.form-actions { display: flex; gap: 10px; }
-.btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; text-decoration: none; }
-.btn-primary { background: #007bff; color: #fff; }
-.btn-secondary { background: #6c757d; color: #fff; }
-</style>
-{% endblock %}
+
+</body>
+</html>
