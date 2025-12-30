@@ -1,11 +1,11 @@
 {
-  "name": "Food Delivery Dashboard",
-  "short_name": "FoodDash",
+  "name": "RuchiGo",
+  "short_name": "RuchiGo",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ff5722",
-  "orientation": "portrait",
   "icons": [
     {
       "src": "/static/icons/icon-192.png",

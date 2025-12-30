@@ -1,36 +1,27 @@
-const CACHE_NAME = "fooddash-v1";
-
-const ASSETS_TO_CACHE = [
-  "/",
-  "/dashboard",
-  "/static/manifest.json"
-];
+const CACHE_NAME = "ruchigo-v2";
 
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll([
+        "/static/css/style.css"
+      ]);
     })
   );
-  self.skipWaiting();
 });
-
-self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
-      )
-    )
-  );
-  self.clients.claim();
-});
-
 self.addEventListener("fetch", event => {
+
+  // ✅ VERY IMPORTANT: allow Flask routes
+  if (event.request.mode === "navigate") {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // ✅ Cache only static assets
   event.respondWith(
     caches.match(event.request).then(response => {
       return response || fetch(event.request);
     })
   );
 });
+

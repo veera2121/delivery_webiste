@@ -7,7 +7,8 @@
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<meta name="theme-color" content="#ff5722">
   <style>
     /* ===== FIXED BOTTOM NAV ===== */
     .bottom-nav {
@@ -433,8 +434,19 @@ html {
     animation: pop 0.25s ease-out;
 }
 
+#installBtn {
+  padding: 12px 20px;
+  background: #ff5722;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
 
-  </style>
+
+  </style> 
+
 </head>
 <body>
 
@@ -512,9 +524,9 @@ html {
   </div>
 </nav>
 
-<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-<meta name="theme-color" content="#ff5722">
-<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<button id="installApp" style="display:none;">
+  📲 Install App
+</button>
 
 {% if restaurant %}
 <!-- Empty Cart Modal -->
@@ -528,7 +540,8 @@ html {
         </div>
     </div>
 </div>
-\
+
+
 
 <script>
 const RESTAURANT_ID = "{{ restaurant.id }}";
@@ -767,17 +780,39 @@ setTimeout(() => {
 }, 3000);
 </script>
 <!-- PWA -->
+
+
 <script>
+let deferredPrompt;
+
+/* PWA install prompt */
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  const installBtn = document.getElementById("installApp");
+  if (installBtn) {
+    installBtn.style.display = "block";
+
+    installBtn.onclick = () => {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.finally(() => {
+        deferredPrompt = null;
+      });
+    };
+  }
+});
+
+/* Service Worker registration */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/static/service-worker.js")
-      .then(reg => console.log("✅ Service Worker Registered:", reg.scope))
-      .catch(err => console.error("❌ Service Worker Failed:", err));
+      .register("{{ url_for('static', filename='service-worker.js') }}")
+      .then(() => console.log("✅ Service Worker registered"))
+      .catch(err => console.error("❌ Service Worker failed", err));
   });
 }
 </script>
-
 
 
 
