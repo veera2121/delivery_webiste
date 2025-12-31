@@ -351,9 +351,11 @@ form button:hover {
 
     <p><strong>Customer:</strong> {{ order.customer_name }}</p>
     <p><strong>Phone:</strong> {{ order.phone }} | <strong>Email:</strong> {{ order.email }}</p>
-    <div class="status-badge status-{{ order.status | replace(' ', '-') }}">
-      {{ order.status }}
-    </div>
+    <div id="orderStatus"
+     class="status-badge status-{{ order.status | replace(' ', '-') }}">
+  {{ order.status }}
+</div>
+
 
     <p><strong>Order Placed:</strong> {{ order.created_at.strftime('%d-%m-%Y %I:%M %p') }}</p>
 
@@ -471,6 +473,35 @@ form button:hover {
 </script>
 
 </div>
+
+
+
+</script>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const socket = io();
+const orderDbId = "{{ orders[0].id if orders else '' }}";
+
+console.log("🟢 Tracking DB order:", orderDbId);
+
+// join correct room
+socket.emit("join_order", { order_id: orderDbId });
+
+socket.on("order_status_update", function (data) {
+    console.log("📥 Live update received:", data);
+
+    if (data.order_db_id == orderDbId) {
+        const el = document.getElementById("orderStatus-" + orderDbId);
+        if (el) {
+            el.innerText = data.status;
+            el.className = "status-badge status-" + data.status.replaceAll(" ", "-");
+        }
+    }
+});
+</script>
+
+
 
 {% endblock %}
 

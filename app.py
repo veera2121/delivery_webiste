@@ -5,6 +5,9 @@ import uuid
 import pandas as pd
 
 from datetime import datetime, timedelta
+import os
+from gevent import monkey
+monkey.patch_all()
 
 from flask import Flask, render_template,send_from_directory, request, redirect, url_for, session, jsonify, flash
 from flask_sqlalchemy import SQLAlchemy 
@@ -15,6 +18,7 @@ from flask_migrate import Migrate
 from sqlalchemy import or_, case
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash, check_password_hash
+from push import send_push
 
 from users.routes import users_bp
 from models import (
@@ -25,11 +29,15 @@ from models import (
 # ------------------ APP ------------------
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "my-super-secret-key-123"
+
+
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode="threading"
+    async_mode="gevent",
+    message_queue=os.environ.get("redis://default:VvTuUrnxDeWhIQLaQLxWZQNJqCczPkHp@redis.railway.internal:6379")
 )
+
 # ------------------ DATABASE (RAILWAY POSTGRES) ------------------
 import os
 
@@ -275,7 +283,6 @@ def get_coordinates(address):
     except Exception as e:
         print("Geocode error:", e)
     return None, None
-
 @app.route("/myorders", methods=["GET", "POST"])
 def myorders():
     orders = []
@@ -292,13 +299,22 @@ def myorders():
         if order_id:
             query = query.filter(Order.order_id == order_id)
 
-        # Only get orders that have coordinates
         orders = query.order_by(Order.created_at.desc()).all()
 
         if orders:
+            # ✅ SAVE ORDER ID FOR AUTO REFRESH
+            session["track_order_id"] = orders[0].order_id
             restaurant_id = orders[0].restaurant.id
         else:
-            flash("No orders found. Please check details.", "warning")
+            flash("No orders found.", "warning")
+
+    # ✅ AUTO LOAD USING SESSION (NO RE-ENTER)
+    elif session.get("track_order_id"):
+        orders = Order.query.filter(
+            Order.order_id == session["track_order_id"]
+        ).all()
+        if orders:
+            restaurant_id = orders[0].restaurant.id
 
     return render_template("myorders.html", orders=orders, restaurant_id=restaurant_id)
 
@@ -739,7 +755,7 @@ def admin_dashboard():
 
 
 # ---------------- ASSIGN DELIVERY PERSON ----------------
-
+from flask_socketio import emit
 
 @app.route("/restaurant/update_status/<int:order_id>", methods=["POST"])
 def update_status(order_id):
@@ -748,12 +764,26 @@ def update_status(order_id):
 
     new_status = request.form.get("status")
     order = Order.query.get(order_id)
+
     if not order:
         flash("Order not found!", "danger")
         return redirect(url_for("restaurant_dashboard"))
 
+    # ✅ Update DB
     order.status = new_status
     db.session.commit()
+
+    # 🔥 SEND LIVE UPDATE TO CUSTOMER TRACK PAGE
+    socketio.emit(
+        "order_status_update",
+        {
+            "order_id": order.order_id,   # public order id
+            "status": order.status
+        },
+        room=f"order_{order.order_id}"
+    )
+
+    print("📤 Emitted status update:", order.order_id, order.status)
 
     flash("Order status updated!", "success")
     return redirect(url_for("restaurant_dashboard"))
@@ -2179,6 +2209,45 @@ def handle_location(data):
         room=f"order_{order_id}"
     )
 
+# ------------------ track apge live ------------------
+@app.route("/track")
+def track_page():
+    if session.get("tracking_order_id"):
+        return redirect(url_for("live_track"))
+    return render_template("track_search.html")
+@app.route("/live-track")
+def live_track():
+    order_id = session.get("tracking_order_id")
+    if not order_id:
+        return redirect(url_for("track_page"))
+
+    order = Order.query.get(order_id)
+    return render_template("live_track.html", order=order)
+@app.route("/order/status/<int:order_id>")
+def order_status(order_id):
+    order = Order.query.get(order_id)
+    return jsonify({"status": order.status}) 
+def send_push(order, message):
+    print("🔔 PUSH:", message)
+
+@app.route("/live/update_status/<int:order_id>", methods=["POST"])
+def live_update_status(order_id):
+    order = Order.query.get(order_id)
+    order.status = request.form.get("status")
+    db.session.commit()
+
+    send_push(order, f"Order {order.order_id} is now {order.status}")
+
+    return redirect(url_for("restaurant_dashboard"))
+@app.route("/api/order_status/<order_id>")
+def api_order_status(order_id):
+    print("📡 API HIT FOR ORDER:", order_id)
+
+    order = Order.query.filter_by(order_id=order_id).first()
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    return jsonify({"status": order.status})
 
 
 # ------------------ DB INIT ------------------
