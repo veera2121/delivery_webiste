@@ -1,3 +1,6 @@
+from gevent import monkey
+monkey.patch_all()
+
 import os
 import math
 import secrets
@@ -6,8 +9,6 @@ import pandas as pd
 
 from datetime import datetime, timedelta
 import os
-from gevent import monkey
-monkey.patch_all()
 
 from flask import Flask, render_template,send_from_directory, request, redirect, url_for, session, jsonify, flash
 from flask_sqlalchemy import SQLAlchemy 
@@ -30,13 +31,14 @@ from models import (
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "my-super-secret-key-123"
 
-
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode="gevent",
-    message_queue=os.environ.get("redis://default:VvTuUrnxDeWhIQLaQLxWZQNJqCczPkHp@redis.railway.internal:6379")
+    async_mode="gevent"
 )
+
+
+
 
 # ------------------ DATABASE (RAILWAY POSTGRES) ------------------
 import os
