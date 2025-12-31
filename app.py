@@ -34,7 +34,8 @@ app.config["SECRET_KEY"] = "my-super-secret-key-123"
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode="gevent"
+    ping_interval=25,
+    ping_timeout=60
 )
 
 
@@ -2188,28 +2189,35 @@ def track_order(order_id):
 
 from flask_socketio import emit, join_room
 
-@socketio.on("join_order_room")
-def join_order(data):
-    order_id = data.get("order_id")
-    join_room(f"order_{order_id}")
-    print(f"🔗 Joined room order_{order_id}")
-@socketio.on("send_delivery_location")
+
+# global or Redis (recommended)
+last_locations = {}
+
+@socketio.on("delivery_location_update")
 def handle_location(data):
-    order_id = data.get("order_id")
-    lat = data.get("lat")
-    lng = data.get("lng")
+    order_id = data["order_id"]
+    lat = data["lat"]
+    lng = data["lng"]
 
-    if not order_id:
-        print("❌ order_id missing")
-        return
-
-    print(f"📍 Delivery update for order {order_id}: {lat}, {lng}")
+    last_locations[order_id] = (lat, lng)
 
     emit(
         "delivery_location_update",
         {"lat": lat, "lng": lng},
-        room=f"order_{order_id}"
+        room=f"order_{order_id}",
     )
+@socketio.on("join_order_room")
+def join_order(data):
+    order_id = data["order_id"]
+    join_room(f"order_{order_id}")
+
+    # 🔥 SEND LAST LOCATION INSTANTLY
+    if order_id in last_locations:
+        lat, lng = last_locations[order_id]
+        emit(
+            "delivery_location_update",
+            {"lat": lat, "lng": lng},
+        )
 
 # ------------------ track apge live ------------------
 @app.route("/track")
