@@ -20,66 +20,66 @@
 
 
 <script>
-  
+
 document.addEventListener("DOMContentLoaded", () => {
 
   const socket = io(location.origin);
   const ORDER_ID = {{ order.id }};
 
   socket.on("connect", () => {
-    console.log("🟢 Customer connected:", socket.id);
     socket.emit("join_order_room", { order_id: ORDER_ID });
   });
 
-  const customerLat = {{ (order.latitude | default(None)) | tojson }};
-  const customerLng = {{ (order.longitude | default(None)) | tojson }};
+  const customerLat = {{ order.latitude | tojson }};
+  const customerLng = {{ order.longitude | tojson }};
 
-  if (isNaN(customerLat) || isNaN(customerLng)) {
+  if (customerLat === null || customerLng === null) {
     document.getElementById("map").innerHTML =
       "<p style='color:red'>Customer location not available</p>";
     return;
   }
 
-  /* ================= MAP ================= */
+  /* MAP */
   const map = L.map("map").setView([customerLat, customerLng], 14);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap"
   }).addTo(map);
 
-  const customerMarker = L.marker([customerLat, customerLng])
+  L.marker([customerLat, customerLng])
     .addTo(map)
     .bindPopup("Customer");
 
   let deliveryMarker = null;
   let routingControl = null;
 
-  /* ================= ROUTE FUNCTION ================= */
+  /* ROUTE */
   function drawRoute(delLat, delLng) {
-    if (routingControl) {
-      map.removeControl(routingControl);
-    }
+    if (routingControl) map.removeControl(routingControl);
 
     routingControl = L.Routing.control({
       waypoints: [
         L.latLng(delLat, delLng),
         L.latLng(customerLat, customerLng)
       ],
-      routeWhileDragging: false,
+      router: L.Routing.osrmv1({
+        serviceUrl: "https://router.project-osrm.org/route/v1"
+      }),
       addWaypoints: false,
       draggableWaypoints: false,
-      show: false,
+      routeWhileDragging: false,
       fitSelectedRoutes: true,
+      show: false,
       lineOptions: {
-        styles: [{ color: "#1e90ff", weight: 5 }]
+        styles: [{ color: "#007bff", weight: 5 }]
       },
       createMarker: () => null
     }).addTo(map);
   }
 
-  /* ================= SOCKET ================= */
+  /* SOCKET UPDATE */
   socket.on("delivery_location_update", data => {
-    if (!data || isNaN(data.lat) || isNaN(data.lng)) return;
+    if (!data || data.lat === null || data.lng === null) return;
 
     if (!deliveryMarker) {
       deliveryMarker = L.marker([data.lat, data.lng])
@@ -91,10 +91,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     drawRoute(data.lat, data.lng);
 
-    const distanceKm = map.distance(
-      [data.lat, data.lng],
-      [customerLat, customerLng]
-    ) / 1000;
+    const distanceKm =
+      map.distance([data.lat, data.lng], [customerLat, customerLng]) / 1000;
 
     document.getElementById("infoBox").innerHTML = `
       <b>Distance:</b> ${distanceKm.toFixed(2)} km<br>
@@ -104,7 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 </script>
-
 
 <style>
 #map {
