@@ -1,6 +1,7 @@
 from gevent import monkey
 monkey.patch_all()
 
+
 import os
 import math
 import secrets
@@ -2265,6 +2266,3 @@ def api_order_status(order_id):
 # ------------------ RUN ------------------
 # Your routes here...
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    socketio.run(app, host="0.0.0.0", port=port, debug=True)
