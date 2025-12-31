@@ -647,19 +647,7 @@ if (customerLat !== null && customerLng !== null) {
     if (mapDiv) mapDiv.innerHTML = "<p style='color:red;text-align:center;'>Customer location not available</p>";
 }
 {% endif %}
-
-
-function startDelivery(orderId) {
-    navigator.geolocation.getCurrentPosition(pos => {
-        socket.emit("delivery_location_update", {
-            order_id: orderId,
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-        });
-    });
-}
 </script> 
-
 
 
 {% endblock %}
