@@ -1,1 +1,1 @@
-web: gunicorn app:app --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --bind 0.0.0.0:$PORT
+web: gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker app:app
