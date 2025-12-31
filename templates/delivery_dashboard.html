@@ -549,54 +549,29 @@ socket.on("connect", () => {
 {% endif %}
 
 // ===== START DELIVERY =====
-let trackingInterval = null;
-
 function startDelivery(orderId) {
     console.log("🚀 startDelivery called for order:", orderId);
 
     ACTIVE_ORDER_ID = orderId;
     ORDER_ID = orderId;
 
-    // Backend update
-    fetch(`/delivery/start/${orderId}`, { method: "POST" });
-
-    // Hide Start button
-    const btn = document.getElementById(`start-btn-${orderId}`);
-    if (btn) btn.style.display = "none";
-
-    // Show OTP / Payment box
-    const form = document.querySelector(`form[data-order-id="${orderId}"]`);
-    if (form) form.style.display = "block";
-
-    // Start live GPS tracking
-    startTracking(orderId);
-}
-
-function startTracking(orderId) {
-    if (!navigator.geolocation) {
-        alert("GPS not supported");
-        return;
-    }
-
-    // Send location immediately
-    sendLocation(orderId);
-
-    // Send location every 5 seconds
-    trackingInterval = setInterval(() => {
-        sendLocation(orderId);
-    }, 5000);
-}
-
-function sendLocation(orderId) {
-    navigator.geolocation.getCurrentPosition(pos => {
-        socket.emit("delivery_location_update", {
-            order_id: orderId,
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
+    // Call backend to mark order as Started
+    fetch(`/delivery/start/${orderId}`, { method:"POST" })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) console.log("Order marked as Started");
         });
 
-        console.log("📡 GPS OK", pos.coords.latitude, pos.coords.longitude);
-    });
+    // Hide start button
+    const btn = document.getElementById(`start-btn-${orderId}`);
+    if(btn) btn.style.display = "none";
+
+    // Show OTP/payment form
+    const form = document.querySelector(`form[data-order-id="${orderId}"]`);
+    if(form) form.style.display = "block";
+
+    // Start GPS tracking
+    startTracking(orderId);
 }
 
 // ===== GPS TRACKING =====
@@ -608,7 +583,7 @@ function startTracking(orderId) {
     watchId = navigator.geolocation.watchPosition(
         pos => {
             console.log("📡 GPS OK", pos.coords.latitude, pos.coords.longitude);
-            socket.emit("send_delivery_location", {
+            socket.emit("delivery_location_update", {
                 order_id: orderId,
                 lat: pos.coords.latitude,
                 lng: pos.coords.longitude
@@ -673,7 +648,6 @@ if (customerLat !== null && customerLng !== null) {
 }
 {% endif %}
 </script> 
-
 
 
 {% endblock %}
