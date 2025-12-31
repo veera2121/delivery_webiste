@@ -312,7 +312,8 @@ button:hover { background: #0056b3; }
             <td>{{ order.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
 
             <td>
-                <form method="POST" action="{{ url_for('assign_delivery', order_id=order.id) }}">
+                <form method="POST" action="{{ url_for('restaurant_assign_delivery', order_id=order.id) }}">
+
                     <select name="delivery_person_id">
                         <option value="">Select</option>
                         {% for dp in delivery_persons %}
