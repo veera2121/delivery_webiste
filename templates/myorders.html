@@ -317,10 +317,6 @@ form button:hover {
 
 
 </style>
-</head>
-
-<body>
-
 
 
 
@@ -419,25 +415,43 @@ form button:hover {
 
 
 
+<div id="trackMap"></div>
 
-
-    <!-- DELIVERY PERSON -->
-    {% if order.delivery_person %}
-      <div class="info-box delivery-box">
-        <strong>Delivery Person</strong><br>
-        {{ order.delivery_person.name }}<br>
-        📞 <a href="tel:{{ order.delivery_person.phone }}">{{ order.delivery_person.phone }}</a><br>
-        Status: On the way
-        {% if order.otp %}
-          <br><strong>Delivery OTP:</strong> {{ order.otp }}
-        {% endif %}
-      </div>
+{% if order.delivery_person_id %}
+    {% if order.status != "Delivered" %}
+        <a href="{{ url_for('track_order', order_id=order.id) }}"
+           class="track-btn">
+            📍 Track Order
+        </a>
     {% else %}
-      <div class="info-box pending-box">
-        <strong>Delivery Person:</strong> Not Assigned Yet<br>
-        Your order is being prepared by the restaurant.
-      </div>
+        <span style="color:green;">✔ Delivered</span>
     {% endif %}
+{% else %}
+    <span style="color:gray;">Waiting for delivery boy</span>
+{% endif %}
+
+
+<!-- DELIVERY PERSON -->
+{% if order.delivery_person %}
+  <div class="info-box delivery-box">
+    <strong>Delivery Person</strong><br>
+    {{ order.delivery_person.name }}<br>
+    📞 <a href="tel:{{ order.delivery_person.phone }}">{{ order.delivery_person.phone }}</a><br>
+    {% if order.status != "Delivered" %}
+      Status: On the way
+    {% else %}
+      Status: Delivered
+    {% endif %}
+    {% if order.otp %}
+      <br><strong>Delivery OTP:</strong> {{ order.otp }}
+    {% endif %}
+  </div>
+{% else %}
+  <div class="info-box pending-box">
+    <strong>Delivery Person:</strong> Not Assigned Yet<br>
+    Your order is being prepared by the restaurant.
+  </div>
+{% endif %}
 
   </div>
   {% endfor %}
@@ -457,6 +471,7 @@ form button:hover {
 </script>
 
 </div>
+
 {% endblock %}
 
 

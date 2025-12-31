@@ -322,39 +322,63 @@ td[data-label="Feedback"] {
 <td data-label="Status"><span class="status {{ order.status }}">{{ order.status }}</span></td>
 <td data-label="Placed">{{ order.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
 <td data-label="Location">
-    {{ order.house_no }}, {{ order.landmark }}, {{ order.city }}, {{ order.state }} - {{ order.pincode }}
-    {% if order.map_link %}
-        <br><a href="{{ order.map_link }}" target="_blank" class="map-btn">Map</a>
+    {{ order.house_no }}, {{ order.landmark }}, {{ order.city }},
+    {{ order.state }} - {{ order.pincode }}
+
+    {% if order.customer_lat and order.customer_lng %}
+        <br>
+        <a href="{{ url_for('track_order', order_id=order.id) }}"
+           class="map-btn">
+           📍 map
+        </a>
     {% else %}
-        <br><span style="color:red;">No Location</span>
+        <br><span style="color:red;">Location not shared</span>
     {% endif %}
 </td>
 
+
 <td data-label="Assign Delivery">
-<form method="POST" action="{{ url_for('assign_delivery', order_id=order.id) }}">
-<select name="delivery_person_id" required>
-<option value="">Select</option>
-{% for dp in delivery_persons %}
-<option value="{{ dp.id }}" {% if order.delivery_person_id==dp.id %}selected{% endif %}>{{ dp.name }}</option>
-{% endfor %}
-</select>
-<button type="submit" class="assign-btn">Assign</button>
-</form>
+  <form method="POST" action="{{ url_for('restaurant_assign_delivery', order_id=order.id) }}">
+    <select name="delivery_person_id" required>
+      <option value="">Select</option>
+      {% for dp in delivery_persons %}
+        <option value="{{ dp.id }}" {% if order.delivery_person_id == dp.id %}selected{% endif %}>{{ dp.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="assign-btn">Assign</button>
+  </form>
 </td>
 
 <td data-label="Update Status">
-<form method="POST" action="{{ url_for('update_status', order_id=order.id) }}">
-<select name="status">
-<option value="Pending" {% if order.status=='Pending' %}selected{% endif %}>Pending</option>
-<option value="Preparing" {% if order.status=='Preparing' %}selected{% endif %}>Preparing</option>
-<option value="Ready" {% if order.status=='Ready' %}selected{% endif %}>Ready</option>
-<option value="Out for Delivery" {% if order.status=='Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
-<option value="Delivered" {% if order.status=='Delivered' %}selected{% endif %}>Delivered</option>
-<option value="Cancelled" {% if order.status=='Cancelled' %}selected{% endif %}>Cancelled</option>
-</select>
-<button type="submit" class="update-btn">Update</button>
-</form>
+  <form method="POST" action="{{ url_for('update_status', order_id=order.id) }}">
+    <select name="status">
+
+      <option value="Pending" {% if order.status=='Pending' %}selected{% endif %}>Pending</option>
+      <option value="Preparing" {% if order.status=='Preparing' %}selected{% endif %}>Preparing</option>
+      <option value="Ready" {% if order.status=='Ready' %}selected{% endif %}>Ready</option>
+      <option value="Out for Delivery" {% if order.status=='Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
+
+      <!-- 🔒 DELIVERY CONTROLLED STATES (READ ONLY) -->
+      <option value="Started"
+        {% if order.status=='Started' %}selected{% endif %}
+        disabled>
+        🚚 Delivery Started
+      </option>
+
+      <option value="Delivered"
+        {% if order.status=='Delivered' %}selected{% endif %}
+        disabled>
+        ✔ Delivered
+      </option>
+
+      <option value="Cancelled" {% if order.status=='Cancelled' %}selected{% endif %}>Cancelled</option>
+
+    </select>
+
+    <button type="submit" class="update-btn">Update</button>
+  </form>
 </td>
+
 
 <td data-label="Payment">
 {% if order.payment_type=='COD' %}<span class="payment-badge COD">COD</span>
@@ -380,6 +404,9 @@ td[data-label="Feedback"] {
 <p>No {{ category.lower() }} orders.</p>
 {% endif %}
 {% endfor %}
+<div id="map" style="height: 300px; width: 100%; margin-bottom: 20px;"></div>
+
+
 
 <script>
 // ===== FILTERS =====

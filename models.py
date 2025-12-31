@@ -89,6 +89,12 @@ class DeliveryPerson(db.Model):
     password_hash = db.Column(db.String(200))
     phone = db.Column(db.String(20), unique=True)
     restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
+     # ✅ ADD THESE
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+    last_seen = db.Column(db.DateTime)
+
+    is_active = db.Column(db.Boolean, default=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

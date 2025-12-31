@@ -4,7 +4,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <meta charset="UTF-8">
-<title>Your Cart</title>
+<title>Your Cart</title> 
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <style>
     
 :root {
@@ -335,7 +338,30 @@ body {
     padding: 10px;
   }
 }
+/* Buttons on map */
+.map-btn {
+    position: absolute;
+    top: 10px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    z-index: 1000;
+}
 
+/* Full screen button on top right */
+.full-btn {
+    right: 10px;
+    background-color: #1e90ff;
+}
+
+/* Current location button on top left */
+.loc-btn {
+    left: 10px;
+    background-color: #28a745;
+}
 
 </style>
 </head>
@@ -361,11 +387,29 @@ body {
     <!-- ✅ Dynamic delivery charge -->
         <input type="hidden" id="base-delivery" value="{{ restaurant.delivery_charge }}">
         <input type="hidden" id="free-delivery-min" value="{{ restaurant.free_delivery_limit or 0 }}">
+<!-- Map & Live Location -->
 
+            <!-- Map & Device Info -->
+        <input type="hidden" name="customer_lat" id="customer_lat">
+        <input type="hidden" name="customer_lng" id="customer_lng">
 
-    <!-- Map & Device Info -->
-    <input type="hidden" name="map_link" id="map_link">
+        <button type="button" onclick="getUserLocation()">
+        📍 Use My Live Location
+        </button>
+<div id="map" style="height: 300px;"></div>
+<input type="hidden" name="lat" id="lat">
+<input type="hidden" name="lng" id="lng">
+
+        <div id="map" style="height:300px;margin-top:10px;"></div>
+          <input type="hidden" name="lat" id="customer_lat">
+          <input type="hidden" name="lng" id="customer_lng">
+
     <input type="hidden" name="device_fingerprint" id="device_fingerprint">
+ 
+
+<!-- Leaflet CSS/JS -->
+
+
 
     <input type="hidden" name="apply_offer" id="apply_offer_input" value="false">
     <input type="hidden" name="apply_coupon" id="apply_coupon_input" value="false">
@@ -780,24 +824,48 @@ function validateCart() {
 renderCart();
 </script>
 <script>
-// ================= MAP LINK =================
-function setMapLink() {
-    const address = ["house_no", "landmark", "city", "state", "pincode"]
-        .map(field => {
-            const el = document.querySelector(`[name="${field}"]`);
-            return el ? el.value.trim() : "";
-        })
-        .filter(v => v.length > 0)
-        .join(", ");
 
-    document.getElementById("map_link").value =
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-}
+
 </script>
+
+
+</script>
+
+
 <script>
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos){
+        document.getElementById('customer_lat').value = pos.coords.latitude;
+        document.getElementById('customer_lng').value = pos.coords.longitude;
+    });
+} 
+
+var map = L.map('map').setView([26.8467, 80.9462], 13); // default coordinates (Lucknow example)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+var marker = L.marker([26.8467, 80.9462], {draggable:true}).addTo(map);
+
+marker.on('dragend', function(e){
+    var latlng = marker.getLatLng();
+    document.getElementById('lat').value = latlng.lat;
+    document.getElementById('lng').value = latlng.lng;
+});
+
+// Optional: if user clicks on map, move marker
+map.on('click', function(e){
+    marker.setLatLng(e.latlng);
+    document.getElementById('lat').value = e.latlng.lat;
+    document.getElementById('lng').value = e.latlng.lng;
+});
+
 
 </script>
 {% endblock %}
+
+
+
 
 
 

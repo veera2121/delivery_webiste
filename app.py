@@ -7,7 +7,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 from flask import Flask, render_template,send_from_directory, request, redirect, url_for, session, jsonify, flash
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy 
+from flask_socketio import SocketIO, emit, join_room
+
 from flask_wtf import CSRFProtect
 from flask_migrate import Migrate
 from sqlalchemy import or_, case
@@ -23,7 +25,11 @@ from models import (
 # ------------------ APP ------------------
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "my-super-secret-key-123"
-
+socketio = SocketIO(
+    app,
+    cors_allowed_origins="*",
+    async_mode="threading"
+)
 # ------------------ DATABASE (RAILWAY POSTGRES) ------------------
 import os
 
@@ -57,7 +63,7 @@ migrate = Migrate(app, db)
 
 # ------------------ BLUEPRINTS ------------------
 app.register_blueprint(users_bp, url_prefix="/users")
-
+socketio = SocketIO(app, cors_allowed_origins="*")
 # ------------------ UTILS ------------------
 def generate_otp():
     return str(secrets.randbelow(900000) + 100000)
@@ -254,7 +260,21 @@ def update_menus():
     flash(f"Menus updated for {updated_restaurants} restaurants from Google Sheets!", "success")
     return redirect(url_for('admin_dashboard'))
 
+from geopy.geocoders import Nominatim
 
+def get_coordinates(address):
+    """
+    Converts a full address string into latitude and longitude.
+    Returns (lat, lng) or (None, None) if not found.
+    """
+    geolocator = Nominatim(user_agent="myapp")
+    try:
+        location = geolocator.geocode(address)
+        if location:
+            return location.latitude, location.longitude
+    except Exception as e:
+        print("Geocode error:", e)
+    return None, None
 
 @app.route("/myorders", methods=["GET", "POST"])
 def myorders():
@@ -269,20 +289,19 @@ def myorders():
 
         if phone:
             query = query.filter(Order.phone == phone)
-
         if order_id:
             query = query.filter(Order.order_id == order_id)
 
+        # Only get orders that have coordinates
         orders = query.order_by(Order.created_at.desc()).all()
 
         if orders:
-            # Take restaurant ID from first order
             restaurant_id = orders[0].restaurant.id
-
         else:
             flash("No orders found. Please check details.", "warning")
 
     return render_template("myorders.html", orders=orders, restaurant_id=restaurant_id)
+
 
 from sqlalchemy import func
 
@@ -398,6 +417,22 @@ from datetime import datetime, timedelta
 from models import Order, OrderItem, RestaurantOffer, Restaurant
 from utils import generate_otp, generate_order_code
 from sqlalchemy import func
+def safe_float(val):
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return None
+def generate_map_link(lat, lng, house_no=None, landmark=None, city=None, state=None, pincode=None):
+    if lat and lng:
+        return f"https://www.google.com/maps?q={lat},{lng}"
+    else:
+        # fallback to full address
+        parts = [house_no, landmark, city, state, pincode]
+        address = ", ".join([p for p in parts if p])
+        if address:
+            return f"https://www.google.com/maps/search/?api=1&query={address}"
+    return None
+
 @app.route("/place_order", methods=["POST"])
 def place_order():
 
@@ -507,6 +542,10 @@ def place_order():
     # ================= OTP =================
     order_otp = generate_otp()
 
+
+    latitude = safe_float(request.form.get("lat"))
+    longitude = safe_float(request.form.get("lng"))
+
     # ================= CREATE ORDER =================
     new_order = Order(
         restaurant_id=restaurant_id,
@@ -530,8 +569,11 @@ def place_order():
         delivery_charge=delivery_charge,
         final_total=final_total,
         coupon_used=coupon_used,
-        map_link=map_link,
-        otp=order_otp
+        otp=order_otp,
+        latitude=latitude,
+        longitude=longitude,
+        map_link = generate_map_link(latitude, longitude, house_no, landmark, city, state, pincode)
+               or map_link   # fallback to form   # <--- add this
     )
 
     db.session.add(new_order)
@@ -801,20 +843,29 @@ def restaurant_dashboard():
         delivery_persons=delivery_persons
     )
 
-
 @app.route("/restaurant/update_status/<int:order_id>", methods=["POST"])
-def restaurant_update_status(order_id):  # renamed
+def restaurant_update_status(order_id):
     if not session.get("restaurant_logged_in"):
         return redirect(url_for("restaurant_login"))
 
+    order = Order.query.get_or_404(order_id)
     new_status = request.form.get("status")
-    order = Order.query.get(order_id)
-    if not order:
-        flash("Order not found!", "danger")
+
+    # 🚫 Restaurant CANNOT touch delivery states
+    protected_states = ["Started", "Delivered"]
+
+    if order.status in protected_states:
+        flash("Delivery is already in progress. Status cannot be changed.", "warning")
+        return redirect(url_for("restaurant_dashboard"))
+
+    # 🚫 Restaurant cannot force delivery states
+    if new_status in protected_states:
+        flash("Only delivery partner can update delivery status.", "danger")
         return redirect(url_for("restaurant_dashboard"))
 
     order.status = new_status
     db.session.commit()
+
     flash("Order status updated!", "success")
     return redirect(url_for("restaurant_dashboard"))
 
@@ -845,9 +896,11 @@ def delivery_login():
             session["restaurant_id"] = dp.restaurant_id  # ✅ IMPORTANT
 
             return redirect(url_for("delivery_dashboard"))
+        else:
+            flash("Invalid login!", "danger")
+            return render_template("delivery_login.html")
 
-        flash("Invalid login!", "danger")
-
+    # ✅ GET request MUST return something
     return render_template("delivery_login.html")
 
 @app.route("/delivery/dashboard", methods=["GET", "POST"])
@@ -856,6 +909,10 @@ def delivery_dashboard():
         return redirect(url_for("delivery_login"))
 
     dp_id = session.get("delivery_person_id")
+    delivery_person = DeliveryPerson.query.get(dp_id)
+
+    if not delivery_person:
+        return redirect(url_for("delivery_login"))
 
     # ---------- SUBMIT OTP ----------
     if request.method == "POST":
@@ -864,47 +921,56 @@ def delivery_dashboard():
 
         order = Order.query.get(int(order_id))
 
-        if order and order.otp == entered_otp:
+        if (
+            order
+            and order.delivery_person_id == dp_id
+            and order.status == "Started"
+            and order.otp == entered_otp
+        ):
             order.status = "Delivered"
             order.delivered_time = datetime.utcnow()
             db.session.commit()
-            flash(f"Order {order.order_id} marked Delivered", "success")
+            flash(f"Order {order.order_id} delivered successfully", "success")
         else:
-            flash("Invalid OTP!", "danger")
+            flash("Invalid OTP or delivery not started", "danger")
 
         return redirect(url_for("delivery_dashboard"))
 
-    # ---------- GET ORDERS ----------
-    
-    orders = Order.query.filter(
-        Order.delivery_person_id == dp_id,
-        Order.status != "Delivered"
-    ).order_by(
-        case(
-            (Order.status == "Assigned", 0),
-            (Order.status == "Out for Delivery", 1),
-            else_=2
-        ),
-        Order.created_at.desc()
-    ).all()
+    # ---------- ACTIVE ORDERS ----------
+    from sqlalchemy import case
+
+    orders = (
+        Order.query.filter(
+            Order.delivery_person_id == dp_id,
+            Order.status.in_(["Out for Delivery", "Started"])
+        )
+        .order_by(
+            case(
+                (Order.status == "Out for Delivery", 0),
+                (Order.status == "Started", 1),
+                else_=2
+            ),
+            Order.created_at.desc()
+        )
+        .all()
+    )
 
     # ---------- STATS ----------
     stats = {
         "total": Order.query.filter_by(delivery_person_id=dp_id).count(),
-        "pending": Order.query.filter_by(delivery_person_id=dp_id, status="Assigned").count(),
-        "delivered": Order.query.filter_by(delivery_person_id=dp_id, status="Delivered").count(),
+        "active": Order.query.filter(
+            Order.delivery_person_id == dp_id,
+            Order.status.in_(["Out for Delivery", "Started"])
+        ).count(),
+        "delivered": Order.query.filter_by(
+            delivery_person_id=dp_id,
+            status="Delivered"
+        ).count(),
     }
 
-    # ---------- AJAX AUTO REFRESH ----------
-    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        return render_template(
-            "delivery_dashboard.html",
-            orders=orders
-        )
-
-    # ---------- FULL PAGE ----------
     return render_template(
         "delivery_dashboard.html",
+        delivery_person=delivery_person,
         orders=orders,
         stats=stats
     )
@@ -1051,17 +1117,15 @@ def menu(restaurant_id):
     except Exception as e:
         return f"Error loading menu: {e}"
 
-@app.route("/assign_delivery/<int:order_id>", methods=["POST"])
-def assign_delivery(order_id):
+@app.route("/restaurant/assign_delivery/<int:order_id>", methods=["POST"])
+def restaurant_assign_delivery(order_id):
+    if not session.get("restaurant_logged_in"):
+        return redirect(url_for("restaurant_login"))
+
     delivery_person_id = request.form.get("delivery_person_id")
     order = Order.query.get(order_id)
-
     if not order:
         flash("Order not found!", "danger")
-        return redirect(url_for("restaurant_dashboard"))
-
-    if not delivery_person_id:
-        flash("Please select a delivery person!", "warning")
         return redirect(url_for("restaurant_dashboard"))
 
     dp = DeliveryPerson.query.get(int(delivery_person_id))
@@ -1069,18 +1133,25 @@ def assign_delivery(order_id):
         flash("Delivery person not found!", "danger")
         return redirect(url_for("restaurant_dashboard"))
 
-    # ✅ ONLY ASSIGN DELIVERY BOY
+    # Assign delivery boy
     order.delivery_person_id = dp.id
     order.delivery_boy_name = dp.name
     order.delivery_boy_phone = dp.phone
-    order.status = "Out for Delivery"
-
+    order.status = "Out for Delivery"  # or "Out for Delivery"
     db.session.commit()
 
-    flash("Delivery person assigned successfully.", "success")
+    flash(f"Delivery boy {dp.name} assigned to Order {order.order_id}", "success")
     return redirect(url_for("restaurant_dashboard"))
+@app.route("/delivery/start/<int:order_id>", methods=["POST"])
+def start_delivery(order_id):
+    order = Order.query.get(order_id)
 
+    print("BEFORE STATUS:", order.status)   # 👈 ADD
+    order.status = "Started"
+    db.session.commit()
+    print("AFTER STATUS:", order.status)    # 👈 ADD
 
+    return jsonify(success=True)
 
 @app.route("/admin/restaurant/edit/<int:restaurant_id>", methods=["GET", "POST"])
 def edit_restaurant(restaurant_id):
@@ -2058,6 +2129,54 @@ def page_not_found(e):
 def promotions():
     return render_template("promotions.html")
 
+
+from datetime import datetime
+
+
+from flask_socketio import emit
+
+
+
+@app.route("/track/<int:order_id>")
+def track_order(order_id):
+    order = Order.query.get_or_404(order_id)
+
+    if not order.delivery_person:
+        flash("Delivery boy not assigned yet", "warning")
+        return redirect(url_for("myorders", restaurant_id=order.restaurant_id))
+    print("📍 Customer lat/lng:", order.latitude, order.longitude)
+
+
+    return render_template("track_order.html", order=order)
+
+
+from flask_socketio import emit, join_room
+
+@socketio.on("join_order_room")
+def join_order(data):
+    order_id = data.get("order_id")
+    join_room(f"order_{order_id}")
+    print(f"🔗 Joined room order_{order_id}")
+@socketio.on("send_delivery_location")
+def handle_location(data):
+    order_id = data.get("order_id")
+    lat = data.get("lat")
+    lng = data.get("lng")
+
+    if not order_id:
+        print("❌ order_id missing")
+        return
+
+    print(f"📍 Delivery update for order {order_id}: {lat}, {lng}")
+
+    emit(
+        "delivery_location_update",
+        {"lat": lat, "lng": lng},
+        room=f"order_{order_id}"
+    )
+
+
+
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------
@@ -2065,4 +2184,4 @@ def promotions():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    socketio.run(app, host="0.0.0.0", port=port, debug=True)

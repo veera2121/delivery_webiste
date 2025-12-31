@@ -1,85 +1,115 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Track Your Orders</title>
-  <style>
-    body { font-family: "Inter", sans-serif; background: #f9fafb; margin: 0; padding: 0; }
-    .container { max-width: 900px; margin: 20px auto; padding: 15px; }
-    h1, h2, h3, h4 { color: #333; }
-    .order-card { background: white; border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin: 15px 0; box-shadow: rgba(0,0,0,0.05) 0px 2px 8px; }
-    .item-list li { background: #f5f5f5; padding: 8px; border-radius: 6px; margin: 5px 0; font-size: 15px; display: flex; justify-content: space-between; }
-    .total-price { font-weight: 700; font-size: 18px; margin-top: 8px; color: #ff5722; }
-    .otp { font-weight: 600; color: #1976d2; margin-top: 5px; font-size: 16px; }
-    .delivery-info { margin-top: 10px; padding: 10px; background: #e6f7ff; border-radius: 8px; border: 1px solid #91d5ff; }
-    .muted { color: #777; margin-top: 20px; font-size: 16px; }
-    @media (max-width: 600px) {
-      .container { padding: 10px; }
-      .order-card { padding: 12px; }
-      .item-list li { font-size: 14px; flex-direction: column; }
-      h1 { font-size: 24px; }
+<h3>Live Delivery Tracking</h3>
+<p>Delivery Boy: {{ order.delivery_person.name if order.delivery_person else "Not Assigned" }}</p>
+
+<div id="infoBox" style="margin:10px 0; font-weight:600;"></div>
+<div id="map" style="height:350px;"></div>
+<!-- 1️⃣ Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+
+<!-- 2️⃣ Leaflet JS (MUST be first) -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<!-- 3️⃣ Routing Machine CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css">
+
+<!-- 4️⃣ Routing Machine JS -->
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+<!-- 5️⃣ Socket.IO -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+
+<script>
+  
+document.addEventListener("DOMContentLoaded", () => {
+
+  const socket = io(location.origin);
+  const ORDER_ID = {{ order.id }};
+
+  socket.on("connect", () => {
+    console.log("🟢 Customer connected:", socket.id);
+    socket.emit("join_order_room", { order_id: ORDER_ID });
+  });
+
+  const customerLat = {{ (order.latitude | default(None)) | tojson }};
+  const customerLng = {{ (order.longitude | default(None)) | tojson }};
+
+  if (isNaN(customerLat) || isNaN(customerLng)) {
+    document.getElementById("map").innerHTML =
+      "<p style='color:red'>Customer location not available</p>";
+    return;
+  }
+
+  /* ================= MAP ================= */
+  const map = L.map("map").setView([customerLat, customerLng], 14);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap"
+  }).addTo(map);
+
+  const customerMarker = L.marker([customerLat, customerLng])
+    .addTo(map)
+    .bindPopup("Customer");
+
+  let deliveryMarker = null;
+  let routingControl = null;
+
+  /* ================= ROUTE FUNCTION ================= */
+  function drawRoute(delLat, delLng) {
+    if (routingControl) {
+      map.removeControl(routingControl);
     }
-  </style>
-</head>
 
-<body>
-  <div class="container">
-    <h1>Track Your Orders</h1>
+    routingControl = L.Routing.control({
+      waypoints: [
+        L.latLng(delLat, delLng),
+        L.latLng(customerLat, customerLng)
+      ],
+      routeWhileDragging: false,
+      addWaypoints: false,
+      draggableWaypoints: false,
+      show: false,
+      fitSelectedRoutes: true,
+      lineOptions: {
+        styles: [{ color: "#1e90ff", weight: 5 }]
+      },
+      createMarker: () => null
+    }).addTo(map);
+  }
 
-    {% if orders %}
-      {% for order in orders %}
-      <div class="order-card">
-        <h3>Order ID: {{ order.order_id }}</h3>
-        <p><strong>Status:</strong> {{ order.status }}</p>
-        <p><strong>Placed At:</strong> {{ order.created_at.strftime('%d-%m-%Y %H:%M') }}</p>
-        <p><strong>Customer:</strong> {{ order.customer_name }} | {{ order.phone }} | {{ order.email }}</p>
-        <p><strong>Address:</strong> {{ order.address }}</p>
+  /* ================= SOCKET ================= */
+  socket.on("delivery_location_update", data => {
+    if (!data || isNaN(data.lat) || isNaN(data.lng)) return;
 
-        {% if order.latitude and order.longitude %}
-        <p>
-          <a href="https://www.google.com/maps?q={{ order.latitude }},{{ order.longitude }}" 
-             target="_blank" style="color:#ff5722;font-weight:600;">
-            View Location on Google Maps
-          </a>
-        </p>
-        {% endif %}
+    if (!deliveryMarker) {
+      deliveryMarker = L.marker([data.lat, data.lng])
+        .addTo(map)
+        .bindPopup("Delivery Boy");
+    } else {
+      deliveryMarker.setLatLng([data.lat, data.lng]);
+    }
 
-        <h4>Items Ordered:</h4>
-        <ul class="item-list">
-          {% for item in order.items %}
-            {% set subtotal = item.quantity * item.price %}
-            <li>
-              <span>{{ item.item_name }} × {{ item.quantity }}</span>
-              <span>₹{{ "%.2f"|format(subtotal) }}</span>
-            </li>
-          {% endfor %}
-        </ul>
+    drawRoute(data.lat, data.lng);
 
-        <p class="total-price">
-          Total Price: ₹{{ "%.2f"|format(order.total_price()) }}
-        </p>
+    const distanceKm = map.distance(
+      [data.lat, data.lng],
+      [customerLat, customerLng]
+    ) / 1000;
 
-        {% if order.delivery_person %}
-        <div class="delivery-info">
-          <p><strong>Delivery Person:</strong> {{ order.delivery_person.name }}</p>
-          <p><strong>Contact:</strong> {{ order.delivery_person.phone }}</p>
-          {% if order.eta %}
-          <p><strong>ETA:</strong> {{ order.eta }}</p>
-          {% endif %}
-        </div>
-        {% endif %}
+    document.getElementById("infoBox").innerHTML = `
+      <b>Distance:</b> ${distanceKm.toFixed(2)} km<br>
+      <b>ETA:</b> ${Math.round((distanceKm / 25) * 60)} mins
+    `;
+  });
 
-        <p class="otp">Delivery OTP: {{ order.otp }}</p>
-      </div>
-      {% endfor %}
-    {% else %}
-      <p class="muted">
-        No orders yet. Place an order from the 
-        <a href="{{ url_for('menu_page') }}">menu page</a>.
-      </p>
-    {% endif %}
+});
+</script>
 
-  </div>
-</body>
-</html>
+
+<style>
+#map {
+  height: 350px !important;
+  width: 100%;
+  border-radius: 10px;
+}
+</style>

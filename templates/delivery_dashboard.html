@@ -363,231 +363,289 @@ select:focus {
 
  
 <table>
-<thead>
-<tr>
-  <th>Order ID</th>
-  <th>Date & Time</th>
-  <th>Restaurant</th>
-  <th>Customer</th>
-  <th>Phone</th>
-  <th>Alt Phone</th>
-  <th>Address</th>
-  <th>Order Type</th>
-  <th>Items</th>
-  <th>Total</th>
-  <th>Delivery Charge</th>
-  <th>Delivery Note</th>
-  <th>Map</th>
-  <th>Call</th>
-  <th>Status</th>
-  <th>Action</th>
-</tr>
-</thead>
+  <thead>
+    <tr>
+      <th>Order ID</th>
+      <th>Date & Time</th>
+      <th>Restaurant</th>
+      <th>Customer</th>
+      <th>Phone</th>
+      <th>Alt Phone</th>
+      <th>Address</th>
+      <th>Order Type</th>
+      <th>Items</th>
+      <th>Total</th>
+      <th>Delivery Charge</th>
+      <th>Delivery Note</th>
+      <th>Map</th>
+      <th>Call</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
 
-<tbody>
-{% for order in orders %}
-<tr
-  data-order-id="{{ order.id }}"
-  data-search="{{ order.order_id }} {{ order.customer_name }} {{ order.phone }}"
-  data-status="{{ order.status }}"
-  data-payment="{{ order.payment_type or '' }}"
->
+  <tbody>
+  {% for order in orders %}
+    <tr
+      data-order-id="{{ order.id }}"
+      data-search="{{ order.order_id }} {{ order.customer_name }} {{ order.phone }}"
+      data-status="{{ order.status }}"
+      data-payment="{{ order.payment_type or '' }}"
+    >
+      <td data-label="Order ID">{{ order.order_id }}</td>
 
-<td data-label="Order ID">{{ order.order_id }}</td>
+      <td data-label="Date & Time">
+        {{ order.created_at.strftime('%d-%m-%Y %I:%M %p') }}
+      </td>
 
-<td data-label="Date & Time">
-  {{ order.created_at.strftime('%d-%m-%Y %I:%M %p') }}
-</td>
+      <td data-label="Restaurant">{{ order.restaurant.name }}</td>
+      <td data-label="Customer">{{ order.customer_name }}</td>
+      <td data-label="Phone">{{ order.phone }}</td>
+      <td data-label="Alt Phone">{{ order.alt_phone or '-' }}</td>
 
-<td data-label="Restaurant">{{ order.restaurant.name }}</td>
-<td data-label="Customer">{{ order.customer_name }}</td>
-<td data-label="Phone">{{ order.phone }}</td>
-<td data-label="Alt Phone">{{ order.alt_phone or '-' }}</td>
+      <td data-label="Address">
+        {{ order.house_no }},
+        {{ order.landmark }},
+        {{ order.city }},
+        {{ order.state }} - {{ order.pincode }}
+      </td>
 
-<td data-label="Address">
-  {{ order.house_no }},
-  {{ order.landmark }},
-  {{ order.city }},
-  {{ order.state }} - {{ order.pincode }}
-</td>
+      <td data-label="Order Type">{{ order.order_type }}</td>
 
-<td data-label="Order Type">{{ order.order_type }}</td>
+      <td data-label="Items">
+        <ul>
+          {% for item in order.items %}
+            <li>{{ item.item_name }} × {{ item.quantity }} – ₹{{ item.price }}</li>
+          {% endfor %}
+        </ul>
+      </td>
 
-<td data-label="Items">
-<ul>
-{% for item in order.items %}
-  <li>{{ item.item_name }} × {{ item.quantity }} – ₹{{ item.price }}</li>
-{% endfor %}
-</ul>
-</td>
+      <td data-label="Total">₹{{ order.final_total }}</td>
+      <td data-label="Delivery Charge">₹{{ order.delivery_charge }}</td>
+      <td data-label="Note">{{ order.delivery_note or '-' }}</td>
 
-<td data-label="Total">₹{{ order.final_total }}</td>
-<td data-label="Delivery Charge">₹{{ order.delivery_charge }}</td>
-<td data-label="Note">{{ order.delivery_note or '-' }}</td>
+      <td data-label="Map">
+        {% if order.map_link %}
+          <a href="{{ order.map_link }}" target="_blank" class="map-btn">Map</a>
+        {% else %}
+          <span style="color:red">No Location</span>
+        {% endif %}
+      </td>
 
-<td data-label="Map">
-{% if order.map_link %}
-  <a href="{{ order.map_link }}" target="_blank" class="map-btn">Map</a>
-{% else %}
-  <span style="color:red">No Location</span>
-{% endif %}
-</td>
+      <td data-label="Call">
+        <a href="tel:{{ order.phone }}" class="call-btn">Call</a>
+      </td>
 
-<td data-label="Call">
-  <a href="tel:{{ order.phone }}" class="call-btn">Call</a>
-</td>
-
-<td data-label="Status">
-  {{ order.status }}
-{% if order.status == 'Delivered' and order.delivered_time %}
-  <br>
-  <small style="color:green">
-    {{ order.delivered_time.strftime('%d-%m-%Y %I:%M %p') }}<br>
-    Payment: {{ order.payment_type }}
-  </small>
-{% endif %}
-</td>
+      <td data-label="Status">
+        {{ order.status }}
+        {% if order.status == 'Delivered' and order.delivered_time %}
+          <br>
+          <small style="color:green">
+            {{ order.delivered_time.strftime('%d-%m-%Y %I:%M %p') }}<br>
+            Payment: {{ order.payment_type }}
+          </small>
+        {% endif %}
+      </td>
 
 <td data-label="Action">
-{% if order.status != 'Delivered' %}
-<form class="deliver-form" data-order-id="{{ order.id }}">
-  <input type="text" class="otp-input" placeholder="Enter OTP" required>
-  <div class="otp-error"></div>
+  {% if order.status == "Out for Delivery" %}
+    <!-- Start Delivery button -->
+    <button class="deliver-btn"
+            id="start-btn-{{ order.id }}"
+            onclick="startDelivery({{ order.id }})">
+        🚀 Start Delivery
+    </button>
 
-  <select required>
-    <option value="">Payment Type</option>
-    <option value="COD">COD</option>
-    <option value="Online">Online</option>
-  </select>
+    <!-- OTP + Payment form (hidden until Start clicked) -->
+    <form class="deliver-form"
+          method="POST"
+          action="{{ url_for('delivery_dashboard') }}"
+          data-order-id="{{ order.id }}"
+          style="display:none;">
+        <input type="hidden" name="order_id" value="{{ order.id }}">
+        <input type="text"
+               name="otp"
+               class="otp-input"
+               placeholder="Enter OTP"
+               required>
+        <select name="payment_type" required>
+            <option value="">Payment Type</option>
+            <option value="COD">COD</option>
+            <option value="Online">Online</option>
+        </select>
+        <button type="submit" class="deliver-btn">
+            ✔ Confirm Delivery
+        </button>
+    </form>
 
-  <button class="deliver-btn">Confirm</button>
-</form>
+  {% elif order.status == "Started" %}
+    <!-- Delivery started -->
+    <span style="color:blue;font-weight:bold">🚚 Delivery Started</span>
 
-<button type="button"
-  onclick="markNotDelivered({{ order.id }})"
-  style="margin-top:6px;background:#f44336;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;">
-  Customer Not Available
-</button>
-{% else %}
-<span style="color:green;font-weight:bold">✔ Delivered</span>
-{% endif %}
+    <!-- OTP + Payment form already visible -->
+    <form class="deliver-form"
+          method="POST"
+          action="{{ url_for('delivery_dashboard') }}"
+          data-order-id="{{ order.id }}"
+          style="display:block;">
+        <input type="hidden" name="order_id" value="{{ order.id }}">
+        <input type="text"
+               name="otp"
+               class="otp-input"
+               placeholder="Enter OTP"
+               required>
+        <select name="payment_type" required>
+            <option value="">Payment Type</option>
+            <option value="COD">COD</option>
+            <option value="Online">Online</option>
+        </select>
+        <button type="submit" class="deliver-btn">
+            ✔ Confirm Delivery
+        </button>
+    </form>
+
+  {% elif order.status == "Delivered" %}
+    <span style="color:green;font-weight:bold">✔ Delivered</span>
+
+  {% elif order.status == "Cancelled" %}
+    <span style="color:red;font-weight:bold">❌ Cancelled</span>
+
+  {% else %}
+    <span style="color:gray;font-style:italic;">{{ order.status }}</span>
+  {% endif %}
 </td>
 
-</tr>
-{% endfor %}
-</tbody>
+
+
+
+    </tr>
+  {% endfor %}
+  </tbody>
 </table>
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-</div>
-
-
-<!-- SINGLE TOAST -->
-<div id="toast" class="toast"></div>
-
+<!-- Socket.IO only if delivery page -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
-document.querySelectorAll(".deliver-form").forEach(form=>{
-form.addEventListener("submit",async e=>{
-e.preventDefault()
+let ORDER_ID = null;
+let ACTIVE_ORDER_ID = null;
+let watchId = null;
+let map = null;
+let customerMarker = null;
+let deliveryMarker = null;
 
-const orderId=form.dataset.orderId
-const otp=form.querySelector(".otp-input").value
-const pay=form.querySelector("select").value
-const err=form.querySelector(".otp-error")
+// ===== SOCKET.IO =====
+let socket = null;
+{% if orders|length > 0 %}
+socket = io();
+socket.on("connect", () => {
+    console.log("🟢 Delivery connected:", socket.id);
+    {% for order in orders %}
+      socket.emit("join_order_room", { order_id: {{ order.id }} });
+    {% endfor %}
+});
+{% endif %}
 
-err.style.display="none"
+// ===== START DELIVERY =====
+function startDelivery(orderId) {
+    console.log("🚀 startDelivery called for order:", orderId);
 
-const fd=new FormData()
-fd.append("entered_otp",otp)
-fd.append("payment_type",pay)
+    ACTIVE_ORDER_ID = orderId;
+    ORDER_ID = orderId;
 
-const res=await fetch(`/confirm_delivery/${orderId}`,{method:"POST",body:fd})
-const data=await res.json()
+    // Call backend to mark order as Started
+    fetch(`/delivery/start/${orderId}`, { method:"POST" })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) console.log("Order marked as Started");
+        });
 
-if(!data.success){
-err.textContent="❌ Incorrect OTP"
-err.style.display="block"
-return
+    // Hide start button
+    const btn = document.getElementById(`start-btn-${orderId}`);
+    if(btn) btn.style.display = "none";
+
+    // Show OTP/payment form
+    const form = document.querySelector(`form[data-order-id="${orderId}"]`);
+    if(form) form.style.display = "block";
+
+    // Start GPS tracking
+    startTracking(orderId);
 }
 
-showToast("✔ Order Delivered Successfully")
-setTimeout(()=>location.reload(),800)
-})
-})
+// ===== GPS TRACKING =====
+function startTracking(orderId) {
+    if (!navigator.geolocation) { alert("GPS not supported"); return; }
+    if (watchId !== null) { alert("Tracking already started"); return; }
+    if (!ORDER_ID || !socket) { alert("No active order to track"); return; }
 
-function showToast(msg){
-const t=document.getElementById("toast")
-t.textContent=msg
-t.classList.add("show")
-setTimeout(()=>t.classList.remove("show"),3000)
+    watchId = navigator.geolocation.watchPosition(
+        pos => {
+            console.log("📡 GPS OK", pos.coords.latitude, pos.coords.longitude);
+            socket.emit("send_delivery_location", {
+                order_id: orderId,
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude
+            });
+
+            if(map) {
+                const latlng = [pos.coords.latitude, pos.coords.longitude];
+                if(deliveryMarker) deliveryMarker.setLatLng(latlng);
+                else {
+                    deliveryMarker = L.marker(latlng, {
+                        icon: L.icon({
+                            iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+                            iconSize: [30,30]
+                        })
+                    }).addTo(map).bindPopup("You (Delivery)").openPopup();
+                }
+            }
+        },
+        err => { console.error("❌ GPS ERROR", err); alert("Allow location access"); },
+        { enableHighAccuracy:true, maximumAge:0 }
+    );
 }
-</script>
-<script>
+
+// ===== CUSTOMER NOT AVAILABLE =====
 async function markNotDelivered(orderId) {
-  const reason = prompt("Reason (Customer not available / Phone switched off):");
+    const reason = prompt("Reason (Customer not available / Phone switched off):");
+    if (!reason) return;
 
-  if (!reason) return;
+    try {
+      const res = await fetch(`/delivery/not-delivered/${orderId}`, {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ reason })
+      });
+      const data = await res.json();
+      if (data.success) { alert("Restaurant notified successfully"); location.reload(); }
+      else alert(data.message || "Failed");
+    } catch(e) { alert("Server error"); }
+}
 
-  try {
-    const res = await fetch(`/delivery/not-delivered/${orderId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ reason })
-    });
+// ===== INITIALIZE MAP =====
+{% if orders|length > 0 %}
+const customerLat = {{ orders[0].latitude | default('null') | tojson }};
+const customerLng = {{ orders[0].longitude | default('null') | tojson }};
 
-    const data = await res.json();
+if (customerLat !== null && customerLng !== null) {
+    const mapDiv = document.getElementById("map");
+    if (mapDiv) {
+        map = L.map("map").setView([customerLat, customerLng], 14);
+        customerMarker = L.marker([customerLat, customerLng])
+                          .addTo(map)
+                          .bindPopup("Customer")
+                          .openPopup();
 
-    if (data.success) {
-      alert("Restaurant notified successfully");
-      location.reload();
-    } else {
-      alert(data.message || "Failed");
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "© OpenStreetMap"
+        }).addTo(map);
     }
-
-  } catch (e) {
-    alert("Server error");
-  }
+} else {
+    const mapDiv = document.getElementById("map");
+    if (mapDiv) mapDiv.innerHTML = "<p style='color:red;text-align:center;'>Customer location not available</p>";
 }
-</script>
-<script>
-function applyFilters(){
-  const search = document.getElementById("searchInput").value.toLowerCase();
-  const status = document.getElementById("statusFilter").value.toLowerCase();
-  const payment = document.getElementById("paymentFilter").value.toLowerCase();
-
-  document.querySelectorAll("tbody tr").forEach(row=>{
-    const rowSearch = (row.dataset.search || "").toLowerCase();
-    const rowStatus = (row.dataset.status || "").toLowerCase();
-    const rowPayment = (row.dataset.payment || "").toLowerCase();
-
-    let visible = true;
-
-    // SEARCH FILTER
-    if(search && !rowSearch.includes(search)) visible = false;
-
-    // STATUS FILTER
-    if(status && rowStatus !== status) visible = false;
-
-    // PAYMENT FILTER
-    if(payment && rowPayment !== payment) visible = false;
-
-    row.style.display = visible ? "" : "none";
-  });
-}
-
-// Attach events
-document.getElementById("searchInput").addEventListener("keyup", applyFilters);
-document.getElementById("statusFilter").addEventListener("change", applyFilters);
-document.getElementById("paymentFilter").addEventListener("change", applyFilters);
-
-// CLEAR BUTTON
-function clearFilters(){
-  document.getElementById("searchInput").value="";
-  document.getElementById("statusFilter").value="";
-  document.getElementById("paymentFilter").value="";
-  applyFilters();
-}
+{% endif %}
 </script>
 {% endblock %}
-
