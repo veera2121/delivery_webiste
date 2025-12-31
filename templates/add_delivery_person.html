@@ -4,6 +4,115 @@
   <meta charset="UTF-8">
   <title>Add Delivery Person</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* Container */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 30px 40px;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+
+/* Headings */
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+/* Form labels and inputs */
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #555;
+}
+
+input[type="text"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border 0.3s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+select:focus {
+    border-color: #1e90ff;
+    outline: none;
+}
+
+/* Buttons */
+button {
+    display: inline-block;
+    background-color: #1e90ff;
+    color: white;
+    padding: 12px 25px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #0f78d1;
+}
+
+/* Flash messages */
+ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+li.success {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+li.danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Back link */
+a {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #1e90ff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+  </style>
 </head>
 <body>
   <div class="container">
@@ -33,6 +142,9 @@
   <label>Name:</label>
   <input type="text" name="name" required><br><br>
 
+  <label>Username:</label>
+  <input type="text" name="username" required><br><br>
+
   <label>Phone:</label>
   <input type="text" name="phone" required><br><br>
 
@@ -41,6 +153,7 @@
 
   <button type="submit">Add Delivery Person</button>
 </form>
+
 
 
     <br>

@@ -1013,7 +1013,6 @@ def delivery_logout():
     session.pop("delivery_person_id", None)
     session.pop("delivery_person_name", None)
     return redirect(url_for("delivery_login"))
-
 @app.route("/admin/add_delivery_person", methods=["GET", "POST"])
 def add_delivery_person():
     if not session.get("admin_logged_in"):
@@ -1021,22 +1020,28 @@ def add_delivery_person():
 
     if request.method == "POST":
         name = request.form.get("name")
+        username = request.form.get("username")  # ✅ NEW
         phone = request.form.get("phone")
         password = request.form.get("password")
-        restaurant_id = request.form.get("restaurant_id")  # ✅ FROM FORM
+        restaurant_id = request.form.get("restaurant_id")
 
-        if not all([name, phone, password, restaurant_id]):
+        if not all([name, username, phone, password, restaurant_id]):
             flash("All fields are required!", "danger")
             return redirect(url_for("add_delivery_person"))
 
         if DeliveryPerson.query.filter_by(phone=phone).first():
             flash("Phone already exists!", "danger")
             return redirect(url_for("add_delivery_person"))
+        
+        if DeliveryPerson.query.filter_by(username=username).first():
+            flash("Username already exists!", "danger")
+            return redirect(url_for("add_delivery_person"))
 
         dp = DeliveryPerson(
             name=name,
+            username=username,  # ✅ SAVE USERNAME
             phone=phone,
-            restaurant_id=restaurant_id   # ✅ CORRECT LINK
+            restaurant_id=restaurant_id
         )
         dp.set_password(password)
 
@@ -1046,11 +1051,10 @@ def add_delivery_person():
         flash("Delivery person added successfully!", "success")
         return redirect(url_for("admin_dashboard"))
 
-    restaurants = Restaurant.query.order_by(Restaurant.name).all()
-    return render_template(
-        "add_delivery_person.html",
-        restaurants=restaurants
-    )
+    # GET request
+    restaurants = Restaurant.query.all()
+    return render_template("add_delivery_person.html", restaurants=restaurants)
+
 
 
 @app.route("/admin/add_restaurant", methods=["GET", "POST"])
