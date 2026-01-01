@@ -76,31 +76,38 @@ document.addEventListener("DOMContentLoaded", () => {
       createMarker: () => null
     }).addTo(map);
   }
+let lastRouteTime = 0;
 
-  /* SOCKET UPDATE */
-  socket.on("delivery_location_update", data => {
-    if (!data || data.lat === null || data.lng === null) return;
+/* SOCKET UPDATE */
+socket.on("delivery_location_update", data => {
+  if (!data || data.lat === null || data.lng === null) return;
 
-    if (!deliveryMarker) {
-      deliveryMarker = L.marker([data.lat, data.lng])
-        .addTo(map)
-        .bindPopup("Delivery Boy");
-    } else {
-      deliveryMarker.setLatLng([data.lat, data.lng]);
-    }
+  // 🟢 MOVE MARKER ALWAYS
+  if (!deliveryMarker) {
+    deliveryMarker = L.marker([data.lat, data.lng])
+      .addTo(map)
+      .bindPopup("Delivery Boy");
+  } else {
+    deliveryMarker.setLatLng([data.lat, data.lng]);
+  }
 
+  // 🔵 REDRAW ROUTE ONLY EVERY 15 SECONDS
+  const now = Date.now();
+  if (now - lastRouteTime > 15000) {
     drawRoute(data.lat, data.lng);
+    lastRouteTime = now;
+  }
 
-    const distanceKm =
-      map.distance([data.lat, data.lng], [customerLat, customerLng]) / 1000;
+  // 🧮 DISTANCE + ETA
+  const distanceKm =
+    map.distance([data.lat, data.lng], [customerLat, customerLng]) / 1000;
 
-    document.getElementById("infoBox").innerHTML = `
-      <b>Distance:</b> ${distanceKm.toFixed(2)} km<br>
-      <b>ETA:</b> ${Math.round((distanceKm / 25) * 60)} mins
-    `;
-  });
-
+  document.getElementById("infoBox").innerHTML = `
+    <b>Distance:</b> ${distanceKm.toFixed(2)} km<br>
+    <b>ETA:</b> ${Math.round((distanceKm / 25) * 60)} mins
+  `;
 });
+
 </script>
 
 <style>

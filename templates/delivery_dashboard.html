@@ -543,7 +543,8 @@ socket = io();
 socket.on("connect", () => {
     console.log("🟢 Delivery connected:", socket.id);
     {% for order in orders %}
-      socket.emit("join_order_room", { order_id: {{ order.id }} });
+    socket.emit("join_order_room", { order_id: ORDER_ID });
+
     {% endfor %}
 });
 {% endif %}
