@@ -91,6 +91,27 @@
     body {
       padding-bottom: 46px; /* slightly more than bottom-nav height */
     } 
+     :root {
+      --bottom-nav-height: 47px;
+    }
+
+    body {
+      padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+    }
+
+    .above-bottom-nav {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 10px);
+      z-index: 100000;
+    }
+
+    .fullscreen-map {
+      position: fixed;
+      inset: 0;
+      padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+    }
     .cart-modal {
   position: fixed;
   inset: 0;

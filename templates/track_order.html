@@ -1,8 +1,100 @@
+
+
+{% extends "base.html" %}
+
+{% block title %}Track order{% endblock %}
+
+{% block content %} 
+<a href="{{ url_for('myorders') }}" id="backBtn">
+  ← My Orders
+</a>
+
 <h3>Live Delivery Tracking</h3>
 <p>Delivery Boy: {{ order.delivery_person.name if order.delivery_person else "Not Assigned" }}</p>
 
-<div id="infoBox" style="margin:10px 0; font-weight:600;"></div>
-<div id="map" style="height:350px;"></div>
+<div id="mapWrapper">
+  <div id="map"></div>
+  <!-- Routing wrapper -->
+  <div id="routingWrapper"></div>
+</div>
+
+<div id="infoBox" class="above-bottom-nav">
+  🚚 Distance & ETA
+</div>
+
+<style>
+html, body { height:100%; margin:0; }
+
+#mapWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(47px + env(safe-area-inset-bottom));
+  z-index: 1;
+}
+
+#map { height: 100%; width: 100%; }
+
+#backBtn {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3000; /* above routing button */
+  background: #fff;
+  color: #000;
+  padding: 4px 6px;
+  border-radius: 12px;
+  font-weight: 300;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  text-decoration: none;
+}
+
+h3, p {
+  position: fixed;
+  left: 12px;
+  background: rgba(255,255,255,0.6);
+  display: inline-block;
+  border-radius: 10px;
+  padding: 4px 10px;
+  z-index: 2000;
+}
+h3 { top: 60px; color: rgb(14,114,92); font-size:14px; }
+p { top: 100px; color: rgb(14,114,92); font-size:12px; }
+
+#infoBox {
+  position: fixed;
+  bottom: calc(57px + env(safe-area-inset-bottom) + 12px);
+  left: 12px; right:12px;
+  background: white;
+  padding: 12px 14px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  z-index: 9999;
+  font-size: 14px;
+  text-align: center;
+}
+
+#routingWrapper {
+  position: fixed;       /* stays on top of map */
+  top: 50px;             /* above back button if needed */
+  left: 50%;             /* center horizontally */
+  transform: translateX(-50%);
+  z-index: 2500;         /* above back button z-index */
+}
+/* Mobile - move to right */
+@media (max-width: 768px) {
+  #backBtn {
+    top :135px;
+    right: auto;         /* unset left 50% */
+    left: 12px;        /* move to right */
+    transform: none;    /* remove translate */
+  }
+}
+</style>
+
+
 <!-- 1️⃣ Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
@@ -38,6 +130,9 @@ document.addEventListener("DOMContentLoaded", () => {
       "<p style='color:red'>Customer location not available</p>";
     return;
   }
+setTimeout(() => {
+  map.invalidateSize();
+}, 300);
 
   /* MAP */
   const map = L.map("map").setView([customerLat, customerLng], 14);
@@ -101,12 +196,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+
+
 </script>
 
-<style>
-#map {
-  height: 350px !important;
-  width: 100%;
-  border-radius: 10px;
-}
 </style>
+{% endblock %}
