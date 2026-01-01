@@ -833,32 +833,81 @@ renderCart();
 
 
 <script>
-if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function(pos){
-        document.getElementById('customer_lat').value = pos.coords.latitude;
-        document.getElementById('customer_lng').value = pos.coords.longitude;
-    });
-} 
 
-var map = L.map('map').setView([26.8467, 80.9462], 13); // default coordinates (Lucknow example)
+/* =========================
+   MAP INIT
+========================= */
+
+var defaultLat = 26.8467;   // Lucknow default
+var defaultLng = 80.9462;
+
+var map = L.map('map').setView([defaultLat, defaultLng], 13);
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-var marker = L.marker([26.8467, 80.9462], {draggable:true}).addTo(map);
+var marker = L.marker([defaultLat, defaultLng], {
+    draggable: true
+}).addTo(map);
 
-marker.on('dragend', function(e){
-    var latlng = marker.getLatLng();
-    document.getElementById('lat').value = latlng.lat;
-    document.getElementById('lng').value = latlng.lng;
+/* =========================
+   UPDATE HIDDEN INPUTS
+========================= */
+function updateLocationInputs(lat, lng) {
+    // backend uses these
+    document.getElementById('lat').value = lat;
+    document.getElementById('lng').value = lng;
+
+    document.getElementById('customer_lat').value = lat;
+    document.getElementById('customer_lng').value = lng;
+}
+
+/* =========================
+   MARKER DRAG
+========================= */
+marker.on('dragend', function () {
+    var pos = marker.getLatLng();
+    updateLocationInputs(pos.lat, pos.lng);
 });
 
-// Optional: if user clicks on map, move marker
-map.on('click', function(e){
+/* =========================
+   MAP CLICK
+========================= */
+map.on('click', function (e) {
     marker.setLatLng(e.latlng);
-    document.getElementById('lat').value = e.latlng.lat;
-    document.getElementById('lng').value = e.latlng.lng;
+    updateLocationInputs(e.latlng.lat, e.latlng.lng);
 });
+
+/* =========================
+   LIVE LOCATION BUTTON
+========================= */
+function getUserLocation() {
+    if (!navigator.geolocation) {
+        alert("Geolocation not supported");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function (pos) {
+            var lat = pos.coords.latitude;
+            var lng = pos.coords.longitude;
+
+            marker.setLatLng([lat, lng]);
+            map.setView([lat, lng], 16);
+
+            updateLocationInputs(lat, lng);
+        },
+        function () {
+            alert("Location permission denied");
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000
+        }
+    );
+}
+</script>
 
 
 </script>
