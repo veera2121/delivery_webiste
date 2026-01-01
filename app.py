@@ -2200,6 +2200,8 @@ def handle_location(data):
     lat = data["lat"]
     lng = data["lng"]
 
+    print(f"🚴 Delivery GPS → Order {order_id}: {lat}, {lng}")
+
     last_locations[order_id] = (lat, lng)
 
     emit(
@@ -2207,6 +2209,7 @@ def handle_location(data):
         {"lat": lat, "lng": lng},
         room=f"order_{order_id}",
     )
+
 @socketio.on("join_order_room")
 def join_order(data):
     order_id = data["order_id"]
