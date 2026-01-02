@@ -1,27 +1,25 @@
-const CACHE_NAME = "ruchigo-v2";
+const CACHE_NAME = "ruchigo-v3";
 
 self.addEventListener("install", event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll([
+    caches.open(CACHE_NAME).then(cache =>
+      cache.addAll([
+        "/",
         "/static/css/style.css"
-      ]);
-    })
+      ])
+    )
   );
 });
+
+self.addEventListener("activate", event => {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener("fetch", event => {
-
-  // ✅ VERY IMPORTANT: allow Flask routes
-  if (event.request.mode === "navigate") {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  // ✅ Cache only static assets
   event.respondWith(
     caches.match(event.request).then(response => {
       return response || fetch(event.request);
     })
   );
 });
-

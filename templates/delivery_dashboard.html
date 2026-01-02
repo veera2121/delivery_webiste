@@ -1,12 +1,26 @@
 {% extends "base.html" %}
 
-{# 🚫 Disable bottom navigation on this page #}
+{# 🔹 Manifest override ONLY #}
+{% block manifest %}
+<link rel="manifest" href="{{ url_for('static', filename='manifest-delivery.json') }}">
+<meta name="theme-color" content="#16a34a">
+{% endblock %}
+
+{# 🚫 Disable bottom nav #}
 {% block bottom_nav %}{% endblock %}
-{% block title %}Menu{% endblock %}
-{% block install_button %}{% endblock %}
+
+{% block title %}Delivery Dashboard{% endblock %}
+
+{% block install_button %}
+<button id="installApp" class="install-fab">
+  📲 Install Delivery App
+</button>
+{% endblock %}
 
 {% block content %}
-<link rel="manifest" href="/static/manifest-delivery.json">
+<!-- YOUR DELIVERY DASHBOARD HTML HERE -->
+
+
 
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -455,7 +469,7 @@ select:focus {
   <button onclick="clearFilters()">Clear</button>
 </div>
 
-<button id="installApp" class="install-fab">📲 Install Delivery App</button>
+
 
  
 <table>

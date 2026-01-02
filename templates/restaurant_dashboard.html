@@ -1,16 +1,22 @@
 {% extends "base.html" %}
 
-
+{% block manifest %}
+<link rel="manifest" href="{{ url_for('static', filename='manifest-restaurant.json') }}">
+<meta name="theme-color" content="#dc2626">
+{% endblock %}
 
 {# 🚫 Disable bottom navigation on this page #}
 {% block bottom_nav %}{% endblock %}
+
 {% block title %}Menu{% endblock %}
-{% block install_button %}{% endblock %}
+
 {% block content %}
 
+<button id="installApp" class="install-fab">
+  📲 Install Restaurant App
+</button>
 
-<link rel="manifest" href="/static/manifest-restaurant.json">
-<button id="installApp" class="install-fab">📲 Install Restaurant App</button>
+
 
 <style>
 /* ===== GLOBAL STYLES ===== */
