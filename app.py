@@ -64,12 +64,13 @@ app.config["WTF_CSRF_ENABLED"] = False  # enable later safely
 db.init_app(app)
 csrf = CSRFProtect(app)
 migrate = Migrate(app, db)
-
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
+    async_mode="gevent",
     ping_interval=25,
-    ping_timeout=60
+    ping_timeout=60,
+    max_http_buffer_size=10_000_000  # prevents payload overflow
 )
 
 # ================= BLUEPRINTS =================
