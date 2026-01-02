@@ -10,9 +10,12 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 <meta name="theme-color" content="#ff5722">
+{% block install_button %}
 <button id="installApp" class="install-fab">
   📲 Install App
 </button>
+{% endblock %}
+
 
 
   <style>
@@ -862,6 +865,21 @@ if ("serviceWorker" in navigator) {
       .then(() => console.log("✅ Service Worker registered"))
       .catch(err => console.error("❌ Service Worker failed", err));
   });
+}
+</script>
+<script>
+function showEmptyCartModal() {
+    const modal = document.getElementById("emptyCartModal");
+    if (modal) modal.classList.remove("hidden");
+}
+
+function closeEmptyCartModal() {
+    const modal = document.getElementById("emptyCartModal");
+    if (modal) modal.classList.add("hidden");
+}
+
+function goToHome() {
+    window.location.href = "/";
 }
 </script>
 

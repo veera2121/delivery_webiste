@@ -811,8 +811,8 @@ if (offerBtn) offerBtn.addEventListener("click", applyRestaurantOffer);
    FORM VALIDATION
 ============================================================ */
 function validateCart() {
-    if (!cart.items.length) {
-        alert("Your cart is empty");
+    if (!cart || !cart.items || cart.items.length === 0) {
+        showEmptyCartModal();   // ✅ app-style modal
         return false;
     }
     return true;

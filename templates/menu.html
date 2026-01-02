@@ -1,8 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends "base.html" %}
+
+{% block title %}Menu{% endblock %}
+{% block install_button %}{% endblock %}
+
+{% block content %}
 <title>{{ restaurant.name }} - Menu</title>
 
 <style>
@@ -12,19 +13,50 @@ body {
     margin: 0;
     padding: 0;
     background: #fafafa;
-    padding-bottom: 60px;
+
+    /* ✅ allow space for floating cart */
+    padding-bottom: 120px;
+    overflow-x: hidden;
 }
+
 
 /* HEADER */
 .header {
-    background: linear-gradient(90deg, #ff4d4d, #ff2b2b);
-    padding: 20px;
-    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    background: linear-gradient(135deg, #ff6b6b, #f06595, #ff9f43); /* multi-color gradient */
+    padding: 18px 24px;
+    color: #fff;
     font-size: 26px;
-    font-weight: 600;
+    font-weight: 700;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    backdrop-filter: blur(4px); /* subtle blur effect */
+    transition: all 0.3s ease;
 }
+
+/* Hover or scroll effect */
+.header:hover {
+    transform: scale(1.02);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+}
+
+/* Optional: animated gradient */
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.header {
+    background: linear-gradient(135deg, #ff6b6b, #f06595, #ff9f43);
+    background-size: 300% 300%;
+    animation: gradientMove 6s ease infinite;
+}
+
 
 /* TOP LINKS */
 .top-links {
@@ -42,121 +74,201 @@ body {
 /* CATEGORY BAR */
 .top-cat-wrapper {
     position: sticky;
-    top: 0;
+    top: 150px; /* header + incentive */
     z-index: 1000;
-    background: white;
-    padding: 12px 16px;
+
+    background: #ffffff;
+    padding: 10px 12px;
     display: flex;
-    gap: 14px;
+    gap: 10px;
+
     overflow-x: auto;
-    white-space: nowrap;
-    border-bottom: 1px solid #eee;
+    scrollbar-width: none;
+    border-bottom: 1px solid #e5e7eb;
 }
+
+.top-cat-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
 .top-cat {
-    background: #f0f0f0;
-    padding: 10px 20px;
-    border-radius: 30px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    border: 1px solid #ddd;
-    transition: 0.3s;
+    background: #f3f4f6;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid #e5e7eb;
+    white-space: nowrap;
+    transition: all 0.25s ease;
 }
+
 .top-cat:hover {
     background: #ff2b2b;
-    color: white;
-    transform: scale(1.05);
+    color: #fff;
+    border-color: #ff2b2b;
 }
 
 /* CATEGORY TITLE */
 .category-title {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
-    margin: 35px 20px 15px;
-    color: #222;
-    border-left: 5px solid #ff2b2b;
+    margin: 40px 20px 16px;
+    color: #111;
+
+    border-left: 4px solid #ff2b2b;
     padding-left: 10px;
+
+    /* ✅ KEY FIX */
+    scroll-margin-top: 190px;
 }
 
 /* MENU GRID */
+/* MENU CARD - IMAGELESS STYLE WITH LEFT BORDER ACCENT */
+/* MENU GRID */
 .menu-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 22px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
     padding: 0 20px 40px;
 }
 
-/* MENU CARD */
-.menu-card {
+/* MENU CARD ACCENT */
+.menu-card-accent {
+    display: flex;
     background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
     overflow: hidden;
     transition: 0.3s;
 }
-.menu-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 10px 28px rgba(0,0,0,0.15);
+
+.menu-card-accent:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
-.menu-card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
+
+/* Left accent border */
+.card-left {
+    width: 8px;
 }
-.card-body {
-    padding: 15px;
+.card-left.veg {
+    background: linear-gradient(180deg, #10b981, #22c55e);
 }
+.card-left.nonveg {
+    background: linear-gradient(180deg, #ef4444, #f87171);
+}
+
+/* Card body */
+.card-body-accent {
+    padding: 16px 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header: name + dot */
+.item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.food-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Veg/Non-Veg triangle */
+.food-dot {
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 14px solid green; /* default color */
+}
+
+/* Veg triangle */
+.food-dot.veg {
+    border-bottom-color: #10b981;
+}
+
+/* Non-Veg triangle */
+.food-dot.nonveg {
+    border-bottom-color: #ef4444;
+}
+
 .item-name {
     font-weight: 700;
-    font-size: 18px;
-    color: #333;
-}
-.item-price {
     font-size: 17px;
-    font-weight: 600;
-    color: #28a745;
-    margin: 8px 0;
+    color: #222;
 }
+
+.item-price {
+    font-size: 16px;
+    font-weight: 600;
+    color: #16a34a; /* greenish */
+    margin-bottom: 6px;
+}
+
 .item-desc {
     font-size: 14px;
-    color: #666;
+    color: #555;
     margin-bottom: 12px;
-    height: 40px;
+    line-height: 1.4;
+    max-height: 42px;
     overflow: hidden;
 }
+
+/* Add section */
 .add-section {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 12px;
 }
-.add-btn {
-    background: #ff2b2b;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    color: white;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.2s;
-}
-.add-btn:hover {
-    background: #d10000;
-    transform: scale(1.05);
-}
+
 .qty-box {
     width: 60px;
-    padding: 7px;
-    border: 1px solid #bbb;
-    border-radius: 8px;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
     font-size: 14px;
 }
-.out-stock {
-    color: #d10000;
-    font-weight: 700;
-    font-size: 16px;
-    padding: 10px 0;
+
+.add-btn {
+    background: linear-gradient(135deg, #f97316, #facc15); /* orange-yellow gradient */
+    border: none;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
 }
+
+.add-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+}
+
+.out-stock {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 6px 0;
+}
+
+/* RESPONSIVE MOBILE */
+@media (max-width: 500px) {
+    .menu-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 0 12px 30px;
+    }
+}
+
 
 /* FLOATING CART */
 .floating-cart {
@@ -294,37 +406,50 @@ body {
 }
 
 .menu-incentive {
-  background: linear-gradient(135deg, #105846, #026154);
-  padding: 14px;
-  border-radius: 14px;
-  margin: 12px;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 64px; /* below header */
+    z-index: 1050;
+
+    background: linear-gradient(135deg, #065f46, #047857);
+    color: #ffffff;
+
+    margin: 10px 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+
+    box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+    transition: transform 0.2s ease;
+}
+
+.menu-incentive:hover {
+    transform: translateY(-2px);
 }
 
 .menu-total {
-  font-weight: bold;
-  margin-bottom: 6px;
+    font-size: 16px;
+    font-weight: 700;
 }
 
 .menu-message {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
+    font-size: 13px;
+    opacity: 0.9;
+    margin: 6px 0 10px;
 }
 
+/* Progress bar */
 .progress-bar {
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 20px;
-  overflow: hidden;
+    height: 7px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 20px;
+    overflow: hidden;
 }
 
 .progress-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #10b981, #22c55e);
-  transition: width 0.4s ease;
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #4ade80);
+    transition: width 0.4s ease;
 }
+
 
 .hidden {
   display: none;
@@ -338,18 +463,16 @@ body {
   width: 100%;
   height: 100%;
   z-index: 9999;
-}
-</style>
+} 
+
+
 
 </style>
-</head>
-<body>
 
-{% extends "base.html" %}
+</style>
 
-{% block title %}Menu{% endblock %}
 
-{% block content %}
+
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     {% for category, message in messages %}
@@ -378,10 +501,10 @@ body {
 <!-- CONFETTI -->
 <canvas id="confetti"></canvas>
 
-<!-- LINKS -->
+<!-- LINKS 
 <div class="top-links">
-    <a href="{{ url_for('home') }}">← Back</a>
-</div>
+    <a href="{{ url_for('home') }}"></a>
+</div> -->
 
 <!-- CATEGORY BAR -->
 <div class="top-cat-wrapper">
@@ -403,40 +526,43 @@ body {
     </div>
   </div>
 </div>
-
 <!-- MENU GRID -->
 {% for category, items in menu_by_category.items() %}
     {% if items %}
-    <div id="{{ category }}" class="category-title">{{ category }}</div>
-    <div class="menu-grid">
-        {% for item in items %}
-        <div class="menu-card">
-            <img src="{{ item.image_url }}" alt="{{ item.name }}">
-            <div class="card-body">
-                <div class="item-name">{{ item.name }}</div>
-                <div class="item-price">₹{{ item.price }}</div>
-                <div class="item-desc">{{ item.description }}</div>
+        <div id="{{ category }}" class="category-title">{{ category }}</div>
+        <div class="menu-grid">
+            {% for item in items %}
+                {% set food_type = item.type if item.type else ('veg' if 'veg' in item.category.lower() else 'nonveg') %}
+                <div class="menu-card-accent">
+                    <div class="card-left {{ food_type }}"></div> <!-- Accent border -->
+                    <div class="card-body-accent">
+                        <div class="item-header">
+                            <span class="food-dot {{ food_type }}"></span>
+                            <span class="item-name">{{ item.name }}</span>
+                        </div>
+                        <div class="item-price">₹{{ item.price }}</div>
+                        <div class="item-desc">{{ item.description }}</div>
 
-                {% if item.availability.lower() == 'yes' %}
-                <div class="add-section">
-                    <input type="number" min="1" value="1" class="qty-box">
-                       <button class="add-btn"
-        data-id="{{ loop.index }}"
-        data-name="{{ item.name }}"
-        data-price="{{ item.price }}">
-    Add +
-</button>
-
+                        {% if item.availability.lower() == 'yes' %}
+                            <div class="add-section">
+                                <input type="number" min="1" value="1" class="qty-box">
+                                <button class="add-btn"
+                                        data-id="{{ loop.index }}"
+                                        data-name="{{ item.name }}"
+                                        data-price="{{ item.price }}">
+                                    Add +
+                                </button>
+                            </div>
+                        {% else %}
+                            <p class="out-stock">Out of Stock</p>
+                        {% endif %}
+                    </div>
                 </div>
-                {% else %}
-                <p class="out-stock">Out of Stock</p>
-                {% endif %}
-            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
     {% endif %}
 {% endfor %}
+
 
 <!-- FLOATING CART BUTTON -->
 <a href="{{ url_for('cart_page', restaurant_id=restaurant.id) }}"
@@ -577,7 +703,8 @@ if (floatingCart) {
         const cart = carts[RESTAURANT_ID] || { items: [] };
         if (cart.items.length === 0) {
             e.preventDefault();
-            alert("Your cart is empty!");
+            showEmptyCartModal();
+
         } else {
             window.location.href = `/cart/${RESTAURANT_ID}`;
         }
@@ -701,7 +828,23 @@ function fireConfetti() {
 }
 
 </script>
+<script>
+function scrollToCategory(categoryId) {
+    // Find the element by ID (even if it's generated dynamically)
+    const el = document.getElementById(categoryId);
+    if (!el) return;
+
+    // Scroll smoothly to that element
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+} 
+function scrollToCategory(id) {
+    const target = document.getElementById(id);
+    if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
+</script>
 
 {% endblock %}
-</body>
-</html>
+

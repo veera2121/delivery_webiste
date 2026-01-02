@@ -1154,7 +1154,6 @@ def menu(restaurant_id):
 
     except Exception as e:
         return f"Error loading menu: {e}"
-
 @app.route("/restaurant/assign_delivery/<int:order_id>", methods=["POST"])
 def restaurant_assign_delivery(order_id):
     if not session.get("restaurant_logged_in"):
@@ -1162,6 +1161,7 @@ def restaurant_assign_delivery(order_id):
 
     delivery_person_id = request.form.get("delivery_person_id")
     order = Order.query.get(order_id)
+
     if not order:
         flash("Order not found!", "danger")
         return redirect(url_for("restaurant_dashboard"))
@@ -1171,15 +1171,28 @@ def restaurant_assign_delivery(order_id):
         flash("Delivery person not found!", "danger")
         return redirect(url_for("restaurant_dashboard"))
 
-    # Assign delivery boy
+    # ✅ Assign delivery boy
     order.delivery_person_id = dp.id
     order.delivery_boy_name = dp.name
     order.delivery_boy_phone = dp.phone
-    order.status = "Out for Delivery"  # or "Out for Delivery"
-    db.session.commit()
+    order.status = "Out for Delivery"
+
+    db.session.commit()  # 🔴 MUST commit before emit
+
+    # 🔔 SEND REAL-TIME NOTIFICATION TO DELIVERY PERSON (ADD HERE)
+    socketio.emit(
+        "new_order_assigned",
+        {
+            "order_id": order.id,
+            "order_number": order.order_id,
+            "restaurant": order.restaurant.name
+        },
+        room=f"delivery_{dp.id}"
+    )
 
     flash(f"Delivery boy {dp.name} assigned to Order {order.order_id}", "success")
     return redirect(url_for("restaurant_dashboard"))
+
 @app.route("/delivery/start/<int:order_id>", methods=["POST"])
 def start_delivery(order_id):
     order = Order.query.get(order_id)
@@ -2222,6 +2235,9 @@ def join_order(data):
             "delivery_location_update",
             {"lat": lat, "lng": lng},
         )
+@socketio.on("join_delivery_room")
+def join_delivery_room(data):
+    join_room(f"delivery_{data['delivery_person_id']}")
 
 # ------------------ track apge live ------------------
 @app.route("/track")

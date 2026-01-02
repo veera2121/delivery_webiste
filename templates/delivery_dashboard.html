@@ -322,6 +322,98 @@ select:focus {
   border-radius:10px;
   font-weight:600;
 }
+/* Modal backdrop */
+.modal {
+  display: none; /* hidden by default */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Card */
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+/* Textarea */
+.modal-content textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-top: 12px;
+  font-size: 14px;
+  resize: none;
+}
+
+/* Buttons */
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+.modal-buttons button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#cancelBtn {
+  background: #ccc;
+  color: #000;
+}
+
+#submitBtn {
+  background: #f44336;
+  color: #fff;
+}
+/* TOAST / FLASH CARD */
+.toast {
+  position: fixed;
+  bottom: 70px; /* above bottom nav */
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #323232;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99999;
+  transition: all 0.3s ease;
+}
+
+/* Success */
+.toast.success {
+  background: #2e7d32;
+}
+
+/* Error */
+.toast.error {
+  background: #d32f2f;
+}
+
+/* Visible */
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 
 </style>
 
@@ -445,75 +537,92 @@ select:focus {
             Payment: {{ order.payment_type }}
           </small>
         {% endif %}
-      </td>
 
-<td data-label="Action">
-  {% if order.status == "Out for Delivery" %}
-    <!-- Start Delivery button -->
-    <button class="deliver-btn"
-            id="start-btn-{{ order.id }}"
-            onclick="startDelivery({{ order.id }})">
-        🚀 Start Delivery
+    <td data-label="Action">
+
+{% if order.status == "Out for Delivery" %}
+
+  <!-- Start Delivery Button -->
+  <button class="deliver-btn"
+          id="start-btn-{{ order.id }}"
+          onclick="startDelivery({{ order.id }})">
+    🚀 Start Delivery
+  </button>
+
+  <!-- OTP + Payment + Customer Not Available (hidden initially) -->
+  <div class="delivery-actions" id="actions-{{ order.id }}" style="display:none; margin-top:8px;">
+
+    <form class="deliver-form"
+          method="POST"
+          action="{{ url_for('delivery_dashboard') }}">
+      <input type="hidden" name="order_id" value="{{ order.id }}">
+      <input type="text" name="otp" class="otp-input" placeholder="Enter OTP" required>
+      <select name="payment_type" required>
+        <option value="">Payment Type</option>
+        <option value="COD">COD</option>
+        <option value="Online">Online</option>
+      </select>
+      <button type="submit" class="deliver-btn">✔ Confirm Delivery</button>
+    </form>
+
+    <!-- Customer Not Available Button -->
+    <button type="button"
+            class="deliver-btn"
+            style="background:#f44336; margin-top:6px;"
+            onclick="markNotDelivered({{ order.id }})">
+      Customer Not Available
     </button>
 
-    <!-- OTP + Payment form (hidden until Start clicked) -->
+  </div>
+
+{% elif order.status == "Started" %}
+
+  <span style="color:blue;font-weight:bold">🚚 Delivery Started</span>
+
+  <!-- Show OTP + Customer Not Available (already visible for started orders) -->
+  <div class="delivery-actions" id="actions-{{ order.id }}" style="display:block; margin-top:8px;">
+
     <form class="deliver-form"
           method="POST"
-          action="{{ url_for('delivery_dashboard') }}"
-          data-order-id="{{ order.id }}"
-          style="display:none;">
-        <input type="hidden" name="order_id" value="{{ order.id }}">
-        <input type="text"
-               name="otp"
-               class="otp-input"
-               placeholder="Enter OTP"
-               required>
-        <select name="payment_type" required>
-            <option value="">Payment Type</option>
-            <option value="COD">COD</option>
-            <option value="Online">Online</option>
-        </select>
-        <button type="submit" class="deliver-btn">
-            ✔ Confirm Delivery
-        </button>
+          action="{{ url_for('delivery_dashboard') }}">
+      <input type="hidden" name="order_id" value="{{ order.id }}">
+      <input type="text" name="otp" class="otp-input" placeholder="Enter OTP" required>
+      <select name="payment_type" required>
+        <option value="">Payment Type</option>
+        <option value="COD">COD</option>
+        <option value="Online">Online</option>
+      </select>
+      <button type="submit" class="deliver-btn">✔ Confirm Delivery</button>
     </form>
 
-  {% elif order.status == "Started" %}
-    <!-- Delivery started -->
-    <span style="color:blue;font-weight:bold">🚚 Delivery Started</span>
+    <button type="button"
+            class="deliver-btn"
+            style="background:#f44336; margin-top:6px;"
+            onclick="markNotDelivered({{ order.id }})">
+      Customer Not Available
+    </button>
 
-    <!-- OTP + Payment form already visible -->
-    <form class="deliver-form"
-          method="POST"
-          action="{{ url_for('delivery_dashboard') }}"
-          data-order-id="{{ order.id }}"
-          style="display:block;">
-        <input type="hidden" name="order_id" value="{{ order.id }}">
-        <input type="text"
-               name="otp"
-               class="otp-input"
-               placeholder="Enter OTP"
-               required>
-        <select name="payment_type" required>
-            <option value="">Payment Type</option>
-            <option value="COD">COD</option>
-            <option value="Online">Online</option>
-        </select>
-        <button type="submit" class="deliver-btn">
-            ✔ Confirm Delivery
-        </button>
-    </form>
+  </div>
 
-  {% elif order.status == "Delivered" %}
-    <span style="color:green;font-weight:bold">✔ Delivered</span>
+{% elif order.status == "Delivered" %}
 
-  {% elif order.status == "Cancelled" %}
-    <span style="color:red;font-weight:bold">❌ Cancelled</span>
+  <span style="color:green;font-weight:bold">✔ Delivered</span>
 
-  {% else %}
-    <span style="color:gray;font-style:italic;">{{ order.status }}</span>
-  {% endif %}
+{% elif order.status == "Cancelled" %}
+
+  <span style="color:red;font-weight:bold">❌ Cancelled</span>
+
+{% else %}
+
+  <span style="color:gray;font-style:italic;">{{ order.status }}</span>
+
+{% endif %}
+
 </td>
+
+
+      
+
 
 
 
@@ -567,9 +676,9 @@ function startDelivery(orderId) {
     const btn = document.getElementById(`start-btn-${orderId}`);
     if(btn) btn.style.display = "none";
 
-    // Show OTP/payment form
-    const form = document.querySelector(`form[data-order-id="${orderId}"]`);
-    if(form) form.style.display = "block";
+    // Show wrapper div containing OTP + "Customer Not Available"
+    const actionsDiv = document.getElementById(`actions-${orderId}`);
+    if(actionsDiv) actionsDiv.style.display = "block";
 
     // Start GPS tracking
     startTracking(orderId);
@@ -609,21 +718,73 @@ function startTracking(orderId) {
 }
 
 // ===== CUSTOMER NOT AVAILABLE =====
-async function markNotDelivered(orderId) {
-    const reason = prompt("Reason (Customer not available / Phone switched off):");
-    if (!reason) return;
+// ===== CUSTOMER NOT AVAILABLE =====
+function markNotDelivered(orderId) {
+  const modal = document.getElementById("notDeliveredModal");
+  const reasonInput = document.getElementById("notDeliveredReason");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const submitBtn = document.getElementById("submitBtn");
+
+  reasonInput.value = "";
+  modal.style.display = "flex";
+
+  cancelBtn.onclick = () => {
+    modal.style.display = "none";
+  };
+
+  submitBtn.onclick = async () => {
+    const reason = reasonInput.value.trim();
+
+    // ❌ no alert
+    if (!reason) {
+      showToast("Please enter a reason", "error");
+      return;
+    }
 
     try {
       const res = await fetch(`/delivery/not-delivered/${orderId}`, {
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason })
       });
+
       const data = await res.json();
-      if (data.success) { alert("Restaurant notified successfully"); location.reload(); }
-      else alert(data.message || "Failed");
-    } catch(e) { alert("Server error"); }
+
+     if (data.success) {
+      showToast("Order moved to history", "success");
+
+      // Remove order card from active list
+      const orderCard = document.getElementById(`order-${orderId}`);
+      if (orderCard) orderCard.remove();
+
+      // Switch to history tab
+      setTimeout(() => {
+        showHistory();
+      }, 800);
+
+
+      } else {
+        showToast(data.message || "Failed to update order", "error");
+      }
+
+    } catch (e) {
+      showToast("Server error. Try again later", "error");
+    } finally {
+      modal.style.display = "none";
+    }
+  };
 }
+
+function showToast(message, type = "success") {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.className = `toast ${type} show`;
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2500); // auto hide
+}
+
 
 // ===== INITIALIZE MAP =====
 {% if orders|length > 0 %}
@@ -649,6 +810,52 @@ if (customerLat !== null && customerLng !== null) {
 }
 {% endif %}
 </script> 
+<script> 
+socket.on("connect", () => {
+  socket.emit("join_delivery_room", {
+    delivery_person_id: {{ session.delivery_person_id }}
+  });
+});
 
+const orderSound = new Audio("{{ url_for('static', filename='sounds/new_delivery.mp3') }}");
+
+document.addEventListener("click", () => {
+  orderSound.play().then(() => {
+    orderSound.pause();
+    orderSound.currentTime = 0;
+  }).catch(()=>{});
+}, { once: true });
+
+socket.on("new_order_assigned", (data) => {
+
+  showToast("📦 New order assigned!", "success");
+
+  orderSound.play().catch(()=>{});
+
+  if (navigator.vibrate) {
+    navigator.vibrate([200,100,200]);
+  }
+
+  setTimeout(() => {
+    location.reload();
+  }, 2000);
+});
+</script>
+
+
+
+<!-- Customer Not Available Modal -->
+<div id="notDeliveredModal" class="modal">
+  <div class="modal-content">
+    <h3>Customer Not Available</h3>
+    <textarea id="notDeliveredReason" placeholder="Reason (Customer not available / Phone switched off)" rows="3"></textarea>
+    <div class="modal-buttons">
+      <button id="cancelBtn">Cancel</button>
+      <button id="submitBtn">Submit</button>
+    </div>
+  </div>
+</div>
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
 
 {% endblock %}

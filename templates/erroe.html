@@ -2918,3 +2918,73 @@ def api_order_status(order_id):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     socketio.run(app, host="0.0.0.0", port=port, debug=True)
+<td data-label="Action">
+
+{% if order.status == "Out for Delivery" %}
+
+  <!-- Start Delivery -->
+  <button class="deliver-btn"
+          id="start-btn-{{ order.id }}"
+          onclick="startDelivery({{ order.id }})">
+    🚀 Start Delivery
+  </button>
+
+  <form class="deliver-form"
+        method="POST"
+        action="{{ url_for('delivery_dashboard') }}"
+        data-order-id="{{ order.id }}"
+        style="display:none;">
+    <input type="hidden" name="order_id" value="{{ order.id }}">
+    <input type="text" name="otp" class="otp-input" placeholder="Enter OTP" required>
+    <select name="payment_type" required>
+      <option value="">Payment Type</option>
+      <option value="COD">COD</option>
+      <option value="Online">Online</option>
+    </select>
+    <button type="submit" class="deliver-btn">✔ Confirm Delivery</button>
+  </form>
+
+{% elif order.status == "Started" %}
+
+  <span style="color:blue;font-weight:bold">🚚 Delivery Started</span>
+
+  <!-- OTP Form -->
+  <form class="deliver-form"
+        method="POST"
+        action="{{ url_for('delivery_dashboard') }}"
+        data-order-id="{{ order.id }}">
+    <input type="hidden" name="order_id" value="{{ order.id }}">
+    <input type="text" name="otp" class="otp-input" placeholder="Enter OTP" required>
+    <select name="payment_type" required>
+      <option value="">Payment Type</option>
+      <option value="COD">COD</option>
+      <option value="Online">Online</option>
+    </select>
+    <button type="submit" class="deliver-btn">✔ Confirm Delivery</button>
+  </form>
+
+  <!-- 👇 OUTSIDE FORM -->
+  <button type="button"
+          onclick="markNotDelivered({{ order.id }})"
+          style="margin-top:6px;background:#f44336;color:#fff;border:none;
+                 padding:6px 10px;border-radius:6px;cursor:pointer;">
+    Customer Not Available
+  </button>
+
+{% elif order.status == "Delivered" %}
+
+  <span style="color:green;font-weight:bold">✔ Delivered</span>
+
+{% elif order.status == "Cancelled" %}
+
+  <span style="color:red;font-weight:bold">❌ Cancelled</span>
+
+{% else %}
+
+  <span style="color:gray;font-style:italic;">{{ order.status }}</span>
+
+{% endif %}
+
+</td>
+
+
