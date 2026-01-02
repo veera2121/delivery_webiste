@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{# 🔹 Manifest override ONLY #}
 {% block manifest %}
 <link rel="manifest" href="{{ url_for('static', filename='manifest-restaurant.json') }}">
 <meta name="theme-color" content="#dc2626">
@@ -10,13 +11,14 @@
 
 {% block title %}Menu{% endblock %}
 
-{% block content %}
-
+{# ✅ Restaurant-specific Install Button #}
+{% block install_button %}
 <button id="installApp" class="install-fab">
   📲 Install Restaurant App
 </button>
+{% endblock %}
 
-
+{% block content %}
 
 <style>
 /* ===== GLOBAL STYLES ===== */
