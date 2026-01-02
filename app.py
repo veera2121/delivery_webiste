@@ -936,7 +936,6 @@ def delivery_login():
 
     # ✅ GET request MUST return something
     return render_template("delivery_login.html")
-
 @app.route("/delivery/dashboard", methods=["GET", "POST"])
 def delivery_dashboard():
     if not session.get("delivery_logged_in"):
@@ -944,7 +943,6 @@ def delivery_dashboard():
 
     dp_id = session.get("delivery_person_id")
     delivery_person = DeliveryPerson.query.get(dp_id)
-
     if not delivery_person:
         return redirect(url_for("delivery_login"))
 
@@ -952,6 +950,7 @@ def delivery_dashboard():
     if request.method == "POST":
         order_id = request.form.get("order_id")
         entered_otp = request.form.get("otp")
+        entered_payment_type = request.form.get("payment_type")  # COD / Online
 
         order = Order.query.get(int(order_id))
 
@@ -963,6 +962,7 @@ def delivery_dashboard():
         ):
             order.status = "Delivered"
             order.delivered_time = datetime.utcnow()
+            order.payment_type = entered_payment_type  # save payment type
             db.session.commit()
             flash(f"Order {order.order_id} delivered successfully", "success")
         else:
@@ -990,16 +990,24 @@ def delivery_dashboard():
     )
 
     # ---------- STATS ----------
+    all_orders = Order.query.filter_by(delivery_person_id=dp_id).all()
+
+    # Calculate COD and Online totals safely using final_total
+    cod_total = sum(
+        (o.final_total or 0) for o in all_orders
+        if o.payment_type and o.payment_type.strip().lower() == "cod"
+    )
+    online_total = sum(
+        (o.final_total or 0) for o in all_orders
+        if o.payment_type and o.payment_type.strip().lower() == "online"
+    )
+
     stats = {
-        "total": Order.query.filter_by(delivery_person_id=dp_id).count(),
-        "active": Order.query.filter(
-            Order.delivery_person_id == dp_id,
-            Order.status.in_(["Out for Delivery", "Started"])
-        ).count(),
-        "delivered": Order.query.filter_by(
-            delivery_person_id=dp_id,
-            status="Delivered"
-        ).count(),
+        "total": len(all_orders),
+        "active": len([o for o in all_orders if o.status in ["Out for Delivery", "Started"]]),
+        "delivered": len([o for o in all_orders if o.status == "Delivered"]),
+        "cod_total": cod_total,
+        "online_total": online_total
     }
 
     return render_template(
@@ -1008,7 +1016,6 @@ def delivery_dashboard():
         orders=orders,
         stats=stats
     )
-
 
 @app.route("/admin/add_restaurant_user", methods=["GET", "POST"])
 def add_restaurant_user():
