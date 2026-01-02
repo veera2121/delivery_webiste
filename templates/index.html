@@ -152,18 +152,41 @@ html, body {
 .brand {
   font-size: 34px;
   font-weight: 900;
-  letter-spacing: 1px;
-  color: #ffffffa2;
+  letter-spacing: 2px;
+  color: #4b0041;
+  text-transform: uppercase;
 
   text-shadow:
-    1px 1px 0 #31a07b,
-    2px 2px 0 #31a07b,
-    3px 3px 0 #31a07b,
-    4px 4px 6px rgba(0,0,0,0.3);
+    0 1px 0 #38b18b,
+    0 2px 0 #35a983,
+    0 3px 0 #309c78,
+    0 4px 0 #2a8f6f,
+    0 5px 0 #247f63,
+    0 6px 0 #1f7057,
+    0 7px 10px rgba(0,0,0,0.45);
 
-  text-transform: uppercase;
-  transition: transform 0.3s ease, text-shadow 0.3s ease;
+  transform: perspective(600px) rotateX(8deg);
+  transform-origin: center;
+
+  transition: transform 0.35s ease, text-shadow 0.35s ease;
 }
+
+
+  
+
+
+/* Hover pop */
+.brand:hover {
+  transform: perspective(600px) rotateX(0deg) translateY(-2px);
+
+  text-shadow:
+    0 2px 0 #38b18b,
+    0 4px 0 #35a983,
+    0 6px 0 #309c78,
+    0 8px 0 #2a8f6f,
+    0 10px 15px rgba(0,0,0,0.6);
+}
+
 
 
 .app-header .container {
@@ -322,11 +345,10 @@ html, body {
     background-repeat: no-repeat;
     }
 
-
-    .header-right {
+ .header-right {
         display: flex;
         align-items: center;
-        gap: 17px;
+        gap: 17px; 
     }
 
     /* Hide links except Login & Location */
@@ -367,6 +389,22 @@ html, body {
     .container {
         padding: 12px;
     }
+}
+@media (max-width: 768px) {
+  .brand {
+    font-size: 26px;
+
+    /* Reset 3D to avoid misalignment */
+    transform: none;
+
+    /* Center properly */
+    display: inline-block;
+    position: relative;
+    top: 20px;
+    left: 0;
+
+    
+  }
 }
 
 
@@ -1017,14 +1055,18 @@ body {
     background: #777;
     cursor: not-allowed;
 }
-
+.logo {
+  width: 42px;
+  height: 42px;
+}
     </style>
 
   
 <header class="app-header">
   <div class="container">
     <!-- LEFT -->
-    <div class="header-left">
+    <div class="header-left"> 
+         
       <span class="brand">RuchiGo</span>
     </div>
 
