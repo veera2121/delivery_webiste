@@ -1,54 +1,72 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
-from models import Customer, OTP, db
+from models import Customer, db  # OTP removed from import
 import secrets
-
-# Dummy SMS sender (for now just prints)
-def send_sms(mobile, message):
-    print(f"SMS to {mobile}: {message}")
-
-users_bp = Blueprint("users", __name__, template_folder="templates")
-
-# Helper to generate OTP
-def generate_otp():
-    return str(secrets.randbelow(900000) + 100000)  # 6-digit
-# ---------------- LOGIN / SIGNUP ----------------
-from flask import Blueprint, render_template, request, session, flash, redirect, url_for
-
 
 users_bp = Blueprint("users", __name__, template_folder="../../templates")
 
+
+# ---------------- LOGIN / SIGNUP (NON-OTP) ----------------
 @users_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         mobile = request.form.get("mobile", "").strip()
+        name = request.form.get("name", "").strip()
+        is_new_user = request.form.get("is_new_user") == "1"
 
         # Validate input
         if not mobile.isdigit() or len(mobile) != 10:
             flash("Please enter a valid 10-digit mobile number")
             return redirect(url_for("users.login"))
 
-        # Convert to E.164 format for India
-        mobile_e164 = "+91" + mobile
-        session["mobile"] = mobile_e164
-
-        try:
-            # Send OTP using Twilio Verify
-            verification = twilio_client.verify \
-                .services(TWILIO_VERIFY_SID) \
-                .verifications \
-                .create(to=mobile_e164, channel="sms")
-
-            flash("OTP sent to your mobile")
-            return redirect(url_for("users.verify_otp"))
-
-        except Exception as e:
-            flash(f"Failed to send OTP: {str(e)}")
+        if not name:
+            flash("Please enter your name")
             return redirect(url_for("users.login"))
+
+        mobile_e164 = "+91" + mobile
+
+        # Check if user exists
+        customer = Customer.query.filter_by(mobile=mobile_e164).first()
+
+        if is_new_user:
+            if customer:
+                flash("User already exists. Please login.")
+                return redirect(url_for("users.login"))
+
+            # Create new user
+            customer = Customer(mobile=mobile_e164, name=name)
+            db.session.add(customer)
+            db.session.commit()
+            flash("Account created successfully!")
+        else:
+            if not customer:
+                flash("User not found. Please sign up.")
+                return redirect(url_for("users.login"))
+
+        # Set session
+        session["customer_id"] = customer.id
+        flash(f"Welcome {customer.name}!")
+        return redirect(url_for("profile"))
 
     return render_template("login.html")
 
+
+# ============================================================
+# FUTURE OTP ROUTES (COMMENTED)
+# If you remove OTP completely, these can be deleted
+# ============================================================
+
+"""
+# Helper to generate OTP
+def generate_otp():
+    return str(secrets.randbelow(900000) + 100000)  # 6-digit
+
+# Dummy SMS sender
+def send_sms(mobile, message):
+    print(f"SMS to {mobile}: {message}")
+
+# Twilio OTP Login (currently unused)
 from twilio.base.exceptions import TwilioRestException
 
 @users_bp.route("/verify-otp", methods=["GET", "POST"])
@@ -73,7 +91,6 @@ def verify_otp():
         return redirect(url_for("users.verify_otp"))
 
     if verification_check.status == "approved":
-        # Twilio verified successfully — log in user
         customer = Customer.query.filter_by(mobile=mobile).first()
         if not customer:
             customer = Customer(mobile=mobile)
@@ -89,23 +106,19 @@ def verify_otp():
         flash("Invalid OTP. Try again!")
         return redirect(url_for("users.verify_otp"))
 
-# ---------------- RESEND OTP ----------------
+
 @users_bp.route("/send-otp", methods=["POST"])
 def resend_otp():
     mobile = request.form.get("mobile", "").strip()
 
-    # Validate input
     if not mobile.isdigit() or len(mobile) != 10:
         return jsonify({"error": "Invalid mobile number"}), 400
 
-    # Convert to E.164 format (for future Twilio)
     mobile_e164 = "+91" + mobile
 
-    # Delete previous OTPs
     OTP.query.filter_by(mobile=mobile_e164, purpose="login").delete()
     db.session.commit()
 
-    # Generate new OTP
     otp = generate_otp()
     otp_row = OTP(
         mobile=mobile_e164,
@@ -117,8 +130,7 @@ def resend_otp():
     db.session.add(otp_row)
     db.session.commit()
 
-    # Send SMS (dummy for now)
     send_sms(mobile_e164, f"Your OTP is {otp}")
 
-    # For testing, return OTP (remove in production)
     return jsonify({"status": "OTP resent", "otp": otp})
+"""

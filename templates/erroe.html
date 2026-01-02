@@ -2988,3 +2988,125 @@ if __name__ == "__main__":
 </td>
 
 
+<div class="restaurant-row">
+{% for r in restaurants %}
+
+    {# 🔹 OPEN STATUS #}
+    
+    {% set is_open = (
+        r.opening_time and r.closing_time and
+        r.opening_time <= now <= r.closing_time
+    ) %}
+
+       
+
+    <div class="card
+        {% if not r.deliverable or not is_open %} disabled {% endif %}"
+        {% if r.deliverable and is_open %}
+            onclick="window.location.href='/menu/{{ r.id }}'"
+        {% endif %}
+    >
+
+        {# 🚫 NOT DELIVERABLE #}
+        {% if not r.deliverable %}
+            <div class="info-box not-deliverable">
+                🚫 Not delivering to your location
+            </div>
+        {% endif %}
+          
+        {# ⏰ STATUS MESSAGE #}
+        {% if not r.opening_time or not r.closing_time %}
+            <div class="info-box closed-box">
+                ❌ Closed — Timing not updated
+            </div>
+
+        {% elif now < r.opening_time %}
+            <div class="info-box closed-box">
+                ⏳ Opens today at {{ r.opening_time.strftime("%I:%M %p") }}
+
+            </div>
+
+        {% elif now > r.closing_time %}
+            <div class="info-box closed-box">
+                🌙 Closed for today — Opens tomorrow at {{ r.opening_str }}
+            </div>
+
+        {% endif %}
+             
+        {# 🔥 OFFER #}
+        {% if r.active_offer and r.deliverable and is_open %}
+            <div class="info-box offer-box">
+                🔥 {{ r.active_offer.title }} — {{ r.active_offer.description }}
+            </div>
+        {% endif %}
+
+        <img src="https://source.unsplash.com/600x400/?restaurant,food,{{ r.name }}" alt="Restaurant">
+
+        <div class="content">
+            <div class="restaurant-name">{{ r.name }}</div>
+
+            {% if r.is_veg %}
+                <div class="veg-badge">Veg</div>
+            {% else %}
+                <div class="nonveg-badge">Non-Veg</div>
+            {% endif %}
+
+            <div class="details">
+                <div class="rating">{{ r.rating }} ⭐</div>
+                <div class="price">{{ r.price_level }}</div>
+                <div class="time">{{ r.delivery_time }}</div>
+            </div>
+
+            <div class="popular">🍽️ {{ r.popular_items }}</div>
+
+            {% if r.free_delivery_limit > 0 %}
+                <div class="free-delivery">
+                    🚚 Free Delivery on ₹{{ r.free_delivery_limit }}+
+                </div>
+            {% else %}
+                <div class="delivery-charge">
+                    🚚 Delivery ₹{{ r.delivery_charge }}
+                </div>
+            {% endif %}
+
+            <div class="open-close">
+                🕒
+                {% if r.opening_time and r.closing_time %}
+                    {{ r.opening_time.strftime("%I:%M %p") }}
+                    -
+                    {{ r.closing_time.strftime("%I:%M %p") }}
+                {% else %}
+                    Timing not available
+                {% endif %}
+            </div>
+
+
+            {# ✅ BUTTON #}
+            {% if r.deliverable and is_open %}
+                <a href="/menu/{{ r.id }}" class="view-btn">View Menu</a>
+            {% else %}
+                <span class="view-btn disabled-btn">Not Available</span>
+            {% endif %}
+        </div>
+
+    </div>
+
+
+{% endfor %}
+</div>
+{% if trending_items %}
+<section class="trending-section">
+    <h2>🔥 Trending Near You</h2>
+
+    <div class="trending-grid">
+        {% for item in trending_items %}
+        <div class="food-card">
+            <span class="badge">🔥 Trending</span>
+            <h4>{{ item.name }}</h4>
+            <p>₹{{ item.price }}</p>
+            <small>From {{ item.restaurant.name }}</small>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}

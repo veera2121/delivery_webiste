@@ -1,241 +1,148 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login / Sign Up</title>
-
-<style>
-
-
-/* Container for vertical centering */
-.auth-wrapper {
-  min-height: 100vh;      /* Full viewport height */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 10px;          /* Small padding on mobile */
-  background: linear-gradient(135deg, #ff7a18, #ffb347); /* Optional gradient */
-}
-
-
-
-/* Main card */
-.main {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  background-color: #240046;
-  max-height: 90vh;      /* limit height to viewport */
-  width: 100%;
-  max-width: 380px;      /* keep form responsive */
-  overflow-y: auto;      /* allow vertical scrolling */
-  border-radius: 12px;
-  box-shadow: 7px 7px 10px 3px #24004628;
-  padding-bottom: 20px;  /* optional padding for scroll comfort */
-}
-
-/* Optional: smooth scrolling on mobile */
-.main::-webkit-scrollbar {
-  width: 6px;
-}
-
-.main::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
-}
-
-
-
-/* Shared form */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 24px; 
-
-}
-
-/* Hide checkbox */
-#chk {
-  display: none;
-}
-
-/* Login section */
-.login {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.login label {
-  margin: 25% 0 5%;
-}
-
-/* Labels */
-label {
-  color: #fff;
-  font-size: 2rem;
-  justify-content: center;
-  display: flex;
-  font-weight: bold;
-  cursor: pointer;
-  transition: .5s ease-in-out;
-}
-
-/* Inputs */
-.input {
-  width: 100%;
-  height: 40px;
-  background: #e0dede;
-  padding: 10px;
-  border: none;
-  outline: none;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-/* Register section */
-.register {
-  background: #eee;
-  border-radius: 60% / 10%;
-  transform: translateY(5%);
-  transition: .8s ease-in-out;
-}
-
-
-
-/* Button */
-.form button {
-  width: 85%;
-  height: 40px;
-  margin: 12px auto 10%;
-  color: #fff;
-  background: #573b8a;
-  font-size: 1rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: .2s ease-in;
-}
-
-.form button:hover {
-  background-color: #6d44b8;
-}
-
-/* Flash messages */
-.flash {
-  text-align: center;
-  color: #000000;
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-/* Responsive adjustments */
-@media(max-width: 480px) {
-  .main {
-    max-width: 95%;
-    max-height: 480px;  /* Ensure mobile fits screen */
-  }
-
-  .form button {
-    width: 95%;
-  }
-
-  label {
-    font-size: 1.6rem;
-  }
-
-  .input {
-    height: 35px;
-    font-size: 13px;
-  }
-}
-/* REGISTER section */
-.register {
-  background: #eee;
-  border-radius: 60% / 10%;
-  transform: translateY(5%);  /* default position */
-  transition: transform .8s ease-in-out;
-}
-
-.register label {
-  color: #573b8a;
-  transform: scale(.6);
-}
-
-/* LOGIN section */
-.login {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transition: transform .8s ease-in-out;
-  transform: translateY(0);  /* default position */
-}
-
-/* Checkbox checked → show REGISTER form */
-#chk:checked ~ .register {
-  transform: translateY(-60%);
-}
-
-#chk:checked ~ .register label {
-  transform: scale(1);
-  margin: 10% 0 5%;
-}
-
-/* Animate LOGIN form down when REGISTER is active */
-#chk:checked ~ .login {
-  transform: translateY(60%);
-}
-
-#chk:checked ~ .login label {
-  transform: scale(.6);
-  margin: 5% 0 5%;
-}
-
-</style>
-</head>
-  {% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Login / Sign Up{% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-  <div class="main">
-    <input type="checkbox" id="chk" aria-hidden="true">
+<div class="form_main">
+  <div class="heading">Welcome</div>
+  <div class="sub">Login or Sign Up with your Mobile</div>
 
-    <!-- LOGIN -->
-    <div class="login">
-      <form class="form" method="POST" action="{{ url_for('users.login') }}">
-        <label for="chk">Login</label>
-
-        <input class="input" type="text" name="mobile" placeholder="Mobile Number" required>
-        <input type="hidden" name="is_new_user" value="0">
-
-        <button type="submit">Send OTP</button> 
-
-        {% for msg in get_flashed_messages() %}
-          <div class="flash">{{ msg }}</div>
-        {% endfor %}
-      </form>
+  <!-- ================= LOGIN ================= -->
+  <form method="POST" action="{{ url_for('users.login') }}">
+    <div class="inputContainer">
+      <input class="inputField" type="text" name="mobile" placeholder="Mobile Number" required>
     </div>
-
-    <!-- REGISTER -->
-    <div class="register">
-      <form class="form" method="POST" action="{{ url_for('users.login') }}">
-        <label for="chk">Sign Up</label>
-
-        <input class="input" type="text" name="mobile" placeholder="Mobile Number" required>
-        <input class="input" type="text" name="name" placeholder="Full Name" required>
-        <input class="input" type="email" name="email" placeholder="Email Address" required>
-        <input type="hidden" name="is_new_user" value="1">
-
-        <button type="submit">Create Account</button>
-      </form>
+    <div class="inputContainer">
+      <input class="inputField" type="text" name="name" placeholder="Your Name" required>
     </div>
-  </div>
+    <!-- Hidden field to indicate login -->
+    <input type="hidden" name="is_new_user" value="0">
+    <button id="button" type="submit">Login</button>
+  </form>
+
+  <div class="sub">Or Sign Up</div>
+
+  <!-- ================= SIGNUP ================= -->
+  <form method="POST" action="{{ url_for('users.login') }}">
+    <div class="inputContainer">
+      <input class="inputField" type="text" name="mobile" placeholder="Mobile Number" required>
+    </div>
+    <div class="inputContainer">
+      <input class="inputField" type="text" name="name" placeholder="Full Name" required>
+    </div>
+    <div class="inputContainer">
+      <input class="inputField" type="email" name="email" placeholder="Email Address (optional)">
+    </div>
+    <!-- Hidden field to indicate signup -->
+    <input type="hidden" name="is_new_user" value="1">
+    <button id="button" type="submit">Create Account</button>
+  </form>
+
+  <!-- ================= FLASH MESSAGES ================= -->
+  {% for msg in get_flashed_messages() %}
+    <div class="flash">{{ msg }}</div>
+  {% endfor %}
+
+  <!-- ================= COMMENTED OUT OTP ELEMENTS ================= -->
+  {# 
+  <div class="sub">OTP sent to {{ mobile }}</div>
+  <form method="POST" action="{{ url_for('users.verify_otp') }}">
+      <input type="text" name="otp" placeholder="Enter OTP" required>
+      <button type="submit">VERIFY</button>
+  </form>
+  <div class="timer">Resend OTP in <span id="time">30</span>s</div>
+  <form id="resendForm" method="POST" action="{{ url_for('users.resend_otp') }}">
+      <input type="hidden" name="mobile" value="{{ mobile }}">
+      <button id="resendBtn" disabled>Resend OTP</button>
+  </form>
+  <script>
+      // OTP timer and resend JS removed
+  </script>
+  #}
 </div>
+
+<style>
+/* ===== PAGE CENTER ===== */
+body {
+  margin: 0;
+  height: 100vh;
+  background: #f4f6f8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: Arial, sans-serif;
+}
+
+/* ===== FORM STYLING ===== */
+.form_main {
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #fff;
+  padding: 30px;
+  box-shadow: 0 0 40px rgba(0,0,0,.06);
+  border-radius: 12px;
+  position: relative;
+}
+
+.heading {
+  font-size: 1.6em;
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+
+.sub {
+  font-size: .85em;
+  font-weight: 700;
+  color: #000000;
+  margin: 10px 0;
+}
+
+.inputContainer {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.inputField {
+  width: 100%;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #aaa;
+  font-size: .9em;
+  padding-left: 8px;
+}
+
+.inputField:focus {
+  outline: none;
+  border-bottom: 2px solid rgb(162, 104, 255);
+}
+
+#button {
+  width: 100%;
+  border: none;
+  background-color: rgb(162, 104, 255);
+  height: 36px;
+  color: #fff;
+  font-size: .85em;
+  letter-spacing: 1px;
+  margin-top: 10px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+#button:hover {
+  background-color: rgb(126, 84, 255);
+}
+
+.flash {
+  margin-top: 8px;
+  font-size: .75em;
+  color: red;
+  font-weight: 900;
+  text-align: center;
+}
+</style>
+
 {% endblock %}
