@@ -2311,6 +2311,22 @@ def notify_all():
 
     return jsonify({"success": True}), 200
 
+from push import send_push, subscriptions
+
+@app.route("/notify_all", methods=["POST"])
+def notify_all():
+    data = request.get_json()
+
+    title = data.get("title", "New Order")
+    body = data.get("body", "Order assigned to you")
+    url = data.get("url", "/delivery/dashboard")
+
+    print("📢 Sending push to", len(subscriptions), "subscribers")
+
+    for sub in subscriptions:
+        send_push(sub, title=title, body=body, url=url)
+
+    return jsonify({"success": True})
 
 # ------------------ DB INIT ------------------
 
