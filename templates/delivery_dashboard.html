@@ -2,8 +2,11 @@
 
 {# 🚫 Disable bottom navigation on this page #}
 {% block bottom_nav %}{% endblock %}
+{% block title %}Menu{% endblock %}
+{% block install_button %}{% endblock %}
 
 {% block content %}
+<link rel="manifest" href="/static/manifest-delivery.json">
 
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -452,6 +455,7 @@ select:focus {
   <button onclick="clearFilters()">Clear</button>
 </div>
 
+<button id="installApp" class="install-fab">📲 Install Delivery App</button>
 
  
 <table>

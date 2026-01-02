@@ -4,10 +4,13 @@
 
 {# 🚫 Disable bottom navigation on this page #}
 {% block bottom_nav %}{% endblock %}
-
+{% block title %}Menu{% endblock %}
+{% block install_button %}{% endblock %}
 {% block content %}
 
 
+<link rel="manifest" href="/static/manifest-restaurant.json">
+<button id="installApp" class="install-fab">📲 Install Restaurant App</button>
 
 <style>
 /* ===== GLOBAL STYLES ===== */
