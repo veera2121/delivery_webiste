@@ -24,16 +24,25 @@
   <style>
 
     /* ===== FIXED BOTTOM NAV ===== */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+    /* ===== FIXED BOTTOM NAV ===== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
 
-      width: 100%;
-      height: 47px;
-      z-index: 99999;
-    }
+  width: 100%;
+  height: 47px;
+  z-index: 99999;
+
+  transition: transform 0.3s ease;
+}
+
+/* HIDDEN STATE */
+.bottom-nav.hide {
+  transform: translateY(100%);
+}
+
 
     /* ===== FULL WIDTH BAR ===== */
     .button-container {
@@ -886,6 +895,25 @@ function goToHome() {
 }
 </script>
 
+<script>
+let lastScrollY = window.scrollY;
+const bottomNav = document.querySelector(".bottom-nav");
+
+window.addEventListener("scroll", () => {
+  const currentScrollY = window.scrollY;
+
+  // Scroll down → hide
+  if (currentScrollY > lastScrollY && currentScrollY > 60) {
+    bottomNav.classList.add("hide");
+  }
+  // Scroll up → show
+  else {
+    bottomNav.classList.remove("hide");
+  }
+
+  lastScrollY = currentScrollY;
+});
+</script>
 
 
 <!-- Empty Cart Modal -->
