@@ -1,50 +1,46 @@
+# ================= GEVENT =================
 from gevent import monkey
 monkey.patch_all()
 
-
+# ================= STANDARD =================
 import os
 import math
 import secrets
 import uuid
 import pandas as pd
-
 from datetime import datetime, timedelta
-import os
 
-from flask import Flask, render_template,send_from_directory, request, redirect, url_for, session, jsonify, flash
-from flask_sqlalchemy import SQLAlchemy 
+# ================= FLASK =================
+from flask import (
+    Flask, render_template, send_from_directory,
+    request, redirect, url_for, session, jsonify, flash
+)
+
+# ================= EXTENSIONS =================
 from flask_socketio import SocketIO, emit, join_room
-
 from flask_wtf import CSRFProtect
 from flask_migrate import Migrate
 from sqlalchemy import or_, case
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash, check_password_hash
-from push import send_push
+# app.py
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from push import VAPID_PUBLIC_KEY, register_subscription, send_push, subscriptions
 
+# ================= LOCAL IMPORTS =================
+from push import send_push
 from users.routes import users_bp
 from models import (
     db, Restaurant, RestaurantUser, MenuItem, Order,
     OrderItem, DeliveryPerson, FoodItem, OTP,
     CouponUsage, RestaurantOffer, Customer
 )
-# ------------------ APP ------------------
+
+# ================= APP =================
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "my-super-secret-key-123"
 
-socketio = SocketIO(
-    app,
-    cors_allowed_origins="*",
-    ping_interval=25,
-    ping_timeout=60
-)
-
-
-
-
-# ------------------ DATABASE (RAILWAY POSTGRES) ------------------
-import os
-
+# ================= DATABASE =================
 db_url = os.getenv("DATABASE_URL")
 
 if db_url:
@@ -62,19 +58,23 @@ else:
     )
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["WTF_CSRF_ENABLED"] = False  # enable later safely
 
-app.config["WTF_CSRF_ENABLED"] = False
-
-
-
-
-# ------------------ INIT EXTENSIONS ------------------
+# ================= INIT EXTENSIONS =================
 db.init_app(app)
 csrf = CSRFProtect(app)
 migrate = Migrate(app, db)
 
-# ------------------ BLUEPRINTS ------------------
+socketio = SocketIO(
+    app,
+    cors_allowed_origins="*",
+    ping_interval=25,
+    ping_timeout=60
+)
+
+# ================= BLUEPRINTS =================
 app.register_blueprint(users_bp, url_prefix="/users")
+
 socketio = SocketIO(app, cors_allowed_origins="*")
 # ------------------ UTILS ------------------
 def generate_otp():
@@ -936,8 +936,10 @@ def delivery_login():
 
     # ✅ GET request MUST return something
     return render_template("delivery_login.html")
+
 @app.route("/delivery/dashboard", methods=["GET", "POST"])
 def delivery_dashboard():
+    # -------------------- AUTH CHECK --------------------
     if not session.get("delivery_logged_in"):
         return redirect(url_for("delivery_login"))
 
@@ -946,7 +948,7 @@ def delivery_dashboard():
     if not delivery_person:
         return redirect(url_for("delivery_login"))
 
-    # ---------- SUBMIT OTP ----------
+    # -------------------- SUBMIT OTP --------------------
     if request.method == "POST":
         order_id = request.form.get("order_id")
         entered_otp = request.form.get("otp")
@@ -970,9 +972,7 @@ def delivery_dashboard():
 
         return redirect(url_for("delivery_dashboard"))
 
-    # ---------- ACTIVE ORDERS ----------
-    from sqlalchemy import case
-
+    # -------------------- ACTIVE ORDERS --------------------
     orders = (
         Order.query.filter(
             Order.delivery_person_id == dp_id,
@@ -989,7 +989,7 @@ def delivery_dashboard():
         .all()
     )
 
-    # ---------- STATS ----------
+    # -------------------- STATS --------------------
     all_orders = Order.query.filter_by(delivery_person_id=dp_id).all()
 
     # Calculate COD and Online totals safely using final_total
@@ -1010,13 +1010,14 @@ def delivery_dashboard():
         "online_total": online_total
     }
 
+    # -------------------- RENDER TEMPLATE --------------------
     return render_template(
         "delivery_dashboard.html",
         delivery_person=delivery_person,
         orders=orders,
-        stats=stats
+        stats=stats,
+        VAPID_PUBLIC_KEY=VAPID_PUBLIC_KEY  # <-- Pass key to template
     )
-
 @app.route("/admin/add_restaurant_user", methods=["GET", "POST"])
 def add_restaurant_user():
     if not session.get("admin_logged_in"):
@@ -1161,6 +1162,8 @@ def menu(restaurant_id):
 
     except Exception as e:
         return f"Error loading menu: {e}"
+
+
 @app.route("/restaurant/assign_delivery/<int:order_id>", methods=["POST"])
 def restaurant_assign_delivery(order_id):
     if not session.get("restaurant_logged_in"):
@@ -2285,6 +2288,28 @@ def api_order_status(order_id):
         return jsonify({"error": "Order not found"}), 404
 
     return jsonify({"status": order.status})
+from flask import Flask, request, jsonify
+
+
+# Register subscription endpoint
+@app.route("/subscribe", methods=["POST"])
+def subscribe():
+    subscription = request.get_json()
+    register_subscription(subscription)
+    return jsonify({"success": True}), 201
+
+# Send push to all subscribers
+@app.route("/notify_all", methods=["POST"])
+def notify_all():
+    data = request.get_json()
+    title = data.get("title", "New Order")
+    body = data.get("body", "You have a new order.")
+    url = data.get("url", "/delivery/dashboard")
+
+    for sub in subscriptions:
+        send_push(sub, title=title, body=body, url=url)
+
+    return jsonify({"success": True}), 200
 
 
 # ------------------ DB INIT ------------------
