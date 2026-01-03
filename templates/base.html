@@ -25,6 +25,31 @@
 html {
   scroll-behavior: smooth;
 }
+         body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+
+    /* Background behind glass */
+    background: linear-gradient(90deg, #02d3c8,#ffffffde);
+    min-height: 100vh;
+}
+
+/* Glass container */
+.glass {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    margin: auto;
+    margin-top: 50px;
+}
 
     /* ===== FIXED BOTTOM NAV ===== */
     /* ===== FIXED BOTTOM NAV ===== */
@@ -261,7 +286,7 @@ html {
         display: none;
         padding: 10px 12px;
         
-        border-bottom: 1px solid #ddd;
+        
     }
 
     .search-box.active {
@@ -273,14 +298,14 @@ html {
     .mobile-search {
         display: none;
         position: fixed;
-        top: 99px; /* header height */
+        top: 20px; /* header height */
         left: 0;
         right: 0;
         z-index: 10000;
 
-        background: #fff;
+       
         padding: 10px 12px;
-        border-bottom: 1px solid #ddd;
+        
     }
 
     .mobile-search.active {
