@@ -324,6 +324,7 @@ form button:hover {
 <div class="container">
 
 <h1>Track Your Orders</h1> 
+
 <div class="sticky-nav">
     <a href="javascript:history.back()" class="btn">⬅ Back</a>
     <a href="{{ url_for('home') }}" class="btn">🏠 Home</a>
@@ -339,27 +340,31 @@ form button:hover {
   <button type="submit">Search</button>
 </form>
 
-{% if orders %}
-  {% for order in orders %}
+<!-- =========================
+     ONGOING ORDERS
+========================= -->
+<h2>🕒 Ongoing Orders</h2>
+
+{% if active_orders %}
+  {% for order in active_orders %}
   <div class="order-card">
 
-   <div class="order-header">
-  <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
-  <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
-</div>
-
+    <div class="order-header">
+      <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
+      <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
+    </div>
 
     <p><strong>Customer:</strong> {{ order.customer_name }}</p>
     <p><strong>Phone:</strong> {{ order.phone }} | <strong>Email:</strong> {{ order.email }}</p>
+
     <div id="orderStatus"
-     class="status-badge status-{{ order.status | replace(' ', '-') }}">
-  {{ order.status }}
-</div>
+         class="status-badge status-{{ order.status | replace(' ', '-') }}">
+      {{ order.status }}
+    </div>
 
+    <p><strong>Order Placed:</strong>
+       {{ order.created_at.strftime('%d-%m-%Y %I:%M %p') }}</p>
 
-    <p><strong>Order Placed:</strong> {{ order.created_at.strftime('%d-%m-%Y %I:%M %p') }}</p>
-
-    <!-- DELIVERY ADDRESS -->
     <div class="info-box address-box">
       <strong>Delivery Address</strong><br>
       {{ order.house_no }},
@@ -372,10 +377,6 @@ form button:hover {
       <p><strong>Expected Delivery:</strong> {{ order.estimated_time }}</p>
     {% endif %}
 
-    {% if order.status == "Delivered" and order.delivered_time %}
-      <p><strong>Delivered At:</strong> {{ order.delivered_time.strftime('%d-%m-%Y %I:%M %p') }}</p>
-    {% endif %}
-
     <h4>Items Ordered</h4>
     <ul class="item-list">
       {% for item in order.items %}
@@ -383,83 +384,76 @@ form button:hover {
       {% endfor %}
     </ul>
 
-            <!-- total calculation -->
-            <p><strong>Items Total:</strong> ₹{{ order.items_total or 0 }}</p>
+    <p><strong>Items Total:</strong> ₹{{ order.items_total or 0 }}</p>
+    <p><strong>Delivery Charge:</strong> ₹{{ order.delivery_charge or 0 }}</p>
 
-            <p><strong>Delivery Charge:</strong> ₹{{ order.delivery_charge or 0 }}</p>
+    {% if order.restaurant_offer_discount %}
+      <p class="discount">
+        <strong>Restaurant Offer Discount:</strong>
+        - ₹{{ order.restaurant_offer_discount }}
+      </p>
+    {% endif %}
 
-            {% if order.restaurant_offer_discount and order.restaurant_offer_discount > 0 %}
-              <p class="discount">
-                <strong>Restaurant Offer Discount:</strong>
-                - ₹{{ order.restaurant_offer_discount }}
-              </p>
-            {% endif %}
+    {% if order.discount %}
+      <p class="discount">
+        <strong>Coupon Discount:</strong>
+        - ₹{{ order.discount }}
+      </p>
+    {% endif %}
 
-            {% if order.discount and order.discount > 0 %}
-              <p class="discount">
-                <strong>Coupon Discount:</strong>
-                - ₹{{ order.discount }}
-              </p>
-            {% endif %}
+    <hr>
 
-            {% set total_discount = (order.restaurant_offer_discount or 0) + (order.discount or 0) %}
-            <p>
-              <strong>Total Discount:</strong>
-              - ₹{{ total_discount }}
-            </p>
+    <p class="final-amount">
+      <strong>Final Total:</strong> ₹{{ order.final_total or 0 }}
+    </p>
 
-            <hr>
-
-            <p class="final-amount">
-              <strong>Final Total:</strong>
-              ₹{{ order.final_total or 0 }}
-            </p>
-
-
-
-<div id="trackMap"></div>
-
-{% if order.delivery_person_id %}
-    {% if order.status != "Delivered" %}
+    {% if order.delivery_person_id %}
         <a href="{{ url_for('track_order', order_id=order.id) }}"
            class="track-btn">
             📍 Track Order
         </a>
     {% else %}
-        <span style="color:green;">✔ Delivered</span>
+        <span style="color:gray;">Waiting for delivery boy</span>
     {% endif %}
-{% else %}
-    <span style="color:gray;">Waiting for delivery boy</span>
-{% endif %}
-
-
-<!-- DELIVERY PERSON -->
-{% if order.delivery_person %}
-  <div class="info-box delivery-box">
-    <strong>Delivery Person</strong><br>
-    {{ order.delivery_person.name }}<br>
-    📞 <a href="tel:{{ order.delivery_person.phone }}">{{ order.delivery_person.phone }}</a><br>
-    {% if order.status != "Delivered" %}
-      Status: On the way
-    {% else %}
-      Status: Delivered
-    {% endif %}
-    {% if order.otp %}
-      <br><strong>Delivery OTP:</strong> {{ order.otp }}
-    {% endif %}
-  </div>
-{% else %}
-  <div class="info-box pending-box">
-    <strong>Delivery Person:</strong> Not Assigned Yet<br>
-    Your order is being prepared by the restaurant.
-  </div>
-{% endif %}
 
   </div>
   {% endfor %}
 {% else %}
-  <h2>No orders found</h2>
+  <p>No active orders</p>
 {% endif %}
+
+<hr>
+
+<!-- =========================
+     ORDER HISTORY
+========================= -->
+<h2>📜 Order History</h2>
+
+{% if history_orders %}
+  {% for order in history_orders %}
+  <div class="order-card history-card">
+
+    <div class="order-header">
+      <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
+      <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
+    </div>
+
+    <p><strong>Delivered At:</strong>
+       {{ order.delivered_time.strftime('%d-%m-%Y %I:%M %p') if order.delivered_time }}</p>
+
+    <p class="final-amount">
+      <strong>Total Paid:</strong> ₹{{ order.final_total or 0 }}
+    </p>
+
+    <span style="color:green;">✔ Delivered</span>
+
+  </div>
+  {% endfor %}
+{% else %}
+  <p>No past orders</p>
+{% endif %}
+
+</div>
 
 <script>
 (function () {

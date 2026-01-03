@@ -290,38 +290,43 @@ def get_coordinates(address):
     return None, None
 @app.route("/myorders", methods=["GET", "POST"])
 def myorders():
-    orders = []
+    phone = None
     restaurant_id = None
+
+    ACTIVE = ["Pending","Placed", "Accepted", "Preparing","Ready","Out for delivery"]
+    HISTORY = ["Delivered", "Cancelled"]
 
     if request.method == "POST":
         phone = request.form.get("phone")
-        order_id = request.form.get("order_id")
+        session["order_phone"] = phone
+    else:
+        phone = session.get("order_phone")
 
-        query = Order.query
+    active_orders = []
+    history_orders = []
 
-        if phone:
-            query = query.filter(Order.phone == phone)
-        if order_id:
-            query = query.filter(Order.order_id == order_id)
+    if phone:
+        active_orders = Order.query.filter(
+            Order.phone == phone,
+            Order.status.in_(ACTIVE)
+        ).order_by(Order.created_at.desc()).all()
 
-        orders = query.order_by(Order.created_at.desc()).all()
+        history_orders = Order.query.filter(
+            Order.phone == phone,
+            Order.status.in_(HISTORY)
+        ).order_by(Order.created_at.desc()).all()
 
-        if orders:
-            # ✅ SAVE ORDER ID FOR AUTO REFRESH
-            session["track_order_id"] = orders[0].order_id
-            restaurant_id = orders[0].restaurant.id
-        else:
-            flash("No orders found.", "warning")
+        if active_orders:
+            restaurant_id = active_orders[0].restaurant.id
+        elif history_orders:
+            restaurant_id = history_orders[0].restaurant.id
 
-    # ✅ AUTO LOAD USING SESSION (NO RE-ENTER)
-    elif session.get("track_order_id"):
-        orders = Order.query.filter(
-            Order.order_id == session["track_order_id"]
-        ).all()
-        if orders:
-            restaurant_id = orders[0].restaurant.id
-
-    return render_template("myorders.html", orders=orders, restaurant_id=restaurant_id)
+    return render_template(
+        "myorders.html",
+        active_orders=active_orders,
+        history_orders=history_orders,
+        restaurant_id=restaurant_id
+    )
 
 
 from sqlalchemy import func
