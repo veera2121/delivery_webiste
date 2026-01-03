@@ -21,11 +21,31 @@ section {
   scroll-margin-top: 80px; /* height of your fixed header */
 }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #f7daf5;
-            margin: 0;
-        }
+         body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+
+    /* Background behind glass */
+    background: linear-gradient(90deg, #4dc0d4, #750870);
+    min-height: 100vh;
+}
+
+/* Glass container */
+.glass {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    margin: auto;
+    margin-top: 50px;
+}
 
         h1 {
             text-align: center;
@@ -62,7 +82,7 @@ section {
 
     .hero {
   padding: 150px 15px;
-  background: #f8f8f8;
+
 }
 
 .hero-grid {
@@ -141,17 +161,26 @@ section {
     position: fixed;
     top: 0;
     width: 100%;
-    height: 120px;              /* 👈 header height */
+    height: 120px;
     z-index: 9999;
 
-    background-image: url("/static/images/bannerrr.svg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background: transparent;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
 
-    border-bottom: 1px solid rgba(248, 181, 222, 0.4);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
 }
+.app-header.scrolled {
+    height: 90px; /* optional shrink */
+
+    background: rgba(1, 139, 231, 0.15);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+
+    border-bottom: 1px solid rgba(39, 8, 179, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
 .brand {
   font-size: 34px;
   font-weight: 900;
@@ -210,6 +239,11 @@ section {
     left: -10px;
 }
 
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
  .header-left {
   display: flex;
@@ -336,13 +370,13 @@ section {
 ================================ */
 @media (max-width: 768px) {
     .app-header{
-        height: 100px;
+        height: 50pxx;
            position: fixed;
     top: 0;
     width: 100%;
     z-index: 9999;
 
-    background-image: url("/static/images/annerr2.svg");
+   /* background-image: url("/static/images/annerr2.svg");*/
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -403,7 +437,7 @@ section {
     /* Center properly */
     display: inline-block;
     position: relative;
-    top: 20px;
+    top: 10px;
     left: 0;
 
     
@@ -417,7 +451,8 @@ section {
 ========================= */
 .restaurants-section {
     padding: 40px 16px;
-    background: linear-gradient(180deg, #e7d6f2, #d5bee4);
+    
+
     overflow: visible;
 }
 
@@ -1017,7 +1052,7 @@ body {
     position: sticky;
     top: 60px; /* height of header */
     z-index: 99999;
-    background: #fff;
+    
     padding: 10px 12px;
     border-bottom: 1px solid #ddd;
 }
@@ -1180,59 +1215,49 @@ body {
 
 </style>
 
-  
 <header class="app-header">
   <div class="container">
+
     <!-- LEFT -->
-    <div class="header-left"> 
-        
+    <div class="header-left">
       <span class="brand">RuchiGo</span>
     </div>
 
     <!-- RIGHT -->
     <div class="header-right">
+
+      <!-- LOCATION -->
       <div class="location-box">
-    
-
-       <select id="locationFilter" onchange="changeLocation('desktop')">
-        <option value="">Select Location</option>
-        {% for loc in all_locations %}
+        <select id="locationFilter" onchange="changeLocation('desktop')">
+          <option value="">Select Location</option>
+          {% for loc in all_locations %}
             <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>
-            {{ loc }}
+              {{ loc }}
             </option>
-        {% endfor %}
+          {% endfor %}
         </select>
+      </div> <!-- ✅ CLOSED -->
 
+      <!-- SEARCH -->
+      <div class="search-box desktop-search">
+        <input type="text" id="search" placeholder="Search restaurants...">
+      </div>
 
+      <!-- LINKS -->
+      <a href="{{ url_for('myorders') }}" class="header-link">Orders</a>
 
+      <a href="javascript:void(0);" class="header-link" id="header-cart-button">
+        🛒 Cart
+        <span class="cart-count" id="header-cart-count">0</span>
+      </a>
 
- <!-- SEARCH -->
-   <div class="search-box desktop-search">
-    <input type="text" id="search" placeholder="Search restaurants...">
-</div>
+      <!-- PROFILE BUTTON -->
+      <a href="{{ url_for('profile') }}" class="header-btn">Profile</a>
 
-    <a href="{{ url_for('myorders') }}" class="header-link">Orders</a>
-     <a href="javascript:void(0);" class="header-link" id="header-cart-button">
-    🛒 Cart
-    <span class="cart-count" id="header-cart-count">0</span>
-</a>
-
-    <!-- Desktop Header -->
-<div class="desktop-header">
-    <!-- Other header content -->
-
-    <!-- Login/Profile Button -->
-    <div class="desktop-login">
-        <a href="{{ url_for('profile') }}" class="header-btn">Profile</a>
     </div>
-</div>
-
-
-   
-</div>
-
   </div>
-</header> 
+</header>
+
 
 <!-- Search Bar (Hidden by default) -->
 <!-- index.html -->
@@ -1676,7 +1701,15 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+
+</script> 
+<script>
+window.addEventListener("scroll", () => {
+    const header = document.querySelector(".app-header");
+    header.classList.toggle("scrolled", window.scrollY > 20);
+});
 </script>
+
 <script>
 const modalData = {
   about: {

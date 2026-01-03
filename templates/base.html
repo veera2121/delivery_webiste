@@ -49,15 +49,24 @@ html {
 
     /* ===== FULL WIDTH BAR ===== */
     .button-container {
-      width: 100%;
-      height: 100%;
+    width: 100%;
+    height: 100%;
 
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
 
-      background: #8a0b79;
-    }
+    /* Glass version of #8a0b79 */
+    background: rgba(138, 11, 121, 0.25); /* same color, transparent */
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+
+    box-shadow: 0 8px 30px rgba(138, 11, 121, 0.35);
+}
+
 
     /* ===== NAV BUTTON ===== */
     .nav-btn {
@@ -251,7 +260,7 @@ html {
     .search-box {
         display: none;
         padding: 10px 12px;
-        background: #fff;
+        
         border-bottom: 1px solid #ddd;
     }
 
@@ -346,7 +355,7 @@ html {
 }
 .mobile-location-wrapper {
     position: fixed;
-    top: 50px;
+    top: 30px;
     right: 9px;
     z-index: 100000;
 }
@@ -482,31 +491,51 @@ html {
 :root {
   --install-btn-bottom: 100px;   /* 🔥 CHANGE THIS VALUE ONLY */
 }
-.install-fab {                       /* ① Main floating button class */
-  display: none;                     /* ② Initially hidden; will show via JS */
-  position: fixed;                   /* ③ Fixed on screen (doesn’t scroll) */
-  right: 18px;                       /* ④ Distance from right edge of screen */
-  bottom: var(--install-btn-bottom); /* ⑤ Distance from bottom of screen (controlled via CSS variable) */
-  z-index: 9999;                     /* ⑥ Layer above most content so it’s clickable */
+.install-fab {
+  display: none;
+  position: fixed;
+  right: 18px;
+  bottom: var(--install-btn-bottom);
+  z-index: 9999;
 
-  padding: 10px 15px;                /* ⑦ Space inside the button (vertical 12px, horizontal 18px) */
-  background: linear-gradient(135deg, #096d54, #18c297); /* ⑧ Button background gradient */
-  color: #ffffff;                     /* ⑨ Text color of button (📲 Install App) */
-  border: none;                       /* ⑩ No border around button */
-  border-radius: 30px;                /* ⑪ Rounded corners (pill-shaped) */
+  padding: 10px 15px;
 
-  font-size: 15px;                    /* ⑫ Font size of text */
-  font-weight: 900;                   /* ⑬ Font weight (boldness) */
-  cursor: pointer;                    /* ⑭ Cursor changes to pointer on hover */
+  /* GLASS BACKGROUND */
+  background: linear-gradient(
+      135deg,
+      rgba(9, 109, 84, 0.35),
+      rgba(24, 194, 151, 0.35)
+  );
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 
-  box-shadow: 0 10px 25px rgba(0,0,0,0.25); /* ⑮ Shadow under button */
-  transition: transform 0.2s ease, box-shadow 0.2s ease; /* ⑯ Smooth hover animation */
+  color: #ffffff;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.install-fab:hover {                  /* ⑰ Hover effect */
-  transform: translateY(-2px);        /* ⑱ Slight lift when hovered */
-  box-shadow: 0 14px 30px rgba(0,0,0,0.35); /* ⑲ Slightly larger shadow on hover */
+
+.install-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.3);
+  background: linear-gradient(
+      135deg,
+      rgba(9, 109, 84, 0.45),
+      rgba(24, 194, 151, 0.45)
+  );
 }
+
+.install-fab:active {
+  transform: scale(0.95);
+}
+
 
 /* Mobile tuning */
 @media (max-width: 768px) {          /* ⑳ Applies only to mobile devices */
