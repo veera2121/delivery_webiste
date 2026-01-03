@@ -26,7 +26,7 @@ section {
     margin: 0;
 
     /* Background behind glass */
-    background: linear-gradient(90deg, #4dc0d4, #750870);
+    background: linear-gradient(90deg, #02d3c8,#ffffffde);
     min-height: 100vh;
 }
 
@@ -159,25 +159,38 @@ section {
 ================================ */
 .app-header {
     position: fixed;
-    top: 0;
-    width: 100%;
+    top: 12px;                 /* space from top */
+    left: 12px;
+    right: 12px;               /* creates box width */
     height: 120px;
+
     z-index: 9999;
 
-    background: transparent;
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
+    /* BOX MODEL */
+    padding: 16px 24px;
+    box-sizing: border-box;
+
+    /* GLASS */
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
 
     transition: all 0.3s ease;
 }
+
 .app-header.scrolled {
-    height: 90px; /* optional shrink */
+    height: 120px; /* optional shrink */
 
     background: rgba(1, 139, 231, 0.15);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
 
-    border-bottom: 1px solid rgba(39, 8, 179, 0.4);
+    border-bottom: 1px solid rgba(173, 8, 179, 0.4);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
@@ -185,23 +198,38 @@ section {
   font-size: 34px;
   font-weight: 900;
   letter-spacing: 2px;
-  color: #4b0041;
-  text-transform: uppercase;
-
-  text-shadow:
-    0 1px 0 #38b18b,
-    0 2px 0 #35a983,
-    0 3px 0 #309c78,
-    0 4px 0 #2a8f6f,
-    0 5px 0 #247f63,
-    0 6px 0 #1f7057,
-    0 7px 10px rgba(0,0,0,0.45);
+  text-transform: none;
 
   transform: perspective(600px) rotateX(8deg);
   transform-origin: center;
 
-  transition: transform 0.35s ease, text-shadow 0.35s ease;
+  transition: transform 0.35s ease;
 }
+.brand-blue {
+  color: #1f4fd8; /* Royal Blue */
+
+  text-shadow:
+    0 1px 0 #000000,
+    0 2px 0 #000000,
+    0 3px 0 #000000,
+    0 4px 0 #000000,
+    0 5px 10px rgba(0,0,0,0.45);
+
+  transition: text-shadow 0.35s ease;
+}
+.brand-green {
+  color: #0f5f3f; /* Dark Green */
+
+  text-shadow:
+    0 1px 0 #000000,
+    0 2px 0 #000000,
+    0 3px 0 #000000,
+    0 4px 0 #000000,
+    0 5px 10px rgba(0,0,0,0.45);
+
+  transition: text-shadow 0.35s ease;
+}
+
 
 
   
@@ -253,12 +281,14 @@ section {
 
 
 
-.brand {
-  font-size: 20px;
-  font-weight: 700;
-  color: #8a0b79;
-  line-height: 1;
+
+/* Logo styling */
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
 }
+
 
 
 /* HEADER LINKS */
@@ -369,18 +399,53 @@ section {
    MOBILE RESPONSIVE
 ================================ */
 @media (max-width: 768px) {
-    .app-header{
-        height: 50pxx;
-           position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 9999;
+    .app-header {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        right: 8px;
 
-   /* background-image: url("/static/images/annerr2.svg");*/
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+        height: 70px;
+        width: auto;
+
+        z-index: 9999;
+
+        /* Glass style */
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+
+        padding: 0 12px;
+
+        /* 🔒 LOCK IT */
+        transition: none !important;
     }
+
+    /* 🔒 Disable scroll effect if exists */
+    .app-header.scrolled {
+        height: 70px !important;
+        backdrop-filter: blur(12px) !important;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2) !important;
+    }
+
+
+
+    .app-header .container {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* Brand smaller on mobile */
+    .brand {
+        font-size: 20px;
+    }
+
 
  .header-right {
         display: flex;
@@ -428,21 +493,22 @@ section {
     }
 }
 @media (max-width: 768px) {
+
+  .header-left {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
   .brand {
     font-size: 20px;
-
-    /* Reset 3D to avoid misalignment */
-    transform: none;
-
-    /* Center properly */
-    display: inline-block;
-    position: relative;
-    top: 10px;
-    left: 0;
-
-    
+    transform: none;   /* keep 3D reset */
+    text-align: center;
+    white-space: nowrap;
   }
 }
+
 
 
 
@@ -1219,9 +1285,17 @@ body {
   <div class="container">
 
     <!-- LEFT -->
-    <div class="header-left">
-      <span class="brand">RuchiGo</span>
-    </div>
+   <!-- LEFT -->
+<div class="header-left">
+    <img src="{{ url_for('static', filename='images/logo1.png') }}" 
+     alt="RuchiGo Logo" 
+     class="brand-logo">
+
+  <span class="brand">
+    <span class="brand-blue">RucHi</span><span class="brand-green">Go</span>
+  </span>
+</div>
+
 
     <!-- RIGHT -->
     <div class="header-right">

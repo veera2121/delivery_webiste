@@ -355,7 +355,7 @@ html {
 }
 .mobile-location-wrapper {
     position: fixed;
-    top: 30px;
+    top: 33px;
     right: 9px;
     z-index: 100000;
 }
@@ -379,13 +379,23 @@ html {
     position: absolute;
     top: 52px;
     right: 0;
-    background: #fff;
+
+    /* Glass background */
+    background: rgba(255, 255, 255, 0.15); /* semi-transparent white */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
     padding: 8px;
     border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
     min-width: 180px;
     transition: all 0.3s ease;
+
+    color: #000; /* optional, for text */
 }
+
 
 .mobile-location-dropdown.active {
     display: block;
