@@ -5,7 +5,7 @@
   "scope": "/delivery/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#16a34a",
+  "theme_color": "#0f172a",
   "icons": [
     {
       "src": "/static/icons/icon-192.png",

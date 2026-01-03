@@ -5,7 +5,7 @@
   "scope": "/restaurant/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#dc2626",
+  "theme_color": "#0f172a",
   "icons": [
     {
       "src": "/static/icons/icon-192.png",
