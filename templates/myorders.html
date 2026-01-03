@@ -107,22 +107,25 @@ form button:active {
 }
 /* ===== ORDER HEADER ===== */
 .order-header {
-  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column; /* stack items vertically */
+  align-items: flex-start; /* left-align everything */
+  margin-bottom: 8px;
 }
 
 .order-id {
-  margin: 0;
   font-size: 18px;
   font-weight: 700;
   color: #ff5722;
 }
 
 .restaurant-name {
-  margin: 4px 0 0;
   font-size: 14px;
   font-weight: 600;
   color: #374151;
+  margin-top: 4px; /* small space below order ID */
 }
+
 
 /* ===== STATUS BADGE ===== */
 .status-badge {
@@ -139,7 +142,12 @@ form button:active {
 }
 
 /* Status colors */
-.status-Pending { background: #ff9800; }
+.status-Pending { background: #ff9800; } 
+.status-Accepted {
+    background: #1effce;   /* blue */
+    color: white;
+}
+
 .status-Preparing { background: #2196f3; }
 .status-Ready { background: #673ab7; }
 .status-Out-for-Delivery { background: #ffeb3b; color: #333; }
@@ -357,7 +365,8 @@ form button:hover {
     <p><strong>Customer:</strong> {{ order.customer_name }}</p>
     <p><strong>Phone:</strong> {{ order.phone }} | <strong>Email:</strong> {{ order.email }}</p>
 
-    <div id="orderStatus"
+    <div id="orderStatus-{{ order.id }}"
+
          class="status-badge status-{{ order.status | replace(' ', '-') }}">
       {{ order.status }}
     </div>

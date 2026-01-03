@@ -293,7 +293,7 @@ def myorders():
     phone = None
     restaurant_id = None
 
-    ACTIVE = ["Pending","Placed", "Accepted", "Preparing","Ready","Out for delivery"]
+    ACTIVE = ["Pending","Placed", "Accepted", "Preparing","Ready","Out for Delivery"]
     HISTORY = ["Delivered", "Cancelled"]
 
     if request.method == "POST":
@@ -862,7 +862,7 @@ def restaurant_dashboard():
         "delivered_today": len(delivered_today_orders),
         "pending_today": len([o for o in today_orders if o.status == "Pending"]),
         "cancelled_today": len([o for o in today_orders if o.status == "Cancelled"]),
-        "active_orders": len([o for o in orders if o.status in ["Preparing", "Out for Delivery"]]),
+        "active_orders": len([o for o in orders if o.status in ["Accepted", "Preparing", "Out for Delivery"]]),
         "today_earnings": sum(o.get_final_total() for o in delivered_today_orders),
         "today_cod_amount": sum(o.get_final_total() for o in delivered_today_orders if o.payment_type == "COD"),
         "today_online_amount": sum(o.get_final_total() for o in delivered_today_orders if o.payment_type == "Online"),

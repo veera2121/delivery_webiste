@@ -68,10 +68,25 @@ tbody tr:hover { background:#fff3e0; }
 
 /* ===== STATUS BADGES ===== */
 .status { padding:6px 14px; border-radius:30px; font-size:12px; font-weight:700; color:#fff; display:inline-block; }
-.status.Pending { background:#ff9800; }
-.status.Preparing { background:#2196f3; }
+.status.Pending { background:#ff9800; } 
+.status.Accepted {
+    background: #048061;   /* blue */
+    color: white;
+}
+.status.Out-for-Delivery {
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(255, 87, 34, 0.35);
+  animation: deliveryPulse 1.4s infinite;
+}
+.status.Preparing { background:#2196f3; } 
+
+
 .status.Ready { background:#9c27b0; }
-.status["Out for Delivery"], .status["Out-for-Delivery"] { background:#ffeb3b; color:#333; }
+.status.Out-for-Delivery {
+    background: #ffeb3b;
+    color: #4caf50;
+}
 .status.Delivered { background:#4caf50; }
 .status.Cancelled { background:#f44336; }
 
@@ -223,6 +238,7 @@ td[data-label="Feedback"] {
     <select id="statusFilter">
         <option value="">All Status</option>
         <option value="Pending">Pending</option>
+        <option value="Accepted">Accepted</option>
         <option value="Preparing">Preparing</option>
         <option value="Ready">Ready</option>
         <option value="Out for Delivery">Out for Delivery</option>
@@ -365,31 +381,24 @@ td[data-label="Feedback"] {
     <select name="status">
 
       <option value="Pending" {% if order.status=='Pending' %}selected{% endif %}>Pending</option>
+      <option value="Accepted" {% if order.status=='Accepted' %}selected{% endif %}>Accepted</option>
       <option value="Preparing" {% if order.status=='Preparing' %}selected{% endif %}>Preparing</option>
       <option value="Ready" {% if order.status=='Ready' %}selected{% endif %}>Ready</option>
       <option value="Out for Delivery" {% if order.status=='Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
 
       <!-- 🔒 DELIVERY CONTROLLED STATES (READ ONLY) -->
-      <option value="Started"
-        {% if order.status=='Started' %}selected{% endif %}
-        disabled>
-        🚚 Delivery Started
-      </option>
-
-      <option value="Delivered"
-        {% if order.status=='Delivered' %}selected{% endif %}
-        disabled>
-        ✔ Delivered
-      </option>
-
+      <option value="Started" {% if order.status=='Started' %}selected{% endif %} disabled>🚚 Delivery Started</option>
+      <option value="Delivered" {% if order.status=='Delivered' %}selected{% endif %} disabled>✔ Delivered</option>
       <option value="Cancelled" {% if order.status=='Cancelled' %}selected{% endif %}>Cancelled</option>
 
     </select>
-
-    <button type="submit" class="update-btn">Update</button>
+      <button type="submit" class="update-btn">Update</button>
   </form>
 </td>
 
+
+  
+ 
 
 <td data-label="Payment">
 {% if order.payment_type=='COD' %}<span class="payment-badge COD">COD</span>
@@ -465,5 +474,8 @@ setInterval(()=>{
         lastOrderCount = newCount;
     }).catch(console.error);
 },8000);
-</script>
+</script> 
+
+
+
 {% endblock %}

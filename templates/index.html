@@ -20,6 +20,9 @@ html, body {
 section {
   scroll-margin-top: 80px; /* height of your fixed header */
 }
+body {
+  padding-top: 148px;
+}
 
          body {
     font-family: 'Poppins', sans-serif;
@@ -80,60 +83,6 @@ section {
             color: white;
         }
 
-    .hero {
-  padding: 150px 15px;
-
-}
-
-.hero-grid {
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
-  gap: 16px;
-  max-width: 1200px;
-  margin: auto;
-}
-
-.hero img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 16px;
-}
-
-/* Desktop heights */
-.hero-center {
-  height: 500px;
-}
-
-.hero-side {
-  height: 500px;
-}
-
-/* 📱 Mobile layout */
-@media (max-width: 768px) {
-  .hero-grid {
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "center center"
-      "left right";
-  }
-
-  .hero-center {
-    grid-area: center;
-    height: 320px;
-  }
-
-  .hero-side.left {
-    grid-area: left;
-    height: 320px;
-  }
-
-  .hero-side.right {
-    grid-area: right;
-    height: 320px;
-  }
-}
- 
 
   /* ================================
    RESET & BASE
@@ -270,13 +219,13 @@ section {
 .header-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 20px;
 }
 
  .header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 15px;
 }
 
 
@@ -284,8 +233,8 @@ section {
 
 /* Logo styling */
 .brand-logo {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
 }
 
@@ -509,6 +458,46 @@ section {
   }
 }
 
+
+
+.hero {
+  padding-top: 160px; /* pushes below fixed header */
+}
+
+.hero-row.full {
+  width: 100%;
+
+
+  height: 260px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.hero-row.full img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hero-row.split {
+  display: flex;
+  gap: 14px;
+}
+
+.hero-card {
+  flex: 1;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* FULL IMAGE – NO CROP */
+.hero-card img {
+  width: 100%;
+  height: auto;          /* 👈 natural height */
+  object-fit: contain;   /* 👈 show full image */
+  display: block;
+}
 
 
 
@@ -1233,10 +1222,7 @@ body {
     background: #777;
     cursor: not-allowed;
 }
-.logo {
-  width: 42px;
-  height: 42px;
-}
+
 
 .modal-overlay {
   position: fixed;
@@ -1282,6 +1268,52 @@ body {
   from { transform: scale(0.85); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+@media (max-width: 768px) {
+
+  .hero {
+  padding-top: 110px; /* header height + breathing space */
+}
+
+
+  .hero-row.full {
+    height: auto;        /* IMPORTANT */
+  }
+
+  .hero-row.full img {
+    width: 100%;
+    height: auto;        /* auto keeps aspect ratio */
+    object-fit: contain; /* NO CROPPING */
+    display: block;
+    border-radius: 14px;
+  }
+
+  .hero-row.split {
+    flex-direction: column;
+  }
+
+  .hero-card {
+    height: auto;
+  }
+
+  .hero-card img {
+    width: 100%;
+    height: auto;
+    object-fit: contain; /* NO CROPPING */
+    border-radius: 14px;
+  }
+}
+/* Desktop gap */
+.hero-row {
+  margin-bottom: 18px;
+}
+
+/* Mobile gap */
+@media (max-width: 768px) {
+  .hero-row {
+    margin-bottom: 12px;  /* slightly smaller on mobile */
+  }
+}
+
 
 </style>
 
@@ -1291,7 +1323,7 @@ body {
     <!-- LEFT -->
    <!-- LEFT -->
 <div class="header-left">
-    <img src="{{ url_for('static', filename='images/logo1.png') }}" 
+    <img src="{{ url_for('static', filename='images/logo4.png') }}" 
      alt="RuchiGo Logo" 
      class="brand-logo">
 
@@ -1344,28 +1376,28 @@ body {
     <input type="text" id="mobileSearchInput" placeholder="Search restaurants...">
 </div>
 <!-- MOBILE LOCATION FILTER -->
+<div class="hero-row full">
+  <picture>
+    <source srcset="{{ url_for('static', filename='images/mobile_banner5.svg') }}"
+            media="(max-width: 768px)">
+    <img src="{{ url_for('static', filename='images/hero_banner2.svg') }}"
+         alt="Banner 1">
+  </picture>
+</div>
+
+<div class="hero-row full">
+  <picture>
+    <source srcset="{{ url_for('static', filename='images/mobile_banner_2.svg') }}"
+            media="(max-width: 768px)">
+    <img src="{{ url_for('static', filename='images/hero_banner.svg') }}"
+         alt="Banner 2">
+  </picture>
+</div>
 
 
-<section id="home" class="hero">
-  <div class="hero-grid">
 
-    <!-- Left Tall Image -->
-    <div class="hero-side left">
-      <img src="{{ url_for('static', filename='images/delivery.png') }}" alt="Side Food 1">
-    </div>
+</div>
 
-    <!-- Center Big Image -->
-    <div class="hero-center">
-      <img src="{{ url_for('static', filename='images/biryaniimg.png') }}" alt="Main Food">
-    </div>
-
-    <!-- Right Tall Image -->
-    <div class="hero-side right">
-      <img src="{{ url_for('static', filename='images/delivery2.png') }}" alt="Side Food 2">
-    </div>
-
-  </div>
-</section>
 
 
 <section id="category" class="category-section">
