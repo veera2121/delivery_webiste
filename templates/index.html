@@ -1819,6 +1819,15 @@ const modalData = {
     content: "By using this app, you agree to our service and delivery policies."
   }
 };
+// JS: Enable mouse wheel horizontal scroll for restaurant rows
+const rows = document.querySelectorAll('.restaurant-row');
+
+rows.forEach(row => {
+    row.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        row.scrollLeft += e.deltaY; // vertical wheel scrolls horizontal
+    });
+});
 
 function openModal(type) {
   document.getElementById("modalTitle").innerText = modalData[type].title;
