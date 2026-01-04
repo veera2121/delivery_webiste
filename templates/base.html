@@ -1,23 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+ <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}My App{% endblock %}</title>
+
+  <!-- ✅ SEO TITLE -->
+  <title>{% block seo_title %}Food Delivery App{% endblock %}</title>
+
+  <!-- ✅ SEO META -->
+  <meta name="description" content="{% block seo_description %}{% endblock %}">
+  <meta name="keywords" content="{% block seo_keywords %}{% endblock %}">
+
+  <!-- ✅ OPEN GRAPH (SOCIAL + GOOGLE) -->
+  <meta property="og:title" content="{% block og_title %}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.url }}">
 
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
- {% block manifest %}
-<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-<meta name="theme-color" content="#ff5722">
-{% endblock %}
 
-{% block install_button %}
-<button id="installApp" class="install-fab">
-  📲 Install App
-</button>
-{% endblock %}
+  {% block manifest %}
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#ff5722">
+  {% endblock %}
+</head>
 
 
 
@@ -586,13 +595,28 @@ html {
 </head>
 <body>
 
- 
+  <!-- 🔹 Install App Button -->
+  {% block install_button %}
+  <button id="installApp" class="install-fab">
+    📲 Install App
+  </button>
+  {% endblock %}
 
-  <!-- Main content for each page -->
- <!-- Main content for each page -->
-<div class="page-content">
-  {% block content %}{% endblock %}
-</div> 
+  <!-- 🔹 City Selector / Navigation -->
+  <header class="city-header">
+    <nav class="city-nav">
+      {% for loc in all_locations %}
+        <a href="/city/{{ loc|lower|replace(' ', '-') }}">{{ loc }}</a>
+      {% endfor %}
+    </nav>
+  </header>
+
+  <!-- 🔹 Main page content -->
+  <div class="page-content">
+    {% block content %}{% endblock %}
+  </div>
+
+</body>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}

@@ -140,11 +140,15 @@ body {
   border-left: 4px solid var(--info);
 }
 
-#delivery-msg {
+#delivery-msg { 
   background: #fff7ed;
+  border-radius: 15px;
   color: #9a3412;
-  border-left: 4px solid var(--warning);
+  border-left: 4px solid var(--warning); 
+  margin-top: 20px;  /* ← Add gap from top */
+  padding: 10px;      /* optional: add some inner spacing */
 }
+
 .total-box {
   margin-top: 20px;
   background: var(--card);
@@ -208,7 +212,8 @@ body {
 }
 .checkout-bar {
   position: sticky;
-  bottom: 0;
+  bottom: 0; 
+  border-radius:15px;
   background: #ffffff;
   padding: 14px;
   box-shadow: 0 -10px 25px rgba(0,0,0,.12);

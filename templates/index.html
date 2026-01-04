@@ -1,11 +1,30 @@
 {% extends "base.html" %}
 
-{% block title %}Home{% endblock %}
+{% block seo_title %}
+Food Delivery in {{ city }} | Fast & Trusted Service
+{% endblock %}
+
+{% block seo_description %}
+Order food online in {{ city }}. Fast delivery, fresh meals, best restaurants near you.
+{% endblock %}
+
+{% block seo_keywords %}
+food delivery {{ city }}, online food order {{ city }}, restaurants in {{ city }}
+{% endblock %}
+
+{% block og_title %}
+Food Delivery in {{ city }}
+{% endblock %}
+
+{% block og_description %}
+Best food delivery service in {{ city }}. Order now!
+{% endblock %}
 
 {% block content %}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <style> 
+
+
+<style> 
     * {
     margin: 0;
     padding: 0;
