@@ -95,6 +95,7 @@ class DeliveryPerson(db.Model):
     last_seen = db.Column(db.DateTime)
 
     is_active = db.Column(db.Boolean, default=True)
+    is_online = db.Column(db.Boolean, default=False)  # ✅ real-time status
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

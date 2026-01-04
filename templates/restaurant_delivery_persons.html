@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <head>
+<h2>Delivery Persons for {{ session.get('restaurant_name', 'Your Restaurant') }}</h2>
+
+<div style="overflow-x:auto; max-height: 70vh;">
+  <table border="1" cellpadding="10" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Last Seen</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for dp in delivery_persons %}
+      <tr>
+        <td>{{ dp.name }}</td>
+        <td>
+          {% if dp.is_online %}
+            <span style="color:green;">Online</span>
+          {% else %}
+            <span style="color:red;">Offline</span>
+          {% endif %}
+        </td>
+        <td>{{ dp.last_seen.strftime('%Y-%m-%d %H:%M') if dp.last_seen else 'N/A' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

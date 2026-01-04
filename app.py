@@ -59,6 +59,9 @@ else:
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["WTF_CSRF_ENABLED"] = False  # enable later safely
+import sys
+
+IS_FLASK_CLI = any(cmd in sys.argv for cmd in ["flask", "db", "migrate", "upgrade"])
 
 # ================= INIT EXTENSIONS =================
 db.init_app(app)
@@ -67,11 +70,12 @@ migrate = Migrate(app, db)
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode="gevent",
+    async_mode="threading",
     ping_interval=25,
     ping_timeout=60,
-    max_http_buffer_size=10_000_000  # prevents payload overflow
+    max_http_buffer_size=10_000_000
 )
+
 
 # ================= BLUEPRINTS =================
 app.register_blueprint(users_bp, url_prefix="/users")
@@ -101,7 +105,7 @@ def haversine(lat1, lon1, lat2, lon2):
 # ------------------ ADMIN CONFIG ------------------
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password123"
-
+app.permanent_session_lifetime = timedelta(hours=6)
 from flask import request
 from flask import request, session, render_template
  # make sure you have this function or library
@@ -989,7 +993,15 @@ def restaurant_dashboard():
         "weekly_earnings": sum(o.get_final_total() for o in orders if o.created_at.date() >= week_ago and o.status == "Delivered"),
         "weekly_delivered_orders": len([o for o in orders if o.created_at.date() >= week_ago and o.status == "Delivered"])
     }
-
+     
+    # ------------------ Delivery Boy Status ------------------
+    # Mark inactive delivery boys offline
+    threshold = datetime.utcnow() - timedelta(minutes=5)
+    DeliveryPerson.query.filter(
+        DeliveryPerson.is_online == True,
+        DeliveryPerson.last_seen < threshold
+    ).update({"is_online": False})
+    db.session.commit()
     # ✅ FIXED: Only this restaurant’s delivery boys
     delivery_persons = DeliveryPerson.query.filter_by(
         restaurant_id=restaurant_id
@@ -999,6 +1011,21 @@ def restaurant_dashboard():
         "restaurant_dashboard.html",
         stats=stats,
         orders=orders,
+        delivery_persons=delivery_persons
+    )
+@app.route("/restaurant/delivery_persons")
+def restaurant_delivery_persons():
+    restaurant_id = session.get("restaurant_id")
+    if not restaurant_id:
+        return redirect(url_for("restaurant_login"))
+
+    # Fetch only this restaurant's delivery persons
+    delivery_persons = DeliveryPerson.query.filter_by(
+        restaurant_id=restaurant_id
+    ).order_by(DeliveryPerson.name).all()
+
+    return render_template(
+        "restaurant_delivery_persons.html",
         delivery_persons=delivery_persons
     )
 
@@ -1035,10 +1062,7 @@ def restaurant_logout():
     session.pop("restaurant_name", None)
     return redirect(url_for("restaurant_login"))
 
-
-
-
-
+from datetime import datetime
 
 @app.route("/delivery/login", methods=["GET", "POST"])
 def delivery_login():
@@ -1049,18 +1073,29 @@ def delivery_login():
         dp = DeliveryPerson.query.filter_by(phone=phone).first()
 
         if dp and dp.check_password(password):
+            # ✅ Clear session
+            session.clear()
+            session.permanent = True  # 6-hour login
+
+            # ✅ Set session variables
             session["delivery_logged_in"] = True
             session["delivery_person_id"] = dp.id
             session["delivery_person_name"] = dp.name
-            session["restaurant_id"] = dp.restaurant_id  # ✅ IMPORTANT
+            session["restaurant_id"] = dp.restaurant_id
+
+            # 🔥 UPDATE ONLINE STATUS
+            dp.is_online = True
+            dp.last_seen = datetime.utcnow()
+            db.session.commit()
 
             return redirect(url_for("delivery_dashboard"))
+
         else:
             flash("Invalid login!", "danger")
             return render_template("delivery_login.html")
 
-    # ✅ GET request MUST return something
     return render_template("delivery_login.html")
+
 
 @app.route("/delivery/dashboard", methods=["GET", "POST"])
 def delivery_dashboard():
@@ -1170,14 +1205,29 @@ def add_restaurant_user():
 
     return render_template("add_restaurant_user.html", restaurants=restaurants)
 
-
-
 @app.route("/delivery/logout")
 def delivery_logout():
-    session.pop("delivery_logged_in", None)
-    session.pop("delivery_person_id", None)
-    session.pop("delivery_person_name", None)
+    dp_id = session.get("delivery_person_id")
+    if dp_id:
+        dp = DeliveryPerson.query.get(dp_id)
+        if dp:
+            dp.is_online = False
+            dp.last_seen = datetime.utcnow()
+            db.session.commit()
+
+    session.clear()
+    flash("Logged out successfully", "success")
     return redirect(url_for("delivery_login"))
+from datetime import datetime, timedelta
+
+def update_delivery_status():
+    threshold = datetime.utcnow() - timedelta(minutes=5)
+    DeliveryPerson.query.filter(
+        DeliveryPerson.is_online == True,
+        DeliveryPerson.last_seen < threshold
+    ).update({"is_online": False})
+    db.session.commit()
+
 @app.route("/admin/add_delivery_person", methods=["GET", "POST"])
 def add_delivery_person():
     if not session.get("admin_logged_in"):

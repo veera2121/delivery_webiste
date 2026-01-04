@@ -603,13 +603,7 @@ html {
   {% endblock %}
 
   <!-- 🔹 City Selector / Navigation -->
-  <header class="city-header">
-    <nav class="city-nav">
-      {% for loc in all_locations %}
-        <a href="/city/{{ loc|lower|replace(' ', '-') }}">{{ loc }}</a>
-      {% endfor %}
-    </nav>
-  </header>
+  
 
   <!-- 🔹 Main page content -->
   <div class="page-content">
@@ -635,21 +629,21 @@ html {
 <!-- Mobile Dropdown (base.html) -->
 
   <div class="mobile-location-wrapper">
-        <button id="locationToggle" class="location-icon" type="button">
-          <i class="fa-solid fa-compass"></i>
-        </button>
-
-        <div class="mobile-location-dropdown" id="mobileLocationDropdown">
-          <select id="mobileLocationSelect" onchange="changeLocation('mobile')">
+    <button id="locationToggle" class="location-icon">
+      <i class="fa-solid fa-compass"></i>
+    </button>
+    <div class="mobile-location-dropdown" id="mobileLocationDropdown">
+        <select id="mobileLocationSelect" onchange="changeLocation('mobile')">
             <option value="">Select Location</option>
             {% for loc in all_locations %}
               <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>
                 {{ loc }}
               </option>
             {% endfor %}
-          </select>
-        </div>
-     </div>
+        </select>
+    </div>
+</div>
+
 
 
 
@@ -1005,8 +999,18 @@ window.addEventListener("scroll", () => {
   lastScrollY = currentScrollY;
 });
 </script>
-
-
+<script>
+function changeLocation(type) {
+    let select = type === 'desktop' ? document.getElementById('locationFilter') :
+                                     document.getElementById('mobileLocationSelect');
+    if (select.value) {
+        // Convert to URL slug
+        let slug = select.value.toLowerCase().replace(/ /g, '-');
+        // Navigate to city page
+        window.location.href = '/city/' + slug;
+    }
+}
+</script>
 <!-- Empty Cart Modal -->
 <div id="emptyCartModal" class="cart-modal hidden">
     <div class="cart-modal-box">
