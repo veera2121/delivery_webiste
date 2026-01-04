@@ -50,7 +50,12 @@
             </div>
         {% endif %}
 
-        <img src="https://source.unsplash.com/600x400/?restaurant,food,{{ r.name }}" alt="Restaurant">
+                <img 
+            src="/static/images/restaurants/{{ r.id }}.jpg"
+            alt="{{ r.name }}"
+            onerror="this.onerror=null; this.src='/static/images/restaurants/img1.jpg';"
+            >
+
 
         <div class="content">
             <div class="restaurant-name">{{ r.name }}</div>
