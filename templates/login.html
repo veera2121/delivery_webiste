@@ -17,13 +17,16 @@
     </div>
     <!-- Hidden field to indicate login -->
     <input type="hidden" name="is_new_user" value="0">
+
+    <!-- 🔹 Pass next_page and restaurant_id for redirect -->
+    <input type="hidden" name="next" value="{{ next or '' }}">
+    <input type="hidden" name="restaurant_id" value="{{ restaurant_id or '' }}">
+
     <button id="button" type="submit">Login</button>
-  </form>
+</form>
 
-  <div class="sub">Or Sign Up</div>
-
-  <!-- ================= SIGNUP ================= -->
-  <form method="POST" action="{{ url_for('users.login') }}">
+<!-- ================= SIGNUP ================= -->
+<form method="POST" action="{{ url_for('users.login') }}">
     <div class="inputContainer">
       <input class="inputField" type="text" name="mobile" placeholder="Mobile Number" required>
     </div>
@@ -35,8 +38,14 @@
     </div>
     <!-- Hidden field to indicate signup -->
     <input type="hidden" name="is_new_user" value="1">
+
+    <!-- 🔹 Pass next_page and restaurant_id for redirect -->
+    <input type="hidden" name="next" value="{{ next or '' }}">
+    <input type="hidden" name="restaurant_id" value="{{ restaurant_id or '' }}">
+
     <button id="button" type="submit">Create Account</button>
-  </form>
+</form>
+
 
   <!-- ================= FLASH MESSAGES ================= -->
   {% for msg in get_flashed_messages() %}

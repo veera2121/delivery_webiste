@@ -462,7 +462,10 @@ def generate_map_link(lat, lng, house_no=None, landmark=None, city=None, state=N
 
 @app.route("/place_order", methods=["POST"])
 def place_order():
-
+       # 🔐 SOFT GATE BACKEND PROTECTION
+    if not session.get("logged_in"):
+        flash("Please login to place your order", "warning")
+        return redirect(url_for("login", next="cart"))
     # ================= BASIC DETAILS =================
     name = request.form.get("name")
     phone = request.form.get("phone")
