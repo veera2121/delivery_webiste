@@ -151,6 +151,7 @@ form button:active {
 .status-Preparing { background: #2196f3; }
 .status-Ready { background: #673ab7; }
 .status-Out-for-Delivery { background: #ffeb3b; color: #333; }
+.status-Started { background: #8a0b96; }
 .status-Delivered { background: #4caf50; }
 .status-Cancelled { background: #f44336; }
 
@@ -322,6 +323,45 @@ form button:hover {
         text-align: center;
     }
 }
+/* =====================
+   HISTORY CARD STYLES
+===================== */
+
+.not-available-card {
+  background: #fff7ed;
+  border-left: 5px solid #f97316;
+}
+
+.cancelled-card {
+  background: #fef2f2;
+  border-left: 5px solid #ef4444;
+}
+
+.delivered-card {
+  background: #ecfdf5;
+  border-left: 5px solid #10b981;
+}
+
+.reason-text {
+  font-size: 14px;
+  color: #7c2d12;
+  margin: 6px 0;
+}
+
+.status-warning {
+  color: #f97316;
+  font-weight: 700;
+}
+
+.status-cancelled {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.status-success {
+  color: #10b981;
+  font-weight: 700;
+}
 
 
 </style>
@@ -462,7 +502,6 @@ form button:hover {
 {% endif %}
 
 <hr>
-
 <!-- =========================
      ORDER HISTORY
 ========================= -->
@@ -470,28 +509,76 @@ form button:hover {
 
 {% if history_orders %}
   {% for order in history_orders %}
-  <div class="order-card history-card">
+
+  <!-- 🔴 CUSTOMER NOT AVAILABLE -->
+  {% if order.status == "Customer Not Available" %}
+  <div class="order-card history-card not-available-card">
 
     <div class="order-header">
       <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
       <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
     </div>
 
-    <p><strong>Delivered At:</strong>
-       {{ order.delivered_time.strftime('%d-%m-%Y %I:%M %p') if order.delivered_time }}</p>
+    <p class="reason-text">
+      ❌ Customer was not available at delivery location
+    </p>
+
+    <p class="final-amount">
+      <strong>Order Amount:</strong> ₹{{ order.final_total or 0 }}
+    </p>
+
+    <span class="status-warning">⚠ Order Failed</span>
+
+  </div>
+
+  <!-- 🟡 CANCELLED -->
+  {% elif order.status == "Cancelled" %}
+  <div class="order-card history-card cancelled-card">
+
+    <div class="order-header">
+      <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
+      <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
+    </div>
+
+    <p class="reason-text">
+      ❌ Order was cancelled
+    </p>
+
+    <p class="final-amount">
+      <strong>Amount:</strong> ₹{{ order.final_total or 0 }}
+    </p>
+
+    <span class="status-cancelled">❌ Cancelled</span>
+
+  </div>
+
+  <!-- 🟢 DELIVERED -->
+  {% else %}
+  <div class="order-card history-card delivered-card">
+
+    <div class="order-header">
+      <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
+      <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
+    </div>
+
+    <p>
+      <strong>Delivered At:</strong>
+      {{ order.delivered_time.strftime('%d-%m-%Y %I:%M %p') if order.delivered_time }}
+    </p>
 
     <p class="final-amount">
       <strong>Total Paid:</strong> ₹{{ order.final_total or 0 }}
     </p>
 
-    <span style="color:green;">✔ Delivered</span>
+    <span class="status-success">✔ Delivered</span>
 
   </div>
+  {% endif %}
+
   {% endfor %}
 {% else %}
   <p>No past orders</p>
 {% endif %}
-
 </div>
 
 <script>

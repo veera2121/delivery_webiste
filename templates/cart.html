@@ -811,25 +811,42 @@ if (offerBtn) offerBtn.addEventListener("click", applyRestaurantOffer);
    FORM VALIDATION
 ============================================================ */
 function validateCart() {
+
     if (!cart || !cart.items || cart.items.length === 0) {
-        showEmptyCartModal();   // ✅ app-style modal
+        alert("Your cart is empty");
         return false;
     }
+
+    if (!liveLocationClicked) {
+        alert("📍 Please click 'Use My Live Location' to continue");
+        return false;
+    }
+
+    if (!locationSelected) {
+        alert("🗺️ Please select your delivery location on the map");
+        return false;
+    }
+
     return true;
 }
+
 
 /* ============================================================
    INIT
 ============================================================ */
 renderCart();
 </script>
+
+
+
+
 <script>
-
-
+let liveLocationClicked = false;
+let locationSelected = false;
 </script>
 
 
-</script>
+
 
 
 <script>
@@ -855,12 +872,13 @@ var marker = L.marker([defaultLat, defaultLng], {
    UPDATE HIDDEN INPUTS
 ========================= */
 function updateLocationInputs(lat, lng) {
-    // backend uses these
     document.getElementById('lat').value = lat;
     document.getElementById('lng').value = lng;
 
     document.getElementById('customer_lat').value = lat;
     document.getElementById('customer_lng').value = lng;
+
+    locationSelected = true; // ✅ REQUIRED
 }
 
 /* =========================
@@ -888,6 +906,12 @@ function getUserLocation() {
         return;
     }
 
+    liveLocationClicked = true;
+
+    const card = document.getElementById("location-status-card");
+    card.innerText = "⏳ Fetching your live location…";
+    card.style.display = "block";
+
     navigator.geolocation.getCurrentPosition(
         function (pos) {
             var lat = pos.coords.latitude;
@@ -897,9 +921,13 @@ function getUserLocation() {
             map.setView([lat, lng], 16);
 
             updateLocationInputs(lat, lng);
+
+            card.innerText = "✅ Location detected successfully";
+            setTimeout(() => card.style.display = "none", 1500);
         },
         function () {
-            alert("Location permission denied");
+            card.innerText = "❌ Location permission denied";
+            setTimeout(() => card.style.display = "none", 2000);
         },
         {
             enableHighAccuracy: true,
@@ -907,10 +935,36 @@ function getUserLocation() {
         }
     );
 }
+
 </script>
 
 
 </script>
+
+
+
+
+
+
+
+
+<div id="location-status-card" style="
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    padding: 12px 16px;
+    border-radius: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,.15);
+    font-size: 14px;
+    font-weight: 600;
+    display: none;
+    z-index: 2000;
+">
+    ⏳ Fetching your live location…
+</div>
+
 {% endblock %}
 
 
@@ -919,5 +973,3 @@ function getUserLocation() {
 
 
  
-</body>
-</html>

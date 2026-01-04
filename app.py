@@ -288,13 +288,14 @@ def get_coordinates(address):
     except Exception as e:
         print("Geocode error:", e)
     return None, None
+
 @app.route("/myorders", methods=["GET", "POST"])
 def myorders():
     phone = None
     restaurant_id = None
 
-    ACTIVE = ["Pending","Placed", "Accepted", "Preparing","Ready","Out for Delivery"]
-    HISTORY = ["Delivered", "Cancelled"]
+    ACTIVE = ["Pending","Placed", "Accepted", "Preparing","Ready","Out for Delivery","Started",]
+    HISTORY = ["Delivered", "Cancelled","Customer Not Available"]
 
     if request.method == "POST":
         phone = request.form.get("phone")
@@ -945,7 +946,8 @@ def delivery_login():
 
 @app.route("/delivery/dashboard", methods=["GET", "POST"])
 def delivery_dashboard():
-    # -------------------- AUTH CHECK --------------------
+
+    # -------------------- AUTH --------------------
     if not session.get("delivery_logged_in"):
         return redirect(url_for("delivery_login"))
 
@@ -954,33 +956,40 @@ def delivery_dashboard():
     if not delivery_person:
         return redirect(url_for("delivery_login"))
 
-    # -------------------- SUBMIT OTP --------------------
+    # -------------------- OTP SUBMIT --------------------
     if request.method == "POST":
         order_id = request.form.get("order_id")
         entered_otp = request.form.get("otp")
-        entered_payment_type = request.form.get("payment_type")  # COD / Online
+        entered_payment_type = request.form.get("payment_type")
 
-        order = Order.query.get(int(order_id))
+        order = Order.query.get(order_id)
 
-        if (
-            order
-            and order.delivery_person_id == dp_id
-            and order.status == "Started"
-            and order.otp == entered_otp
-        ):
+        if not order or order.delivery_person_id != dp_id:
+            flash("Invalid order", "danger")
+            return redirect(url_for("delivery_dashboard"))
+
+        # ✅ Allow OTP ONLY if delivery already started
+        if order.status != "Started":
+            flash("Delivery not started yet", "danger")
+            return redirect(url_for("delivery_dashboard"))
+
+        # ✅ OTP CHECK
+        if order.otp == entered_otp:
             order.status = "Delivered"
             order.delivered_time = datetime.utcnow()
-            order.payment_type = entered_payment_type  # save payment type
+            order.payment_type = entered_payment_type
             db.session.commit()
             flash(f"Order {order.order_id} delivered successfully", "success")
         else:
-            flash("Invalid OTP or delivery not started", "danger")
+            # ❗ NOTHING changes on wrong OTP
+            flash("❌ Invalid OTP. Try again.", "danger")
 
         return redirect(url_for("delivery_dashboard"))
 
     # -------------------- ACTIVE ORDERS --------------------
     orders = (
-        Order.query.filter(
+        Order.query
+        .filter(
             Order.delivery_person_id == dp_id,
             Order.status.in_(["Out for Delivery", "Started"])
         )
@@ -998,32 +1007,22 @@ def delivery_dashboard():
     # -------------------- STATS --------------------
     all_orders = Order.query.filter_by(delivery_person_id=dp_id).all()
 
-    # Calculate COD and Online totals safely using final_total
-    cod_total = sum(
-        (o.final_total or 0) for o in all_orders
-        if o.payment_type and o.payment_type.strip().lower() == "cod"
-    )
-    online_total = sum(
-        (o.final_total or 0) for o in all_orders
-        if o.payment_type and o.payment_type.strip().lower() == "online"
-    )
-
     stats = {
         "total": len(all_orders),
         "active": len([o for o in all_orders if o.status in ["Out for Delivery", "Started"]]),
         "delivered": len([o for o in all_orders if o.status == "Delivered"]),
-        "cod_total": cod_total,
-        "online_total": online_total
+        "cod_total": sum(o.final_total or 0 for o in all_orders if o.payment_type == "COD"),
+        "online_total": sum(o.final_total or 0 for o in all_orders if o.payment_type == "Online"),
     }
 
-    # -------------------- RENDER TEMPLATE --------------------
     return render_template(
         "delivery_dashboard.html",
         delivery_person=delivery_person,
         orders=orders,
         stats=stats,
-        VAPID_PUBLIC_KEY=VAPID_PUBLIC_KEY  # <-- Pass key to template
+        VAPID_PUBLIC_KEY=VAPID_PUBLIC_KEY
     )
+
 @app.route("/admin/add_restaurant_user", methods=["GET", "POST"])
 def add_restaurant_user():
     if not session.get("admin_logged_in"):
