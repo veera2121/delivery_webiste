@@ -424,9 +424,39 @@ form button:hover {
     {% else %}
         <span style="color:gray;">Waiting for delivery boy</span>
     {% endif %}
+        <!-- DELIVERY PERSON & OTP -->
+{% if order.delivery_person %}
+  <div class="info-box delivery-box">
+    <strong>Delivery Person</strong><br>
+    {{ order.delivery_person.name }}<br>
+    📞 <a href="tel:{{ order.delivery_person.phone }}">
+        {{ order.delivery_person.phone }}
+    </a><br>
+
+    {% if order.status != "Delivered" %}
+      Status: On the way 🚴
+    {% else %}
+      Status: Delivered ✅
+    {% endif %}
+
+    {% if order.otp %}
+      <br><strong>Delivery OTP:</strong>
+      <span style="font-size:18px;font-weight:800;color:#ff5722;">
+        {{ order.otp }}
+      </span>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="info-box pending-box">
+    <strong>Delivery Person:</strong> Not Assigned Yet<br>
+    Your order is being prepared by the restaurant.
+  </div>
+{% endif %}
 
   </div>
-  {% endfor %}
+  {% endfor %} 
+
+
 {% else %}
   <p>No active orders</p>
 {% endif %}
