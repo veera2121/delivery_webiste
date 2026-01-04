@@ -999,18 +999,7 @@ window.addEventListener("scroll", () => {
   lastScrollY = currentScrollY;
 });
 </script>
-<script>
-function changeLocation(type) {
-    let select = type === 'desktop' ? document.getElementById('locationFilter') :
-                                     document.getElementById('mobileLocationSelect');
-    if (select.value) {
-        // Convert to URL slug
-        let slug = select.value.toLowerCase().replace(/ /g, '-');
-        // Navigate to city page
-        window.location.href = '/city/' + slug;
-    }
-}
-</script>
+
 <!-- Empty Cart Modal -->
 <div id="emptyCartModal" class="cart-modal hidden">
     <div class="cart-modal-box">
