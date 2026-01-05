@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Platform Offers</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+        a.button { padding: 5px 10px; background: #2ecc71; color: white; text-decoration: none; border-radius: 4px; }
+        a.button:hover { background: #27ae60; }
+    </style>
+</head>
+<body>
+
+<h2>All Platform Offers</h2>
+
+<a href="{{ url_for('add_platform_offer') }}" class="button">➕ Add New Offer</a>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Coupon</th>
+            <th>Type</th>
+            <th>Value</th>
+            <th>Min Order</th>
+            <th>Max Discount</th>
+            <th>Free Delivery</th>
+            <th>First Order Only</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for offer in offers %}
+        <tr>
+            <td>{{ offer.id }}</td>
+            <td>{{ offer.coupon_code }}</td>
+            <td>{{ offer.offer_type }}</td>
+            <td>{{ offer.offer_value }}</td>
+            <td>{{ offer.min_order_amount }}</td>
+            <td>{{ offer.max_discount }}</td>
+            <td>{{ 'Yes' if offer.free_delivery else 'No' }}</td>
+            <td>{{ 'Yes' if offer.is_first_order else 'No' }}</td>
+            <td>{{ 'Yes' if offer.is_active else 'No' }}</td>
+            <td>
+               <td>
+                    {% if offer.is_active %}
+                        <a href="{{ url_for('toggle_platform_offer', offer_id=offer.id) }}" class="button" style="background:#e74c3c;">Deactivate</a>
+                    {% else %}
+                        <a href="{{ url_for('toggle_platform_offer', offer_id=offer.id) }}" class="button">Activate</a>
+                    {% endif %}
+                    <a href="{{ url_for('edit_platform_offer', offer_id=offer.id) }}" class="button">Edit</a>
+                </td>
+
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>

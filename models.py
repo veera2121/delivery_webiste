@@ -168,7 +168,10 @@ class Order(db.Model):
     distance_km = db.Column(db.Float)
     profit_amount = db.Column(db.Float, default=0.0)
     admin_notes = db.Column(db.String(300)) 
-     
+ 
+  
+  
+ 
     restaurant_offer_id = db.Column(
         db.Integer,
         db.ForeignKey('restaurant_offer.id'),
@@ -281,3 +284,23 @@ class RestaurantOffer(db.Model):
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
     is_active = db.Column(db.Boolean, default=True)
+class PlatformOffer(db.Model):
+    __tablename__ = "platform_offer"
+
+    id = db.Column(db.Integer, primary_key=True)
+    coupon_code = db.Column(db.String(50), unique=True)
+
+    offer_type = db.Column(db.String(20))   # percent / flat
+    offer_value = db.Column(db.Float)       # 30 = 30%
+
+    min_order_amount = db.Column(db.Float, default=0)
+    max_discount = db.Column(db.Float)      # eg: 60
+
+    free_delivery = db.Column(db.Boolean, default=False)  # ✅ NEW
+
+    is_first_order = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+         # ✅ ADD THIS
+    

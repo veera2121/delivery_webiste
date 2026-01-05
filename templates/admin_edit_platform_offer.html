@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Offer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+<h2>Edit Offer: {{ offer.coupon_code }}</h2>
+
+<form method="POST" action="{{ url_for('edit_platform_offer', offer_id=offer.id) }}">
+    <label>Coupon Code</label>
+    <input type="text" name="coupon_code" value="{{ offer.coupon_code }}" required>
+
+    <label>Offer Type</label>
+    <select name="offer_type" required>
+        <option value="percent" {% if offer.offer_type == 'percent' %}selected{% endif %}>Percent (%)</option>
+        <option value="flat" {% if offer.offer_type == 'flat' %}selected{% endif %}>Flat (₹)</option>
+    </select>
+
+    <label>Offer Value</label>
+    <input type="number" step="0.01" name="offer_value" value="{{ offer.offer_value }}">
+
+    <label>Minimum Order Amount</label>
+    <input type="number" step="0.01" name="min_order_amount" value="{{ offer.min_order_amount }}">
+
+    <label>Maximum Discount</label>
+    <input type="number" step="0.01" name="max_discount" value="{{ offer.max_discount }}">
+
+    <label>Free Delivery</label>
+    <input type="checkbox" name="free_delivery" value="1" {% if offer.free_delivery %}checked{% endif %}>
+
+    <label>First Order Only</label>
+    <input type="checkbox" name="is_first_order" value="1" {% if offer.is_first_order %}checked{% endif %}>
+
+    <label>Active</label>
+    <input type="checkbox" name="is_active" value="1" {% if offer.is_active %}checked{% endif %}>
+
+    <button type="submit">Update Offer</button>
+</form>
+
+</body>
+</html>
