@@ -3110,3 +3110,19 @@ if __name__ == "__main__":
     </div>
 </section>
 {% endif %}
+
+
+
+
+<script>
+function changeLocation(type) {
+    let select = type === 'desktop' ? document.getElementById('locationFilter') :
+                                     document.getElementById('mobileLocationSelect');
+    if (select.value) {
+        // Convert to URL slug
+        let slug = select.value.toLowerCase().replace(/ /g, '-');
+        // Navigate to city page
+        window.location.href = '/city/' + slug;
+    }
+}
+</script>

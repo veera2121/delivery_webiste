@@ -60,7 +60,7 @@ h3 { font-size: 18px; margin-bottom: 15px; color:#666; }
 /* ===== TABLE STYLES ===== */
 .table-wrapper { overflow-x:auto; margin-bottom:30px; }
 table { width:100%; border-collapse:collapse; border-radius:14px; overflow:hidden; }
-thead { background: linear-gradient(135deg,#ff5722,#ff7043); color:#fff; position:sticky; top:0; z-index:2; }
+thead { background: linear-gradient(135deg,#22ffda,#068372); color:#fff; position:sticky; top:0; z-index:2; }
 th, td { padding:14px; text-align:center; font-size:14px; }
 tbody tr { transition:0.2s ease; }
 tbody tr:nth-child(even) { background:#fafafa; }
@@ -128,18 +128,21 @@ td[data-label="Feedback"] {
     overflow: hidden;
     text-overflow: ellipsis;   /* show ... if too long */
     text-align: center;
-}
+}/* ===== CARDS (default mobile view) ===== */
+/* Table wrapper to allow horizontal scroll */
+/* ===== Mobile Cards ===== */
 .stats-cards-wrapper {
     display: flex;
     gap: 12px;
-    overflow-x: auto;          /* enable horizontal scroll */
+    overflow-x: auto;
     padding: 15px 0;
-    -webkit-overflow-scrolling: touch;  /* smooth scrolling on iOS */
-    scroll-behavior: smooth;   /* smooth scroll */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }
+
 .stats-card {
-    flex: 0 0 auto;            /* fix width per card */
-    min-width: 140px;          /* minimum card width */
+    flex: 0 0 auto;
+    min-width: 140px;
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -147,102 +150,128 @@ td[data-label="Feedback"] {
     text-align: center;
 }
 
-/* ===== STATS CARDS HORIZONTAL SCROLL ===== */
-@media (max-width:768px) {
-    .stats-cards-wrapper {
-        display: flex;
-        gap: 12px;
-        overflow-x: auto;
-        padding: 15px 0;
-        -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
-    }
-
-    .stats-cards-wrapper::-webkit-scrollbar {
-        height: 6px;
-    }
-
-    .stats-cards-wrapper::-webkit-scrollbar-thumb {
-        background: #ff5722;
-        border-radius: 3px;
-    }
-
-    .stats-card {
-        flex: 0 0 auto; /* card width fixed */
-        min-width: 140px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        padding: 15px;
-        text-align: center;
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    .stats-card strong {
-        display: block;
-        font-size: 13px;
-        color: #666;
-        margin-bottom: 8px;
-    }
-
-    .stats-card span {
-        font-size: 16px;
-        color: #333;
-        font-weight: 700;
-    }
+.stats-card strong {
+    display: block;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
 }
 
+.stats-card span {
+    font-size: 16px;
+    color: #333;
+    font-weight: 700;
+}
+
+/* ===== Horizontal Table ===== */
+.stats-table-wrapper {
+    display: none; /* hide by default on mobile */
+    overflow-x: auto;
+    padding: 15px 0;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+.stats-table {
+    border-collapse: collapse;
+    min-width: 1000px; /* force horizontal scroll if needed */
+    width: 100%;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-radius: 12px;
+}
+
+.stats-table th, .stats-table td {
+    padding: 12px 15px;
+    text-align: center;
+}
+
+.stats-table th {
+    background: #f4f4f4;
+    color: #333;
+    font-weight: 600;
+}
+
+.stats-table tbody tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.stats-table td {
+    font-weight: 500;
+    color: #555;
+}
+
+/* ===== MEDIA QUERIES ===== */
+@media (min-width: 769px) {
+    .stats-cards-wrapper {
+        display: none; /* hide cards on desktop */
+    }
+    .stats-table-wrapper {
+        display: block; /* show horizontal table on desktop */
+    }
+}
+/* Base button style */
+.top-links .btn, .btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-right: 10px;
+    font-size: 16px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+/* Hover effect */
+.top-links .btn:hover, .btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+}
+
+/* Individual colors */
+.delivery-boys { background-color: #ff9800; }       /* orange */
+.manage-offers { background-color: #ff5722; }       /* deep orange */
+.edit-card { background-color: #4caf50; }           /* green */
+.reports { background-color: #673ab7; }            /* purple */
+.logout { background-color: #f44336; }             /* red */
+.view-delivery-persons { background-color: #009688; } /* teal */
 
 </style>
 
 <div class="dashboard-container">
 <h2>Welcome, {{ session['restaurant_name'] }}</h2>
 <div id="newOrderBadge" class="new-order-badge">🔔 New Order Received!</div>
-
-<!-- TOP LINKS -->
 <!-- TOP LINKS -->
 <div class="top-links">
-    <a href="{{ url_for('delivery_boys_cod_summary') }}" class="delivery-boys">
+    <a href="{{ url_for('delivery_boys_cod_summary') }}" class="btn delivery-boys">
         Delivery Boys COD
     </a>
 
-      <a href="{{ url_for('manage_offers', restaurant_id=session['restaurant_id']) }}">
-    🔥 Manage Offers
-</a>
-
-
-
-    <!-- NEW LINK FOR EDITING RESTAURANT CARD -->
-    <a href="{{ url_for('edit_restaurant_card', restaurant_id=session['restaurant_id']) }}"
-       style="background:#4caf50;color:white;">
-       ✏️ Edit Restaurant Card
+    <a href="{{ url_for('manage_offers', restaurant_id=session['restaurant_id']) }}" class="btn manage-offers">
+        🔥 Manage Offers
     </a>
 
-    <a href="{{ url_for('restaurant_reports') }}"
-       style="background:#673ab7;color:white;">
+    <a href="{{ url_for('edit_restaurant_card', restaurant_id=session['restaurant_id']) }}" class="btn edit-card">
+        ✏️ Edit Restaurant Card
+    </a>
+
+    <a href="{{ url_for('restaurant_reports') }}" class="btn reports">
         📊 Reports
     </a>
 
-    <a href="{{ url_for('restaurant_logout') }}" class="logout">
+    <a href="{{ url_for('restaurant_logout') }}" class="btn logout">
         Logout
     </a>
 </div>
 
 <div style="margin-bottom: 20px;">
-  <a href="{{ url_for('restaurant_delivery_persons') }}">
-    <button style="
-      padding: 10px 20px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-    ">
-      View All Delivery Persons
-    </button>
-  </a>
+    <a href="{{ url_for('restaurant_delivery_persons') }}" class="btn view-delivery-persons">
+        View All Delivery Persons
+    </a>
 </div>
 
 <!-- FILTERS -->
@@ -263,56 +292,58 @@ td[data-label="Feedback"] {
     <button id="searchBtn">Search</button>
     <button id="clearFilters">Clear</button>
 </div>
-
-<!-- STATS TABLE --> 
- <h3>Today's Overview</h3>
+<!-- CARDS (mobile) -->
 <div class="stats-cards-wrapper">
-    <div class="stats-card">
-        <strong>Today Orders</strong>
-        <span>{{ stats.today_orders }}</span>
-    </div>
-    <div class="stats-card">
-        <strong>Delivered Today</strong>
-        <span>{{ stats.delivered_today }}</span>
-    </div>
-    <div class="stats-card">
-        <strong>Pending Today</strong>
-        <span>{{ stats.pending_today }}</span>
-    </div>
-    <div class="stats-card">
-        <strong>Cancelled Today</strong>
-        <span>{{ stats.cancelled_today }}</span>
-    </div>
-    <div class="stats-card">
-        <strong>Active Orders</strong>
-        <span>{{ stats.active_orders }}</span>
-    </div>
-    <div class="stats-card">
-        <strong>Today Earnings</strong>
-        <span>₹{{ stats.today_earnings }}</span>
-    </div>
-    <div class="stats-card">
-        <strong>COD Amount</strong>
-        <span>₹{{ stats.today_cod_amount }}</span>
-    </div>
-    <div class="stats-card">
-        <strong>Online Amount</strong>
-        <span>₹{{ stats.today_online_amount }}</span>
-    </div>
-    <div class="stats-card">
-        <strong>Weekly Orders</strong>
-        <span>{{ stats.weekly_orders }}</span>
-    </div>
-    <div class="stats-card">
-        <strong>Weekly Earnings</strong>
-        <span>₹{{ stats.weekly_earnings }}</span>
-    </div>
-    <div class="stats-card">
-        <strong>Weekly Delivered</strong>
-        <span>{{ stats.weekly_delivered_orders }}</span>
-    </div>
+    <div class="stats-card"><strong>Today Orders</strong><span>{{ stats.today_orders }}</span></div>
+    <div class="stats-card"><strong>Delivered Today</strong><span>{{ stats.delivered_today }}</span></div>
+    <div class="stats-card"><strong>Pending Today</strong><span>{{ stats.pending_today }}</span></div>
+    <div class="stats-card"><strong>Cancelled Today</strong><span>{{ stats.cancelled_today }}</span></div>
+    <div class="stats-card"><strong>Active Orders</strong><span>{{ stats.active_orders }}</span></div>
+    <div class="stats-card"><strong>Today Earnings</strong><span>₹{{ stats.today_earnings }}</span></div>
+    <div class="stats-card"><strong>COD Amount</strong><span>₹{{ stats.today_cod_amount }}</span></div>
+    <div class="stats-card"><strong>Online Amount</strong><span>₹{{ stats.today_online_amount }}</span></div>
+    <div class="stats-card"><strong>Weekly Orders</strong><span>{{ stats.weekly_orders }}</span></div>
+    <div class="stats-card"><strong>Weekly Earnings</strong><span>₹{{ stats.weekly_earnings }}</span></div>
+    <div class="stats-card"><strong>Weekly Delivered</strong><span>{{ stats.weekly_delivered_orders }}</span></div>
 </div>
 
+<!-- TABLE (desktop) -->
+<h3>Today's Overview</h3>
+
+<div class="stats-table-wrapper">
+    <table class="stats-table">
+        <thead>
+            <tr>
+                <th>Today Orders</th>
+                <th>Delivered Today</th>
+                <th>Pending Today</th>
+                <th>Cancelled Today</th>
+                <th>Active Orders</th>
+                <th>Today Earnings</th>
+                <th>COD Amount</th>
+                <th>Online Amount</th>
+                <th>Weekly Orders</th>
+                <th>Weekly Earnings</th>
+                <th>Weekly Delivered</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ stats.today_orders }}</td>
+                <td>{{ stats.delivered_today }}</td>
+                <td>{{ stats.pending_today }}</td>
+                <td>{{ stats.cancelled_today }}</td>
+                <td>{{ stats.active_orders }}</td>
+                <td>₹{{ stats.today_earnings }}</td>
+                <td>₹{{ stats.today_cod_amount }}</td>
+                <td>₹{{ stats.today_online_amount }}</td>
+                <td>{{ stats.weekly_orders }}</td>
+                <td>₹{{ stats.weekly_earnings }}</td>
+                <td>{{ stats.weekly_delivered_orders }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 </table>
 </div>
