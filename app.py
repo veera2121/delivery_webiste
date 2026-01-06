@@ -615,12 +615,24 @@ def place_order():
         return redirect("/")
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
-
+    
     # ================= RESTAURANT OPEN CHECK =================
     if not is_restaurant_open(restaurant):
         flash("Restaurant is currently closed.", "danger")
         return redirect(url_for("menu", restaurant_id=restaurant_id))
+        # 🚫 HARD STOP
+    if not restaurant.is_accepting_orders:
+        return jsonify({
+            "success": False,
+            "message": "Restaurant is not accepting orders right now."
+        }), 403
 
+    if restaurant.opening_time and restaurant.closing_time:
+        if not (restaurant.opening_time <= now <= restaurant.closing_time):
+            return jsonify({
+                "success": False,
+                "message": "Restaurant is currently closed."
+            }), 403
     # ================= ITEMS TOTAL =================
     items_total = sum(
         int(quantities[i]) * float(prices[i])
@@ -1310,30 +1322,48 @@ def add_restaurant():
     return render_template("add_restaurant.html")
 
 
+from datetime import datetime
+from flask import abort, flash, redirect, url_for
 
 @app.route("/menu/<int:restaurant_id>")
 def menu(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
 
+    now = datetime.now().time()
+
+    # 🕒 OPEN STATUS
+    is_open = (
+        restaurant.opening_time and
+        restaurant.closing_time and
+        restaurant.opening_time <= now <= restaurant.closing_time
+    )
+
+    # 🚫 HARD BLOCK (same as closed)
+    if not is_open or not restaurant.is_accepting_orders:
+        flash("Restaurant is currently not accepting orders", "warning")
+        return redirect(url_for("home"))   # or restaurant list page
+
+    # 🚫 Sheet missing
     if not restaurant.sheet_url:
         return "Error: No Google Sheet URL set for this restaurant"
 
     try:
-        # Load CSV directly
         df = pd.read_csv(restaurant.sheet_url)
         items = df.to_dict(orient="records")
 
-        # Group items by category
         menu_by_category = {}
         for item in items:
-            category = item.get('category', 'Other')
+            category = item.get("category", "Other")
             menu_by_category.setdefault(category, []).append(item)
 
-        return render_template("menu.html", restaurant=restaurant, menu_by_category=menu_by_category)
+        return render_template(
+            "menu.html",
+            restaurant=restaurant,
+            menu_by_category=menu_by_category
+        )
 
     except Exception as e:
         return f"Error loading menu: {e}"
-
 
 @app.route("/restaurant/assign_delivery/<int:order_id>", methods=["POST"])
 def restaurant_assign_delivery(order_id):
@@ -2495,6 +2525,7 @@ def notify_all():
         send_push(sub, title=title, body=body, url=url)
 
     return jsonify({"success": True})
+  
 
 # ------------------ DB INIT ------------------
 
