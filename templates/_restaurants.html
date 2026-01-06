@@ -96,12 +96,19 @@
             </div>
 
 
-            {# ✅ BUTTON #}
-            {% if r.deliverable and is_open %}
-                <a href="/menu/{{ r.id }}" class="view-btn">View Menu</a>
-            {% else %}
-                <span class="view-btn disabled-btn">Not Available</span>
-            {% endif %}
+           {# ✅ BUTTON #}
+                {% if r.deliverable and is_open and r.is_accepting_orders %}
+                    <a href="/menu/{{ r.id }}" class="view-btn">View Menu</a>
+                {% else %}
+                    {% set btn_text = "Not Available" %}
+                    {% if not r.is_accepting_orders and r.accept_orders_until %}
+                        {% set btn_text = "Accepting orders after " ~ r.accept_orders_until.strftime("%I:%M %p") %}
+                    {% elif not r.is_accepting_orders %}
+                        {% set btn_text = "Currently not accepting orders" %}
+                    {% endif %}
+                    <span class="view-btn disabled-btn">{{ btn_text }}</span>
+                {% endif %}
+
         </div>
 
     </div>

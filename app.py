@@ -56,6 +56,7 @@ else:
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         "sqlite:///" + os.path.join(INSTANCE_PATH, "restaurants.db")
     )
+print("DB:", app.config["SQLALCHEMY_DATABASE_URI"])
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["WTF_CSRF_ENABLED"] = False  # enable later safely
@@ -2095,8 +2096,7 @@ def delete_offer(offer_id):
     return redirect(url_for("manage_offers", restaurant_id=restaurant_id))
 
 
-
-
+from datetime import datetime
 
 @app.route("/dashboard/restaurant/<int:restaurant_id>/edit", methods=["GET", "POST"])
 def edit_restaurant_card(restaurant_id):
@@ -2117,18 +2117,30 @@ def edit_restaurant_card(restaurant_id):
         restaurant.delivery_charge = float(request.form.get("delivery_charge") or 30)
         restaurant.free_delivery_limit = float(request.form.get("free_delivery_limit") or 499)
 
-        # Open / Close times
-        opening_time_str = request.form.get("opening_time")
-        closing_time_str = request.form.get("closing_time")
         restaurant.latitude = request.form.get("latitude") or None
         restaurant.longitude = request.form.get("longitude") or None
-        restaurant.delivery_radius_km = request.form.get("delivery_radius_km") or 5
+        restaurant.delivery_radius_km = float(request.form.get("delivery_radius_km") or 5)
+
+        # Opening / Closing time
+        opening_time_str = request.form.get("opening_time")
+        closing_time_str = request.form.get("closing_time")
 
         if opening_time_str:
             restaurant.opening_time = datetime.strptime(opening_time_str, "%H:%M").time()
+
         if closing_time_str:
             restaurant.closing_time = datetime.strptime(closing_time_str, "%H:%M").time()
-    
+
+        # ✅ FIX 1: checkbox
+        restaurant.is_accepting_orders = "is_accepting_orders" in request.form
+
+        # ✅ FIX 2: accept orders until
+        accept_until_str = request.form.get("accept_orders_until")
+        restaurant.accept_orders_until = (
+            datetime.strptime(accept_until_str, "%H:%M").time()
+            if accept_until_str else None
+        )
+
         db.session.commit()
         flash("Restaurant card updated successfully!", "success")
         return redirect(url_for("restaurant_dashboard", restaurant_id=restaurant.id))

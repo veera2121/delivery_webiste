@@ -74,7 +74,17 @@
         <input type="number" step="0.1" name="delivery_radius_km"
             value="{{ restaurant.delivery_radius_km if restaurant.delivery_radius_km is not none else 5 }}"
             placeholder="Eg: 5">
+         <label>Currently Accepting Orders?</label>
+        <div class="switch">
+            <input type="checkbox" name="is_accepting_orders" value="1"
+                {% if restaurant.is_accepting_orders %}checked{% endif %}>
+            <span>Yes</span>
+        </div>
 
+        <label>Accept Orders Until (optional)</label>
+        <input type="time" name="accept_orders_until"
+            value="{{ restaurant.accept_orders_until.strftime('%H:%M') if restaurant.accept_orders_until else '' }}"
+            placeholder="Eg: 22:30">
         <button type="submit">Update Card</button>
     </form>
 </div>

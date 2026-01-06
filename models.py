@@ -24,7 +24,8 @@ class Restaurant(db.Model):
     price_level = db.Column(db.String(10), default="₹₹")
     delivery_time = db.Column(db.String(20), default="30–40 mins")
     popular_items = db.Column(db.String(255), default="Biryani • Pizza • Rolls • Chinese")
-
+    is_accepting_orders = db.Column(db.Boolean, default=True)
+    accept_orders_until = db.Column(db.Time, nullable=True)  # optional
     # Delivery
     delivery_charge = db.Column(db.Float, default=30, nullable=False)
     free_delivery_limit = db.Column(db.Float, default=499, nullable=False)
