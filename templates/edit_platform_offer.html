@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Edit Platform Offer{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Offer: {{ offer.coupon_code }}</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('edit_platform_offer', offer_id=offer.id) }}" method="POST">
+                <div class="mb-3">
+                    <label for="coupon_code" class="form-label">Coupon Code</label>
+                    <input type="text" name="coupon_code" id="coupon_code" class="form-control" value="{{ offer.coupon_code }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Offer Type</label>
+                    <select name="offer_type" class="form-select">
+                        <option value="percent" {% if offer.offer_type=="percent" %}selected{% endif %}>Percent (%)</option>
+                        <option value="flat" {% if offer.offer_type=="flat" %}selected{% endif %}>Flat (₹)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="offer_value" class="form-label">Offer Value</label>
+                    <input type="number" step="0.01" name="offer_value" id="offer_value" class="form-control" value="{{ offer.offer_value }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="min_order_amount" class="form-label">Minimum Order Amount</label>
+                    <input type="number" step="0.01" name="min_order_amount" id="min_order_amount" class="form-control" value="{{ offer.min_order_amount }}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="max_discount" class="form-label">Maximum Discount</label>
+                    <input type="number" step="0.01" name="max_discount" id="max_discount" class="form-control" value="{{ offer.max_discount }}">
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" name="free_delivery" id="free_delivery" class="form-check-input" {% if offer.free_delivery %}checked{% endif %}>
+                    <label for="free_delivery" class="form-check-label">Free Delivery</label>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" name="is_first_order" id="is_first_order" class="form-check-input" {% if offer.is_first_order %}checked{% endif %}>
+                    <label for="is_first_order" class="form-check-label">First Order Only</label>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Select Restaurants</label>
+                    <select name="restaurants" class="form-select" multiple size="5">
+                        {% for r in restaurants %}
+                        <option value="{{ r.id }}" {% if r in offer.included_restaurants %}selected{% endif %}>{{ r.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple</small>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" name="is_active" id="is_active" class="form-check-input" {% if offer.is_active %}checked{% endif %}>
+                    <label for="is_active" class="form-check-label">Active</label>
+                </div>
+
+                <button type="submit" class="btn btn-success">Update Offer</button>
+                <a href="{{ url_for('manage_platform_offers') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

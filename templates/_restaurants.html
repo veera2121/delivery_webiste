@@ -109,9 +109,11 @@
 
 {% endfor %}
 </div>
-{% if trending_items %}
+</div>
+
+{% if trending_items|length > 0 %}
 <section class="trending-section">
-    <h2>🔥 Trending Near You</h2>
+    <h2>🔥 Trending in {{ selected_location }}</h2>
 
     <div class="trending-grid">
         {% for item in trending_items %}
@@ -119,7 +121,9 @@
             <span class="badge">🔥 Trending</span>
             <h4>{{ item.name }}</h4>
             <p>₹{{ item.price }}</p>
-            <small>From {{ item.restaurant.name }}</small>
+            <small>
+                From {{ item.restaurant.name if item.restaurant else "Unknown" }}
+            </small>
         </div>
         {% endfor %}
     </div>
