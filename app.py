@@ -774,31 +774,20 @@ from datetime import datetime, timedelta
 from flask import session, redirect, url_for, render_template, request
 from models import Order, Restaurant, DeliveryPerson, db
 from sqlalchemy import or_
-from datetime import datetime, timedelta
-import pytz
-from sqlalchemy import or_
 
 @app.route("/admin/dashboard")
 def admin_dashboard():
     if not session.get("admin_logged_in"):
         return redirect(url_for("admin_login"))
 
-    # ---------------- TIMEZONE (IMPORTANT) ----------------
-    ist = pytz.timezone("Asia/Kolkata")
-    today = datetime.now(ist).date()
-    yesterday = today - timedelta(days=1)
-    week_start = today - timedelta(days=today.weekday())
-
-    # ---------------- FILTER PARAMS ----------------
     query = request.args.get("query", "")
     status_filter = request.args.get("status", "")
-    date_filter = request.args.get("date")
+    date_filter = request.args.get("date")  # Optional date filter (YYYY-MM-DD)
     page = request.args.get("page", 1, type=int)
 
-    # ---------------- BASE QUERY ----------------
     q = Order.query
 
-    # 🔍 SEARCH
+    # ---------------- SEARCH FILTER ----------------
     if query:
         q = q.filter(
             or_(
@@ -809,24 +798,67 @@ def admin_dashboard():
             )
         )
 
-    # 📌 STATUS FILTER
+    # ---------------- STATUS FILTER ----------------
     if status_filter:
         q = q.filter(Order.status == status_filter)
 
-    # 📅 DATE FILTER
+    # ---------------- DATE FILTER ----------------
     if date_filter:
         try:
             filter_date = datetime.strptime(date_filter, "%Y-%m-%d").date()
             q = q.filter(db.func.date(Order.created_at) == filter_date)
         except ValueError:
-            pass
+            pass  # ignore invalid date input
 
-    # ---------------- PAGINATED ORDERS ----------------
     q = q.order_by(Order.created_at.desc())
     pagination = q.paginate(page=page, per_page=10)
     orders = pagination.items
 
-    # ---------------- CLASSIFY ORDERS ----------------
+    # ---------------- DELIVERY PERSONS & RESTAURANTS ----------------
+    delivery_persons = DeliveryPerson.query.order_by(DeliveryPerson.name).all()
+    restaurants = Restaurant.query.all()
+
+    # ---------------- ADMIN STATISTICS ----------------
+    today = datetime.utcnow().date()
+    yesterday = today - timedelta(days=1)
+    week_start = today - timedelta(days=today.weekday())
+
+    stats = {
+        "total_orders": Order.query.count(),
+        "pending": Order.query.filter_by(status="Pending").count(),
+        "preparing": Order.query.filter_by(status="Preparing").count(),
+        "assigned": Order.query.filter(
+            Order.delivery_person_id.isnot(None),
+            Order.status != "Delivered",
+            Order.status != "Cancelled"
+        ).count(),
+        "delivered": Order.query.filter_by(status="Delivered").count(),
+        "cancelled": Order.query.filter_by(status="Cancelled").count(),
+
+        # Today's delivered orders & revenue
+        "total_orders_today": Order.query.filter(
+            db.func.date(Order.created_at) == today,
+            Order.status == "Delivered"
+        ).count(),
+        "total_revenue_today": sum(
+            o.get_final_total() for o in Order.query.filter(
+                db.func.date(Order.created_at) == today,
+                Order.status == "Delivered"
+            ).all()
+        ),
+
+        # Weekly statistics
+        "week_orders": Order.query.filter(Order.created_at >= week_start).count(),
+        "total_revenue": sum(o.get_final_total() for o in Order.query.filter_by(status="Delivered").all()),
+        "weekly_revenue": sum(
+            o.get_final_total() for o in Order.query.filter(
+                Order.created_at >= week_start,
+                Order.status == "Delivered"
+            ).all()
+        )
+    }
+
+    # ---------------- CLASSIFY ORDERS BY DAY ----------------
     for o in orders:
         if o.created_at.date() == today:
             o.day_category = "Today"
@@ -835,97 +867,35 @@ def admin_dashboard():
         else:
             o.day_category = "Older"
 
-    # ---------------- TODAY ORDERS (ALL – NO PAGINATION) ----------------
-    today_orders = Order.query.filter(
-        db.func.date(Order.created_at) == today
-    ).order_by(Order.created_at.desc()).all()
-
-    # ---------------- DELIVERY PERSONS & RESTAURANTS ----------------
-    delivery_persons = DeliveryPerson.query.order_by(DeliveryPerson.name).all()
-    restaurants = Restaurant.query.all()
-
-    # ---------------- ADMIN STATISTICS ----------------
-    stats = {
-        "total_orders": Order.query.count(),
-
-        "total_orders_today": len(today_orders),
-
-        "pending": Order.query.filter_by(status="Pending").count(),
-        "preparing": Order.query.filter_by(status="Preparing").count(),
-        "assigned": Order.query.filter(
-            Order.delivery_person_id.isnot(None),
-            Order.status.notin_(["Delivered", "Cancelled"])
-        ).count(),
-
-        "delivered": Order.query.filter_by(status="Delivered").count(),
-        "cancelled": Order.query.filter_by(status="Cancelled").count(),
-
-        # 💰 TODAY REVENUE
-        "delivered_today": len([o for o in today_orders if o.status == "Delivered"]),
-        "total_revenue_today": sum(
-            o.get_final_total() for o in today_orders if o.status == "Delivered"
-        ),
-
-        # 📊 WEEKLY
-        "week_orders": Order.query.filter(
-            Order.created_at >= week_start
-        ).count(),
-
-        "weekly_revenue": sum(
-            o.get_final_total()
-            for o in Order.query.filter(
-                Order.created_at >= week_start,
-                Order.status == "Delivered"
-            ).all()
-        ),
-
-        "total_revenue": sum(
-            o.get_final_total()
-            for o in Order.query.filter_by(status="Delivered").all()
-        )
-    }
-
     # ---------------- RESTAURANT PERFORMANCE ----------------
     restaurant_performance = []
     for r in restaurants:
         r_orders = Order.query.filter_by(restaurant_id=r.id).all()
-
-        today_delivered = [
-            o for o in r_orders
-            if o.created_at.date() == today and o.status == "Delivered"
-        ]
-
-        weekly_delivered = [
-            o for o in r_orders
-            if o.created_at.date() >= week_start and o.status == "Delivered"
-        ]
-
+        today_orders = [o for o in r_orders if o.created_at.date() == today and o.status=="Delivered"]
+        weekly_orders = [o for o in r_orders if o.created_at.date() >= week_start and o.status=="Delivered"]
         restaurant_performance.append({
             "id": r.id,
             "name": r.name,
-            "today_orders": len(today_delivered),
-            "today_earnings": sum(o.get_final_total() for o in today_delivered),
-            "weekly_orders": len(weekly_delivered),
-            "weekly_earnings": sum(o.get_final_total() for o in weekly_delivered),
+            "today_orders": len(today_orders),
+            "today_earnings": sum(o.get_final_total() for o in today_orders),
+            "weekly_orders": len(weekly_orders),
+            "weekly_earnings": sum(o.get_final_total() for o in weekly_orders),
             "pending": len([o for o in r_orders if o.status == "Pending"]),
             "completed": len([o for o in r_orders if o.status == "Delivered"])
         })
 
-    # ---------------- RENDER ----------------
     return render_template(
         "admin_dashboard.html",
         orders=orders,
-        today_orders=today_orders,
+        delivery_persons=delivery_persons,
         pagination=pagination,
         query=query,
         status_filter=status_filter,
         date_filter=date_filter,
-        delivery_persons=delivery_persons,
         restaurants=restaurants,
         stats=stats,
         restaurant_stats=restaurant_performance
     )
-
 
 
 # ---------------- ASSIGN DELIVERY PERSON ----------------
