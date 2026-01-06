@@ -619,7 +619,8 @@ def place_order():
     # ================= RESTAURANT OPEN CHECK =================
     if not is_restaurant_open(restaurant):
         flash("Restaurant is currently closed.", "danger")
-        return redirect(url_for("menu", restaurant_id=restaurant_id))
+        return redirect(url_for("menu", restaurant_id=restaurant_id)) 
+    now = datetime.now().time()
         # 🚫 HARD STOP
     if not restaurant.is_accepting_orders:
         return jsonify({
