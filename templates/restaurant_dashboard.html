@@ -373,7 +373,8 @@ td[data-label="Feedback"] {
 </thead>
 <tbody>
 {% for order in filtered_orders %}
-<tr data-status="{{ order.status }}">
+<tr data-status="{{ order.status }}" data-order-id="{{ order.order_id }}">
+
 <td data-label="Order ID">{{ order.order_id }}</td>
 <td data-label="Customer">{{ order.customer_name }}<br>{{ order.phone }}</td>
 <td data-label="Items">
@@ -495,33 +496,48 @@ document.getElementById("clearFilters").addEventListener("click", function(){
 document.getElementById("searchInput").addEventListener("keyup", e=>{if(e.key==="Enter") applyFilters();});
 
 // ===== NEW ORDER SOUND & POPUP =====
-let lastOrderCount = {{ orders|length }};
+let lastOrderId = "{{ orders[0].order_id if orders else '' }}";
 const notifySound = new Audio("/static/sounds/neworder.mp3");
+
 function showPopup(msg){
     const badge = document.getElementById("newOrderBadge");
     badge.innerHTML = msg;
-    badge.style.display="block";
-    setTimeout(()=>badge.style.display="none",4000);
+    badge.style.display = "block";
+    setTimeout(() => badge.style.display = "none", 4000);
 }
-setInterval(()=>{
-    fetch(window.location.href).then(r=>r.text()).then(html=>{
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html,"text/html");
-        const updatedTables = doc.querySelectorAll("table tbody");
-        const currentTables = document.querySelectorAll("table tbody");
-        updatedTables.forEach((ut,i)=>currentTables[i].innerHTML = ut.innerHTML);
 
-        const newRows = doc.querySelectorAll("tbody tr");
-        const newCount = newRows.length;
-        if(newCount > lastOrderCount){
-            notifySound.play();
-            showPopup("🔔 New Order Received!");
-        }
-        lastOrderCount = newCount;
-    }).catch(console.error);
-},8000);
-</script> 
+setInterval(() => {
+    fetch(window.location.href)
+        .then(r => r.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
 
+            // Update tables (same as before)
+            const updatedTables = doc.querySelectorAll("table tbody");
+            const currentTables = document.querySelectorAll("table tbody");
+            updatedTables.forEach((ut, i) => {
+                if (currentTables[i]) {
+                    currentTables[i].innerHTML = ut.innerHTML;
+                }
+            });
+
+            // 🔥 Detect ONLY newest order
+            const firstRow = doc.querySelector("tbody tr[data-order-id]");
+            if (!firstRow) return;
+
+            const newOrderId = firstRow.getAttribute("data-order-id");
+
+            if (newOrderId && newOrderId !== lastOrderId) {
+                notifySound.play();
+                showPopup("🔔 New Order Received!");
+                lastOrderId = newOrderId;
+            }
+        })
+        .catch(console.error);
+}, 8000);
+
+</script>
 
 
 {% endblock %}
