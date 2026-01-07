@@ -9,7 +9,7 @@ import secrets
 import uuid
 import pandas as pd
 from datetime import datetime, timedelta
-
+import pytz
 # ================= FLASK =================
 from flask import (
     Flask, render_template, send_from_directory,
@@ -134,9 +134,8 @@ from flask import request, session, render_template
 from datetime import datetime 
 from zoneinfo import ZoneInfo
 
-IST = ZoneInfo("Asia/Kolkata")
-
-now = datetime.now(IST)
+ist = pytz.timezone("Asia/Kolkata")
+now = datetime.now(ist).time()
 @app.route("/")
 def home():
        # Fetch all distinct locations from database

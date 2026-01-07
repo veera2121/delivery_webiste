@@ -1354,28 +1354,18 @@ body {
 
     <!-- RIGHT -->
     <div class="header-right">
-<!-- LOCATION -->
-<div class="location-box">
-    <select id="locationFilter" onchange="changeLocation('desktop')">
 
-
-        <!-- First option: always placeholder -->
-        <option value="" {% if not selected_location %}selected{% endif %}>
-            Select Location
-        </option>
-
-        <!-- Loop through real locations -->
-        {% for loc in all_locations %}
-        <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>
-            {{ loc }}
-        </option>
-        {% endfor %}
-
-
-
-    </select>
-</div>
-
+      <!-- LOCATION -->
+                <div class="location-box">
+                <select id="locationFilter" onchange="changeLocation('desktop')">
+                    <option value="">Select Location</option>
+                    {% for loc in all_locations %}
+                    <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>
+                        {{ loc }}
+                    </option>
+                    {% endfor %}
+                </select>
+                </div>
 
       <!-- SEARCH -->
       <div class="search-box desktop-search">
