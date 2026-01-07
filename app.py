@@ -134,10 +134,11 @@ from flask import request, session, render_template
 from datetime import datetime 
 from zoneinfo import ZoneInfo
 
-ist = pytz.timezone("Asia/Kolkata")
-now = datetime.now(ist).time()
+
 @app.route("/")
-def home():
+def home(): 
+    ist = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(ist).time()
        # Fetch all distinct locations from database
     locations = db.session.query(Restaurant.location).distinct().all()
     # Convert SQLAlchemy tuples to simple list
@@ -180,7 +181,7 @@ def home():
     user_lng = session.get("user_lng")
     user_location_set = user_lat is not None and user_lng is not None
 
-    now = datetime.now().time()
+    
 
     # 🔹 Calculate delivery + open status
     for r in restaurants:
@@ -294,7 +295,7 @@ def city_page(city_slug):
     user_lng = session.get("user_lng")
     user_location_set = user_lat is not None and user_lng is not None
 
-    now = datetime.now().time()
+   
 
     # 🔹 Delivery + open status
     for r in restaurants:
@@ -652,6 +653,7 @@ def place_order():
         flash("Restaurant is currently closed.", "danger")
         return redirect(url_for("menu", restaurant_id=restaurant_id)) 
     now = datetime.now().time()
+
         # 🚫 HARD STOP
     if not restaurant.is_accepting_orders:
         return jsonify({
