@@ -546,14 +546,18 @@ body {
                         <div class="item-desc">{{ item['description'] }}</div>
 
                         {% if item['availability'].lower() == 'yes' %}
-                            <div class="add-section">
+                          <div class="add-section">
+                                <button type="button" class="qty-btn minus">-</button>
                                 <input type="number" min="1" value="1" class="qty-box">
+                                <button type="button" class="qty-btn plus">+</button>
                                 <button class="add-btn"
                                         data-id="{{ loop.index }}"
                                         data-name="{{ item['name'] }}"
                                         data-price="{{ item['price'] }}">
                                     Add +
                                 </button>
+                            </div>
+
                             </div>
                         {% else %}
                             <p class="out-stock">Out of Stock</p>
@@ -847,6 +851,21 @@ function scrollToCategory(id) {
     }
 }
 
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".qty-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const input = e.target.parentElement.querySelector(".qty-box");
+            let value = parseInt(input.value);
+            if (e.target.classList.contains("plus")) {
+                input.value = value + 1;
+            } else if (e.target.classList.contains("minus") && value > 1) {
+                input.value = value - 1;
+            }
+        });
+    });
+});
 </script>
 
 {% endblock %}
