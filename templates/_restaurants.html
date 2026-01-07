@@ -104,7 +104,7 @@
                     {% if not r.is_accepting_orders and r.accept_orders_until %}
                         {% set btn_text = "Accepting orders after " ~ r.accept_orders_until.strftime("%I:%M %p") %}
                     {% elif not r.is_accepting_orders %}
-                       
+                        {% set btn_text = "Currently not accepting orders" %}
                     {% endif %}
                     <span class="view-btn disabled-btn">{{ btn_text }}</span>
                 {% endif %}
