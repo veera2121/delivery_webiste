@@ -534,24 +534,24 @@ body {
         <div id="{{ category }}" class="category-title">{{ category }}</div>
         <div class="menu-grid">
             {% for item in items %}
-                {% set food_type = item.type if item.type else ('veg' if 'veg' in item.category.lower() else 'nonveg') %}
+                {% set food_type = item['type'] if item.get('type') else ('veg' if 'veg' in item['category'].lower() else 'nonveg') %}
                 <div class="menu-card-accent">
                     <div class="card-left {{ food_type }}"></div> <!-- Accent border -->
                     <div class="card-body-accent">
                         <div class="item-header">
                             <span class="food-dot {{ food_type }}"></span>
-                            <span class="item-name">{{ item.name }}</span>
+                            <span class="item-name">{{ item['name'] }}</span>
                         </div>
-                        <div class="item-price">₹{{ item.price }}</div>
-                        <div class="item-desc">{{ item.description }}</div>
+                        <div class="item-price">₹{{ item['price'] }}</div>
+                        <div class="item-desc">{{ item['description'] }}</div>
 
-                        {% if item.availability.lower() == 'yes' %}
+                        {% if item['availability'].lower() == 'yes' %}
                             <div class="add-section">
                                 <input type="number" min="1" value="1" class="qty-box">
                                 <button class="add-btn"
                                         data-id="{{ loop.index }}"
-                                        data-name="{{ item.name }}"
-                                        data-price="{{ item.price }}">
+                                        data-name="{{ item['name'] }}"
+                                        data-price="{{ item['price'] }}">
                                     Add +
                                 </button>
                             </div>
@@ -564,6 +564,7 @@ body {
         </div>
     {% endif %}
 {% endfor %}
+
 
 
 <!-- FLOATING CART BUTTON -->

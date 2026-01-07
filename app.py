@@ -131,7 +131,8 @@ app.permanent_session_lifetime = timedelta(hours=6)
 from flask import request
 from flask import request, session, render_template
  # make sure you have this function or library
-from datetime import datetime
+from datetime import datetime 
+IST = pytz.timezone("Asia/Kolkata")
 @app.route("/")
 def home():
        # Fetch all distinct locations from database
