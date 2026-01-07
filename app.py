@@ -132,7 +132,11 @@ from flask import request
 from flask import request, session, render_template
  # make sure you have this function or library
 from datetime import datetime 
-IST = pytz.timezone("Asia/Kolkata")
+from zoneinfo import ZoneInfo
+
+IST = ZoneInfo("Asia/Kolkata")
+
+now = datetime.now(IST)
 @app.route("/")
 def home():
        # Fetch all distinct locations from database
