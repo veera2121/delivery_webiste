@@ -60,6 +60,23 @@
       box-shadow: 0 0 0 3px rgba(4,114,99,0.2);
     }
 
+    /* PASSWORD WRAPPER */
+    .password-wrapper {
+      position: relative;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 14px;
+      color: #ff5722;
+      user-select: none;
+      font-weight: 600;
+    }
+
     button {
       width: 100%;
       padding: 12px;
@@ -108,7 +125,10 @@
       <input type="text" name="username" placeholder="Enter username" required>
 
       <label>Password:</label>
-      <input type="password" name="password" placeholder="Enter password" required>
+      <div class="password-wrapper">
+        <input type="password" name="password" id="password" placeholder="Enter password" required>
+        <span class="toggle-password" onclick="togglePassword()">Show</span>
+      </div>
 
       <label>Restaurant:</label>
       <select name="restaurant_id" required>
@@ -120,5 +140,20 @@
       <button type="submit">Create User</button>
     </form>
   </div>
+
+  <script>
+    function togglePassword() {
+      const pwd = document.getElementById("password");
+      const toggle = document.querySelector(".toggle-password");
+
+      if (pwd.type === "password") {
+        pwd.type = "text";
+        toggle.textContent = "Hide";
+      } else {
+        pwd.type = "password";
+        toggle.textContent = "Show";
+      }
+    }
+  </script>
 </body>
 </html>
