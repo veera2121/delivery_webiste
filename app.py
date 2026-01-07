@@ -1375,12 +1375,12 @@ def add_restaurant():
 
 from datetime import datetime
 from flask import abort, flash, redirect, url_for
-
 @app.route("/menu/<int:restaurant_id>")
 def menu(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
 
-    now = datetime.now().time()
+    ist = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(ist).time()
 
     # 🕒 OPEN STATUS
     is_open = (
@@ -1389,12 +1389,11 @@ def menu(restaurant_id):
         restaurant.opening_time <= now <= restaurant.closing_time
     )
 
-    # 🚫 HARD BLOCK (same as closed)
+    # 🚫 HARD BLOCK
     if not is_open or not restaurant.is_accepting_orders:
         flash("Restaurant is currently not accepting orders", "warning")
-        return redirect(url_for("home"))   # or restaurant list page
+        return redirect(url_for("home"))
 
-    # 🚫 Sheet missing
     if not restaurant.sheet_url:
         return "Error: No Google Sheet URL set for this restaurant"
 
@@ -1415,6 +1414,7 @@ def menu(restaurant_id):
 
     except Exception as e:
         return f"Error loading menu: {e}"
+
 
 @app.route("/restaurant/assign_delivery/<int:order_id>", methods=["POST"])
 def restaurant_assign_delivery(order_id):
