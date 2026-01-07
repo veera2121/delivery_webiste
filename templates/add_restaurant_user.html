@@ -3,26 +3,122 @@
 <head>
   <meta charset="UTF-8">
   <title>Add Restaurant User</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #047263, #279999);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 15px;
+      max-width: 450px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #111827;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #047263;
+      box-shadow: 0 0 0 3px rgba(4,114,99,0.2);
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #ff7043, #ff5722);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255,87,34,0.35);
+    }
+
+    a {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #047263;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 500px) {
+      .container {
+        padding: 20px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Add Restaurant User</h1>
-  <a href="{{ url_for('admin_dashboard') }}">Back to Admin Dashboard</a>
-  
-  <form method="POST">
-    <label>Username:</label>
-    <input type="text" name="username" required><br><br>
+  <div class="container">
+    <h1>Add Restaurant User</h1>
+    <a href="{{ url_for('admin_dashboard') }}">← Back to Admin Dashboard</a>
 
-    <label>Password:</label>
-    <input type="password" name="password" required><br><br>
+    <form method="POST">
+      <label>Username:</label>
+      <input type="text" name="username" placeholder="Enter username" required>
 
-    <label>Restaurant:</label>
-    <select name="restaurant_id" required>
-      {% for r in restaurants %}
-        <option value="{{ r.id }}">{{ r.name }}</option>
-      {% endfor %}
-    </select><br><br>
+      <label>Password:</label>
+      <input type="password" name="password" placeholder="Enter password" required>
 
-    <button type="submit">Create User</button>
-  </form>
+      <label>Restaurant:</label>
+      <select name="restaurant_id" required>
+        {% for r in restaurants %}
+          <option value="{{ r.id }}">{{ r.name }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit">Create User</button>
+    </form>
+  </div>
 </body>
 </html>
