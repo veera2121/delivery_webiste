@@ -136,6 +136,39 @@ from flask import send_from_directory
 @app.route('/googleb0a5e859452528b7.html')
 def google_verify():
     return send_from_directory('static', 'googleb0a5e859452528b7.html')
+from flask import Response, url_for
+from datetime import datetime
+
+@app.route('/sitemap.xml', methods=['GET'])
+def sitemap():
+    # Base URL
+    base_url = 'https://www.ruchigo.in'
+
+    # Static pages
+    pages = [
+        url_for('home', _external=True),
+    ]
+
+    # Add all restaurants dynamically
+    restaurants = Restaurant.query.all()
+    for r in restaurants:
+        pages.append(url_for('menu', restaurant_id=r.id, _external=True))
+
+    # Generate XML content
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+
+    for page in pages:
+        xml += '  <url>\n'
+        xml += f'    <loc>{page}</loc>\n'
+        xml += f'    <lastmod>{datetime.today().date()}</lastmod>\n'
+        xml += '    <changefreq>weekly</changefreq>\n'
+        xml += '    <priority>0.8</priority>\n'
+        xml += '  </url>\n'
+
+    xml += '</urlset>'
+
+    return Response(xml, mimetype='application/xml')
 
 from datetime import datetime 
 from zoneinfo import ZoneInfo
