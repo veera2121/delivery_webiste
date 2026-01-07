@@ -179,12 +179,7 @@ def home():
     ist = pytz.timezone("Asia/Kolkata")
     now = datetime.now(ist).time()
        # Fetch all distinct locations from database
-    locations = db.session.query(Restaurant.location).distinct().all()
-    # Convert SQLAlchemy tuples to simple list
-    all_locations = [loc[0] for loc in locations]
-
-    # Do NOT select any by default
-    selected_location = ""  # placeholder will be shown
+    selected_location = request.args.get("location", "").strip()
 
     # 🔹 Filter restaurants by selected location
     if selected_location:
