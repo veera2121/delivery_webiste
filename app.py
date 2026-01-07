@@ -130,7 +130,13 @@ ADMIN_PASSWORD_HASH ="scrypt:32768:8:1$KjIRJyvNzAIMkq3H$93b2da15188e769f503cc5c4
 app.permanent_session_lifetime = timedelta(hours=6)
 from flask import request
 from flask import request, session, render_template
- # make sure you have this function or library
+ # make sure you have this function or library 
+from flask import send_from_directory
+
+@app.route('/googleb0a5e859452528b7.html')
+def google_verify():
+    return send_from_directory('static', 'googleb0a5e859452528b7.html')
+
 from datetime import datetime 
 from zoneinfo import ZoneInfo
 
@@ -2083,7 +2089,7 @@ def apply_coupon():
 
     # Minimum items total to apply coupon
     if items_total < 399:
-        return jsonify({"success": False, "message": "Order must be at least ₹199 to apply coupon."})
+        return jsonify({"success": False, "message": "Order must be at least ₹399 to apply coupon."})
 
     # Apply discount: 30% off capped at 60
     discount = min(items_total * 0.10, 20)
