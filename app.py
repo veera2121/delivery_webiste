@@ -37,8 +37,23 @@ from models import (
 )
 
 # ================= APP =================
+# ================= APP =================
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "my-super-secret-key-123"
+
+# 🔐 SECURITY & CSRF CONFIG
+app.config.update(
+    SECRET_KEY=os.getenv("SECRET_KEY", "my-super-secret-key-123"),
+    WTF_CSRF_ENABLED=True,
+    WTF_CSRF_TIME_LIMIT=3600,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax"
+)
+
+if os.getenv("FLASK_ENV") == "production":
+    app.config["SESSION_COOKIE_SECURE"] = True
+
+# 🔐 INIT CSRF (AFTER config)
+csrf = CSRFProtect(app)
 
 # ================= DATABASE =================
 db_url = os.getenv("DATABASE_URL")
@@ -81,7 +96,7 @@ socketio = SocketIO(
 # ================= BLUEPRINTS =================
 app.register_blueprint(users_bp, url_prefix="/users")
 
-socketio = SocketIO(app, cors_allowed_origins="*")
+
 # ------------------ UTILS ------------------
 def generate_otp():
     return str(secrets.randbelow(900000) + 100000)
@@ -104,8 +119,14 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * math.asin(math.sqrt(a))
     return R * c
 # ------------------ ADMIN CONFIG ------------------
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "password123"
+
+# Admin credentials
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+# Use the hashed password instead of plain text
+# Admin credentials
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")  # default username
+ADMIN_PASSWORD_HASH ="scrypt:32768:8:1$KjIRJyvNzAIMkq3H$93b2da15188e769f503cc5c4285c7281bd8b42b774b320355f476652eafc983e994d285b434753ae852d8faabec936e50b8f63d43d8d0ffd8ab09b4614501661"
+
 app.permanent_session_lifetime = timedelta(hours=6)
 from flask import request
 from flask import request, session, render_template
@@ -113,7 +134,13 @@ from flask import request, session, render_template
 from datetime import datetime
 @app.route("/")
 def home():
-    selected_location = request.args.get("location", "").strip()
+       # Fetch all distinct locations from database
+    locations = db.session.query(Restaurant.location).distinct().all()
+    # Convert SQLAlchemy tuples to simple list
+    all_locations = [loc[0] for loc in locations]
+
+    # Do NOT select any by default
+    selected_location = ""  # placeholder will be shown
 
     # 🔹 Filter restaurants by selected location
     if selected_location:
@@ -761,15 +788,25 @@ def place_order():
 
 
 # ------------------ SUPER ADMIN ------------------
-@csrf.exempt
+
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
+    if session.get("admin_logged_in"):
+        return redirect(url_for("admin_dashboard"))
+
     if request.method == "POST":
-        if request.form.get("username") == ADMIN_USERNAME and request.form.get("password") == ADMIN_PASSWORD:
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        if username == ADMIN_USERNAME and check_password_hash(ADMIN_PASSWORD_HASH, password):
             session["admin_logged_in"] = True
             return redirect(url_for("admin_dashboard"))
+
         flash("Invalid login", "danger")
+
     return render_template("admin_login.html")
+
+
 from datetime import datetime, timedelta
 from flask import session, redirect, url_for, render_template, request
 from models import Order, Restaurant, DeliveryPerson, db
@@ -933,12 +970,19 @@ def update_status(order_id):
     return redirect(url_for("restaurant_dashboard"))
 
 
-
 @app.route("/admin/logout")
 def admin_logout():
     session.pop("admin_logged_in", None)
+    flash("Logged out successfully", "success")
     return redirect(url_for("admin_login"))
-
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("admin_logged_in"):
+            flash("You must be logged in as admin to access this page", "danger")
+            return redirect(url_for("admin_login"))
+        return f(*args, **kwargs)
+    return decorated_function
 # ------------------ RESTAURANT OWNER ------------------
 @app.route("/restaurant/login", methods=["GET", "POST"])
 def restaurant_login():

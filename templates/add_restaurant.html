@@ -3,45 +3,144 @@
 <head>
   <meta charset="UTF-8">
   <title>Add Restaurant & User</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #047263, #279999);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 15px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #111827;
+      text-align: center;
+    }
+
+    h3 {
+      margin-top: 20px;
+      margin-bottom: 10px;
+      color: #047263;
+      font-weight: 600;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #047263;
+      box-shadow: 0 0 0 3px rgba(4,114,99,0.2);
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #ff7043, #ff5722);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255,87,34,0.35);
+    }
+
+    a {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #047263;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 550px) {
+      .container {
+        padding: 20px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Add Restaurant & Login</h1>
-  <a href="{{ url_for('admin_dashboard') }}">Back to Admin Dashboard</a>
-  
-  <form method="POST">
-    <h3>Restaurant Details</h3>
+  <div class="container">
+    <h1>Add Restaurant & Login</h1>
+    <a href="{{ url_for('admin_dashboard') }}">← Back to Admin Dashboard</a>
 
-    <label>Restaurant Name</label><br>
-    <input type="text" name="name" placeholder="Restaurant Name" required><br><br>
+    <form method="POST">
+      <h3>Restaurant Details</h3>
 
-    <label>Phone</label><br>
-    <input type="text" name="phone" placeholder="Phone"><br><br>
+      <label>Restaurant Name</label>
+      <input type="text" name="name" placeholder="Restaurant Name" required>
 
-    <label>Email</label><br>
-    <input type="email" name="email" placeholder="Email"><br><br>
+      <label>Phone</label>
+      <input type="text" name="phone" placeholder="Phone">
 
-    <label>Address</label><br>
-    <input type="text" name="address" placeholder="Address"><br><br>
+      <label>Email</label>
+      <input type="email" name="email" placeholder="Email">
 
-    <!-- ⭐ REPLACED DROPDOWN → TEXT INPUT FOR EXACT LOCATION -->
-    <label>Location</label><br>
-    <input type="text" name="location" placeholder="Eg: Ameerpet, BTM Layout, Andheri" required><br><br>
+      <label>Address</label>
+      <input type="text" name="address" placeholder="Address">
 
-    <!-- Existing Field -->
-    <label>Google Sheet URL (Published CSV Link)</label><br>
-    <input type="text" name="sheet_url"
-       placeholder="https://docs.google.com/spreadsheets/d/e/XXXX/pub?output=csv"
-       required><br><br>
+      <label>Location</label>
+      <input type="text" name="location" placeholder="Eg: Ameerpet, BTM Layout, Andheri" required>
 
-    <h3>Admin Login (for this restaurant)</h3>
+      <label>Google Sheet URL (Published CSV Link)</label>
+      <input type="text" name="sheet_url" placeholder="https://docs.google.com/spreadsheets/d/e/XXXX/pub?output=csv" required>
 
-    <label>Admin Username</label><br>
-    <input type="text" name="admin_username" placeholder="admin123" required><br><br>
+      <h3>Admin Login (for this restaurant)</h3>
 
-    <label>Admin Password</label><br>
-    <input type="password" name="admin_password" required><br><br>
+      <label>Admin Username</label>
+      <input type="text" name="admin_username" placeholder="admin123" required>
 
-    <button type="submit">Add Restaurant</button>
-  </form>
+      <label>Admin Password</label>
+      <input type="password" name="admin_password" required>
+
+      <button type="submit">Add Restaurant</button>
+    </form>
+  </div>
 </body>
 </html>
