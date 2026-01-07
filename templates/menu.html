@@ -682,7 +682,8 @@ document.querySelectorAll(".add-btn").forEach(btn => {
     btn.addEventListener("click", () => {
         const name = btn.dataset.name;
         const price = parseFloat(btn.dataset.price);
-        const qtyBox = btn.closest(".menu-card")?.querySelector(".qty-box");
+        const qtyBox = btn.closest(".menu-card-accent")?.querySelector(".qty-box");
+
         const qty = qtyBox ? parseInt(qtyBox.value) || 1 : 1;
 
         const otherRestaurantIds = Object.keys(carts).filter(
