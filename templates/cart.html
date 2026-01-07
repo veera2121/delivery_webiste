@@ -712,7 +712,7 @@ async function applyCoupon() {
         body: JSON.stringify({
             phone,
             device_fingerprint: fingerprint,
-            coupon_code: "FIRST30",
+            coupon_code: "FIRST20",
             items_total: itemsTotal
         })
     });
@@ -734,7 +734,7 @@ async function applyCoupon() {
     couponApplied = true;
     couponDiscount = data.discount;
     document.getElementById("apply_coupon_input").value = "true";
-    document.getElementById("coupon-box").innerText = "FIRST30 applied";
+    document.getElementById("coupon-box").innerText = "FIRST20 applied";
 
     msg.innerText = `🎉 Coupon applied · You saved ₹${couponDiscount}`;
     msg.className = "soft-success";

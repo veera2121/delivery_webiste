@@ -723,10 +723,10 @@ def place_order():
         offer_discount == 0 and
         apply_coupon and
         first_time_user and
-        items_total >= 199
+        items_total >= 399
     ):
         coupon_discount = min(items_total * 0.30, 60)
-        coupon_used = "FIRST30"
+        coupon_used = "FIRST20"
 
     # ================= FINAL TOTAL =================
     total_discount = offer_discount + coupon_discount
@@ -2069,7 +2069,7 @@ def apply_coupon():
         return jsonify({"success": False, "message": "Phone number is required."})
 
     # Only FIRST30 coupon supported for now
-    if coupon_code != "FIRST30":
+    if coupon_code != "FIRST20":
         return jsonify({"success": False, "message": "Invalid coupon code."})
 
     # Check if user has any delivered orders (first-time check)
