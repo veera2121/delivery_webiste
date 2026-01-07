@@ -40,6 +40,10 @@ from models import (
 # ================= APP =================
 app = Flask(__name__)
 
+@app.before_request
+def redirect_root_to_www():
+    if request.host == "ruchigo.in":
+        return redirect("https://www.ruchigo.in" + request.full_path, code=301)
 # 🔐 SECURITY & CSRF CONFIG
 app.config.update(
     SECRET_KEY=os.getenv("SECRET_KEY", "my-super-secret-key-123"),
@@ -132,6 +136,8 @@ from flask import request
 from flask import request, session, render_template
  # make sure you have this function or library 
 from flask import send_from_directory
+from flask import request, redirect
+
 
 @app.route('/googleb0a5e859452528b7.html')
 def google_verify():
