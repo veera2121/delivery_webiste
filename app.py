@@ -2082,12 +2082,11 @@ def apply_coupon():
         return jsonify({"success": False, "message": "Coupon valid for first-time users only."})
 
     # Minimum items total to apply coupon
-    if items_total < 199:
+    if items_total < 399:
         return jsonify({"success": False, "message": "Order must be at least ₹199 to apply coupon."})
 
     # Apply discount: 30% off capped at 60
-    discount = min(items_total * 0.30, 60)
-
+    discount = min(items_total * 0.10, 20)
     return jsonify({
         "success": True,
         "discount": discount,
