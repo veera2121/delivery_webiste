@@ -1333,6 +1333,47 @@ body {
   }
 }
 
+.flash-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+.flash-card {
+  background: #fff;
+  padding: 20px 25px;
+  border-radius: 12px;
+  max-width: 320px;
+  text-align: center;
+  animation: pop 0.3s ease;
+}
+
+.flash-card h3 {
+  margin-bottom: 10px;
+}
+
+.flash-card p {
+  color: #444;
+  margin-bottom: 15px;
+}
+
+.flash-card button {
+  background: #ff4d4f;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@keyframes pop {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
 
 </style>
 
@@ -1894,6 +1935,24 @@ function closeModal(e) {
   }
 }
 </script>
+<script>
+function showFlash(message) {
+  document.getElementById("flashMessage").innerText = message;
+  document.getElementById("flashModal").style.display = "flex";
+}
+
+function closeFlash() {
+  document.getElementById("flashModal").style.display = "none";
+}
+</script>
+<!-- 🚨 FLASH MODAL -->
+<div id="flashModal" class="flash-modal">
+  <div class="flash-card">
+    <h3>⏳ Restaurant Unavailable</h3>
+    <p id="flashMessage"></p>
+    <button onclick="closeFlash()">OK</button>
+  </div>
+</div>
 
 
 <div id="modalOverlay" class="modal-overlay" onclick="closeModal(event)">
