@@ -362,6 +362,32 @@ form button:hover {
   color: #10b981;
   font-weight: 700;
 }
+.order-header {
+  position: relative;
+}
+
+.refresh-alert {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  background: #ff9800;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+
+  padding: 4px 8px;
+  border-radius: 12px;
+
+  animation: pulse 1.5s infinite;
+}
+
+/* Subtle attention animation */
+@keyframes pulse {
+  0%   { transform: scale(1); opacity: 1; }
+  50%  { transform: scale(1.05); opacity: 0.85; }
+  100% { transform: scale(1); opacity: 1; }
+}
 
 
 </style>
@@ -396,7 +422,10 @@ form button:hover {
 {% if active_orders %}
   {% for order in active_orders %}
   <div class="order-card">
-
+      <!-- 🔔 REFRESH ALERT -->
+  <span class="refresh-alert">
+    🔄 Refresh for updates
+  </span>
     <div class="order-header">
       <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
       <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>

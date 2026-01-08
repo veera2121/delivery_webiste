@@ -123,7 +123,8 @@ class Order(db.Model):
     delivery_charge = db.Column(db.Float, default=0.0)
     final_total = db.Column(db.Float, default=0.0)          # items_total - discount + delivery_charge
     coupon_used = db.Column(db.String(50), nullable=True)
-    device_fingerprint = db.Column(db.String(200), nullable=True)
+    device_fingerprint = db.Column(db.Text, nullable=True)
+
     restaurant_offer_discount = db.Column(db.Float, default=0)
     # ---------------- ORDER STATUS ----------------
     status = db.Column(db.String(50), default="Pending")    # Pending / Completed / Cancelled
@@ -269,7 +270,8 @@ class CouponUsage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     coupon_code = db.Column(db.String(50))
     phone = db.Column(db.String(20))
-    device_fingerprint = db.Column(db.String(200))
+    device_fingerprint = db.Column(db.Text, nullable=True)
+
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 class RestaurantOffer(db.Model):
