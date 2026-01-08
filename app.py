@@ -40,10 +40,6 @@ from models import (
 # ================= APP =================
 app = Flask(__name__)
 
-@app.before_request
-def redirect_root_to_www():
-    if request.host == "ruchigo.in":
-        return redirect("https://www.ruchigo.in" + request.full_path, code=301)
 # 🔐 SECURITY & CSRF CONFIG
 app.config.update(
     SECRET_KEY=os.getenv("SECRET_KEY", "my-super-secret-key-123"),

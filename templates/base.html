@@ -16,7 +16,16 @@
   <meta property="og:title" content="{% block og_title %}{% endblock %}">
   <meta property="og:description" content="{% block og_description %}{% endblock %}">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="{{ request.url }}">
+  <meta property="og:url" content="{{ request.url }}"> 
+  <!-- ✅ FAVICON / LOGO ICON -->
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo4.png') }}">
+
+   <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo-192.png') }}">
+
+  <!-- Android / PWA Icons -->
+  <link rel="icon" sizes="192x192" href="{{ url_for('static', filename='images/logo-192.png') }}">
+  <link rel="icon" sizes="512x512" href="{{ url_for('static', filename='images/logo-512.png') }}">
 
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

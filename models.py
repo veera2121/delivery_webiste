@@ -169,8 +169,16 @@ class Order(db.Model):
     distance_km = db.Column(db.Float)
     profit_amount = db.Column(db.Float, default=0.0)
     admin_notes = db.Column(db.String(300)) 
- 
-  
+    
+    # ---------------- DELIVERY ACCEPT FLOW ----------------
+    delivery_accept_status = db.Column(
+        db.String(20),
+        default="pending"
+    )  # pending / accepted / rejected
+
+    delivery_response_time = db.Column(db.DateTime, nullable=True)
+
+    
   
  
     restaurant_offer_id = db.Column(
@@ -305,3 +313,38 @@ class PlatformOffer(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
          # ✅ ADD THIS
     
+class OrderAssignment(db.Model):
+    __tablename__ = "order_assignment"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    order_id = db.Column(
+        db.Integer,
+        db.ForeignKey("order.id"),
+        nullable=False
+    )
+
+    delivery_person_id = db.Column(
+        db.Integer,
+        db.ForeignKey("delivery_person.id"),
+        nullable=False
+    )
+
+    status = db.Column(
+        db.String(20),
+        default="assigned"
+    )
+    # assigned | accepted | rejected | expired
+
+    assigned_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    responded_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    order = db.relationship("Order", backref="assignments")
+    delivery_person = db.relationship("DeliveryPerson", backref="assignments")
