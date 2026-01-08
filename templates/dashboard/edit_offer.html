@@ -23,13 +23,27 @@
   text-decoration: none;
 }
 .btn-primary { background: #007bff; color: #fff; }
-.btn-secondary { background: #6c757d; color: #fff; }
+.btn-secondary { background: #6c757d; color: #fff; } 
+a.button, button {
+    padding: 8px 14px;
+    background: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a.button:hover, button:hover {
+    background: #2980b9;
+}
 </style>
 </head>
     <body>
 
-   
-<div class="dashboard-page">
+
+<div class="dashboard-page"> 
+     <a href="{{ url_for('restaurant_dashboard') }}" class="button">← Back to Dashboard</a>
   <h2>✏️ Edit Offer – {{ restaurant.name }}</h2>
 
   <form method="POST">

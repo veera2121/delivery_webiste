@@ -367,6 +367,61 @@ body {
     left: 10px;
     background-color: #28a745;
 }
+/* Live Location Button */
+.location-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 22px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #ff6a00, #ff9800);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(255, 152, 0, 0.35);
+    transition: all 0.3s ease;
+}
+
+/* Hover Effect */
+.location-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 14px 35px rgba(255, 152, 0, 0.5);
+}
+
+/* Active / Click */
+.location-btn:active {
+    transform: scale(0.96);
+}
+
+/* Mobile Friendly */
+@media (max-width: 480px) {
+    .location-btn {
+        width: 100%;
+        justify-content: center;
+        font-size: 15px;
+        padding: 14px;
+    }
+}
+.payment-info {
+    margin: 18px 0 12px;
+    padding: 12px 16px;
+    background: #f0fff4;
+    border: 1px solid #b7ebc6;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2e7d32;
+    text-align: center;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .payment-info {
+        font-size: 14px;
+    }
+}
 
 </style>
 </head>
@@ -398,12 +453,12 @@ body {
         <input type="hidden" name="customer_lat" id="customer_lat">
         <input type="hidden" name="customer_lng" id="customer_lng">
 
-        <button type="button" onclick="getUserLocation()">
-        📍 Use My Live Location
-        </button>
+      <button type="button" class="location-btn" onclick="getUserLocation()">
+          📍 Use My Live Location
+      </button>
 
-<input type="hidden" name="lat" id="lat">
-<input type="hidden" name="lng" id="lng">
+
+
 
         <div id="map" style="height:300px;margin-top:10px;"></div>
           <input type="hidden" name="lat" id="customer_lat">
@@ -510,9 +565,16 @@ body {
             <textarea name="delivery_note" placeholder="Delivery instructions (optional)"></textarea>
         </div>
 
+                  <!-- Payment Info Message -->
+        <div class="payment-info">
+            💳 Pay by <strong>Cash on Delivery</strong> or 
+            <strong>Online Payment at Delivery Time</strong>
+        </div>
+
         <div class="checkout-bar">
             <button type="submit">Place Order</button>
         </div>
+
     </form>
 </div>
 

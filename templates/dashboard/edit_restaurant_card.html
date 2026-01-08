@@ -10,11 +10,25 @@
     label { display:block; margin-top:12px; font-weight:bold; }
     input, select, textarea { width:100%; padding:10px; margin-top:5px; border-radius:6px; border:1px solid #ccc; }
     button { margin-top:20px; padding:12px; width:100%; border:none; background:#ff5722; color:white; font-size:16px; border-radius:8px; cursor:pointer; }
+a.button, button {
+    padding: 8px 14px;
+    background: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a.button:hover, button:hover {
+    background: #2980b9;
+}
 </style>
     </head>
     <body>
-
-<div class="container">
+    
+<div class="container"> 
+    <a href="{{ url_for('restaurant_dashboard') }}" class="button">← Back to Dashboard</a>
     <h2>Edit Restaurant Card – {{ restaurant.name }}</h2>
 
     <form method="POST">
