@@ -170,14 +170,6 @@ class Order(db.Model):
     profit_amount = db.Column(db.Float, default=0.0)
     admin_notes = db.Column(db.String(300)) 
     
-    # ---------------- DELIVERY ACCEPT FLOW ----------------
-    delivery_accept_status = db.Column(
-        db.String(20),
-        default="pending"
-    )  # pending / accepted / rejected
-
-    delivery_response_time = db.Column(db.DateTime, nullable=True)
-
     
   
  
