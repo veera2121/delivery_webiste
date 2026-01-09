@@ -175,28 +175,27 @@ def sitemap():
 from datetime import datetime 
 from zoneinfo import ZoneInfo
 
-
 @app.route("/")
-def home(): 
+def home():
     ist = pytz.timezone("Asia/Kolkata")
     now = datetime.now(ist).time()
-       # Fetch all distinct locations from database
+
     selected_location = request.args.get("location", "").strip()
 
-    # 🔹 Filter restaurants by selected location
+    # 🔹 Restaurants by location
     if selected_location:
         restaurants = Restaurant.query.filter_by(location=selected_location).all()
     else:
         restaurants = Restaurant.query.all()
 
-    # 🔹 List of all locations for dropdown
+    # 🔹 Location dropdown
     all_locations = [
         loc[0]
         for loc in db.session.query(Restaurant.location).distinct()
         if loc[0]
     ]
 
-    # 🔹 Trending items (ONLY from selected location)
+    # 🔹 Trending items
     if selected_location:
         trending_items = (
             db.session.query(FoodItem)
@@ -212,19 +211,17 @@ def home():
     else:
         trending_items = []
 
-    # 🔹 User location from session
+    # 🔹 User location
     user_lat = session.get("user_lat")
     user_lng = session.get("user_lng")
     user_location_set = user_lat is not None and user_lng is not None
 
-    
-
-    # 🔹 Calculate delivery + open status
+    # 🔹 Calculate status
     for r in restaurants:
         r.deliverable = True
         r.distance = None
 
-        # 🚚 Delivery radius check
+        # 🚚 Delivery radius
         if (
             user_location_set
             and r.latitude is not None
@@ -240,21 +237,24 @@ def home():
             r.distance = round(dist, 1)
             r.deliverable = dist <= r.delivery_radius_km
 
-        # 🕒 Open / Closed check
+        # 🕒 Open status
         if r.opening_time and r.closing_time:
             r.is_open = r.opening_time <= now <= r.closing_time
         else:
             r.is_open = False
 
-    # ⭐ Sort: deliverable + open first
+    # ⭐⭐ FINAL SORT (THIS IS THE KEY FIX)
     restaurants.sort(
         key=lambda r: (
-            not r.deliverable,
-            not r.is_open
+            not r.deliverable,            # deliverable first
+            not r.is_open,                # open first
+            not r.can_accept_orders,      # active first
+            r.status == "suspended",      # suspended last
+            r.status == "coming_soon"     # coming soon after open
         )
     )
 
-    # 🔹 SEO (DYNAMIC – VERY IMPORTANT)
+    # 🔹 SEO
     if selected_location:
         seo_title = f"Online Food Delivery in {selected_location} | RuchiGo"
         seo_description = (
@@ -276,7 +276,7 @@ def home():
             "Sakhinetipalli food delivery, RuchiGo"
         )
 
-    # 🔹 AJAX request (restaurant list only)
+    # 🔹 AJAX load
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return render_template(
             "_restaurants.html",
@@ -285,7 +285,6 @@ def home():
             now=now
         )
 
-    # 🔹 Full page render
     return render_template(
         "index.html",
         restaurants=restaurants,
@@ -298,6 +297,7 @@ def home():
         seo_description=seo_description,
         seo_keywords=seo_keywords
     )
+
 @app.route("/city/<city_slug>")
 def city_page(city_slug):
     # Convert slug to readable name
