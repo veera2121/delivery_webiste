@@ -689,20 +689,14 @@ def place_order():
         flash("Restaurant is currently closed.", "danger")
         return redirect(url_for("menu", restaurant_id=restaurant_id)) 
     now = datetime.now().time()
-
-        # 🚫 HARD STOP
-    if not restaurant.is_accepting_orders:
+    # 🚫 HARD STOP
+    if not restaurant.can_accept_orders:
         return jsonify({
             "success": False,
             "message": "Restaurant is not accepting orders right now."
         }), 403
 
-    if restaurant.opening_time and restaurant.closing_time:
-        if not (restaurant.opening_time <= now <= restaurant.closing_time):
-            return jsonify({
-                "success": False,
-                "message": "Restaurant is currently closed."
-            }), 403
+   
     # ================= ITEMS TOTAL =================
     items_total = sum(
         int(quantities[i]) * float(prices[i])
@@ -1426,7 +1420,8 @@ def menu(restaurant_id):
     )
 
     # 🚫 HARD BLOCK
-    if not is_open or not restaurant.is_accepting_orders:
+    if not is_open or not restaurant.can_accept_orders:
+
         flash("Restaurant is currently not accepting orders", "warning")
         return redirect(url_for("home"))
 
