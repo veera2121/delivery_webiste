@@ -541,41 +541,22 @@ body {
 /* =========================
    SCROLLABLE ROW
 ========================= */
-/* =========================
-   RESTAURANT ROW – VERTICAL
-========================= */
 .restaurant-row {
     display: flex;
-    flex-direction: column;   /* 🔥 ONE BY ONE */
-    gap: 20px;
+    gap: 18px;
 
-    padding: 16px;
+    overflow-x: auto;
+    overflow-y: visible;
+
+    padding: 16px 18px 28px;
     margin-bottom: 36px;
 
-    overflow: visible;        /* ❌ no scroll */
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+
+    -webkit-overflow-scrolling: touch;
+    
 }
-
-/* =========================
-   CARD – FULL WIDTH
-========================= */
-.card {
-    position: relative;
-    width: 100%;               /* 🔥 FULL ROW */
-    max-width: 900px;          /* Nice centered width */
-    margin: auto;
-
-    background: #fff;
-    border-radius: 20px;
-    overflow: hidden;
-
-    box-shadow: 0 12px 28px rgba(0,0,0,0.14);
-    cursor: pointer;
-
-    transition:
-        transform 0.35s ease,
-        box-shadow 0.35s ease;
-}
-
 
 /* Hide scrollbar */
 .restaurant-row::-webkit-scrollbar {
@@ -585,7 +566,24 @@ body {
 /* =========================
    CARD
 ========================= */
+.card {
+    position: relative;
+    flex: 0 0 auto;
+    width: 280px;
 
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+
+    box-shadow: 0 12px 28px rgba(0,0,0,0.14);
+    cursor: pointer;
+
+    scroll-snap-align: start;
+
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease;
+}
 
 /* EDGE GLOW */
 .card::before {
