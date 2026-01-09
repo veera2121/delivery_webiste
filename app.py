@@ -2213,23 +2213,27 @@ def delete_offer(offer_id):
 
 
 from datetime import datetime
+from datetime import datetime
 
 @app.route("/dashboard/restaurant/<int:restaurant_id>/edit", methods=["GET", "POST"])
 def edit_restaurant_card(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
 
     if request.method == "POST":
+        # ================= BASIC INFO =================
         restaurant.name = request.form.get("name")
         restaurant.address = request.form.get("address")
         restaurant.phone = request.form.get("phone")
         restaurant.email = request.form.get("email")
 
+        # ================= CARD DETAILS =================
         restaurant.is_veg = request.form.get("is_veg") == "yes"
         restaurant.rating = float(request.form.get("rating") or 4.0)
         restaurant.price_level = request.form.get("price_level")
         restaurant.delivery_time = request.form.get("delivery_time")
         restaurant.popular_items = request.form.get("popular_items")
 
+        # ================= DELIVERY =================
         restaurant.delivery_charge = float(request.form.get("delivery_charge") or 30)
         restaurant.free_delivery_limit = float(request.form.get("free_delivery_limit") or 499)
 
@@ -2237,31 +2241,47 @@ def edit_restaurant_card(restaurant_id):
         restaurant.longitude = request.form.get("longitude") or None
         restaurant.delivery_radius_km = float(request.form.get("delivery_radius_km") or 5)
 
-        # Opening / Closing time
+        # ================= OPEN / CLOSE TIME =================
         opening_time_str = request.form.get("opening_time")
         closing_time_str = request.form.get("closing_time")
 
-        if opening_time_str:
-            restaurant.opening_time = datetime.strptime(opening_time_str, "%H:%M").time()
-
-        if closing_time_str:
-            restaurant.closing_time = datetime.strptime(closing_time_str, "%H:%M").time()
-
-        # ✅ FIX 1: checkbox
-        restaurant.is_accepting_orders = "is_accepting_orders" in request.form
-
-        # ✅ FIX 2: accept orders until
-        accept_until_str = request.form.get("accept_orders_until")
-        restaurant.accept_orders_until = (
-            datetime.strptime(accept_until_str, "%H:%M").time()
-            if accept_until_str else None
+        restaurant.opening_time = (
+            datetime.strptime(opening_time_str, "%H:%M").time()
+            if opening_time_str else None
         )
+
+        restaurant.closing_time = (
+            datetime.strptime(closing_time_str, "%H:%M").time()
+            if closing_time_str else None
+        )
+
+        # ================= START DATE (COMING SOON) =================
+        start_date_str = request.form.get("start_date")
+        restaurant.start_date = (
+            datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            if start_date_str else None
+        )
+
+        # ================= STATUS CONTROL =================
+        status = request.form.get("status")
+
+        if status in ["active", "coming_soon", "suspended"]:
+            restaurant.status = status
+
+        # 🔒 SAFETY RULES
+        # If coming soon → must have start_date
+        if restaurant.status == "coming_soon" and not restaurant.start_date:
+            flash("Start date is required for Coming Soon restaurants", "danger")
+            return redirect(request.url)
 
         db.session.commit()
         flash("Restaurant card updated successfully!", "success")
         return redirect(url_for("restaurant_dashboard", restaurant_id=restaurant.id))
 
-    return render_template("dashboard/edit_restaurant_card.html", restaurant=restaurant)
+    return render_template(
+        "dashboard/edit_restaurant_card.html",
+        restaurant=restaurant
+    )
 
 
 @app.route('/toggle-offer/<int:offer_id>', methods=['POST'])

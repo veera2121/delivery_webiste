@@ -224,7 +224,17 @@ button:hover {
         <label>Accept Orders Until (optional)</label>
         <input type="time" name="accept_orders_until"
             value="{{ restaurant.accept_orders_until.strftime('%H:%M') if restaurant.accept_orders_until else '' }}"
-            placeholder="Eg: 22:30">
+            placeholder="Eg: 22:30">  
+            <label>Status</label>
+            <select name="status">
+            <option value="active" {{ 'selected' if restaurant.status == 'active' }}>Active</option>
+            <option value="coming_soon" {{ 'selected' if restaurant.status == 'coming_soon' }}>Coming Soon</option>
+            <option value="suspended" {{ 'selected' if restaurant.status == 'suspended' }}>Suspended</option>
+            </select>
+
+            <label>Start Date</label>
+            <input type="date" name="start_date" value="{{ restaurant.start_date }}">
+
         <button type="submit">Update Card</button>
     </form>
 </div>

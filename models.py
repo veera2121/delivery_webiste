@@ -8,44 +8,61 @@ from sqlalchemy.orm import relationship
 db = SQLAlchemy()  # Keep this here, do NOT move to app.py
 
 from datetime import time
+from datetime import datetime, date, time
+
+
 
 class Restaurant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
+    # ================= BASIC INFO =================
     name = db.Column(db.String(200), nullable=False)
     address = db.Column(db.String(500))
     phone = db.Column(db.String(20))
     email = db.Column(db.String(200))
     sheet_url = db.Column(db.String(500))  # CSV URL
-    location = db.Column(db.String(100))  # Optional: location filter
+    location = db.Column(db.String(100))   # city / area filter
 
-    # Card fields
+    # ================= CARD DETAILS =================
     is_veg = db.Column(db.Boolean, default=True)
     rating = db.Column(db.Float, default=4.0)
     price_level = db.Column(db.String(10), default="₹₹")
     delivery_time = db.Column(db.String(20), default="30–40 mins")
-    popular_items = db.Column(db.String(255), default="Biryani • Pizza • Rolls • Chinese")
-    is_accepting_orders = db.Column(db.Boolean, default=True)
-    accept_orders_until = db.Column(db.Time, nullable=True)  # optional
-    # Delivery
+    popular_items = db.Column(
+        db.String(255),
+        default="Biryani • Pizza • Rolls • Chinese"
+    )
+
+    # ================= LAUNCH & STATUS =================
+    start_date = db.Column(db.Date, nullable=True)
+
+    status = db.Column(
+        db.String(20),
+        default="coming_soon"
+        # active | coming_soon | suspended
+    )
+
+    # ================= DELIVERY =================
     delivery_charge = db.Column(db.Float, default=30, nullable=False)
     free_delivery_limit = db.Column(db.Float, default=499, nullable=False)
 
-    # Open/Close times
-    opening_time = db.Column(db.Time, default=time(10, 0))  # 10:00 AM
-    closing_time = db.Column(db.Time, default=time(22, 0))  # 10:00 PM
-     # ADD THESE FIELDS
-        # Delivery location
+    # ================= OPEN / CLOSE TIME =================
+    opening_time = db.Column(db.Time, default=time(10, 0))   # 10:00 AM
+    closing_time = db.Column(db.Time, default=time(22, 0))   # 10:00 PM
+
+    # ================= DELIVERY LOCATION =================
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
     delivery_radius_km = db.Column(db.Float, default=5, nullable=True)
 
-    # Relationships
+    # ================= RELATIONSHIPS =================
     users = db.relationship("RestaurantUser", backref="restaurant", lazy=True)
     orders = db.relationship("Order", backref="restaurant", lazy=True)
     delivery_persons = db.relationship("DeliveryPerson", backref="restaurant", lazy=True)
     menu_items = db.relationship("MenuItem", backref="restaurant", lazy=True)
     offers = db.relationship("RestaurantOffer", backref="restaurant", lazy=True)
 
+    # ================= ACTIVE OFFER =================
     @property
     def active_offer(self):
         now = datetime.utcnow()
@@ -53,12 +70,28 @@ class Restaurant(db.Model):
             (
                 o for o in self.offers
                 if o.is_active
-                and o.start_date is not None
-                and o.end_date is not None
+                and o.start_date
+                and o.end_date
                 and o.start_date <= now <= o.end_date
             ),
             None
         )
+
+    # ================= SINGLE SOURCE OF TRUTH =================
+    @property
+    def can_accept_orders(self):
+        # Suspended → never accept
+        if self.status == "suspended":
+            return False
+
+        # Coming soon → only after start_date
+        if self.status == "coming_soon":
+            if not self.start_date:
+                return False
+            return date.today() >= self.start_date
+
+        # Active
+        return self.status == "active"
 
 # ----------------- Restaurant Admin User -----------------
 class RestaurantUser(db.Model):
