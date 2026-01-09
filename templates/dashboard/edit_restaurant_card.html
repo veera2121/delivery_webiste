@@ -5,25 +5,151 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
   <head>
 <style>
-    body { font-family: Arial; background:#f5f5f5; padding:30px; }
-    .container { max-width:700px; margin:auto; background:#fff; padding:25px; border-radius:10px; }
-    label { display:block; margin-top:12px; font-weight:bold; }
-    input, select, textarea { width:100%; padding:10px; margin-top:5px; border-radius:6px; border:1px solid #ccc; }
-    button { margin-top:20px; padding:12px; width:100%; border:none; background:#ff5722; color:white; font-size:16px; border-radius:8px; cursor:pointer; }
-a.button, button {
-    padding: 8px 14px;
-    background: #3498db;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    text-decoration: none;
-    cursor: pointer;
+body {
+    font-family: "Poppins", Arial, sans-serif;
+    background: linear-gradient(135deg, #f8fafc, #eef2f7);
+    padding: 30px;
 }
 
-a.button:hover, button:hover {
-    background: #2980b9;
+.container {
+    max-width: 720px;
+    margin: auto;
+    background: #ffffff;
+    padding: 28px;
+    border-radius: 18px;
+    box-shadow: 0 20px 45px rgba(0,0,0,0.08);
+}
+
+/* Header */
+h2 {
+    margin-top: 15px;
+    margin-bottom: 25px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+}
+
+/* Back button */
+a.button {
+    display: inline-block;
+    margin-bottom: 12px;
+    padding: 10px 16px;
+    background: #e5e7eb;
+    color: #111;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.2s;
+}
+a.button:hover {
+    background: #d1d5db;
+}
+
+/* Labels */
+label {
+    display: block;
+    margin-top: 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* Inputs */
+input, select, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    margin-top: 6px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #ff5722;
+    box-shadow: 0 0 0 3px rgba(255,87,34,0.15);
+}
+
+/* Two-column layout */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+/* Toggle switch */
+.switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.switch input {
+    appearance: none;
+    width: 44px;
+    height: 24px;
+    background: #d1d5db;
+    border-radius: 999px;
+    position: relative;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.switch input:checked {
+    background: #22c55e;
+}
+
+.switch input::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 4px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.switch input:checked::before {
+    transform: translateX(18px);
+}
+
+/* Submit button */
+button {
+    margin-top: 30px;
+    padding: 14px;
+    width: 100%;
+    border: none;
+    background: linear-gradient(135deg, #ff5722, #ff784e);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(255,87,34,0.35);
+}
+
+/* Section divider */
+.section-title {
+    margin-top: 32px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    border-left: 4px solid #ff5722;
+    padding-left: 10px;
 }
 </style>
+
     </head>
     <body>
     
