@@ -933,6 +933,108 @@ body {
     }
 }
 
+/* ===== TRENDING SECTION ===== */
+.trending-section {
+    padding: 20px 16px;
+    background: #becce0;
+}
+
+.trending-section h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: #222;
+}
+
+/* ===== GRID ===== */
+.trending-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+}
+
+/* ===== FOOD CARD ===== */
+.food-card {
+    position: relative;
+    background: #074132;
+    border-radius: 14px;
+    padding: 18px;              /* more inner space */
+    min-height: 200px;          /* 🔥 increase card height */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* spreads content nicely */
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+
+.food-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== TRENDING BADGE ===== */
+.food-card .badge {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    background: #ff4d4d;
+    color: #fff;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+/* ===== FOOD NAME ===== */
+.food-card h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 10px 0 6px;
+    color: #111;
+}
+
+/* ===== PRICE ===== */
+.food-card p {
+    font-size: 14px;
+    font-weight: 900;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
+
+/* ===== RESTAURANT NAME ===== */
+.food-card small {
+    font-size: 12px;
+    color: #969696;
+    font-weight: bolder;
+}
+
+/* ===== MOBILE OPTIMIZATION ===== */
+@media (max-width: 480px) {
+    .trending-section h2 {
+        font-size: 18px;
+    }
+
+    .food-card {
+        padding: 12px;
+    }
+}
+.banner {
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+/* IMAGE ITSELF */
+.banner img { 
+    padding-bottom: 40px;
+    width: 100%;
+    height: auto;          /* 🔥 KEY FOR MOBILE */
+    display: block;
+    object-fit: contain;   /* Shows full image */
+}
+
+
 
 /* =========================
    FOOTER
