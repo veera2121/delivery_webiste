@@ -21,6 +21,15 @@ body {
     overflow-x: hidden;
 }
 
+.header {
+    position: sticky;
+    top: 0;
+    height: 64px;              /* ✅ fixed height */
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
 /* HEADER */
 .header {
@@ -76,7 +85,7 @@ body {
 /* CATEGORY BAR */
 .top-cat-wrapper {
     position: sticky;
-    top: 150px; /* header + incentive */
+    top: 124px; /* header + incentive */
     z-index: 1000;
 
     background: #ffffff;
@@ -121,7 +130,7 @@ body {
     padding-left: 10px;
 
     /* ✅ KEY FIX */
-    scroll-margin-top: 190px;
+    scroll-margin-top: 160px;
 }
 
 /* MENU GRID */
