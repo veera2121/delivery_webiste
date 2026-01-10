@@ -684,17 +684,7 @@ def place_order():
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
     
-    # ================= RESTAURANT OPEN CHECK =================
-    if not is_restaurant_open(restaurant):
-        flash("Restaurant is currently closed.", "danger")
-        return redirect(url_for("menu", restaurant_id=restaurant_id)) 
-    now = datetime.now().time()
-    # 🚫 HARD STOP
-    if not restaurant.can_accept_orders:
-
-        flash("Restaurant is not accepting orders right now.", "danger")
-    return redirect(url_for("menu", restaurant_id=restaurant_id))
-
+ 
 
    
     # ================= ITEMS TOTAL =================
