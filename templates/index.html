@@ -525,8 +525,6 @@ body {
 ========================= */
 .restaurants-section {
     padding: 40px 16px;
-    
-
     overflow: visible;
 }
 
@@ -553,9 +551,9 @@ body {
 
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
+    scroll-padding-left: 18px;
 
     -webkit-overflow-scrolling: touch;
-    
 }
 
 /* Hide scrollbar */
@@ -636,7 +634,7 @@ body {
     padding: 16px;
 }
 
-/* RESTAURANT NAME – WOW */
+/* RESTAURANT NAME */
 .restaurant-name {
     font-size: 21px;
     font-weight: 800;
@@ -776,22 +774,24 @@ body {
     cursor: not-allowed;
 }
 
-
 /* =========================
    MOBILE RESPONSIVE
 ========================= */
 @media (max-width: 768px) {
 
     .restaurant-row {
-        gap: 16px;
+        gap: 14px;
         padding-left: 16px;
         padding-right: 16px;
     }
 
     .card {
-        width: calc(100vw - 32px); /* FULL card, no half cut */
+        width: 90vw;              /* One card at a time */
+        max-width: 360px;
+        scroll-snap-align: center;
     }
 }
+
 /* =========================
    FOOD CATEGORIES SECTION
 ========================= */

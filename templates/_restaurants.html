@@ -119,54 +119,56 @@
     {% endif %}
 </div>
 {# ================= ACTION BUTTON ================= #}
-{% if is_suspended %}
-    <span class="view-btn disabled-btn">Suspended</span>
+            {% if is_suspended %}
+                <span class="view-btn disabled-btn">Suspended</span>
 
-{% elif is_coming_soon %}
-    <span class="view-btn disabled-btn">
-        Coming Soon
-        {% if r.start_date %}
-            ({{ r.start_date.strftime("%d %b") }})
-        {% endif %}
-    </span>
+            {% elif is_coming_soon %}
+                <span class="view-btn disabled-btn">
+                    Coming Soon
+                    {% if r.start_date %}
+                        ({{ r.start_date.strftime("%d %b") }})
+                    {% endif %}
+                </span>
 
-{% elif not r.opening_time or not r.closing_time %}
-    <span class="view-btn disabled-btn">Timing not updated</span>
+            {% elif not r.opening_time or not r.closing_time %}
+                <span class="view-btn disabled-btn">Timing not updated</span>
 
-{% elif not is_open %}
-    {% if now < r.opening_time %}
-        <span class="view-btn disabled-btn">
-            Accepting orders at {{ r.opening_time.strftime("%I:%M %p") }}
-        </span>
-    {% else %}
-        <span class="view-btn disabled-btn">
-            Closed for today
-        </span>
-    {% endif %}
+            {% elif not is_open %}
+                {% if now < r.opening_time %}
+                    <span class="view-btn disabled-btn">
+                        Accepting orders at {{ r.opening_time.strftime("%I:%M %p") }}
+                    </span>
+                {% else %}
+                    <span class="view-btn disabled-btn">
+                        Closed for today
+                    </span>
+                {% endif %}
 
-{% elif not can_accept %}
-    {% if r.accept_orders_until and now < r.accept_orders_until %}
-        <span class="view-btn disabled-btn">
-            ⏳ Accepting orders after {{ r.accept_orders_until.strftime("%I:%M %p") }}
-        </span>
-    {% else %}
-        <span class="view-btn disabled-btn">
-            🚫 Orders temporarily paused by restaurant
-        </span>
-    {% endif %}
+            {% elif not can_accept %}
+                {% if r.accept_orders_until and now < r.accept_orders_until %}
+                    <span class="view-btn disabled-btn">
+                        ⏳ Accepting orders after {{ r.accept_orders_until.strftime("%I:%M %p") }}
+                    </span>
+                {% else %}
+                    <span class="view-btn disabled-btn">
+                        🚫 Orders temporarily paused by restaurant
+                    </span>
+                {% endif %}
 
+            {% elif not r.deliverable %}
+                <span class="view-btn disabled-btn">
+                    Not delivering to your location
+                </span>
 
-{% elif not r.deliverable %}
-    <span class="view-btn disabled-btn">
-        Not delivering to your location
-    </span>
+            {% else %}
+                <a href="/menu/{{ r.id }}" class="view-btn">View Menu</a>
+            {% endif %}
 
-{% else %}
-    <a href="/menu/{{ r.id }}" class="view-btn">View Menu</a>
-{% endif %}
+        </div>   <!-- ✅ CLOSE .content -->
+    </div>       <!-- ✅ CLOSE .card -->
 
 {% endfor %}
-</div>
+</div>           <!-- ✅ CLOSE .restaurant-row -->
 
 {% if trending_items|length > 0 %}
 <section class="trending-section">
