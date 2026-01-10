@@ -84,18 +84,36 @@ class Restaurant(db.Model):
     # ================= SINGLE SOURCE OF TRUTH =================
     @property
     def can_accept_orders(self):
-        # Suspended → never accept
+        now = datetime.now().time()  # local time
+
+        # 1️⃣ Manual OFF switch
+        if not self.is_accepting_orders:
+            return False
+
+        # 2️⃣ Suspended → never accept
         if self.status == "suspended":
             return False
 
-        # Coming soon → only after start_date
+        # 3️⃣ Coming soon → only after start_date
         if self.status == "coming_soon":
             if not self.start_date:
                 return False
-            return date.today() >= self.start_date
+            if date.today() < self.start_date:
+                return False
 
-        # Active
-        return self.status == "active"
+        # 4️⃣ Active + opening/closing time
+        if self.opening_time and self.closing_time:
+            if not (self.opening_time <= now <= self.closing_time):
+                return False
+
+        # 5️⃣ Accept orders until time
+        if self.accept_orders_until:
+            if now > self.accept_orders_until:
+                return False
+
+        return True
+
+
 
 # ----------------- Restaurant Admin User -----------------
 class RestaurantUser(db.Model):

@@ -56,28 +56,43 @@ if os.getenv("FLASK_ENV") == "production":
 csrf = CSRFProtect(app)
 
 # ================= DATABASE =================
+import os
+import sys
+
+# Get DATABASE_URL from environment (for production)
 db_url = os.getenv("DATABASE_URL")
 
 if db_url:
+    # Fix old postgres:// URLs for SQLAlchemy
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
-    print("✅ Using PostgreSQL database")
+    print("✅ Using PRODUCTION PostgreSQL database")
 else:
-    print("⚠️ Using LOCAL SQLite database")
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    INSTANCE_PATH = os.path.join(BASE_DIR, "instance")
-    os.makedirs(INSTANCE_PATH, exist_ok=True)
+    # Local development: use local PostgreSQL instead of SQLite
+    print("⚠️ Using LOCAL PostgreSQL database")
+    LOCAL_DB_USER = "postgres"       # your local DB username
+    LOCAL_DB_PASSWORD = "9676382650"   # your local DB password
+    LOCAL_DB_HOST = "localhost"      # usually localhost
+    LOCAL_DB_PORT = "5433"           # your PostgreSQL port
+    LOCAL_DB_NAME = "testdb"         # your local database name
+
     app.config["SQLALCHEMY_DATABASE_URI"] = (
-        "sqlite:///" + os.path.join(INSTANCE_PATH, "restaurants.db")
+        f"postgresql://{LOCAL_DB_USER}:{LOCAL_DB_PASSWORD}"
+        f"@{LOCAL_DB_HOST}:{LOCAL_DB_PORT}/{LOCAL_DB_NAME}"
     )
-print("DB:", app.config["SQLALCHEMY_DATABASE_URI"])
 
+# Disable track modifications for performance
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["WTF_CSRF_ENABLED"] = False  # enable later safely
-import sys
 
+# CSRF temporarily disabled for development (enable safely later)
+app.config["WTF_CSRF_ENABLED"] = False
+
+# Detect if running Flask CLI commands (migrate, upgrade, etc.)
 IS_FLASK_CLI = any(cmd in sys.argv for cmd in ["flask", "db", "migrate", "upgrade"])
+
+# Optional: print DB URI for debug (remove in production)
+print("DB URI:", app.config["SQLALCHEMY_DATABASE_URI"])
 
 # ================= INIT EXTENSIONS =================
 db.init_app(app)
@@ -194,6 +209,7 @@ def home():
         for loc in db.session.query(Restaurant.location).distinct()
         if loc[0]
     ]
+
 
     # 🔹 Trending items
     if selected_location:
@@ -684,7 +700,46 @@ def place_order():
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
     
- 
+    now = datetime.now().time()
+    # 1️⃣ Restaurant suspended
+    if restaurant.status == "suspended":
+        flash("🚫 This restaurant is currently suspended.", "danger")
+        return redirect("/")
+
+    # 2️⃣ Coming soon
+    if restaurant.status == "coming_soon":
+        flash("⏳ This restaurant is coming soon. Orders not open yet.", "warning")
+        return redirect("/")
+
+    # 3️⃣ Timing not updated
+    if not restaurant.opening_time or not restaurant.closing_time:
+        flash("❌ Restaurant timing not updated. Cannot place order.", "danger")
+        return redirect("/")
+
+    # 4️⃣ Before opening
+    if now < restaurant.opening_time:
+        flash(
+            f"⏳ Orders will open at {restaurant.opening_time.strftime('%I:%M %p')}",
+            "warning"
+        )
+        return redirect("/")
+
+    # 5️⃣ After closing
+    if now > restaurant.closing_time:
+        flash("🌙 Restaurant is closed for today.", "danger")
+        return redirect("/")
+
+    # 6️⃣ Orders paused manually
+    if not restaurant.is_accepting_orders:
+        if restaurant.accept_orders_until and now < restaurant.accept_orders_until:
+            flash(
+                f"⏳ Orders will be accepted after "
+                f"{restaurant.accept_orders_until.strftime('%I:%M %p')}",
+                "warning"
+            )
+        else:
+            flash("🚫 Restaurant is not accepting orders right now.", "danger")
+        return redirect("/")
 
    
     # ================= ITEMS TOTAL =================
@@ -743,9 +798,9 @@ def place_order():
         offer_discount == 0 and
         apply_coupon and
         first_time_user and
-        items_total >= 399
+        items_total >= 599
     ):
-        coupon_discount = min(items_total * 0.30, 60)
+        coupon_discount = min(items_total * 0.30, 30)
         coupon_used = "FIRST20"
 
     # ================= FINAL TOTAL =================
@@ -2103,11 +2158,11 @@ def apply_coupon():
         return jsonify({"success": False, "message": "Coupon valid for first-time users only."})
 
     # Minimum items total to apply coupon
-    if items_total < 399:
-        return jsonify({"success": False, "message": "Order must be at least ₹399 to apply coupon."})
+    if items_total < 599:
+        return jsonify({"success": False, "message": "Order must be at least ₹599 to apply coupon."})
 
     # Apply discount: 30% off capped at 60
-    discount = min(items_total * 0.10, 20)
+    discount = min(items_total * 0.20, 30)
     return jsonify({
         "success": True,
         "discount": discount,
@@ -2240,6 +2295,17 @@ def edit_restaurant_card(restaurant_id):
             if closing_time_str else None
         )
 
+        # ================= ACCEPT ORDERS MANUAL =================
+        # ✅ Fixed: properly set True/False
+        restaurant.is_accepting_orders = True if request.form.get("is_accepting_orders") == "1" else False
+
+        # ================= ACCEPT ORDERS UNTIL =================
+        accept_until_str = request.form.get("accept_orders_until")
+        restaurant.accept_orders_until = (
+            datetime.strptime(accept_until_str, "%H:%M").time()
+            if accept_until_str else None
+        )
+
         # ================= START DATE (COMING SOON) =================
         start_date_str = request.form.get("start_date")
         restaurant.start_date = (
@@ -2249,12 +2315,10 @@ def edit_restaurant_card(restaurant_id):
 
         # ================= STATUS CONTROL =================
         status = request.form.get("status")
-
         if status in ["active", "coming_soon", "suspended"]:
             restaurant.status = status
 
         # 🔒 SAFETY RULES
-        # If coming soon → must have start_date
         if restaurant.status == "coming_soon" and not restaurant.start_date:
             flash("Start date is required for Coming Soon restaurants", "danger")
             return redirect(request.url)
@@ -2267,7 +2331,6 @@ def edit_restaurant_card(restaurant_id):
         "dashboard/edit_restaurant_card.html",
         restaurant=restaurant
     )
-
 
 @app.route('/toggle-offer/<int:offer_id>', methods=['POST'])
 def toggle_offer_status(offer_id):
@@ -2617,6 +2680,36 @@ def notify_all():
 
     return jsonify({"success": True})
   
+from datetime import datetime
+import pytz
+
+def update_can_accept_orders(restaurant):
+    ist = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(ist).time()
+
+    if restaurant.status != "active":
+        restaurant.can_accept_orders = False
+        return
+
+    if not restaurant.opening_time or not restaurant.closing_time:
+        restaurant.can_accept_orders = False
+        return
+
+    if not (restaurant.opening_time <= now <= restaurant.closing_time):
+        restaurant.can_accept_orders = False
+        return
+
+    # Manual ON
+    if restaurant.is_accepting_orders:
+        restaurant.can_accept_orders = True
+        return
+
+    # Auto resume after time
+    if restaurant.accept_orders_until and now >= restaurant.accept_orders_until:
+        restaurant.can_accept_orders = True
+        return
+
+    restaurant.can_accept_orders = False
 
 # ------------------ DB INIT ------------------
 

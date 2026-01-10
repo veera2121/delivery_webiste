@@ -583,6 +583,22 @@ html {
   border-radius: 8px;
   cursor: pointer;
 }
+.flash-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+}
+.alert {
+    padding: 12px 20px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    color: #fff;
+}
+.alert-danger { background: #e74c3c; }
+.alert-warning { background: #f39c12; }
+.alert-success { background: #27ae60; }
 
 
   </style> 
@@ -1017,6 +1033,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 </script>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 
 <!-- Empty Cart Modal -->
 <div id="emptyCartModal" class="cart-modal hidden">
