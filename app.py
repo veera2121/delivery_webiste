@@ -690,11 +690,10 @@ def place_order():
         return redirect(url_for("menu", restaurant_id=restaurant_id)) 
     now = datetime.now().time()
     # 🚫 HARD STOP
-    if not restaurant.can_accept_orders:
-        return jsonify({
-            "success": False,
-            "message": "Restaurant is not accepting orders right now."
-        }), 403
+   if not restaurant.can_accept_orders:
+    flash("Restaurant is not accepting orders right now.", "danger")
+    return redirect(url_for("menu", restaurant_id=restaurant_id))
+
 
    
     # ================= ITEMS TOTAL =================

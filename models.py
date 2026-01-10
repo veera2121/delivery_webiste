@@ -27,7 +27,11 @@ class Restaurant(db.Model):
     is_veg = db.Column(db.Boolean, default=True)
     rating = db.Column(db.Float, default=4.0)
     price_level = db.Column(db.String(10), default="₹₹")
-    delivery_time = db.Column(db.String(20), default="30–40 mins")
+    delivery_time = db.Column(db.String(20), default="30–40 mins") 
+    # ================= ORDER ACCEPTANCE =================
+    is_accepting_orders = db.Column(db.Boolean, default=True, nullable=False)
+    accept_orders_until = db.Column(db.Time, nullable=True)
+
     popular_items = db.Column(
         db.String(255),
         default="Biryani • Pizza • Rolls • Chinese"
@@ -45,7 +49,7 @@ class Restaurant(db.Model):
     # ================= DELIVERY =================
     delivery_charge = db.Column(db.Float, default=30, nullable=False)
     free_delivery_limit = db.Column(db.Float, default=499, nullable=False)
-
+ 
     # ================= OPEN / CLOSE TIME =================
     opening_time = db.Column(db.Time, default=time(10, 0))   # 10:00 AM
     closing_time = db.Column(db.Time, default=time(22, 0))   # 10:00 PM
