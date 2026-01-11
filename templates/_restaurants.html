@@ -144,7 +144,16 @@
                     </span>
                 {% endif %}
 
-
+            {% elif not can_accept %}
+                {% if r.accept_orders_until and now < r.accept_orders_until %}
+                    <span class="view-btn disabled-btn">
+                        ⏳ Accepting orders after {{ r.accept_orders_until.strftime("%I:%M %p") }}
+                    </span>
+                {% else %}
+                    <span class="view-btn disabled-btn">
+                        🚫 Orders temporarily paused by restaurant
+                    </span>
+                {% endif %}
 
             {% elif not r.deliverable %}
                 <span class="view-btn disabled-btn">
