@@ -58,7 +58,10 @@ csrf = CSRFProtect(app)
 # ================= DATABASE =================
 import os
 import sys
+IST = pytz.timezone("Asia/Kolkata")
 
+def now_ist():
+    return datetime.now(IST)
 # Get DATABASE_URL from environment (for production)
 db_url = os.getenv("DATABASE_URL")
 
@@ -628,19 +631,19 @@ from datetime import datetime
 def generate_otp():
     return str(random.randint(100000, 999999))
 from datetime import datetime
-
 def is_restaurant_open(restaurant):
-    now = datetime.now().time()
+    now = now_ist().time()
 
     if not restaurant.opening_time or not restaurant.closing_time:
         return False
 
-    # Normal same-day timing
+    # Same-day timing (e.g. 10 AM – 10 PM)
     if restaurant.opening_time < restaurant.closing_time:
         return restaurant.opening_time <= now <= restaurant.closing_time
 
-    # Overnight timing (e.g., 8 PM – 2 AM)
+    # Overnight timing (e.g. 8 PM – 2 AM)
     return now >= restaurant.opening_time or now <= restaurant.closing_time
+
 
 
 from flask import request, flash, redirect, url_for, session
@@ -711,7 +714,7 @@ def place_order():
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
     
-    now = datetime.now().time()
+    now = now_ist().time()
     # 1️⃣ Restaurant suspended
     if restaurant.status == "suspended":
         flash("🚫 This restaurant is currently suspended.", "danger")
