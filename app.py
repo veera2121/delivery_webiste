@@ -186,41 +186,6 @@ def sitemap():
     xml += '</urlset>'
 
     return Response(xml, mimetype='application/xml')
-from datetime import datetime
-import pytz
-
-def can_accept_now(restaurant):
-    ist = pytz.timezone("Asia/Kolkata")
-    now = datetime.now(ist).time()
-
-    # Status check
-    if restaurant.status != "active":
-        return False
-
-    # Manual OFF by restaurant
-    if not restaurant.is_accepting_orders:
-        return False
-
-    # Time missing
-    if not restaurant.opening_time or not restaurant.closing_time:
-        return False
-
-    opening = restaurant.opening_time
-    closing = restaurant.closing_time
-
-    # 🕒 SAME DAY (eg 10:00 → 22:00)
-    if opening < closing:
-        is_open = opening <= now <= closing
-    else:
-        # 🌙 OVERNIGHT (eg 18:00 → 02:00)
-        is_open = now >= opening or now <= closing
-
-    # Accept-until logic
-    if restaurant.accept_orders_until:
-        if now > restaurant.accept_orders_until:
-            return False
-
-    return is_open
 
 from datetime import datetime 
 from zoneinfo import ZoneInfo
@@ -1184,31 +1149,21 @@ def restaurant_dashboard():
         orders=orders,
         delivery_persons=delivery_persons
     )
-
 @app.route("/restaurant/delivery_persons")
 def restaurant_delivery_persons():
     restaurant_id = session.get("restaurant_id")
     if not restaurant_id:
         return redirect(url_for("restaurant_login"))
 
-    # Current restaurant delivery persons
+    # Fetch only this restaurant's delivery persons
     delivery_persons = DeliveryPerson.query.filter_by(
         restaurant_id=restaurant_id
     ).order_by(DeliveryPerson.name).all()
 
-    # ⭐ ONLY EXTRA PART (manual option)
-    other_delivery_persons = []
-    if not delivery_persons:
-        other_delivery_persons = DeliveryPerson.query.filter(
-            DeliveryPerson.restaurant_id != restaurant_id
-        ).order_by(DeliveryPerson.name).all()
-
     return render_template(
         "restaurant_delivery_persons.html",
-        delivery_persons=delivery_persons,
-        other_delivery_persons=other_delivery_persons
+        delivery_persons=delivery_persons
     )
-
 
 @app.route("/restaurant/update_status/<int:order_id>", methods=["POST"])
 def restaurant_update_status(order_id):
@@ -1502,6 +1457,18 @@ def menu(restaurant_id):
     ist = pytz.timezone("Asia/Kolkata")
     now = datetime.now(ist).time()
 
+    # 🕒 OPEN STATUS
+    is_open = (
+        restaurant.opening_time and
+        restaurant.closing_time and
+        restaurant.opening_time <= now <= restaurant.closing_time
+    )
+
+    # 🚫 HARD BLOCK
+    if not is_open or not restaurant.can_accept_orders:
+
+        flash("Restaurant is currently not accepting orders", "warning")
+        return redirect(url_for("home"))
 
     if not restaurant.sheet_url:
         return "Error: No Google Sheet URL set for this restaurant"
@@ -2716,6 +2683,33 @@ def notify_all():
 from datetime import datetime
 import pytz
 
+def update_can_accept_orders(restaurant):
+    ist = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(ist).time()
+
+    if restaurant.status != "active":
+        restaurant.can_accept_orders = False
+        return
+
+    if not restaurant.opening_time or not restaurant.closing_time:
+        restaurant.can_accept_orders = False
+        return
+
+    if not (restaurant.opening_time <= now <= restaurant.closing_time):
+        restaurant.can_accept_orders = False
+        return
+
+    # Manual ON
+    if restaurant.is_accepting_orders:
+        restaurant.can_accept_orders = True
+        return
+
+    # Auto resume after time
+    if restaurant.accept_orders_until and now >= restaurant.accept_orders_until:
+        restaurant.can_accept_orders = True
+        return
+
+    restaurant.can_accept_orders = False
 
 # ------------------ DB INIT ------------------
 

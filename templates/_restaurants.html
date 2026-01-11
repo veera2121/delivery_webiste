@@ -1,8 +1,7 @@
 <div class="restaurant-row">
 {% for r in restaurants %}
 
-    {# ================= BASIC FLAGS ================= #} 
-    
+    {# ================= BASIC FLAGS ================= #}
     {% set is_open = (
         r.opening_time and r.closing_time and
         r.opening_time <= now <= r.closing_time
@@ -148,7 +147,7 @@
             {% elif not can_accept %}
                 {% if r.accept_orders_until and now < r.accept_orders_until %}
                     <span class="view-btn disabled-btn">
-                        ⏳ Accepting orders  until {{ r.accept_orders_until.strftime("%I:%M %p") }}
+                        ⏳ Accepting orders after {{ r.accept_orders_until.strftime("%I:%M %p") }}
                     </span>
                 {% else %}
                     <span class="view-btn disabled-btn">
