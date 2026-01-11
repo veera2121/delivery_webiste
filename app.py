@@ -1502,18 +1502,6 @@ def menu(restaurant_id):
     ist = pytz.timezone("Asia/Kolkata")
     now = datetime.now(ist).time()
 
-    # 🕒 OPEN STATUS
-    is_open = (
-        restaurant.opening_time and
-        restaurant.closing_time and
-        restaurant.opening_time <= now <= restaurant.closing_time
-    )
-
-    # 🚫 HARD BLOCK
-    if not is_open or not restaurant.can_accept_orders:
-
-        flash("Restaurant is currently not accepting orders", "warning")
-        return redirect(url_for("home"))
 
     if not restaurant.sheet_url:
         return "Error: No Google Sheet URL set for this restaurant"
