@@ -192,9 +192,12 @@ from zoneinfo import ZoneInfo
 
 @app.route("/")
 def home():
+    utc = pytz.utc
     ist = pytz.timezone("Asia/Kolkata")
-    now = datetime.now(ist).time()
 
+    # ALWAYS start from UTC (Railway-safe)
+    now_utc = datetime.now(utc)
+    now_ist = now_utc.astimezone(ist).time()
     selected_location = request.args.get("location", "").strip()
 
     # 🔹 Restaurants by location
@@ -2734,6 +2737,19 @@ def update_can_accept_orders(restaurant):
         return
 
     restaurant.can_accept_orders = False
+from datetime import datetime, timezone
+import pytz
+
+@app.route("/debug/time")
+def debug_time():
+    utc_now = datetime.now(timezone.utc)
+    ist = pytz.timezone("Asia/Kolkata")
+
+    return {
+        "utc_now": utc_now.isoformat(),
+        "ist_now": utc_now.astimezone(ist).isoformat(),
+        "server_naive_now": datetime.now().isoformat()
+    }
 
 # ------------------ DB INIT ------------------
 
