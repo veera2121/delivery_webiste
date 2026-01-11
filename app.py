@@ -190,19 +190,13 @@ def sitemap():
 
     return Response(xml, mimetype='application/xml')
 
-from datetime import datetime 
-from zoneinfo import ZoneInfo
 @app.route("/")
 def home():
-    import pytz
-    from datetime import datetime
+    # ================= CURRENT IST TIME =================
+    IST = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(IST).time()  # ✅ This is Railway-safe IST time
 
-    utc = pytz.utc
-    ist = pytz.timezone("Asia/Kolkata")
-
-    # ✅ Current IST time (Railway safe)
-    now = datetime.now(utc).astimezone(ist).time()
-
+    # ================= SELECTED LOCATION =================
     selected_location = request.args.get("location", "").strip()
 
     # 🔹 Restaurants by location
@@ -211,11 +205,9 @@ def home():
     else:
         restaurants = Restaurant.query.all()
 
-    # 🔹 Location dropdown
+    # 🔹 All locations for dropdown
     all_locations = [
-        loc[0]
-        for loc in db.session.query(Restaurant.location).distinct()
-        if loc[0]
+        loc[0] for loc in db.session.query(Restaurant.location).distinct() if loc[0]
     ]
 
     # 🔹 Trending items
@@ -247,7 +239,7 @@ def home():
         r.opens_later_today = False
         r.closed_for_today = False
 
-        # 🚚 Delivery radius
+        # 🚚 Delivery radius check
         if (
             user_location_set
             and r.latitude is not None
@@ -263,23 +255,27 @@ def home():
             r.distance = round(dist, 1)
             r.deliverable = dist <= r.delivery_radius_km
 
-        # 🕒 Open / Close logic
+        # 🕒 Open / Close logic (handles overnight timings)
         if r.opening_time and r.closing_time:
-            if r.opening_time <= now <= r.closing_time:
-                r.is_open = True
-            elif now < r.opening_time:
-                r.opens_later_today = True
-            else:
-                r.closed_for_today = True
+            if r.opening_time < r.closing_time:  # normal same-day
+                r.is_open = r.opening_time <= now <= r.closing_time
+                r.opens_later_today = now < r.opening_time
+                r.closed_for_today = now > r.closing_time
+            else:  # overnight timing (e.g., 8 PM – 2 AM)
+                r.is_open = now >= r.opening_time or now <= r.closing_time
+                r.opens_later_today = now < r.opening_time and now > r.closing_time
+                r.closed_for_today = not r.is_open and not r.opens_later_today
+        else:
+            r.is_open = False
 
-    # ⭐ FINAL SORT
+    # 🔹 FINAL SORT
     restaurants.sort(
         key=lambda r: (
-            not r.deliverable,            # deliverable first
-            not r.is_open,                # open first
-            not r.can_accept_orders,      # active first
-            r.status == "suspended",      # suspended last
-            r.status == "coming_soon"     # coming soon after open
+            not r.deliverable,        # deliverable first
+            not r.is_open,            # open first
+            not r.can_accept_orders,  # active first
+            r.status == "suspended",  # suspended last
+            r.status == "coming_soon" # coming soon after open
         )
     )
 
@@ -314,6 +310,7 @@ def home():
             now=now
         )
 
+    # 🔹 RENDER HOME PAGE
     return render_template(
         "index.html",
         restaurants=restaurants,
@@ -321,99 +318,7 @@ def home():
         selected_location=selected_location,
         trending_items=trending_items,
         user_location_set=user_location_set,
-        now=now,
-        seo_title=seo_title,
-        seo_description=seo_description,
-        seo_keywords=seo_keywords
-    )
-
-
-@app.route("/city/<city_slug>")
-def city_page(city_slug):
-    # Convert slug to readable name
-    selected_location = city_slug.replace("-", " ").title()
-
-    # 🔹 Restaurants in this city
-    restaurants = Restaurant.query.filter_by(location=selected_location).all()
-
-    # 🔹 All locations (for dropdown)
-    all_locations = [
-        loc[0]
-        for loc in db.session.query(Restaurant.location).distinct()
-        if loc[0]
-    ]
-
-    # 🔹 Trending items (city only)
-    trending_items = (
-        db.session.query(FoodItem)
-        .join(Restaurant)
-        .filter(
-            Restaurant.location == selected_location,
-            FoodItem.order_count > 0
-        )
-        .order_by(FoodItem.order_count.desc())
-        .limit(8)
-        .all()
-    )
-
-    # 🔹 User location
-    user_lat = session.get("user_lat")
-    user_lng = session.get("user_lng")
-    user_location_set = user_lat is not None and user_lng is not None
-
-   
-
-    # 🔹 Delivery + open status
-    for r in restaurants:
-        r.deliverable = True
-        r.distance = None
-
-        if (
-            user_location_set
-            and r.latitude is not None
-            and r.longitude is not None
-            and r.delivery_radius_km
-        ):
-            dist = haversine(
-                float(user_lat),
-                float(user_lng),
-                float(r.latitude),
-                float(r.longitude)
-            )
-            r.distance = round(dist, 1)
-            r.deliverable = dist <= r.delivery_radius_km
-
-        if r.opening_time and r.closing_time:
-            r.is_open = r.opening_time <= now <= r.closing_time
-        else:
-            r.is_open = False
-
-    restaurants.sort(
-        key=lambda r: (
-            not r.deliverable,
-            not r.is_open
-        )
-    )
-
-    # 🔹 SEO (CITY PAGE)
-    seo_title = f"Online Food Delivery in {selected_location} | RuchiGo"
-    seo_description = (
-        f"Order food online from nearby restaurants in {selected_location}. "
-        "Fast delivery from trusted local kitchens."
-    )
-    seo_keywords = (
-        f"{selected_location} food delivery, "
-        f"online food {selected_location}, RuchiGo"
-    )
-
-    return render_template(
-        "index.html",
-        restaurants=restaurants,
-        all_locations=all_locations,
-        selected_location=selected_location,
-        trending_items=trending_items,
-        user_location_set=user_location_set,
-        now=now,
+        now=now,  # ✅ Pass IST time to template
         seo_title=seo_title,
         seo_description=seo_description,
         seo_keywords=seo_keywords
