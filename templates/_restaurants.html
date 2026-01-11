@@ -108,16 +108,7 @@
                 </div>
             {% endif %}
             
-<div class="open-close">
-    🕒
-    {% if r.opening_time and r.closing_time %}
-        {{ r.opening_time.strftime("%I:%M %p") }}
-        –
-        {{ r.closing_time.strftime("%I:%M %p") }}
-    {% else %}
-        Timing not available
-    {% endif %}
-</div>
+
 {# ================= ACTION BUTTON ================= #}
             {% if is_suspended %}
                 <span class="view-btn disabled-btn">Suspended</span>
