@@ -1,9 +1,10 @@
+# utils/timezone.py
 from datetime import timezone
 import pytz
 
 IST = pytz.timezone("Asia/Kolkata")
 
-def utc_to_ist(utc_dt):
-    if utc_dt is None:
+def to_ist(dt):
+    if dt is None:
         return None
-    return utc_dt.replace(tzinfo=timezone.utc).astimezone(IST)
+    return dt.replace(tzinfo=timezone.utc).astimezone(IST)

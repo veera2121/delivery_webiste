@@ -1149,21 +1149,44 @@ def restaurant_dashboard():
         orders=orders,
         delivery_persons=delivery_persons
     )
-@app.route("/restaurant/delivery_persons")
+@app.route("/restaurant/delivery-persons")
 def restaurant_delivery_persons():
     restaurant_id = session.get("restaurant_id")
     if not restaurant_id:
         return redirect(url_for("restaurant_login"))
 
-    # Fetch only this restaurant's delivery persons
+    # This restaurant delivery boys
     delivery_persons = DeliveryPerson.query.filter_by(
         restaurant_id=restaurant_id
     ).order_by(DeliveryPerson.name).all()
 
+    # Other restaurant delivery boys
+    other_delivery_persons = DeliveryPerson.query.filter(
+        DeliveryPerson.restaurant_id != restaurant_id
+    ).order_by(DeliveryPerson.name).all()
+
     return render_template(
         "restaurant_delivery_persons.html",
-        delivery_persons=delivery_persons
+        delivery_persons=delivery_persons,
+        other_delivery_persons=other_delivery_persons
     )
+
+@app.route("/restaurant/add_delivery_person/<int:delivery_id>", methods=["POST"])
+def add_delivery_person_to_restaurant(delivery_id):
+    restaurant_id = session.get("restaurant_id")
+    if not restaurant_id:
+        return redirect(url_for("restaurant_login"))
+
+    dp = DeliveryPerson.query.get_or_404(delivery_id)
+
+    # Assign delivery boy to this restaurant
+    dp.restaurant_id = restaurant_id
+    db.session.commit()
+
+    flash(f"{dp.name} assigned to your restaurant", "success")
+
+    # ✅ MUST return something
+    return redirect(url_for("restaurant_delivery_persons"))
 
 @app.route("/restaurant/update_status/<int:order_id>", methods=["POST"])
 def restaurant_update_status(order_id):

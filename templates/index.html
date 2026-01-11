@@ -1352,6 +1352,17 @@ body {
   background: #ccc;
   cursor: not-allowed;
 }
+.location-fa-icon {
+  color: #e11d48;   /* red/pink like location */
+  margin-right: 6px;
+  font-size: 18px;
+  vertical-align: middle;
+}
+.popup-title .location-icon {
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+}
 
 </style>
 
@@ -1916,11 +1927,18 @@ function closeModal(e) {
 
 <div id="locationPopup" class="location-popup hidden">
   <div class="popup-card">
-    <h3>📍 Select location to continue</h3>
+    <h3 class="popup-title">
+      <span class="location-icon">
+        <i class="fa-solid fa-map-marker-alt"></i>
+      </span>
+      Select location to continue
+    </h3>
     <p>We need your location to show nearby restaurants</p>
     <button id="popupOk">Select Location</button>
   </div>
 </div>
+
+
 
 
 <div id="modalOverlay" class="modal-overlay" onclick="closeModal(event)">
