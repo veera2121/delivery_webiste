@@ -589,81 +589,77 @@ form button:hover {
 <!-- =========================
      ORDER HISTORY
 ========================= -->
-<h2>📜 Order History</h2>
-
 {% if history_orders %}
   {% for order in history_orders %}
 
-  <!-- 🔴 CUSTOMER NOT AVAILABLE -->
-  {% if order.status == "Customer Not Available" %}
-  <div class="order-card history-card not-available-card">
+    {% if order.status == "Customer Not Available" %}
+      <div class="order-card history-card not-available-card">
+        <div class="order-header">
+          <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
+          <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
+        </div>
 
-    <div class="order-header">
-      <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
-      <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
-    </div>
+        <p class="reason-text">
+          ❌ Customer was not available at delivery location
+        </p>
 
-    <p class="reason-text">
-      ❌ Customer was not available at delivery location
-    </p>
+        <p class="final-amount">
+          <strong>Order Amount:</strong> ₹{{ order.final_total or 0 }}
+        </p>
 
-    <p class="final-amount">
-      <strong>Order Amount:</strong> ₹{{ order.final_total or 0 }}
-    </p>
+        <span class="status-warning">⚠ Order Failed</span>
+      </div>
 
-    <span class="status-warning">⚠ Order Failed</span>
+    {% elif order.status == "Cancelled" %}
+      <div class="order-card history-card cancelled-card">
+        <div class="order-header">
+          <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
+          <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
+        </div>
 
-  </div>
+        <p class="reason-text">❌ Order was cancelled</p>
 
-  <!-- 🟡 CANCELLED -->
-  {% elif order.status == "Cancelled" %}
-  <div class="order-card history-card cancelled-card">
+        {% if order.cancel_reason %}
+          <p class="reason-text">
+            <strong>Reason:</strong> {{ order.cancel_reason }}
+          </p>
+        {% else %}
+          <p class="reason-text">
+            <strong>Reason:</strong> Not specified
+          </p>
+        {% endif %}
 
-    <div class="order-header">
-      <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
-      <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
-    </div>
+        <p class="final-amount">
+          <strong>Amount:</strong> ₹{{ order.final_total or 0 }}
+        </p>
 
-    <p class="reason-text">
-      ❌ Order was cancelled
-    </p>
+        <span class="status-cancelled">❌ Cancelled</span>
+      </div>
 
-    <p class="final-amount">
-      <strong>Amount:</strong> ₹{{ order.final_total or 0 }}
-    </p>
+    {% else %}
+      <div class="order-card history-card delivered-card">
+        <div class="order-header">
+          <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
+          <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
+        </div>
 
-    <span class="status-cancelled">❌ Cancelled</span>
+        <p>
+          <strong>Delivered At:</strong>
+          {{ order.delivered_time.strftime('%d-%m-%Y %I:%M %p') if order.delivered_time }}
+        </p>
 
-  </div>
+        <p class="final-amount">
+          <strong>Total Paid:</strong> ₹{{ order.final_total or 0 }}
+        </p>
 
-  <!-- 🟢 DELIVERED -->
-  {% else %}
-  <div class="order-card history-card delivered-card">
-
-    <div class="order-header">
-      <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
-      <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
-    </div>
-
-    <p>
-      <strong>Delivered At:</strong>
-      {{ order.delivered_time.strftime('%d-%m-%Y %I:%M %p') if order.delivered_time }}
-    </p>
-
-    <p class="final-amount">
-      <strong>Total Paid:</strong> ₹{{ order.final_total or 0 }}
-    </p>
-
-    <span class="status-success">✔ Delivered</span>
-
-  </div>
-  {% endif %}
+        <span class="status-success">✔ Delivered</span>
+      </div>
+    {% endif %}
 
   {% endfor %}
 {% else %}
   <p>No past orders</p>
 {% endif %}
-</div>
 
 <script>
 (function () {

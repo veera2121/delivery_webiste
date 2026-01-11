@@ -397,3 +397,5 @@ class OrderAssignment(db.Model):
 
     order = db.relationship("Order", backref="assignments")
     delivery_person = db.relationship("DeliveryPerson", backref="assignments")
+    assign_type = db.Column(db.String(20), default="auto")
+# auto | manual

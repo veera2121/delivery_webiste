@@ -2,35 +2,54 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-  <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delivery Persons</title>
+</head>
+
+<body>
 <h2>Delivery Persons for {{ session.get('restaurant_name', 'Your Restaurant') }}</h2>
 
-<div style="overflow-x:auto; max-height: 70vh;">
-  <table border="1" cellpadding="10" cellspacing="0">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Status</th>
-        <th>Last Seen</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for dp in delivery_persons %}
-      <tr>
-        <td>{{ dp.name }}</td>
-        <td>
-          {% if dp.is_online %}
-            <span style="color:green;">Online</span>
-          {% else %}
-            <span style="color:red;">Offline</span>
-          {% endif %}
-        </td>
-        <td>{{ dp.last_seen.strftime('%Y-%m-%d %H:%M') if dp.last_seen else 'N/A' }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-</body>
-</html>
+<table border="1">
+<tr>
+  <th>Name</th> 
+    <th>Phone</th> 
+  <th>Status</th>
+  <th>Last Seen</th>
+</tr>
+
+{% for dp in delivery_persons %}
+<tr>
+  <td>{{ dp.name }}</td>
+    <td>{{ dp.phone }}</td> <!-- SHOW PHONE -->
+  <td>
+    {% if dp.is_online %}
+      Online
+    {% else %}
+      Offline
+    {% endif %}
+  </td>
+  <td>{{ dp.last_seen.strftime('%Y-%m-%d %H:%M') if dp.last_seen else 'N/A' }}</td>
+</tr>
+{% endfor %}
+</table>
+
+{% if not delivery_persons %}
+<p>No delivery boys available for your restaurant</p>
+{% endif %}
+
+<hr>
+
+<h3>Available Delivery Boys from Other Restaurants</h3>
+
+{% for d in other_delivery_persons %}
+  <div style="margin-bottom:10px;">
+    {{ d.name }} - {{ d.phone }}
+
+    <form method="POST"
+          action="{{ url_for('add_delivery_person_to_restaurant', delivery_id=d.id) }}"
+          style="display:inline;">
+      <button type="submit">➕ Add to My Restaurant</button>
+    </form>
+  </div>
+{% endfor %}
+
