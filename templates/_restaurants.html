@@ -1,15 +1,77 @@
 <div class="restaurant-row">
 {% for r in restaurants %}
 
-    {# ================= FORCE OPEN ================= #} 
-    {% set is_open = True %}
-    {% set can_accept = True %}
-    {% set is_suspended = False %}
-    {% set is_coming_soon = False %}
+    {# ================= BASIC FLAGS ================= #} 
+    
+    {% set is_open = (
+        r.opening_time and r.closing_time and
+        r.opening_time <= now <= r.closing_time
+    ) %}
+    {% set is_suspended = (r.status == 'suspended') %}
+    {% set is_coming_soon = (r.status == 'coming_soon') %}
+    {% set can_accept = r.can_accept_orders %}
 
-    <div class="card"
-         onclick="window.location.href='/menu/{{ r.id }}'"
+    <div class="card
+        {% if is_suspended or not can_accept or not r.deliverable or not is_open %}
+            disabled
+        {% endif %}
+    "
+    {% if can_accept and r.deliverable and is_open %}
+        onclick="window.location.href='/menu/{{ r.id }}'"
+    {% endif %}
     >
+
+        {# ================= STATUS BANNERS ================= #}
+
+        {% if is_suspended %}
+            <div class="info-box suspended-box">
+                🚫 Temporarily unavailable
+            </div>
+
+        {% elif is_coming_soon %}
+            <div class="info-box coming-soon-box">
+                ⏳ Coming Soon
+                {% if r.start_date %}
+                    <br>
+                    Starts on {{ r.start_date.strftime("%d %b %Y") }}
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {# ================= DELIVERY CHECK ================= #}
+        {% if not r.deliverable %}
+            <div class="info-box not-deliverable">
+                🚫 Not delivering to your location
+            </div>
+        {% endif %}
+
+        {# ================= TIME STATUS ================= #}
+        {% if not is_suspended and not is_coming_soon %}
+
+            {% if not r.opening_time or not r.closing_time %}
+                <div class="info-box closed-box">
+                    ❌ Closed — Timing not updated
+                </div>
+
+            {% elif now < r.opening_time %}
+                <div class="info-box closed-box">
+                    ⏳ Opens today at {{ r.opening_time.strftime("%I:%M %p") }}
+                </div>
+
+            {% elif now > r.closing_time %}
+                <div class="info-box closed-box">
+                    🌙 Closed for today — Opens tomorrow
+                </div>
+            {% endif %}
+
+        {% endif %}
+
+        {# ================= OFFER ================= #}
+        {% if r.active_offer and r.deliverable and is_open and can_accept %}
+            <div class="info-box offer-box">
+                🔥 {{ r.active_offer.title }} — {{ r.active_offer.description }}
+            </div>
+        {% endif %}
 
         {# ================= IMAGE ================= #}
         <img 
@@ -47,19 +109,61 @@
                 </div>
             {% endif %}
             
-            <div class="open-close">
-                🕒
-                {% if r.opening_time and r.closing_time %}
-                    {{ r.opening_time.strftime("%I:%M %p") }}
-                    –
-                    {{ r.closing_time.strftime("%I:%M %p") }}
-                {% else %}
-                    Timing not available
-                {% endif %}
-            </div>
+<div class="open-close">
+    🕒
+    {% if r.opening_time and r.closing_time %}
+        {{ r.opening_time.strftime("%I:%M %p") }}
+        –
+        {{ r.closing_time.strftime("%I:%M %p") }}
+    {% else %}
+        Timing not available
+    {% endif %}
+</div>
+{# ================= ACTION BUTTON ================= #}
+            {% if is_suspended %}
+                <span class="view-btn disabled-btn">Suspended</span>
 
-            {# ================= ACTION BUTTON ================= #}
-            <a href="/menu/{{ r.id }}" class="view-btn">View Menu</a>
+            {% elif is_coming_soon %}
+                <span class="view-btn disabled-btn">
+                    Coming Soon
+                    {% if r.start_date %}
+                        ({{ r.start_date.strftime("%d %b") }})
+                    {% endif %}
+                </span>
+
+            {% elif not r.opening_time or not r.closing_time %}
+                <span class="view-btn disabled-btn">Timing not updated</span>
+
+            {% elif not is_open %}
+                {% if now < r.opening_time %}
+                    <span class="view-btn disabled-btn">
+                        Accepting orders at {{ r.opening_time.strftime("%I:%M %p") }}
+                    </span>
+                {% else %}
+                    <span class="view-btn disabled-btn">
+                        Closed for today
+                    </span>
+                {% endif %}
+
+            {% elif not can_accept %}
+                {% if r.accept_orders_until and now < r.accept_orders_until %}
+                    <span class="view-btn disabled-btn">
+                        ⏳ Accepting orders  until {{ r.accept_orders_until.strftime("%I:%M %p") }}
+                    </span>
+                {% else %}
+                    <span class="view-btn disabled-btn">
+                        🚫 Orders temporarily paused by restaurant
+                    </span>
+                {% endif %}
+
+            {% elif not r.deliverable %}
+                <span class="view-btn disabled-btn">
+                    Not delivering to your location
+                </span>
+
+            {% else %}
+                <a href="/menu/{{ r.id }}" class="view-btn">View Menu</a>
+            {% endif %}
 
         </div>   <!-- ✅ CLOSE .content -->
     </div>       <!-- ✅ CLOSE .card -->
