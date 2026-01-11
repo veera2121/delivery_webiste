@@ -58,10 +58,7 @@ csrf = CSRFProtect(app)
 # ================= DATABASE =================
 import os
 import sys
-IST = pytz.timezone("Asia/Kolkata")
 
-def now_ist():
-    return datetime.now(IST)
 # Get DATABASE_URL from environment (for production)
 db_url = os.getenv("DATABASE_URL")
 
@@ -190,13 +187,14 @@ def sitemap():
 
     return Response(xml, mimetype='application/xml')
 
+from datetime import datetime 
+from zoneinfo import ZoneInfo
+
 @app.route("/")
 def home():
-    # ================= CURRENT IST TIME =================
-    IST = pytz.timezone("Asia/Kolkata")
-    now = datetime.now(IST).time()  # ✅ This is Railway-safe IST time
+    ist = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(ist).time()
 
-    # ================= SELECTED LOCATION =================
     selected_location = request.args.get("location", "").strip()
 
     # 🔹 Restaurants by location
@@ -205,10 +203,13 @@ def home():
     else:
         restaurants = Restaurant.query.all()
 
-    # 🔹 All locations for dropdown
+    # 🔹 Location dropdown
     all_locations = [
-        loc[0] for loc in db.session.query(Restaurant.location).distinct() if loc[0]
+        loc[0]
+        for loc in db.session.query(Restaurant.location).distinct()
+        if loc[0]
     ]
+
 
     # 🔹 Trending items
     if selected_location:
@@ -231,15 +232,12 @@ def home():
     user_lng = session.get("user_lng")
     user_location_set = user_lat is not None and user_lng is not None
 
-    # 🔹 Calculate delivery + open status
+    # 🔹 Calculate status
     for r in restaurants:
         r.deliverable = True
         r.distance = None
-        r.is_open = False
-        r.opens_later_today = False
-        r.closed_for_today = False
 
-        # 🚚 Delivery radius check
+        # 🚚 Delivery radius
         if (
             user_location_set
             and r.latitude is not None
@@ -255,27 +253,20 @@ def home():
             r.distance = round(dist, 1)
             r.deliverable = dist <= r.delivery_radius_km
 
-        # 🕒 Open / Close logic (handles overnight timings)
+        # 🕒 Open status
         if r.opening_time and r.closing_time:
-            if r.opening_time < r.closing_time:  # normal same-day
-                r.is_open = r.opening_time <= now <= r.closing_time
-                r.opens_later_today = now < r.opening_time
-                r.closed_for_today = now > r.closing_time
-            else:  # overnight timing (e.g., 8 PM – 2 AM)
-                r.is_open = now >= r.opening_time or now <= r.closing_time
-                r.opens_later_today = now < r.opening_time and now > r.closing_time
-                r.closed_for_today = not r.is_open and not r.opens_later_today
+            r.is_open = r.opening_time <= now <= r.closing_time
         else:
             r.is_open = False
 
-    # 🔹 FINAL SORT
+    # ⭐⭐ FINAL SORT (THIS IS THE KEY FIX)
     restaurants.sort(
         key=lambda r: (
-            not r.deliverable,        # deliverable first
-            not r.is_open,            # open first
-            not r.can_accept_orders,  # active first
-            r.status == "suspended",  # suspended last
-            r.status == "coming_soon" # coming soon after open
+            not r.deliverable,            # deliverable first
+            not r.is_open,                # open first
+            not r.can_accept_orders,      # active first
+            r.status == "suspended",      # suspended last
+            r.status == "coming_soon"     # coming soon after open
         )
     )
 
@@ -310,7 +301,6 @@ def home():
             now=now
         )
 
-    # 🔹 RENDER HOME PAGE
     return render_template(
         "index.html",
         restaurants=restaurants,
@@ -318,7 +308,98 @@ def home():
         selected_location=selected_location,
         trending_items=trending_items,
         user_location_set=user_location_set,
-        now=now,  # ✅ Pass IST time to template
+        now=now,
+        seo_title=seo_title,
+        seo_description=seo_description,
+        seo_keywords=seo_keywords
+    )
+
+@app.route("/city/<city_slug>")
+def city_page(city_slug):
+    # Convert slug to readable name
+    selected_location = city_slug.replace("-", " ").title()
+
+    # 🔹 Restaurants in this city
+    restaurants = Restaurant.query.filter_by(location=selected_location).all()
+
+    # 🔹 All locations (for dropdown)
+    all_locations = [
+        loc[0]
+        for loc in db.session.query(Restaurant.location).distinct()
+        if loc[0]
+    ]
+
+    # 🔹 Trending items (city only)
+    trending_items = (
+        db.session.query(FoodItem)
+        .join(Restaurant)
+        .filter(
+            Restaurant.location == selected_location,
+            FoodItem.order_count > 0
+        )
+        .order_by(FoodItem.order_count.desc())
+        .limit(8)
+        .all()
+    )
+
+    # 🔹 User location
+    user_lat = session.get("user_lat")
+    user_lng = session.get("user_lng")
+    user_location_set = user_lat is not None and user_lng is not None
+
+   
+
+    # 🔹 Delivery + open status
+    for r in restaurants:
+        r.deliverable = True
+        r.distance = None
+
+        if (
+            user_location_set
+            and r.latitude is not None
+            and r.longitude is not None
+            and r.delivery_radius_km
+        ):
+            dist = haversine(
+                float(user_lat),
+                float(user_lng),
+                float(r.latitude),
+                float(r.longitude)
+            )
+            r.distance = round(dist, 1)
+            r.deliverable = dist <= r.delivery_radius_km
+
+        if r.opening_time and r.closing_time:
+            r.is_open = r.opening_time <= now <= r.closing_time
+        else:
+            r.is_open = False
+
+    restaurants.sort(
+        key=lambda r: (
+            not r.deliverable,
+            not r.is_open
+        )
+    )
+
+    # 🔹 SEO (CITY PAGE)
+    seo_title = f"Online Food Delivery in {selected_location} | RuchiGo"
+    seo_description = (
+        f"Order food online from nearby restaurants in {selected_location}. "
+        "Fast delivery from trusted local kitchens."
+    )
+    seo_keywords = (
+        f"{selected_location} food delivery, "
+        f"online food {selected_location}, RuchiGo"
+    )
+
+    return render_template(
+        "index.html",
+        restaurants=restaurants,
+        all_locations=all_locations,
+        selected_location=selected_location,
+        trending_items=trending_items,
+        user_location_set=user_location_set,
+        now=now,
         seo_title=seo_title,
         seo_description=seo_description,
         seo_keywords=seo_keywords
@@ -536,19 +617,19 @@ from datetime import datetime
 def generate_otp():
     return str(random.randint(100000, 999999))
 from datetime import datetime
+
 def is_restaurant_open(restaurant):
-    now = now_ist().time()
+    now = datetime.now().time()
 
     if not restaurant.opening_time or not restaurant.closing_time:
         return False
 
-    # Same-day timing (e.g. 10 AM – 10 PM)
+    # Normal same-day timing
     if restaurant.opening_time < restaurant.closing_time:
         return restaurant.opening_time <= now <= restaurant.closing_time
 
-    # Overnight timing (e.g. 8 PM – 2 AM)
+    # Overnight timing (e.g., 8 PM – 2 AM)
     return now >= restaurant.opening_time or now <= restaurant.closing_time
-
 
 
 from flask import request, flash, redirect, url_for, session
@@ -619,7 +700,7 @@ def place_order():
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
     
-    now = now_ist().time()
+    now = datetime.now().time()
     # 1️⃣ Restaurant suspended
     if restaurant.status == "suspended":
         flash("🚫 This restaurant is currently suspended.", "danger")
@@ -1068,44 +1149,30 @@ def restaurant_dashboard():
         orders=orders,
         delivery_persons=delivery_persons
     )
+
 @app.route("/restaurant/delivery_persons")
 def restaurant_delivery_persons():
     restaurant_id = session.get("restaurant_id")
     if not restaurant_id:
         return redirect(url_for("restaurant_login"))
 
-    # This restaurant delivery boys
+    # Current restaurant delivery persons
     delivery_persons = DeliveryPerson.query.filter_by(
         restaurant_id=restaurant_id
     ).order_by(DeliveryPerson.name).all()
 
-    # 👇 OTHER restaurant delivery boys (NOT automatic)
-    other_delivery_persons = DeliveryPerson.query.filter(
-        DeliveryPerson.restaurant_id != restaurant_id
-    ).order_by(DeliveryPerson.name).all()
-    print("MY DELIVERY BOYS:", delivery_persons)
-    print("OTHER DELIVERY BOYS:", other_delivery_persons)
+    # ⭐ ONLY EXTRA PART (manual option)
+    other_delivery_persons = []
+    if not delivery_persons:
+        other_delivery_persons = DeliveryPerson.query.filter(
+            DeliveryPerson.restaurant_id != restaurant_id
+        ).order_by(DeliveryPerson.name).all()
 
     return render_template(
         "restaurant_delivery_persons.html",
         delivery_persons=delivery_persons,
         other_delivery_persons=other_delivery_persons
     )
-
-@app.route("/restaurant/add_delivery_person/<int:delivery_id>", methods=["POST"])
-def add_delivery_person_to_restaurant(delivery_id):
-    restaurant_id = session.get("restaurant_id")
-    if not restaurant_id:
-        return redirect(url_for("restaurant_login"))
-
-    dp = DeliveryPerson.query.get_or_404(delivery_id)
-
-    # Assign delivery boy to this restaurant
-    dp.restaurant_id = restaurant_id
-    db.session.commit()
-
-    flash(f"{dp.name} assigned to your restaurant", "success")
-    return redirect(url_for("restaurant_delivery_persons"))
 
 
 @app.route("/restaurant/update_status/<int:order_id>", methods=["POST"])
@@ -2653,19 +2720,6 @@ def update_can_accept_orders(restaurant):
         return
 
     restaurant.can_accept_orders = False
-from datetime import datetime, timezone
-import pytz
-
-@app.route("/debug/time")
-def debug_time():
-    utc_now = datetime.now(timezone.utc)
-    ist = pytz.timezone("Asia/Kolkata")
-
-    return {
-        "utc_now": utc_now.isoformat(),
-        "ist_now": utc_now.astimezone(ist).isoformat(),
-        "server_naive_now": datetime.now().isoformat()
-    }
 
 # ------------------ DB INIT ------------------
 

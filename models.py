@@ -9,7 +9,7 @@ db = SQLAlchemy()  # Keep this here, do NOT move to app.py
 
 from datetime import time
 from datetime import datetime, date, time
-
+import pytz
 
 
 class Restaurant(db.Model):
@@ -81,32 +81,37 @@ class Restaurant(db.Model):
             None
         )
 
-    # ================= SINGLE SOURCE OF TRUTH =================
+        # ================= SINGLE SOURCE OF TRUTH =================
+    from datetime import datetime
+    import pytz
     @property
     def can_accept_orders(self):
-        now = datetime.now().time()  # local time
+        now = datetime.now().time()  # IST or local
 
-        # 1️⃣ Manual OFF switch
+        # 1️⃣ Manual OFF
         if not self.is_accepting_orders:
             return False
 
-        # 2️⃣ Suspended → never accept
+        # 2️⃣ Suspended
         if self.status == "suspended":
             return False
 
-        # 3️⃣ Coming soon → only after start_date
+        # 3️⃣ Coming soon
         if self.status == "coming_soon":
-            if not self.start_date:
-                return False
-            if date.today() < self.start_date:
+            if not self.start_date or date.today() < self.start_date:
                 return False
 
-        # 4️⃣ Active + opening/closing time
+        # 4️⃣ Check opening/closing
         if self.opening_time and self.closing_time:
-            if not (self.opening_time <= now <= self.closing_time):
-                return False
+            if self.opening_time < self.closing_time:
+                if not (self.opening_time <= now <= self.closing_time):
+                    return False
+            else:
+                # overnight
+                if not (now >= self.opening_time or now <= self.closing_time):
+                    return False
 
-        # 5️⃣ Accept orders until time
+        # 5️⃣ Accept orders until (manual pause)
         if self.accept_orders_until:
             if now > self.accept_orders_until:
                 return False
