@@ -186,6 +186,41 @@ def sitemap():
     xml += '</urlset>'
 
     return Response(xml, mimetype='application/xml')
+from datetime import datetime
+import pytz
+
+def can_accept_now(restaurant):
+    ist = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(ist).time()
+
+    # Status check
+    if restaurant.status != "active":
+        return False
+
+    # Manual OFF by restaurant
+    if not restaurant.is_accepting_orders:
+        return False
+
+    # Time missing
+    if not restaurant.opening_time or not restaurant.closing_time:
+        return False
+
+    opening = restaurant.opening_time
+    closing = restaurant.closing_time
+
+    # 🕒 SAME DAY (eg 10:00 → 22:00)
+    if opening < closing:
+        is_open = opening <= now <= closing
+    else:
+        # 🌙 OVERNIGHT (eg 18:00 → 02:00)
+        is_open = now >= opening or now <= closing
+
+    # Accept-until logic
+    if restaurant.accept_orders_until:
+        if now > restaurant.accept_orders_until:
+            return False
+
+    return is_open
 
 from datetime import datetime 
 from zoneinfo import ZoneInfo
@@ -2693,33 +2728,6 @@ def notify_all():
 from datetime import datetime
 import pytz
 
-def update_can_accept_orders(restaurant):
-    ist = pytz.timezone("Asia/Kolkata")
-    now = datetime.now(ist).time()
-
-    if restaurant.status != "active":
-        restaurant.can_accept_orders = False
-        return
-
-    if not restaurant.opening_time or not restaurant.closing_time:
-        restaurant.can_accept_orders = False
-        return
-
-    if not (restaurant.opening_time <= now <= restaurant.closing_time):
-        restaurant.can_accept_orders = False
-        return
-
-    # Manual ON
-    if restaurant.is_accepting_orders:
-        restaurant.can_accept_orders = True
-        return
-
-    # Auto resume after time
-    if restaurant.accept_orders_until and now >= restaurant.accept_orders_until:
-        restaurant.can_accept_orders = True
-        return
-
-    restaurant.can_accept_orders = False
 
 # ------------------ DB INIT ------------------
 
