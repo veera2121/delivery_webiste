@@ -189,15 +189,17 @@ def sitemap():
 
 from datetime import datetime 
 from zoneinfo import ZoneInfo
-
 @app.route("/")
 def home():
+    import pytz
+    from datetime import datetime
+
     utc = pytz.utc
     ist = pytz.timezone("Asia/Kolkata")
 
-    # ALWAYS start from UTC (Railway-safe)
-    now_utc = datetime.now(utc)
-    now_ist = now_utc.astimezone(ist).time()
+    # ✅ Current IST time (Railway safe)
+    now = datetime.now(utc).astimezone(ist).time()
+
     selected_location = request.args.get("location", "").strip()
 
     # 🔹 Restaurants by location
@@ -212,7 +214,6 @@ def home():
         for loc in db.session.query(Restaurant.location).distinct()
         if loc[0]
     ]
-
 
     # 🔹 Trending items
     if selected_location:
@@ -235,10 +236,13 @@ def home():
     user_lng = session.get("user_lng")
     user_location_set = user_lat is not None and user_lng is not None
 
-    # 🔹 Calculate status
+    # 🔹 Calculate delivery + open status
     for r in restaurants:
         r.deliverable = True
         r.distance = None
+        r.is_open = False
+        r.opens_later_today = False
+        r.closed_for_today = False
 
         # 🚚 Delivery radius
         if (
@@ -256,14 +260,16 @@ def home():
             r.distance = round(dist, 1)
             r.deliverable = dist <= r.delivery_radius_km
 
-        # 🕒 Open status
+        # 🕒 Open / Close logic
         if r.opening_time and r.closing_time:
-            r.is_open = r.opening_time <= now <= r.closing_time
-        else:
-            r.is_open = False
+            if r.opening_time <= now <= r.closing_time:
+                r.is_open = True
+            elif now < r.opening_time:
+                r.opens_later_today = True
+            else:
+                r.closed_for_today = True
 
-
-    # ⭐⭐ FINAL SORT (THIS IS THE KEY FIX)
+    # ⭐ FINAL SORT
     restaurants.sort(
         key=lambda r: (
             not r.deliverable,            # deliverable first
@@ -317,6 +323,7 @@ def home():
         seo_description=seo_description,
         seo_keywords=seo_keywords
     )
+
 
 @app.route("/city/<city_slug>")
 def city_page(city_slug):
