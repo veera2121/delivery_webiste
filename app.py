@@ -752,7 +752,7 @@ def place_order():
     delivery_charge = restaurant.delivery_charge or 0
     if restaurant.free_delivery_limit and items_total >= restaurant.free_delivery_limit:
         delivery_charge = 0
-
+    
     # ================= SESSION =================
     session["phone"] = phone
     session["device_fingerprint"] = device_fingerprint
@@ -800,7 +800,7 @@ def place_order():
         first_time_user and
         items_total >= 599
     ):
-        coupon_discount = min(items_total * 0.30, 30)
+        coupon_discount = min(items_total * 0.20, 20)
         coupon_used = "FIRST20"
 
     # ================= FINAL TOTAL =================
@@ -2184,8 +2184,8 @@ def apply_coupon():
     if items_total < 599:
         return jsonify({"success": False, "message": "Order must be at least ₹599 to apply coupon."})
 
-    # Apply discount: 30% off capped at 60
-    discount = min(items_total * 0.20, 30)
+    # Apply discount: 20% off capped at 20
+    discount = min(items_total * 0.20, 20)
     return jsonify({
         "success": True,
         "discount": discount,
