@@ -262,6 +262,7 @@ def home():
         else:
             r.is_open = False
 
+
     # ⭐⭐ FINAL SORT (THIS IS THE KEY FIX)
     restaurants.sort(
         key=lambda r: (
