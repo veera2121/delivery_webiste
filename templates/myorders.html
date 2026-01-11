@@ -495,8 +495,8 @@ form button:hover {
       {{ order.status }}
     </div>
 
-    <p><strong>Order Placed:</strong>
-       {{ order.created_at.strftime('%d-%m-%Y %I:%M %p') }}</p>
+      <p><strong>Order Placed:</strong> {{ order.created_at_str }}</p>
+
 
     <div class="info-box address-box">
       <strong>Delivery Address</strong><br>

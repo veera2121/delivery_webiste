@@ -492,6 +492,8 @@ def get_coordinates(address):
     except Exception as e:
         print("Geocode error:", e)
     return None, None
+from datetime import datetime
+import pytz
 
 @app.route("/myorders", methods=["GET", "POST"])
 def myorders():
@@ -521,6 +523,21 @@ def myorders():
             Order.status.in_(HISTORY)
         ).order_by(Order.created_at.desc()).all()
 
+        # ===== CONVERT ORDER TIMES TO IST =====
+        ist = pytz.timezone('Asia/Kolkata')
+        for order in active_orders + history_orders:
+            if order.created_at:
+                # Make sure it's timezone-aware UTC
+                if order.created_at.tzinfo is None:
+                    from pytz import UTC
+                    order.created_at = UTC.localize(order.created_at)
+                
+                # Convert to IST
+                order.created_at_ist = order.created_at.astimezone(ist)
+                # Formatted string
+                order.created_at_str = order.created_at_ist.strftime('%d-%m-%Y %I:%M %p')
+
+        # Determine restaurant_id
         if active_orders:
             restaurant_id = active_orders[0].restaurant.id
         elif history_orders:
@@ -532,7 +549,6 @@ def myorders():
         history_orders=history_orders,
         restaurant_id=restaurant_id
     )
-
 
 from sqlalchemy import func
 
@@ -663,6 +679,7 @@ def generate_map_link(lat, lng, house_no=None, landmark=None, city=None, state=N
         if address:
             return f"https://www.google.com/maps/search/?api=1&query={address}"
     return None
+# Assume order_time is in UTC
 
 @app.route("/place_order", methods=["POST"])
 def place_order():
@@ -861,7 +878,7 @@ def place_order():
                 quantity=qty,
                 price=float(prices[i])
             ))
-
+    
     db.session.commit()
 
     flash(f"Order placed successfully! Order ID: {new_order.order_id}", "success")
