@@ -1,0 +1,231 @@
+{% extends "admin/base.html" %}
+
+{% block content %} 
+<style>
+/* ===== Feedback Page ===== */
+h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ===== Table ===== */
+.feedback-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+/* Header */
+.feedback-table thead {
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+}
+
+.feedback-table th {
+  padding: 14px 12px;
+  text-align: left;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #3730a3;
+}
+
+/* Body cells */
+.feedback-table td {
+  padding: 14px 12px;
+  font-size: 14px;
+  border-top: 1px solid #e5e7eb;
+  color: #111827;
+}
+
+/* Row hover */
+.feedback-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* ===== Urgent Priority ===== */
+.feedback-table tr.urgent {
+  background: #fff1f2;
+}
+
+.feedback-table tr.urgent td {
+  color: #991b1b;
+}
+
+/* ===== Status Badges ===== */
+.status {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Pending */
+.status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* In Progress */
+.status.in-progress {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* Resolved */
+.status.resolved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* ===== Action Form ===== */
+.feedback-table form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Select */
+.feedback-table select {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+/* Input */
+.feedback-table input {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  width: 140px;
+}
+
+/* Button */
+.feedback-table button {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  color: #ffffff;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.feedback-table button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(79,70,229,0.35);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .feedback-table {
+    font-size: 13px;
+  }
+
+  .feedback-table form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .feedback-table input {
+    width: 100%;
+  }
+}
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 26px;
+  font-weight: 700;
+  color: #111827;
+
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* Optional subtle accent line */
+.page-title::before {
+  content: "";
+  width: 5px;
+  height: 28px;
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  border-radius: 999px;
+}
+
+
+</style>
+<h2 class="page-title">📩 User Feedback & Issues</h2>
+
+
+<table class="feedback-table">
+  <thead>
+    <tr>
+      <th>Ticket</th>
+      <th>Phone</th>
+      <th>Issue</th>
+      <th>Priority</th>
+      <th>Status</th>
+      <th>Created</th>
+      <th>Resolved</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+
+  <tbody>
+  {% for f in feedbacks %}
+    <tr class="{% if f.priority == 'Urgent' %}urgent{% endif %}">
+      <td>{{ f.feedback_id }}</td>
+      <td>{{ f.phone }}</td>
+      <td>{{ f.issue_type }}</td>
+      <td>{{ f.priority }}</td>
+
+      <td>
+        <span class="status {{ f.status|lower|replace(' ','-') }}">
+          {{ f.status }}
+        </span>
+      </td>
+
+      <td>{{ f.created_at.strftime('%d-%m %I:%M %p') }}</td>
+
+      <td>
+        {% if f.resolved_at %}
+          {{ f.resolved_at.strftime('%d-%m %I:%M %p') }}
+        {% else %}—{% endif %}
+      </td>
+
+      <td>
+        <form method="post"
+              action="/admin/feedback/{{ f.feedback_id }}/status">
+          <select name="status" required>
+            <option {{ 'selected' if f.status=='Pending' }}>Pending</option>
+            <option {{ 'selected' if f.status=='In Progress' }}>In Progress</option>
+            <option {{ 'selected' if f.status=='Resolved' }}>Resolved</option>
+          </select>
+
+          <input name="admin_note"
+                 placeholder="Admin note"
+                 value="{{ f.admin_note or '' }}">
+
+          <button type="submit">Update</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

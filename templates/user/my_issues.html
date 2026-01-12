@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Menu{% endblock %}
+{% block install_button %}{% endblock %}
+
+{% block content %}
+
+<title>My Issues</title>
+
+<style>
+/* ================= RESET ================= */
+* {
+  box-sizing: border-box;
+}
+
+/* ================= BASE ================= */
+body {
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #f5f7ff, #eef2ff);
+  padding: 16px;
+  color: #1f2937;
+}
+
+/* ================= TITLE ================= */
+h2 {
+  text-align: center;
+  margin-bottom: 14px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* ================= SEARCH FORM ================= */
+form {
+  max-width: 420px;
+  margin: auto;
+  background: #ffffff;
+  padding: 18px;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+input {
+  padding: 13px 14px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #fbf9fb;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+input:focus {
+  border-color: #6366f1;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* ================= BUTTON ================= */
+button {
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #ffffff;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:hover {
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* ================= TABLE ================= */
+table {
+  width: 100%;
+  max-width: 100%;
+  margin: 18px auto 0;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border-collapse: collapse;
+}
+
+/* ================= TABLE HEAD ================= */
+thead th {
+  background: #9ff1ff;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+}
+
+/* ================= TABLE BODY ================= */
+td {
+  padding: 12px;
+  font-size: 14px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ================= STATUS STYLES ================= */
+.status {
+  font-weight: 700;
+}
+
+.status.pending {
+  color: #d97706;
+}
+
+.status.in-progress {
+  color: #2563eb;
+}
+
+.status.resolved {
+  color: #16a34a;
+}
+
+/* ================= EMPTY MESSAGE ================= */
+p {
+  text-align: center;
+  margin-top: 16px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* ================= MOBILE RESPONSIVE ================= */
+@media (max-width: 640px) {
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    display: block;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tr {
+    margin-bottom: 12px;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    padding: 10px;
+  }
+
+  td {
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 6px;
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6b7280;
+  }
+}
+</style>
+
+
+<h2>📩 Track My Issue</h2>
+
+<form method="post">
+  <input name="ticket_id" placeholder="Enter Ticket ID (optional)">
+  <input name="phone" placeholder="Enter Phone Number (optional)">
+  <button type="submit">Check Status</button>
+</form>
+
+{% if feedbacks %}
+<table>
+  <thead>
+    <tr>
+      <th>Ticket ID</th>
+      <th>Issue</th>
+      <th>Status</th>
+      <th>Priority</th>
+      <th>Submitted</th>
+      <th>Resolved</th>
+    </tr>
+  </thead>
+
+  <tbody>
+  {% for f in feedbacks %}
+    <tr>
+      <td data-label="Ticket ID">{{ f.feedback_id }}</td>
+      <td data-label="Issue">{{ f.issue_type }}</td>
+      <td data-label="Status"
+          class="status {{ f.status|lower|replace(' ', '-') }}">
+        {{ f.status }}
+      </td>
+      <td data-label="Priority">{{ f.priority }}</td>
+      <td data-label="Submitted">
+        {{ f.created_at.strftime('%d-%m-%Y %I:%M %p') }}
+      </td>
+      <td data-label="Resolved">
+        {% if f.resolved_at %}
+          {{ f.resolved_at.strftime('%d-%m-%Y %I:%M %p') }}
+        {% else %}
+          —
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% elif request.method == "POST" %}
+<p>No issues found.</p>
+{% endif %}
+
+{% endblock %}

@@ -1363,6 +1363,115 @@ body {
   display: inline-flex;
   align-items: center;
 }
+/* ================= EDGY FEEDBACK CARD ================= */
+.feedback-card {
+  max-width: 420px;
+  margin: 26px auto;
+  padding: 26px 22px;
+  position: relative;
+  border-radius: 22px;
+  text-align: center;
+  color: #ffffff;
+
+  /* Animated gradient */
+  background: linear-gradient(
+    135deg,
+    #6366f1,
+    #8b5cf6,
+    #ec4899
+  );
+  background-size: 200% 200%;
+  animation: gradientShift 6s ease infinite;
+
+  box-shadow:
+    0 20px 40px rgba(99,102,241,0.45),
+    inset 0 0 0 1px rgba(255,255,255,0.15);
+  overflow: hidden;
+}
+
+/* Glow border (NON-BLOCKING) */
+.feedback-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    #a5b4fc,
+    #f472b6,
+    #c7d2fe
+  );
+  filter: blur(18px);
+  opacity: 0.6;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Floating light (NON-BLOCKING) */
+.feedback-card::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle, rgba(255,255,255,0.15), transparent 60%);
+  animation: floatLight 8s linear infinite;
+  pointer-events: none;
+}
+
+/* ================= TEXT ================= */
+.feedback-card h3 {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.feedback-card p {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 18px;
+}
+
+/* ================= BUTTON ================= */
+.btn-feedback {
+  position: relative;
+  z-index: 1; /* ensures click priority */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 13px 26px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  text-decoration: none;
+  border-radius: 999px;
+
+  background: #ffffff;
+  box-shadow:
+    0 10px 30px rgba(255,255,255,0.35),
+    inset 0 0 0 1px rgba(0,0,0,0.05);
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Hover = AD-style */
+.btn-feedback:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow:
+    0 20px 40px rgba(255,255,255,0.5),
+    inset 0 0 0 1px rgba(0,0,0,0.08);
+}
+
+/* ================= ANIMATIONS ================= */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes floatLight {
+  from { transform: translate(0,0); }
+  to { transform: translate(30%,30%); }
+}
 
 </style>
 
@@ -1514,6 +1623,15 @@ body {
 <div id="trending-wrapper">
 </div>
 </section>
+<div class="feedback-card">
+  <h3>📝 Have an Issue?</h3>
+  <p>Facing a problem with your order or app?</p>
+  <a href="{{ url_for('feedback_form') }}" class="btn-feedback">
+    Report Now
+  </a>
+</div>
+
+
 
 <footer class="app-footer">
     <div class="footer-top">

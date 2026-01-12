@@ -404,3 +404,35 @@ class OrderAssignment(db.Model):
     delivery_person = db.relationship("DeliveryPerson", backref="assignments")
     assign_type = db.Column(db.String(20), default="auto")
 # auto | manual
+
+
+
+class UserFeedback(db.Model):
+    __tablename__ = "user_feedback"
+
+    id = db.Column(db.Integer, primary_key=True)  # ✅ real PK
+
+    feedback_id = db.Column(
+        db.String(20),
+        unique=True,
+        nullable=False,
+        default=lambda: f"FB{int(datetime.utcnow().timestamp())}"
+    )
+
+    user_id = db.Column(db.Integer, nullable=True)
+    user_name = db.Column(db.String(100))
+    phone = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(120))
+    order_id = db.Column(db.String(50))
+    issue_type = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    priority = db.Column(db.String(20), default="Normal")
+    status = db.Column(db.String(20), default="Pending")
+
+    assigned_to = db.Column(db.String(100))
+    admin_note = db.Column(db.Text)
+    source = db.Column(db.String(20), default="web")
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime)
+    resolved_at = db.Column(db.DateTime)

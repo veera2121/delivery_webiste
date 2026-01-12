@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Menu{% endblock %}
+{% block install_button %}{% endblock %}
+
+{% block content %}
+<title>Submit Feedback</title>
+<style>
+/* ========== RESET & BASE ========== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bottom-nav-height: 47px; /* height of your bottom nav */
+  --form-accent-color: #6366f1; /* left edge accent */
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #f5f7ff, #eef2ff);
+  padding: 16px;
+  color: #1f2937;
+  padding-bottom: calc(var(--bottom-nav-height) + 100px); /* extra for fixed button */
+}
+
+/* ========== HEADINGS ========== */
+h2 {
+  text-align: center;
+  margin-bottom: 14px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* ========== FORM ========== */
+form {
+  max-width: 420px;
+  margin: 12px auto 0;
+  background: #ffffff;
+  padding: 14px 14px 80px 14px; /* bottom padding for fixed button */
+  border-radius: 16px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-left: 6px solid var(--form-accent-color); /* left accent */
+  position: relative;
+}
+
+/* ========== INPUTS, SELECT, TEXTAREA ========== */
+input, select, textarea {
+  padding: 12px 14px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  outline: none;
+  background: #f9fafb;
+  transition: all 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #6366f1;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+textarea {
+  min-height: 90px;
+  resize: none;
+}
+
+/* ========== SUBMIT BUTTON ========== */
+button {
+  margin-top: 6px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #ffffff;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button:hover {
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+}
+
+/* ========== SUCCESS BOX ========== */
+#feedbackSuccess {
+  max-width: 420px;
+  margin: 12px auto 0;
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height) + 70px); /* just above track button */
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  background: #ecfdf5;
+  border: 1px solid #34d399;
+  padding: 14px;
+  border-radius: 14px;
+  color: #065f46;
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+  z-index: 999;
+  text-align: center;
+}
+
+
+/* ========== TRACK BUTTON (compact style) ========== */
+/* ========== TRACK BUTTON (text-only style) ========== */
+a.track-issue {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height) + 4px); /* slightly above nav */
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 200px;
+  padding: 4px 8px; /* minimal padding */
+  text-align: center;
+  font-weight: 500;
+  font-size: 14px;
+  color: #9e003d; /* text color */
+  background: none; /* remove background */
+  border: none; /* remove border */
+  border-radius: 0; /* remove rounding */
+  text-decoration: underline; /* optional, make it look clickable */
+  box-shadow: none; /* remove shadow */
+  z-index: 998;
+  line-height: 1.2;
+  white-space: nowrap;
+  display: inline-block;
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+a.track-issue:hover {
+  color: #007777; /* slightly darker on hover */
+  transform: translateX(-50%) scale(1.05);
+}
+
+a.track-issue:active {
+  transform: translateX(-50%) scale(0.97);
+}
+
+
+
+/* ========== MOBILE OPTIMIZATION ========== */
+@media (max-width: 480px) {
+  body {
+    padding: 12px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  form {
+    padding: 16px;
+  }
+
+  button, a.track-issue {
+    font-size: 15px;
+    padding: 12px;
+  }
+
+  #feedbackSuccess {
+    font-size: 13px;
+    padding: 12px;
+    bottom: calc(var(--bottom-nav-height) + 65px);
+  }
+}
+
+</style>
+
+</style>
+</head>
+<body>
+
+<h2>Submit Your Feedback</h2>
+
+<form id="feedbackForm">
+  <input id="name" name="name" placeholder="Your Name (optional)">
+  <input id="phone" name="phone" placeholder="Mobile Number" required>
+  <select id="issue_type" name="issue_type" required>
+    <option value="">Select Issue</option>
+    <option>Order not delivered</option>
+    <option>Late delivery</option>
+    <option>Wrong item</option>
+    <option>Food quality</option>
+    <option>Payment issue</option>
+    <option>Delivery boy issue</option>
+    <option>App issue</option>
+    <option>Other</option>
+  </select>
+  <input id="order_id" name="order_id" placeholder="Order ID (optional)">
+  <textarea id="description" name="description" placeholder="Describe your issue clearly" required></textarea>
+  <select id="priority" name="priority">
+    <option value="Normal">Normal</option>
+    <option value="Urgent">Urgent</option>
+  </select>
+  <button type="submit">Submit Issue</button>
+</form>
+
+<div id="feedbackSuccess" style="display:none;"></div>
+
+<div id="feedbackSuccess" style="
+  display:none;
+  background:#e8fff1;
+  border:1px solid #2ecc71;
+  padding:12px;
+  margin-top:15px;
+  border-radius:6px;
+  color:#1e8449;
+  font-weight:600;
+"></div>
+<a href="/my-issues" class="track-issue">Track My Issue</a>
+
+
+<script>
+document.getElementById("feedbackForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const payload = {
+        name: name.value,
+        phone: phone.value,
+        issue_type: issue_type.value,
+        order_id: order_id.value,
+        description: description.value,
+        priority: priority.value
+    };
+
+    fetch("/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const box = document.getElementById("feedbackSuccess");
+            box.innerHTML = `
+              ✅ ${data.message}<br>
+              🎫 <strong>Ticket ID:</strong> ${data.ticket_id}<br>
+              <small>Please save this ID for future reference.</small>
+            `;
+            box.style.display = "block";
+            feedbackForm.reset();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(() => {
+        alert("Server error. Please try again later.");
+    });
+});
+</script>
+
+</body>
+</html>
+{% endblock %}

@@ -1,0 +1,64 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+body {
+  background: #f4f6fb;
+  color: #1f2937;
+  padding: 14px;
+}
+
+h1, h2, h3 {
+  margin-bottom: 12px;
+}
+
+button {
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+}
+
+textarea {
+  resize: none;
+}
+
+.container {
+  max-width: 520px;
+  margin: auto;
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Status badges */
+.badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge.pending { background: #fde68a; }
+.badge.in-progress { background: #bfdbfe; }
+.badge.resolved { background: #bbf7d0; }

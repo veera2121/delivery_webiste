@@ -26,6 +26,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # app.py
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from push import VAPID_PUBLIC_KEY, register_subscription, send_push, subscriptions
+from functools import wraps
 
 # ================= LOCAL IMPORTS =================
 from push import send_push
@@ -33,7 +34,7 @@ from users.routes import users_bp
 from models import (
     db, Restaurant, RestaurantUser, MenuItem, Order,
     OrderItem, DeliveryPerson, FoodItem, OTP,
-    CouponUsage, RestaurantOffer, Customer
+    CouponUsage, RestaurantOffer, Customer ,UserFeedback
 )
 
 # ================= APP =================
@@ -2754,6 +2755,89 @@ def update_can_accept_orders(restaurant):
         return
 
     restaurant.can_accept_orders = False
+
+# =======================
+# Feedback Form Route
+# =======================
+@app.route("/feedback", methods=["GET", "POST"])
+def feedback_form():
+    if request.method == "POST":
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify(success=False, message="No data received"), 400
+
+            new_feedback = UserFeedback(
+                user_name=data.get("name"),
+                phone=data.get("phone"),
+                order_id=data.get("order_id"),
+                issue_type=data.get("issue_type"),
+                description=data.get("description"),
+                priority=data.get("priority", "Normal"),
+                source="web"
+            )
+
+            db.session.add(new_feedback)
+            db.session.commit()
+
+            return jsonify({
+                "success": True,
+                "message": "Feedback submitted successfully!",
+                "ticket_id": new_feedback.feedback_id  # 👈 IMPORTANT
+            })
+
+        except Exception as e:
+            return jsonify(success=False, message=str(e)), 500
+
+    return render_template("user/feedback.html")
+
+# =======================
+# Admin Feedback Dashboard
+# =======================
+@app.route("/admin/feedback")
+def admin_feedback():
+    feedbacks = UserFeedback.query.order_by(UserFeedback.created_at.desc()).all()
+    return render_template("admin/feedback.html", feedbacks=feedbacks)
+
+
+# =======================
+# Update Feedback Status
+# =======================
+
+@app.route("/my-issues", methods=["GET", "POST"])
+def my_issues():
+    feedbacks = []
+
+    if request.method == "POST":
+        ticket_id = request.form.get("ticket_id")
+        phone = request.form.get("phone")
+
+        query = UserFeedback.query
+
+        if ticket_id:
+            query = query.filter(UserFeedback.feedback_id == ticket_id)
+        elif phone:
+            query = query.filter(UserFeedback.phone == phone)
+
+        feedbacks = query.order_by(UserFeedback.created_at.desc()).all()
+
+    return render_template("user/my_issues.html", feedbacks=feedbacks)
+@app.route("/admin/feedback/<feedback_id>/status", methods=["POST"])
+def update_feedback_status(feedback_id):
+    feedback = UserFeedback.query.filter_by(feedback_id=feedback_id).first_or_404()
+
+    new_status = request.form.get("status")
+    feedback.status = new_status
+    feedback.updated_at = datetime.utcnow()
+
+    if new_status == "Resolved":
+        feedback.resolved_at = datetime.utcnow()
+    else:
+        feedback.resolved_at = None
+
+    db.session.commit()
+    flash("Status updated successfully", "success")
+    return redirect(url_for("admin_feedback"))
 
 # ------------------ DB INIT ------------------
 
