@@ -1459,36 +1459,69 @@ def add_restaurant():
         return redirect(url_for("admin_login"))
 
     if request.method == "POST":
-        name = request.form.get("name")
-        phone = request.form.get("phone")
-        email = request.form.get("email")
-        address = request.form.get("address")
-        sheet_url = request.form.get("sheet_url")
-        location = request.form.get("location")  # <-- get location
+        try:
+            # Get form data
+            name = request.form.get("name")
+            phone = request.form.get("phone")
+            email = request.form.get("email")
+            address = request.form.get("address")
+            sheet_url = request.form.get("sheet_url")
+            location = request.form.get("location")
+            admin_username = request.form.get("admin_username")
+            admin_password = request.form.get("admin_password")
 
-        if not name or not phone or not email or not sheet_url:
-            flash("Name, phone, email, and Google Sheet URL are required!", "danger")
+            # --- DEBUG: print all values ---
+            print("DEBUG: Form submission received:")
+            print(f"name={name}, phone={phone}, email={email}, address={address}")
+            print(f"sheet_url={sheet_url}, location={location}, admin_username={admin_username}, admin_password={admin_password}")
+
+            # Required fields check
+            missing = []
+            for field, value in [("Name", name), ("Phone", phone), ("Sheet URL", sheet_url),
+                                 ("Location", location), ("Admin Username", admin_username),
+                                 ("Admin Password", admin_password)]:
+                if not value:
+                    missing.append(field)
+            if missing:
+                flash(f"Missing required fields: {', '.join(missing)}", "danger")
+                return redirect(url_for("add_restaurant"))
+
+            # Check duplicate restaurant
+            if Restaurant.query.filter_by(name=name).first():
+                flash("Restaurant already exists!", "danger")
+                return redirect(url_for("add_restaurant"))
+
+            # Save restaurant
+            restaurant = Restaurant(
+                name=name,
+                phone=phone,
+                email=email,
+                address=address,
+                sheet_url=sheet_url,
+                location=location
+            )
+            db.session.add(restaurant)
+            db.session.commit()
+            print(f"DEBUG: Restaurant '{name}' added successfully with ID {restaurant.id}")
+
+            # Optional: create admin user for this restaurant
+            admin = AdminUser(
+                username=admin_username,
+                password=admin_password,  # ⚠️ hash in production!
+                restaurant_id=restaurant.id
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print(f"DEBUG: Admin '{admin_username}' created for restaurant ID {restaurant.id}")
+
+            flash(f"Restaurant {name} added successfully!", "success")
+            return redirect(url_for("admin_dashboard"))
+
+        except Exception as e:
+            db.session.rollback()
+            print("DEBUG ERROR:", str(e))
+            flash(f"Error adding restaurant: {str(e)}", "danger")
             return redirect(url_for("add_restaurant"))
-
-        if Restaurant.query.filter_by(name=name).first():
-            flash("Restaurant already exists!", "danger")
-            return redirect(url_for("add_restaurant"))
-
-        # Save restaurant INCLUDING location
-        restaurant = Restaurant(
-            name=name,
-            phone=phone,
-            email=email,
-            address=address,
-            sheet_url=sheet_url,
-            location=location   # <-- SAVE IT HERE
-        )
-
-        db.session.add(restaurant)
-        db.session.commit()
-
-        flash(f"Restaurant {name} added successfully!", "success")
-        return redirect(url_for("admin_dashboard"))
 
     return render_template("add_restaurant.html")
 

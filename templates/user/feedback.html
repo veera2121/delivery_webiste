@@ -117,39 +117,56 @@ button:hover {
 
 
 /* ========== TRACK BUTTON (compact style) ========== */
-/* ========== TRACK BUTTON (text-only style) ========== */
+/* ========== TRACK BUTTON (accent text + background) ========== */
 a.track-issue {
   position: fixed;
-  bottom: calc(var(--bottom-nav-height) + 4px); /* slightly above nav */
+  bottom: calc(var(--bottom-nav-height) + 12px);
   left: 50%;
   transform: translateX(-50%);
-  max-width: 200px;
-  padding: 4px 8px; /* minimal padding */
+  max-width: 220px;
+
+  padding: 6px 14px;
   text-align: center;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
-  color: #9e003d; /* text color */
-  background: none; /* remove background */
-  border: none; /* remove border */
-  border-radius: 0; /* remove rounding */
-  text-decoration: underline; /* optional, make it look clickable */
-  box-shadow: none; /* remove shadow */
+
+  color: #9e003d;
+  background: rgba(158, 0, 61, 0.08); /* soft accent background */
+  backdrop-filter: blur(6px);        /* modern glass feel */
+
+  border: 1px solid rgba(158, 0, 61, 0.25);
+  border-radius: 18px;
+
+  text-decoration: none;
+  box-shadow: 0 6px 18px rgba(158, 0, 61, 0.18);
+
   z-index: 998;
   line-height: 1.2;
   white-space: nowrap;
   display: inline-block;
   cursor: pointer;
-  transition: color 0.15s ease, transform 0.15s ease;
+
+  transition: 
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
 }
 
+/* Hover effect */
 a.track-issue:hover {
-  color: #007777; /* slightly darker on hover */
-  transform: translateX(-50%) scale(1.05);
+  background: rgba(158, 0, 61, 0.16);
+  color: #7c002f;
+  box-shadow: 0 10px 26px rgba(158, 0, 61, 0.3);
+  transform: translateX(-50%) translateY(-2px);
 }
 
+/* Active / tap */
 a.track-issue:active {
-  transform: translateX(-50%) scale(0.97);
+  transform: translateX(-50%) scale(0.96);
 }
+
+
 
 
 
