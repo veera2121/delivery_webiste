@@ -680,10 +680,13 @@ def generate_map_link(lat, lng, house_no=None, landmark=None, city=None, state=N
             return f"https://www.google.com/maps/search/?api=1&query={address}"
     return None
 # Assume order_time is in UTC
+from flask import request, flash, redirect, url_for, session
+from datetime import datetime
+import pytz
+from sqlalchemy import func
 
 @app.route("/place_order", methods=["POST"])
 def place_order():
-
     # ================= BASIC DETAILS =================
     name = request.form.get("name")
     phone = request.form.get("phone")
@@ -758,7 +761,6 @@ def place_order():
             flash("🚫 Restaurant is not accepting orders right now.", "danger")
         return redirect("/")
 
-   
     # ================= ITEMS TOTAL =================
     items_total = sum(
         int(quantities[i]) * float(prices[i])
@@ -827,9 +829,11 @@ def place_order():
     # ================= OTP =================
     order_otp = generate_otp()
 
-
     latitude = safe_float(request.form.get("lat"))
     longitude = safe_float(request.form.get("lng"))
+
+    # ================= CURRENT UTC TIME =================
+    utc_now = datetime.utcnow()  # store UTC in DB
 
     # ================= CREATE ORDER =================
     new_order = Order(
@@ -857,8 +861,8 @@ def place_order():
         otp=order_otp,
         latitude=latitude,
         longitude=longitude,
-        map_link = generate_map_link(latitude, longitude, house_no, landmark, city, state, pincode)
-               or map_link   # fallback to form   # <--- add this
+        map_link=generate_map_link(latitude, longitude, house_no, landmark, city, state, pincode) or map_link,
+        created_at=utc_now  # ✅ store UTC
     )
 
     db.session.add(new_order)
