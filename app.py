@@ -112,7 +112,7 @@ socketio = SocketIO(
 # ================= BLUEPRINTS =================
 app.register_blueprint(users_bp, url_prefix="/users")
 
-
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 # ------------------ UTILS ------------------
 def generate_otp():
     return str(secrets.randbelow(900000) + 100000)
@@ -1451,47 +1451,37 @@ def add_delivery_person():
     restaurants = Restaurant.query.all()
     return render_template("add_delivery_person.html", restaurants=restaurants)
 
-
-
 @app.route("/admin/add_restaurant", methods=["GET", "POST"])
 def add_restaurant():
     if not session.get("admin_logged_in"):
         return redirect(url_for("admin_login"))
 
     if request.method == "POST":
+        name = request.form.get("name")
+        phone = request.form.get("phone")
+        email = request.form.get("email")
+        address = request.form.get("address")
+        sheet_url = request.form.get("sheet_url")
+        location = request.form.get("location")
+
+        admin_username = request.form.get("admin_username")
+        admin_password = request.form.get("admin_password")
+
+        # ---- Validation ----
+        if not all([name, phone, email, sheet_url, admin_username, admin_password]):
+            flash("All restaurant and admin fields are required!", "danger")
+            return redirect(url_for("add_restaurant"))
+
+        if Restaurant.query.filter_by(name=name).first():
+            flash("Restaurant already exists!", "danger")
+            return redirect(url_for("add_restaurant"))
+
+        if RestaurantUser.query.filter_by(username=admin_username).first():
+            flash("Admin username already exists!", "danger")
+            return redirect(url_for("add_restaurant"))
+
         try:
-            # Get form data
-            name = request.form.get("name")
-            phone = request.form.get("phone")
-            email = request.form.get("email")
-            address = request.form.get("address")
-            sheet_url = request.form.get("sheet_url")
-            location = request.form.get("location")
-            admin_username = request.form.get("admin_username")
-            admin_password = request.form.get("admin_password")
-
-            # --- DEBUG: print all values ---
-            print("DEBUG: Form submission received:")
-            print(f"name={name}, phone={phone}, email={email}, address={address}")
-            print(f"sheet_url={sheet_url}, location={location}, admin_username={admin_username}, admin_password={admin_password}")
-
-            # Required fields check
-            missing = []
-            for field, value in [("Name", name), ("Phone", phone), ("Sheet URL", sheet_url),
-                                 ("Location", location), ("Admin Username", admin_username),
-                                 ("Admin Password", admin_password)]:
-                if not value:
-                    missing.append(field)
-            if missing:
-                flash(f"Missing required fields: {', '.join(missing)}", "danger")
-                return redirect(url_for("add_restaurant"))
-
-            # Check duplicate restaurant
-            if Restaurant.query.filter_by(name=name).first():
-                flash("Restaurant already exists!", "danger")
-                return redirect(url_for("add_restaurant"))
-
-            # Save restaurant
+            # ---- Save restaurant ----
             restaurant = Restaurant(
                 name=name,
                 phone=phone,
@@ -1501,25 +1491,23 @@ def add_restaurant():
                 location=location
             )
             db.session.add(restaurant)
-            db.session.commit()
-            print(f"DEBUG: Restaurant '{name}' added successfully with ID {restaurant.id}")
+            db.session.flush()  # get restaurant.id without committing yet
 
-            # Optional: create admin user for this restaurant
-            admin = AdminUser(
+            # ---- Create admin user ----
+            admin_user = RestaurantUser(
                 username=admin_username,
-                password=admin_password,  # ⚠️ hash in production!
                 restaurant_id=restaurant.id
             )
-            db.session.add(admin)
-            db.session.commit()
-            print(f"DEBUG: Admin '{admin_username}' created for restaurant ID {restaurant.id}")
+            admin_user.set_password(admin_password)
+            db.session.add(admin_user)
 
-            flash(f"Restaurant {name} added successfully!", "success")
+            db.session.commit()  # commit everything at once
+
+            flash(f"Restaurant '{name}' added successfully with admin '{admin_username}'!", "success")
             return redirect(url_for("admin_dashboard"))
 
         except Exception as e:
             db.session.rollback()
-            print("DEBUG ERROR:", str(e))
             flash(f"Error adding restaurant: {str(e)}", "danger")
             return redirect(url_for("add_restaurant"))
 
@@ -2167,16 +2155,20 @@ def add_to_cart(restaurant_id, item_id):
     session["cart_count"] = sum(i["quantity"] for i in cart)
 
     return redirect(url_for("cart_page")) 
-
 @app.route("/profile")
 def profile():
+    # If user is not logged in, redirect to login
     if "customer_id" not in session:
-        return render_template("profile.html", logged_in=False)
+        return redirect(url_for("users.login"))
 
+    # Fetch the logged-in customer
     customer = Customer.query.get(session["customer_id"])
-    return render_template("profile.html", logged_in=True, customer=customer)
 
-   
+    return render_template(
+        "profile.html",
+        logged_in=True,
+        customer=customer
+    )
 
 # Logout
 @app.route("/logout")

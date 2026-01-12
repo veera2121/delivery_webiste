@@ -45,7 +45,8 @@ def login():
                 return redirect(url_for("users.login"))
 
         # Set session
-        session["customer_id"] = customer.id
+        session["customer_id"] = customer.id 
+        session.permanent = True
         flash(f"Welcome {customer.name}!")
         return redirect(url_for("profile"))
 
