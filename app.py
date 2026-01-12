@@ -1451,12 +1451,14 @@ def add_delivery_person():
     restaurants = Restaurant.query.all()
     return render_template("add_delivery_person.html", restaurants=restaurants)
 
+
 @app.route("/admin/add_restaurant", methods=["GET", "POST"])
 def add_restaurant():
     if not session.get("admin_logged_in"):
         return redirect(url_for("admin_login"))
 
     if request.method == "POST":
+        # ---- Restaurant data ----
         name = request.form.get("name")
         phone = request.form.get("phone")
         email = request.form.get("email")
@@ -1464,54 +1466,47 @@ def add_restaurant():
         sheet_url = request.form.get("sheet_url")
         location = request.form.get("location")
 
-        admin_username = request.form.get("admin_username")
-        admin_password = request.form.get("admin_password")
-
-        # ---- Validation ----
-        if not all([name, phone, email, sheet_url, admin_username, admin_password]):
-            flash("All restaurant and admin fields are required!", "danger")
+        if not name or not phone or not email or not sheet_url:
+            flash("Name, phone, email, and Google Sheet URL are required!", "danger")
             return redirect(url_for("add_restaurant"))
 
         if Restaurant.query.filter_by(name=name).first():
             flash("Restaurant already exists!", "danger")
             return redirect(url_for("add_restaurant"))
 
-        if RestaurantUser.query.filter_by(username=admin_username).first():
-            flash("Admin username already exists!", "danger")
-            return redirect(url_for("add_restaurant"))
+        restaurant = Restaurant(
+            name=name,
+            phone=phone,
+            email=email,
+            address=address,
+            sheet_url=sheet_url,
+            location=location
+        )
+        db.session.add(restaurant)
+        db.session.commit()  # save restaurant first to get ID
 
-        try:
-            # ---- Save restaurant ----
-            restaurant = Restaurant(
-                name=name,
-                phone=phone,
-                email=email,
-                address=address,
-                sheet_url=sheet_url,
-                location=location
-            )
-            db.session.add(restaurant)
-            db.session.flush()  # get restaurant.id without committing yet
+        # ---- Admin user for this restaurant ----
+        admin_username = request.form.get("admin_username")
+        admin_password = request.form.get("admin_password")
 
-            # ---- Create admin user ----
+        if admin_username and admin_password:
+            if RestaurantUser.query.filter_by(username=admin_username).first():
+                flash("Admin username already exists!", "danger")
+                return redirect(url_for("add_restaurant"))
+
             admin_user = RestaurantUser(
                 username=admin_username,
                 restaurant_id=restaurant.id
             )
             admin_user.set_password(admin_password)
             db.session.add(admin_user)
+            db.session.commit()
 
-            db.session.commit()  # commit everything at once
-
-            flash(f"Restaurant '{name}' added successfully with admin '{admin_username}'!", "success")
-            return redirect(url_for("admin_dashboard"))
-
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Error adding restaurant: {str(e)}", "danger")
-            return redirect(url_for("add_restaurant"))
+        flash(f"Restaurant '{name}' added successfully with admin '{admin_username}'!", "success")
+        return redirect(url_for("admin_dashboard"))
 
     return render_template("add_restaurant.html")
+
 
 
 from datetime import datetime
