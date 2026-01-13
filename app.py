@@ -1508,11 +1508,9 @@ def add_restaurant():
     return render_template("add_restaurant.html")
 
 
-from datetime import datetime
-from flask import abort, flash, redirect, url_for, render_template
-import pytz
-import pandas as pd
 
+from datetime import datetime
+from flask import abort, flash, redirect, url_for
 @app.route("/menu/<int:restaurant_id>")
 def menu(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
@@ -1529,6 +1527,7 @@ def menu(restaurant_id):
 
     # 🚫 HARD BLOCK
     if not is_open or not restaurant.can_accept_orders:
+
         flash("Restaurant is currently not accepting orders", "warning")
         return redirect(url_for("home"))
 
@@ -1537,34 +1536,11 @@ def menu(restaurant_id):
 
     try:
         df = pd.read_csv(restaurant.sheet_url)
+        items = df.to_dict(orient="records")
 
-        # 🔒 Replace NaN with empty string
-        df = df.fillna("")
-
-        items = []
-
-        for row in df.to_dict(orient="records"):
-            item = {
-                "name": str(row.get("name", "")).strip(),
-                "category": str(row.get("category", "Other")).strip(),
-                "description": str(row.get("description", "")).strip(),
-
-                # ✅ PRICE → FLOAT ONLY
-                "price": float(row.get("price", 0)),
-
-                "image_url": str(row.get("image_url", "")).strip(),
-
-                # ✅ TEXT → LOWER SAFELY
-                "availability": str(row.get("availability", "yes")).strip().lower(),
-                "type": str(row.get("type", "veg")).strip().lower(),
-            }
-
-            items.append(item)
-
-        # 📂 GROUP BY CATEGORY
         menu_by_category = {}
         for item in items:
-            category = item["category"] or "Other"
+            category = item.get("category", "Other")
             menu_by_category.setdefault(category, []).append(item)
 
         return render_template(
@@ -1575,7 +1551,6 @@ def menu(restaurant_id):
 
     except Exception as e:
         return f"Error loading menu: {e}"
-
 
 
 @app.route("/restaurant/assign_delivery/<int:order_id>", methods=["POST"])
