@@ -1,51 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- ✅ SEO TITLE -->
-  <title>{% block seo_title %}Food Delivery App{% endblock %}</title>
+  <title>Ruchigo - Fast & Reliable Food Delivery</title>
 
   <!-- ✅ SEO META -->
-  <meta name="description" content="{% block seo_description %}{% endblock %}">
-  <meta name="keywords" content="{% block seo_keywords %}{% endblock %}">
+  <meta name="description" content="Order fresh food online from Ruchigo. Fast delivery to your area with exclusive offers.">
+  <meta name="keywords" content="Ruchigo, food delivery, order online, fast delivery, restaurant, samosa, pizza">
+
+  <!-- ✅ CANONICAL URL -->
+  <link rel="canonical" href="https://ruchigo.in/">
 
   <!-- ✅ OPEN GRAPH (SOCIAL + GOOGLE) -->
-  <meta property="og:title" content="{% block og_title %}{% endblock %}">
-  <meta property="og:description" content="{% block og_description %}{% endblock %}">
+  <meta property="og:title" content="Ruchigo - Fast & Reliable Food Delivery">
+  <meta property="og:description" content="Order fresh food online from Ruchigo. Fast delivery to your area with exclusive offers.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="{{ request.url }}"> 
+  <meta property="og:url" content="https://ruchigo.in/">
+  <meta property="og:image" content="{{ url_for('static', filename='images/logo4.png') }}">
+
   <!-- ✅ FAVICON / LOGO ICON -->
-<link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo4.png') }}">
-
-   <!-- Apple Touch Icon -->
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo4.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo-192.png') }}">
-
-  <!-- Android / PWA Icons -->
   <link rel="icon" sizes="192x192" href="{{ url_for('static', filename='images/logo-192.png') }}">
   <link rel="icon" sizes="512x512" href="{{ url_for('static', filename='images/logo-512.png') }}">
 
-  <!-- Font Awesome Icons -->
+  <!-- ✅ FONT AWESOME -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
-  {% block manifest %}
+  <!-- ✅ PWA / MANIFEST -->
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <meta name="theme-color" content="#ff5722">
-  {% endblock %}
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HXFDJY7X7E"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'G-HXFDJY7X7E');
-</script>
+  <!-- ✅ GOOGLE ANALYTICS -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-HXFDJY7X7E"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-HXFDJY7X7E');
+  </script>
 </head>
-
 
 
   <style>
