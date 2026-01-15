@@ -49,7 +49,9 @@ class Restaurant(db.Model):
     # ================= DELIVERY =================
     delivery_charge = db.Column(db.Float, default=30, nullable=False)
     free_delivery_limit = db.Column(db.Float, default=499, nullable=False)
- 
+    # ================= ADVANCED DELIVERY CONTROL =================
+    force_delivery_charge = db.Column(db.Boolean, default=False, nullable=False)
+
     # ================= OPEN / CLOSE TIME =================
     opening_time = db.Column(db.Time, default=time(10, 0))   # 10:00 AM
     closing_time = db.Column(db.Time, default=time(22, 0))   # 10:00 PM
@@ -436,3 +438,70 @@ class UserFeedback(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime)
     resolved_at = db.Column(db.DateTime)
+class RestaurantDelivery(db.Model):
+    __tablename__ = "restaurant_delivery"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    restaurant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant.id"),
+        nullable=False
+    )
+
+    delivery_person_id = db.Column(
+        db.Integer,
+        db.ForeignKey("delivery_person.id"),
+        nullable=False
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "restaurant_id",
+            "delivery_person_id",
+            name="unique_restaurant_delivery"
+        ),
+    )
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    name = db.Column(db.String(100))
+    email = db.Column(db.String(120), unique=True)
+    phone = db.Column(db.String(15))
+
+    # Address fields
+    address_line = db.Column(db.String(255))
+    landmark = db.Column(db.String(100))
+    area = db.Column(db.String(100))
+    city = db.Column(db.String(50))
+    pincode = db.Column(db.String(10))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+class DeliverySettings(db.Model):
+    __tablename__ = "delivery_settings"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Distance slabs (km)
+    base_distance = db.Column(db.Float, default=3)
+    base_charge = db.Column(db.Integer, default=30)
+
+    slab_1_upto = db.Column(db.Float, default=6)
+    slab_1_charge = db.Column(db.Integer, default=40)
+
+    slab_2_upto = db.Column(db.Float, default=9)
+    slab_2_charge = db.Column(db.Integer, default=55)
+
+    slab_3_upto = db.Column(db.Float, default=12)
+    slab_3_charge = db.Column(db.Integer, default=70)
+
+    max_charge = db.Column(db.Integer, default=90)
+
+    # Free delivery
+    free_delivery_min_order = db.Column(db.Integer, default=499)
+
+    # Surge / Night
+    night_surge = db.Column(db.Integer, default=0)   # ₹
+    is_night_surge_active = db.Column(db.Boolean, default=False)
+
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)

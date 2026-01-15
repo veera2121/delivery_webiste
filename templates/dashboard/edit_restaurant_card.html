@@ -194,6 +194,12 @@ button:hover {
 
         <label>Free Delivery Limit</label>
         <input type="number" step="0.01" name="free_delivery_limit" value="{{ restaurant.free_delivery_limit }}">
+         <label>Force Delivery Charge (Emergency Mode)</label>
+<div class="switch">
+    <input type="checkbox" name="force_delivery_charge" value="1"
+        {% if restaurant.force_delivery_charge %}checked{% endif %}>
+    <span>Enable</span>
+</div>
 
         <label>Opening Time</label>
         <input type="time" name="opening_time" value="{{ restaurant.opening_time.strftime('%H:%M') if restaurant.opening_time else '' }}">

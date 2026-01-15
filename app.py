@@ -34,7 +34,7 @@ from users.routes import users_bp
 from models import (
     db, Restaurant, RestaurantUser, MenuItem, Order,
     OrderItem, DeliveryPerson, FoodItem, OTP,
-    CouponUsage, RestaurantOffer, Customer ,UserFeedback
+    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings
 )
 
 # ================= APP =================
@@ -133,7 +133,35 @@ def haversine(lat1, lon1, lat2, lon2):
         math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
 
     c = 2 * math.asin(math.sqrt(a))
-    return R * c
+    return R * c 
+import math
+
+import math
+
+def calculate_distance_km(lat1, lng1, lat2, lng2):
+    if None in (lat1, lng1, lat2, lng2):
+        return 0  # fallback (or raise error)
+
+    lat1 = float(lat1)
+    lng1 = float(lng1)
+    lat2 = float(lat2)
+    lng2 = float(lng2)
+
+    R = 6371  # Earth radius in KM
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+
+    a = (
+        math.sin(dlat / 2) ** 2 +
+        math.cos(math.radians(lat1)) *
+        math.cos(math.radians(lat2)) *
+        math.sin(dlng / 2) ** 2
+    )
+
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return round(R * c, 2)
+
+
 # ------------------ ADMIN CONFIG ------------------
 
 # Admin credentials
@@ -555,7 +583,6 @@ from sqlalchemy import func
 
 from sqlalchemy import func
 from datetime import datetime
-
 @app.route("/cart/<int:restaurant_id>")
 def cart_page(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
@@ -577,17 +604,27 @@ def cart_page(restaurant_id):
                 "total": total
             })
 
-    # 🔹 DELIVERY LOGIC
-    base_delivery = 30
-    delivery_charge = 0 if items_total >= 499 else base_delivery
+    # ================= DISTANCE =================
+    user_lat = session.get("latitude")
+    user_lon = session.get("longitude")
 
-    # 🔹 FREE DELIVERY MESSAGE
-    if items_total >= 499:
-        free_delivery_msg = "🎉 Free delivery applied"
-    else:
-        free_delivery_msg = f"Add ₹{499 - items_total} more for free delivery"
+    distance_km = 0
+    if user_lat and user_lon and restaurant.latitude and restaurant.longitude:
+        distance_km = calculate_distance_km(
+            user_lat,
+            user_lon,
+            restaurant.latitude,
+            restaurant.longitude
+        )
 
-    # 🔹 FIRST-TIME USER CHECK
+    # ✅ DELIVERY (CORRECT CALL)
+    delivery_charge, delivery_msg = calculate_delivery_charge(
+        distance_km,
+        items_total,
+        restaurant
+    )
+
+    # ================= FIRST TIME USER =================
     phone = session.get("phone")
     device_fingerprint = session.get("device_fingerprint")
 
@@ -598,34 +635,31 @@ def cart_page(restaurant_id):
 
     first_time_user = delivered_orders == 0
 
-    # 🔹 FETCH ACTIVE OFFER FOR RESTAURANT
+    # ================= OFFER =================
     active_offer = RestaurantOffer.query.filter_by(
         restaurant_id=restaurant.id,
         is_active=True
     ).first()
 
-    # 🔹 CHECK IF OFFER ALREADY USED
     offer_already_used = False
     if active_offer:
-        previous_offer_order = Order.query.filter(
+        offer_already_used = Order.query.filter(
             (Order.restaurant_id == restaurant.id) &
             ((Order.phone == phone) | (Order.device_fingerprint == device_fingerprint)) &
             (Order.restaurant_offer_id == active_offer.id) &
             (func.lower(Order.status) == "delivered")
-        ).first()
-        if previous_offer_order:
-            offer_already_used = True
-        
+        ).first() is not None
+
     return render_template(
         "cart.html",
         restaurant=restaurant,
         items=items,
         items_total=items_total,
         delivery_charge=delivery_charge,
-        free_delivery_msg=free_delivery_msg,
+        delivery_msg=delivery_msg,   # ✅ single source
         first_time_user=first_time_user,
         active_offer=active_offer,
-        offer_already_used=offer_already_used   # <-- Pass flag to template
+        offer_already_used=offer_already_used
     )
 
 import random
@@ -684,10 +718,11 @@ def generate_map_link(lat, lng, house_no=None, landmark=None, city=None, state=N
 from flask import request, flash, redirect, url_for, session
 from datetime import datetime
 import pytz
-from sqlalchemy import func
+from sqlalchemy import func 
 
 @app.route("/place_order", methods=["POST"])
 def place_order():
+
     # ================= BASIC DETAILS =================
     name = request.form.get("name")
     phone = request.form.get("phone")
@@ -704,11 +739,18 @@ def place_order():
     delivery_note = request.form.get("delivery_note")
 
     restaurant_id = int(request.form.get("restaurant_id"))
-    map_link = request.form.get("map_link")
     device_fingerprint = request.form.get("device_fingerprint")
 
-    apply_offer = request.form.get("apply_offer") == "true"
-    apply_coupon = request.form.get("apply_coupon") == "true"
+    # ================= LOCATION (SUPPORT OLD + NEW) =================
+    customer_lat = safe_float(
+        request.form.get("customer_lat") or request.form.get("lat")
+    )
+    customer_lng = safe_float(
+        request.form.get("customer_lng") or request.form.get("lng")
+    )
+
+    print("📍 CUSTOMER LAT:", customer_lat)
+    print("📍 CUSTOMER LNG:", customer_lng)
 
     # ================= ITEMS =================
     item_names = request.form.getlist("item_name[]")
@@ -720,46 +762,19 @@ def place_order():
         return redirect("/")
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
-    
     now = datetime.now().time()
-    # 1️⃣ Restaurant suspended
-    if restaurant.status == "suspended":
-        flash("🚫 This restaurant is currently suspended.", "danger")
+
+    # ================= RESTAURANT STATUS =================
+    if restaurant.status != "active":
+        flash("Restaurant not available", "danger")
         return redirect("/")
 
-    # 2️⃣ Coming soon
-    if restaurant.status == "coming_soon":
-        flash("⏳ This restaurant is coming soon. Orders not open yet.", "warning")
-        return redirect("/")
-
-    # 3️⃣ Timing not updated
-    if not restaurant.opening_time or not restaurant.closing_time:
-        flash("❌ Restaurant timing not updated. Cannot place order.", "danger")
-        return redirect("/")
-
-    # 4️⃣ Before opening
-    if now < restaurant.opening_time:
-        flash(
-            f"⏳ Orders will open at {restaurant.opening_time.strftime('%I:%M %p')}",
-            "warning"
-        )
-        return redirect("/")
-
-    # 5️⃣ After closing
-    if now > restaurant.closing_time:
-        flash("🌙 Restaurant is closed for today.", "danger")
-        return redirect("/")
-
-    # 6️⃣ Orders paused manually
     if not restaurant.is_accepting_orders:
-        if restaurant.accept_orders_until and now < restaurant.accept_orders_until:
-            flash(
-                f"⏳ Orders will be accepted after "
-                f"{restaurant.accept_orders_until.strftime('%I:%M %p')}",
-                "warning"
-            )
-        else:
-            flash("🚫 Restaurant is not accepting orders right now.", "danger")
+        flash("Restaurant not accepting orders", "danger")
+        return redirect("/")
+
+    if now < restaurant.opening_time or now > restaurant.closing_time:
+        flash("Restaurant closed now", "danger")
         return redirect("/")
 
     # ================= ITEMS TOTAL =================
@@ -768,73 +783,48 @@ def place_order():
         for i in range(len(item_names))
     )
 
-    # ================= DELIVERY CHARGE =================
-    delivery_charge = restaurant.delivery_charge or 0
-    if restaurant.free_delivery_limit and items_total >= restaurant.free_delivery_limit:
-        delivery_charge = 0
-    
-    # ================= SESSION =================
-    session["phone"] = phone
-    session["device_fingerprint"] = device_fingerprint
+    print("🧾 ITEMS TOTAL:", items_total)
 
-    # ================= RESTAURANT OFFER =================
-    offer_discount = 0
-    offer_used = None
+    # ================= LOCATION VALIDATION =================
+    if not customer_lat or not customer_lng:
+        flash("📍 Please select your delivery location on the map", "danger")
+        return redirect(request.referrer + "#map-box")
 
-    offer_data = get_active_offer_for_restaurant(
-        restaurant_id,
-        device_fingerprint
+    # ================= DISTANCE =================
+    distance_km = calculate_distance_km(
+        restaurant.latitude,
+        restaurant.longitude,
+        customer_lat,
+        customer_lng
     )
 
-    if (
-        apply_offer and
-        offer_data["id"] and
-        not offer_data["already_used"] and
-        items_total >= offer_data["min_order_amount"]
-    ):
-        offer_used = RestaurantOffer.query.get(offer_data["id"])
+    print("📏 DISTANCE (KM):", round(distance_km, 2))
 
-        if offer_data["offer_type"] == "percent":
-            offer_discount = (items_total * offer_data["offer_value"]) / 100
+    # ================= DELIVERY CHARGE (FINAL AUTHORITY) =================
+    delivery_charge, delivery_msg = calculate_delivery_charge(
+        distance_km,
+        items_total,
+        restaurant
+    )
 
-        elif offer_data["offer_type"] == "flat":
-            offer_discount = offer_data["offer_value"]
-
-        elif offer_data["offer_type"] == "free_delivery":
-            delivery_charge = 0
-
-    # ================= COUPON (ONLY IF OFFER NOT APPLIED) =================
-    coupon_discount = 0
-    coupon_used = None
-
-    delivered_orders = Order.query.filter(
-        ((Order.phone == phone) | (Order.device_fingerprint == device_fingerprint)),
-        func.lower(Order.status) == "delivered"
-    ).count()
-
-    first_time_user = delivered_orders == 0
-
-    if (
-        offer_discount == 0 and
-        apply_coupon and
-        first_time_user and
-        items_total >= 599
-    ):
-        coupon_discount = min(items_total * 0.20, 20)
-        coupon_used = "FIRST20"
+    print("🚚 DELIVERY CHARGE:", delivery_charge)
+    print("ℹ DELIVERY MSG:", delivery_msg)
 
     # ================= FINAL TOTAL =================
-    total_discount = offer_discount + coupon_discount
-    final_total = round(items_total + delivery_charge - total_discount, 2)
+    final_total = round(items_total + delivery_charge, 2)
 
-    # ================= OTP =================
-    order_otp = generate_otp()
+    # ================= MAP LINK =================
+    map_link = generate_map_link(
+        customer_lat,
+        customer_lng,
+        house_no,
+        landmark,
+        city,
+        state,
+        pincode
+    )
 
-    latitude = safe_float(request.form.get("lat"))
-    longitude = safe_float(request.form.get("lng"))
-
-    # ================= CURRENT UTC TIME =================
-    utc_now = datetime.utcnow()  # store UTC in DB
+    print("🗺 MAP LINK:", map_link)
 
     # ================= CREATE ORDER =================
     new_order = Order(
@@ -852,18 +842,18 @@ def place_order():
         delivery_note=delivery_note,
         payment_type=payment_type,
         device_fingerprint=device_fingerprint,
+
         items_total=items_total,
-        discount=coupon_discount,
-        restaurant_offer_discount=offer_discount,
-        restaurant_offer_id=offer_used.id if offer_used else None,
         delivery_charge=delivery_charge,
         final_total=final_total,
-        coupon_used=coupon_used,
-        otp=order_otp,
-        latitude=latitude,
-        longitude=longitude,
-        map_link=generate_map_link(latitude, longitude, house_no, landmark, city, state, pincode) or map_link,
-        created_at=utc_now  # ✅ store UTC
+
+        latitude=customer_lat,
+        longitude=customer_lng,
+        distance_km=round(distance_km, 2),
+        map_link=map_link,
+
+        otp=generate_otp(),
+        created_at=datetime.utcnow()
     )
 
     db.session.add(new_order)
@@ -883,12 +873,19 @@ def place_order():
                 quantity=qty,
                 price=float(prices[i])
             ))
-    
+
     db.session.commit()
+
+    # ================= FINAL DEBUG =================
+    print("✅ ORDER PLACED")
+    print("🆔 ORDER ID:", new_order.order_id)
+    print("📍 FINAL LAT:", new_order.latitude)
+    print("📍 FINAL LNG:", new_order.longitude)
+    print("📏 FINAL KM:", new_order.distance_km)
+    print("🚚 FINAL DELIVERY:", new_order.delivery_charge)
 
     flash(f"Order placed successfully! Order ID: {new_order.order_id}", "success")
     return redirect(url_for("myorders", restaurant_id=restaurant_id))
-
 
 # ------------------ SUPER ADMIN ------------------
 
@@ -1155,15 +1152,28 @@ def restaurant_dashboard():
     # ------------------ Delivery Boy Status ------------------
     # Mark inactive delivery boys offline
     threshold = datetime.utcnow() - timedelta(minutes=5)
-    DeliveryPerson.query.filter(
+
+    inactive_delivery_persons = DeliveryPerson.query.filter(
         DeliveryPerson.is_online == True,
         DeliveryPerson.last_seen < threshold
-    ).update({"is_online": False})
+    ).all()
+
+    for dp in inactive_delivery_persons:
+        dp.is_online = False
+
     db.session.commit()
+
+
+
     # ✅ FIXED: Only this restaurant’s delivery boys
-    delivery_persons = DeliveryPerson.query.filter_by(
-        restaurant_id=restaurant_id
-    ).order_by(DeliveryPerson.name).all()
+    delivery_persons = (
+        DeliveryPerson.query
+        .join(RestaurantDelivery)
+        .filter(RestaurantDelivery.restaurant_id == restaurant_id)
+        .order_by(DeliveryPerson.name)
+        .all()
+    )
+
 
     return render_template(
         "restaurant_dashboard.html",
@@ -1177,15 +1187,27 @@ def restaurant_delivery_persons():
     if not restaurant_id:
         return redirect(url_for("restaurant_login"))
 
-    # This restaurant delivery boys
-    delivery_persons = DeliveryPerson.query.filter_by(
-        restaurant_id=restaurant_id
-    ).order_by(DeliveryPerson.name).all()
+    # ✅ Assigned to THIS restaurant
+    delivery_persons = (
+        db.session.query(DeliveryPerson)
+        .join(RestaurantDelivery)
+        .filter(RestaurantDelivery.restaurant_id == restaurant_id)
+        .order_by(DeliveryPerson.name)
+        .all()
+    )
 
-    # Other restaurant delivery boys
-    other_delivery_persons = DeliveryPerson.query.filter(
-        DeliveryPerson.restaurant_id != restaurant_id
-    ).order_by(DeliveryPerson.name).all()
+    # ✅ NOT assigned to this restaurant
+    other_delivery_persons = (
+        db.session.query(DeliveryPerson)
+        .filter(
+            ~DeliveryPerson.id.in_(
+                db.session.query(RestaurantDelivery.delivery_person_id)
+                .filter(RestaurantDelivery.restaurant_id == restaurant_id)
+            )
+        )
+        .order_by(DeliveryPerson.name)
+        .all()
+    )
 
     return render_template(
         "restaurant_delivery_persons.html",
@@ -1199,16 +1221,26 @@ def add_delivery_person_to_restaurant(delivery_id):
     if not restaurant_id:
         return redirect(url_for("restaurant_login"))
 
-    dp = DeliveryPerson.query.get_or_404(delivery_id)
+    exists = RestaurantDelivery.query.filter_by(
+        restaurant_id=restaurant_id,
+        delivery_person_id=delivery_id
+    ).first()
 
-    # Assign delivery boy to this restaurant
-    dp.restaurant_id = restaurant_id
+    if exists:
+        flash("Delivery person already assigned", "info")
+        return redirect(url_for("restaurant_delivery_persons"))
+
+    assignment = RestaurantDelivery(
+        restaurant_id=restaurant_id,
+        delivery_person_id=delivery_id
+    )
+
+    db.session.add(assignment)
     db.session.commit()
 
-    flash(f"{dp.name} assigned to your restaurant", "success")
-
-    # ✅ MUST return something
+    flash("Delivery person assigned successfully", "success")
     return redirect(url_for("restaurant_delivery_persons"))
+
 
 @app.route("/restaurant/update_status/<int:order_id>", methods=["POST"])
 def restaurant_update_status(order_id):
@@ -1348,7 +1380,7 @@ def delivery_dashboard():
         "cod_total": sum(o.final_total or 0 for o in all_orders if o.payment_type == "COD"),
         "online_total": sum(o.final_total or 0 for o in all_orders if o.payment_type == "Online"),
     }
-
+    
     return render_template(
         "delivery_dashboard.html",
         delivery_person=delivery_person,
@@ -2345,6 +2377,8 @@ def edit_restaurant_card(restaurant_id):
         restaurant.latitude = request.form.get("latitude") or None
         restaurant.longitude = request.form.get("longitude") or None
         restaurant.delivery_radius_km = float(request.form.get("delivery_radius_km") or 5)
+        # ================= FORCE DELIVERY CHARGE =================
+        restaurant.force_delivery_charge = True if request.form.get("force_delivery_charge") == "1" else False
 
         # ================= OPEN / CLOSE TIME =================
         opening_time_str = request.form.get("opening_time")
@@ -2857,7 +2891,122 @@ def update_feedback_status(feedback_id):
 
     db.session.commit()
     flash("Status updated successfully", "success")
-    return redirect(url_for("admin_feedback"))
+    return redirect(url_for("admin_feedback"))  
+def calculate_delivery_charge(distance_km, items_total, restaurant):
+    s = DeliverySettings.query.first()
+
+    if not s:
+        return 30, "🚚 Delivery charge ₹30"
+
+    # =========================
+    # 1️⃣ RESTAURANT FREE DELIVERY (ONLY THIS)
+    # =========================
+    if (
+        restaurant.free_delivery_limit
+        and restaurant.free_delivery_limit > 0
+        and items_total >= restaurant.free_delivery_limit
+    ):
+        return 0, "🎉 Free delivery (Restaurant)"
+
+    # =========================
+    # 2️⃣ DISTANCE SLAB
+    # =========================
+    if distance_km <= s.base_distance:
+        charge = s.base_charge
+    elif distance_km <= s.slab_1_upto:
+        charge = s.slab_1_charge
+    elif distance_km <= s.slab_2_upto:
+        charge = s.slab_2_charge
+    elif distance_km <= s.slab_3_upto:
+        charge = s.slab_3_charge
+    else:
+        charge = s.max_charge
+
+    # =========================
+    # 3️⃣ NIGHT SURGE
+    # =========================
+    if s.is_night_surge_active:
+        charge += s.night_surge
+        msg = f"🌙 Night delivery charge ₹{charge}"
+    else:
+        msg = f"🚚 Delivery charge ₹{charge}"
+
+    return charge, msg
+
+    return charge, msg
+@app.route("/calculate_delivery", methods=["POST"])
+def calculate_delivery():
+    data = request.get_json()
+
+    restaurant_id = int(data["restaurant_id"])
+    customer_lat = float(data["customer_lat"])
+    customer_lng = float(data["customer_lng"])
+    items_total = float(data["items_total"])
+
+    restaurant = Restaurant.query.get_or_404(restaurant_id)
+
+    distance_km = calculate_distance_km(
+        restaurant.latitude,
+        restaurant.longitude,
+        customer_lat,
+        customer_lng
+    )
+
+    delivery_charge, message =calculate_delivery_charge(distance_km, items_total, restaurant)
+
+    
+
+    return jsonify({
+        "distance_km": round(distance_km, 2),
+        "delivery_charge": delivery_charge,
+        "message": message
+    })
+
+@app.route("/admin/delivery-settings", methods=["GET", "POST"])
+def admin_delivery_settings():
+    settings = DeliverySettings.query.first()
+
+    if request.method == "POST":
+        if not settings:
+            settings = DeliverySettings()  # create new if not exists
+            db.session.add(settings)
+
+        # Safe update using helper functions
+        settings.base_distance = safe_float(request.form.get("base_distance"), settings.base_distance)
+        settings.base_charge = safe_int(request.form.get("base_charge"), settings.base_charge)
+
+        settings.slab_1_upto = safe_float(request.form.get("slab_1_upto"), settings.slab_1_upto)
+        settings.slab_1_charge = safe_int(request.form.get("slab_1_charge"), settings.slab_1_charge)
+
+        settings.slab_2_upto = safe_float(request.form.get("slab_2_upto"), settings.slab_2_upto)
+        settings.slab_2_charge = safe_int(request.form.get("slab_2_charge"), settings.slab_2_charge)
+
+        settings.slab_3_upto = safe_float(request.form.get("slab_3_upto"), settings.slab_3_upto)
+        settings.slab_3_charge = safe_int(request.form.get("slab_3_charge"), settings.slab_3_charge)
+
+        settings.max_charge = safe_int(request.form.get("max_charge"), settings.max_charge)
+        settings.free_delivery_min_order = safe_int(request.form.get("free_delivery_min_order"), settings.free_delivery_min_order)
+
+        settings.night_surge = safe_int(request.form.get("night_surge"), settings.night_surge)
+        settings.is_night_surge_active = request.form.get("is_night_surge_active") == "on"
+
+        settings.updated_at = datetime.utcnow()
+
+        db.session.commit()
+        flash("Delivery settings updated successfully", "success")
+        return redirect(url_for("admin_delivery_settings"))
+
+    return render_template("admin_delivery_settings.html", settings=settings)
+def safe_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+def safe_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 # ------------------ DB INIT ------------------
 

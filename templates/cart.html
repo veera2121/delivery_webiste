@@ -422,6 +422,15 @@ body {
         font-size: 14px;
     }
 }
+#map-box {
+  border: 2px solid transparent;
+}
+
+#map-box.error {
+  border-color: #dc3545;
+  padding: 10px;
+  border-radius: 8px;
+}
 
 </style>
 </head>
@@ -458,19 +467,25 @@ body {
       </button>
 
 
-<input type="hidden" name="lat" id="lat">
-<input type="hidden" name="lng" id="lng">
-
-        <div id="map" style="height:300px;margin-top:10px;"></div>
-          <input type="hidden" name="lat" id="customer_lat">
-          <input type="hidden" name="lng" id="customer_lng">
-
-    <input type="hidden" name="device_fingerprint" id="device_fingerprint">
- 
-
-<!-- Leaflet CSS/JS -->
+<!-- MAP -->
+<div id="map-box">
+    <!-- Map -->
+    <div id="map" style="height: 300px;"></div>
+    <p class="text-danger mt-2">
+        Please select your delivery location
+    </p>
+</div>
 
 
+<!-- SINGLE SOURCE OF TRUTH -->
+<input type="hidden" name="latitude" id="latitude">
+<input type="hidden" name="longitude" id="longitude">
+
+<!-- DELIVERY -->
+<input type="hidden" name="delivery_charge" id="delivery_charge_input">
+
+<!-- DEVICE -->
+<input type="hidden" name="device_fingerprint" id="device_fingerprint">
 
     <input type="hidden" name="apply_offer" id="apply_offer_input" value="false">
     <input type="hidden" name="apply_coupon" id="apply_coupon_input" value="false">
@@ -592,22 +607,33 @@ document.getElementById("device_fingerprint").value = btoa([
 ].join("|"));
    
 
-
-
-
-
 /* ============================================================
-   CONFIG
+   GLOBAL STATE
+============================================================ */
+let liveLocationClicked = false;
+let locationSelected = false;
+let currentDeliveryCharge = null
+let freeDeliveryReason = "";
+let messageLocked = false;
+
+/* ===========================================================
+   CONFIG (FROM BACKEND)
 ============================================================ */
 const RESTAURANT_ID = {{ restaurant.id }};
 const RESTAURANT_NAME = "{{ restaurant.name }}";
-const BASE_DELIVERY = parseFloat(
-    document.getElementById("base-delivery").value || 0
-);
-const FREE_DELIVERY_LIMIT = parseFloat(
-    document.getElementById("free-delivery-min").value || 0
-);
+const BASE_DELIVERY = {{ restaurant.delivery_charge }};
+const FREE_DELIVERY_LIMIT = {{ restaurant.free_delivery_limit or 0 }};
 
+/* ============================================================
+   DEVICE FINGERPRINT
+============================================================ */
+document.getElementById("device_fingerprint").value = btoa([
+    navigator.userAgent,
+    navigator.language,
+    screen.width,
+    screen.height,
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+].join("|"));
 
 /* ============================================================
    CART INIT
@@ -625,19 +651,12 @@ document.getElementById("restaurant-name").innerText = cart.restaurantName;
 let restaurantOffer = {{ active_offer.offer_value if active_offer else 0 }};
 let offerType = "{{ active_offer.offer_type if active_offer else '' }}";
 let minOrder = {{ active_offer.min_order_amount if active_offer else 0 }};
-let offerTitle = "{{ active_offer.title if active_offer else '' }}";
 let offerAlreadyUsed = {{ 'true' if offer_already_used else 'false' }};
 
-/* ============================================================
-   STATE
-============================================================ */
 let couponApplied = false;
 let couponDiscount = 0;
-
 let offerApplied = false;
 let offerDiscount = 0;
-
-let messageLocked = false;
 
 /* ============================================================
    RENDER CART
@@ -671,86 +690,129 @@ function renderCart() {
 }
 
 /* ============================================================
-   CHANGE QTY
+   CHANGE QUANTITY
 ============================================================ */
 function changeQty(i, delta) {
     cart.items[i].quantity += delta;
     if (cart.items[i].quantity <= 0) cart.items.splice(i, 1);
 
     messageLocked = false;
-
     carts[RESTAURANT_ID] = cart;
     localStorage.setItem("carts", JSON.stringify(carts));
     renderCart();
 }
-let freeDeliveryReason = "";
+
 /* ============================================================
-   UPDATE TOTALS (NO USER MESSAGES HERE)
+   DELIVERY FROM BACKEND (ONLY SOURCE)
+============================================================ */
+async function fetchDistanceDelivery(itemsTotal) {
+    const lat = document.getElementById("customer_lat").value;
+    const lng = document.getElementById("customer_lng").value;
+    if (!lat || !lng) return;
+
+    try {
+        const res = await fetch("/calculate_delivery", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                restaurant_id: RESTAURANT_ID,
+                customer_lat: parseFloat(lat),
+                customer_lng: parseFloat(lng),
+                items_total: itemsTotal
+            })
+        });
+
+        const data = await res.json();
+        currentDeliveryCharge = data.delivery_charge;
+
+        document.getElementById("delivery-charge").innerText =
+            currentDeliveryCharge.toFixed(2);
+
+        document.getElementById("delivery-msg").innerText =
+            `📍 ${data.distance_km} km · Delivery ₹${currentDeliveryCharge}`;
+    } catch (e) {
+        console.error("Delivery fetch failed", e);
+    }
+}
+function updateLocationInputs(lat, lng) {
+    document.getElementById("latitude").value = lat;
+    document.getElementById("longitude").value = lng;
+
+    locationSelected = true;
+
+    const itemsTotal = cart.items.reduce(
+        (sum, item) => sum + item.price * item.quantity, 0
+    );
+
+    fetchDistanceDelivery(itemsTotal);
+}
+document.querySelector("form").addEventListener("submit", function () {
+    console.log("FORM SUBMIT LAT:", document.getElementById("latitude").value);
+    console.log("FORM SUBMIT LNG:", document.getElementById("longitude").value);
+});
+
+/* ============================================================
+   TOTALS
+============================================================ */
+/* ============================================================
+   TOTALS (Distance-Based Delivery + Offers + Coupons)
+============================================================ */
+/* ============================================================
+   TOTALS (Backend Delivery + Offers + Coupons)
 ============================================================ */
 function updateTotals() {
-    const itemsTotal = cart.items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const itemsTotal = cart.items.reduce(
+        (sum, item) => sum + item.price * item.quantity, 0
+    );
 
-    currentDeliveryCharge = BASE_DELIVERY;
-    freeDeliveryReason = "";
+    let offerDiscount = 0;
+    let deliveryCharge = Number(currentDeliveryCharge);
 
-    // 1️⃣ Restaurant free delivery limit
-    if (FREE_DELIVERY_LIMIT > 0 && itemsTotal >= FREE_DELIVERY_LIMIT) {
-        currentDeliveryCharge = 0;
-        freeDeliveryReason = "limit";
-    }
-
-    // 2️⃣ Restaurant offer
-    offerDiscount = 0;
+    // ================= 1️⃣ OFFERS (ONLY ALLOWED OVERRIDE)
     if (offerApplied && !offerAlreadyUsed && itemsTotal >= minOrder) {
+
         if (offerType === "percent") {
             offerDiscount = (itemsTotal * restaurantOffer) / 100;
+
         } else if (offerType === "flat") {
             offerDiscount = restaurantOffer;
+
         } else if (offerType === "free_delivery") {
-            currentDeliveryCharge = 0;
+            deliveryCharge = 0;
             freeDeliveryReason = "offer";
         }
     }
 
-    const totalDiscount = couponDiscount + offerDiscount;
-    const finalTotal = itemsTotal + currentDeliveryCharge - totalDiscount;
+    // ================= 2️⃣ COUPON
+    const totalDiscount = (couponDiscount || 0) + offerDiscount;
 
+    // ================= 3️⃣ FINAL TOTAL
+    const finalTotal = itemsTotal + deliveryCharge - totalDiscount;
+
+    // ================= 4️⃣ UPDATE UI
     document.getElementById("items-total").innerText = itemsTotal.toFixed(2);
-    document.getElementById("delivery-charge").innerText = currentDeliveryCharge.toFixed(2);
     document.getElementById("discount").innerText = totalDiscount.toFixed(2);
+    document.getElementById("delivery-charge").innerText = deliveryCharge.toFixed(2);
     document.getElementById("final-total").innerText = finalTotal.toFixed(2);
 
-    autoDeliveryMessage(itemsTotal);
-}
+    document.getElementById("delivery_charge_input").value = deliveryCharge;
 
-
-/* ============================================================
-   AUTO DELIVERY MESSAGE
-============================================================ */
-function autoDeliveryMessage(itemsTotal) {
-    if (messageLocked) return;
-
+    // ================= 5️⃣ DELIVERY MESSAGE
     const msg = document.getElementById("delivery-msg");
 
-    if (currentDeliveryCharge === 0) {
-        if (freeDeliveryReason === "offer") {
-            msg.innerText = "🎉 Free delivery unlocked by offer";
-        } else {
-            msg.innerText = "🚚 Free delivery applied";
-        }
+    if (freeDeliveryReason === "offer") {
+        msg.innerText = "🎉 Free delivery via offer";
         msg.className = "soft-success";
-        return;
-    }
 
-    if (FREE_DELIVERY_LIMIT > 0) {
-        msg.innerText =
-            `Add ₹${(FREE_DELIVERY_LIMIT - itemsTotal).toFixed(0)} more for free delivery`;
-        msg.className = "soft-info";
+    } else if (deliveryCharge === 0) {
+        msg.innerText = "🎉 Free delivery";
+        msg.className = "soft-success";
+
     } else {
-        msg.innerText = "";
+        msg.innerText = `📍 Delivery ₹${deliveryCharge}`;
+        msg.className = "";
     }
 }
-
 
 
 /* ============================================================
@@ -763,9 +825,8 @@ async function applyCoupon() {
     const msg = document.getElementById("delivery-msg");
 
     if (!phone) {
-        msg.innerText = "Enter your mobile number to unlock coupons";
+        msg.innerText = "Enter mobile number to unlock coupon";
         msg.className = "soft-info";
-        messageLocked = true;
         return;
     }
 
@@ -781,15 +842,11 @@ async function applyCoupon() {
     });
 
     const data = await res.json();
-
     if (!data.success) {
         couponApplied = false;
         couponDiscount = 0;
-
-        msg.innerText = data.message || "Coupon not available for this order";
+        msg.innerText = data.message;
         msg.className = "soft-warning";
-        messageLocked = true;
-
         updateTotals();
         return;
     }
@@ -799,10 +856,8 @@ async function applyCoupon() {
     document.getElementById("apply_coupon_input").value = "true";
     document.getElementById("coupon-box").innerText = "FIRST20 applied";
 
-    msg.innerText = `🎉 Coupon applied · You saved ₹${couponDiscount}`;
+    msg.innerText = `🎉 Coupon applied · Saved ₹${couponDiscount}`;
     msg.className = "soft-success";
-    messageLocked = true;
-
     updateTotals();
 }
 
@@ -816,9 +871,8 @@ async function applyRestaurantOffer() {
     const msg = document.getElementById("delivery-msg");
 
     if (!phone) {
-        msg.innerText = "Enter your mobile number to unlock restaurant offers";
+        msg.innerText = "Enter mobile number to unlock offers";
         msg.className = "soft-info";
-        messageLocked = true;
         return;
     }
 
@@ -833,184 +887,112 @@ async function applyRestaurantOffer() {
     });
 
     const data = await res.json();
-
     if (!data.allowed) {
-        offerApplied = false;
-        offerDiscount = 0;
-
-        msg.innerText = data.message || "This offer is not available for you";
+        msg.innerText = data.message;
         msg.className = "soft-warning";
-        messageLocked = true;
-
-        updateTotals();
         return;
     }
 
     if (itemsTotal < data.min_order) {
         msg.innerText =
-            `Add ₹${(data.min_order - itemsTotal).toFixed(0)} more to unlock this offer`;
+            `Add ₹${(data.min_order - itemsTotal).toFixed(0)} more to unlock offer`;
         msg.className = "soft-info";
-        messageLocked = true;
         return;
     }
 
     offerApplied = true;
-    document.getElementById("apply_offer_input").value = "true";
-    restaurantOffer = data.offer_value;
     offerType = data.offer_type;
+    restaurantOffer = data.offer_value;
     minOrder = data.min_order;
-    offerTitle = data.title;
+    document.getElementById("apply_offer_input").value = "true";
 
-    msg.innerText = `🎉 Offer applied · Extra savings added`;
+    msg.innerText = "🎉 Restaurant offer applied";
     msg.className = "soft-success";
-    messageLocked = true;
-
     updateTotals();
 }
 
 /* ============================================================
-   EVENTS
+   MAP + LOCATION
 ============================================================ */
-document.getElementById("coupon-box").addEventListener("click", applyCoupon);
-const offerBtn = document.getElementById("apply-offer-btn");
-if (offerBtn) offerBtn.addEventListener("click", applyRestaurantOffer);
+var map = L.map('map').setView([16.4113, 81.8043], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-/* ============================================================
-   FORM VALIDATION
-============================================================ */
-function validateCart() {
+var marker = L.marker([16.4113, 81.8043], { draggable: true }).addTo(map);
 
-    if (!cart || !cart.items || cart.items.length === 0) {
-        alert("Your cart is empty");
-        return false;
-    }
-
-    if (!liveLocationClicked) {
-        alert("📍 Please click 'Use My Live Location' to continue");
-        return false;
-    }
-
-    if (!locationSelected) {
-        alert("🗺️ Please select your delivery location on the map");
-        return false;
-    }
-
-    return true;
-}
-
-
-/* ============================================================
-   INIT
-============================================================ */
-renderCart();
-</script>
-
-
-
-
-<script>
-let liveLocationClicked = false;
-let locationSelected = false;
-</script>
-
-
-
-
-
-<script>
-
-/* =========================
-   MAP INIT
-========================= */
-
-var defaultLat = 16.41131998594353;   // Lucknow default
-var defaultLng = 81.80438771598153;
-
-var map = L.map('map').setView([defaultLat, defaultLng], 13);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
-
-var marker = L.marker([defaultLat, defaultLng], {
-    draggable: true
-}).addTo(map);
-
-/* =========================
-   UPDATE HIDDEN INPUTS
-========================= */
 function updateLocationInputs(lat, lng) {
-    document.getElementById('lat').value = lat;
-    document.getElementById('lng').value = lng;
+    document.getElementById("customer_lat").value = lat;
+    document.getElementById("customer_lng").value = lng;
+    locationSelected = true;
 
-    document.getElementById('customer_lat').value = lat;
-    document.getElementById('customer_lng').value = lng;
-
-    locationSelected = true; // ✅ REQUIRED
+    const itemsTotal = cart.items.reduce((s, i) => s + i.price * i.quantity, 0);
+    fetchDistanceDelivery(itemsTotal);
 }
 
-/* =========================
-   MARKER DRAG
-========================= */
-marker.on('dragend', function () {
-    var pos = marker.getLatLng();
-    updateLocationInputs(pos.lat, pos.lng);
+marker.on("dragend", () => {
+    const p = marker.getLatLng();
+    updateLocationInputs(p.lat, p.lng);
 });
 
-/* =========================
-   MAP CLICK
-========================= */
-map.on('click', function (e) {
+map.on("click", e => {
     marker.setLatLng(e.latlng);
     updateLocationInputs(e.latlng.lat, e.latlng.lng);
 });
 
-/* =========================
-   LIVE LOCATION BUTTON
-========================= */
 function getUserLocation() {
-    if (!navigator.geolocation) {
-        alert("Geolocation not supported");
-        return;
-    }
-
+    if (!navigator.geolocation) return alert("Geolocation not supported");
     liveLocationClicked = true;
 
-    const card = document.getElementById("location-status-card");
-    card.innerText = "⏳ Fetching your live location…";
-    card.style.display = "block";
-
-    navigator.geolocation.getCurrentPosition(
-        function (pos) {
-            var lat = pos.coords.latitude;
-            var lng = pos.coords.longitude;
-
-            marker.setLatLng([lat, lng]);
-            map.setView([lat, lng], 16);
-
-            updateLocationInputs(lat, lng);
-
-            card.innerText = "✅ Location detected successfully";
-            setTimeout(() => card.style.display = "none", 1500);
-        },
-        function () {
-            card.innerText = " Try again or Set Manually";
-            setTimeout(() => card.style.display = "none", 2000);
-        },
-        {
-            enableHighAccuracy: true,
-            timeout: 10000
-        }
-    );
+    navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        marker.setLatLng([latitude, longitude]);
+        map.setView([latitude, longitude], 16);
+        updateLocationInputs(latitude, longitude);
+    });
 }
 
+/* ============================================================
+   VALIDATION
+============================================================ */
+function validateCart() {
+    if (!cart.items.length) {
+        alert("Your cart is empty");
+        return false;
+    }
+    if (!liveLocationClicked) {
+        alert("📍 Please use live location");
+        return false;
+    }
+    if (!locationSelected) {
+        alert("🗺️ Please select delivery location");
+        return false;
+    }
+    return true;
+}
+
+/* ============================================================
+   EVENTS & INIT
+============================================================ */
+document.getElementById("coupon-box").addEventListener("click", applyCoupon);
+document.getElementById("apply-offer-btn")?.addEventListener("click", applyRestaurantOffer);
+
+window.getUserLocation = getUserLocation;
+
+renderCart();
 </script>
 
-
+<script>
+  window.onload = function () {
+    if (window.location.hash === "#map-box") {
+      document.getElementById("map-box")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
 </script>
-
-
-
+<script>
+  if (window.location.hash === "#map-box") {
+    document.getElementById("map-box")?.classList.add("error");
+  }
+</script>
 
 
 

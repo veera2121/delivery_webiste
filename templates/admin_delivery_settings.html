@@ -1,0 +1,32 @@
+<form method="POST">
+  <h3>Base Delivery</h3>
+  <p>Distance: 0 km → {{ settings.base_distance }} km</p>
+  <input type="number" step="0.1" name="base_distance" value="{{ settings.base_distance }}" placeholder="Base distance (km)">
+  <input type="number" name="base_charge" value="{{ settings.base_charge }}" placeholder="Base charge">
+
+  <h3>Slabs</h3>
+  <p>Slab 1: {{ settings.base_distance }} km → {{ settings.slab_1_upto }} km</p>
+  <input type="number" step="0.1" name="slab_1_upto" value="{{ settings.slab_1_upto }}">
+  <input type="number" name="slab_1_charge" value="{{ settings.slab_1_charge }}">
+
+  <p>Slab 2: {{ settings.slab_1_upto }} km → {{ settings.slab_2_upto }} km</p>
+  <input type="number" step="0.1" name="slab_2_upto" value="{{ settings.slab_2_upto }}">
+  <input type="number" name="slab_2_charge" value="{{ settings.slab_2_charge }}">
+
+  <p>Slab 3: {{ settings.slab_2_upto }} km → {{ settings.slab_3_upto }} km</p>
+  <input type="number" step="0.1" name="slab_3_upto" value="{{ settings.slab_3_upto }}">
+  <input type="number" name="slab_3_charge" value="{{ settings.slab_3_charge }}">
+
+  <h3>Max & Free Delivery</h3>
+  <input type="number" name="max_charge" value="{{ settings.max_charge }}">
+  <input type="number" name="free_delivery_min_order" value="{{ settings.free_delivery_min_order }}">
+
+  <h3>Night Surge</h3>
+  <input type="number" name="night_surge" value="{{ settings.night_surge }}">
+  <label>
+    <input type="checkbox" name="is_night_surge_active" {% if settings.is_night_surge_active %}checked{% endif %}>
+    Night Surge Active
+  </label>
+
+  <button type="submit">Save</button>
+</form>
