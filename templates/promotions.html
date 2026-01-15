@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Promotions | RuchiGo</title>
-</head>
+{% extends "base.html" %}
+
+{% block title %}promotions{% endblock %}
+
+{% block content %}
 <style>
   /* ==============================
    GENERAL RESET
@@ -123,21 +122,21 @@ p {
 }
 
 </style>
-<body>
+
 <div class="promo-container">
   <div class="promo-card">
     <h2>FLAT 30 OFF</h2>
-    <p>Order now and enjoy  off your first meal!</p>
-    <a href="#" class="promo-btn">Order Now</a>
+    <p>Order now and enjoy off your first meal!</p>
+    <a href="https://ruchigo.in/" class="promo-btn">Order Now</a>
   </div>
 
   <div class="promo-card">
     <h2>Free Delivery Over ₹499</h2>
     <p>Add more items to your cart and get free delivery!</p>
-    <a href="#" class="promo-btn">View Menu</a>
+    <a href="https://ruchigo.in/" class="promo-btn">View Menu</a>
   </div>
 </div>
 
   
-</body>
-</html>
+
+{% endblock %}
