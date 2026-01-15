@@ -1482,6 +1482,55 @@ body {
   from { transform: translate(0,0); }
   to { transform: translate(30%,30%); }
 }
+.floating-icons {
+  position: fixed;
+  bottom: 45px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  z-index: 1000;
+}
+
+.floating-icons a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 24px;
+  text-decoration: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.floating-icons a:hover {
+  transform: scale(1.1);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* WhatsApp color */
+.floating-icons .whatsapp {
+  background-color: #25D366;
+}
+
+/* Instagram gradient */
+.floating-icons .instagram {
+  background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+}
+
+/* Floating animation */
+.floating {
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
 
 </style>
 
@@ -1641,6 +1690,19 @@ body {
   </a>
 </div>
 
+
+<!-- Floating Chat Icons -->
+<div class="floating-icons">
+  <!-- WhatsApp -->
+  <a href="https://wa.me/+919618319849?text=Hi%20Ruchigo!" target="_blank" class="whatsapp floating">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+
+  <!-- Instagram -->
+  <a href="https://www.instagram.com/ruchigo_food_delivery/?igsh=MTB5dnRtMGNpMWtu" target="_blank" class="instagram floating">
+    <i class="fab fa-instagram"></i>
+  </a>
+</div>
 
 
 <footer class="app-footer">
