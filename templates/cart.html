@@ -742,6 +742,60 @@ body {
   letter-spacing: 0.4px;
   text-shadow: 0 3px 10px rgba(22,163,74,0.35);
 }
+.save-address {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+/* hide default checkbox */
+.save-address input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 2px solid #9ca3af;
+  display: grid;
+  place-content: center;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+/* check icon */
+.save-address input[type="checkbox"]::before {
+  content: "✓";
+  font-size: 14px;
+  color: white;
+  transform: scale(0);
+  transition: transform 0.15s ease;
+}
+
+/* checked state */
+.save-address input[type="checkbox"]:checked {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  border-color: #16a34a;
+}
+
+.save-address input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+/* hover effect */
+.save-address:hover input[type="checkbox"] {
+  border-color: #16a34a;
+}
+
+/* focus accessibility */
+.save-address input[type="checkbox"]:focus-visible {
+  outline: 3px solid rgba(22,163,74,0.35);
+  outline-offset: 2px;
+}
 
 </style>
 </head>
@@ -877,30 +931,34 @@ body {
     </div>
 </div>
 
-       
-        <!-- Customer Details -->
-        <div class="address-card customer-card">
-            <h3>Customer Details</h3>
-            <input name="name" placeholder="Full Name" required>
-            <input name="email" placeholder="Email">
-            <input name="phone" placeholder="Phone Number" required>
-            <input name="alt_phone" placeholder="Alternate Phone">
-            <select name="address_type">
-                <option value="Home">Home</option>
-                <option value="Office">Office</option>
-            </select>
-        </div>
+       <!-- Customer Details -->
+<div class="address-card customer-card">
+    <h3>Customer Details</h3>
+    <input name="name" placeholder="Full Name" required>
+    <input name="email" placeholder="Email">
+    <input name="phone" placeholder="Phone Number" required>
+    <input name="alt_phone" placeholder="Alternate Phone">
+    <select name="address_type">
+        <option value="Home">Home</option>
+        <option value="Office">Office</option>
+    </select>
 
-        <!-- Delivery Address -->
-        <div class="address-card delivery-card">
-            <h3>Delivery Address</h3>
-            <input name="house_no" placeholder="House / Flat No" required>
-            <input name="landmark" placeholder="Landmark" required>
-            <input name="city" placeholder="City" required>
-            <input name="state" placeholder="State" required>
-            <input name="pincode" placeholder="Pincode" required>
-            <textarea name="delivery_note" placeholder="Delivery instructions (optional)"></textarea>
-        </div>
+
+<!-- Delivery Address -->
+<div class="address-card delivery-card">
+    <h3>Delivery Address</h3>
+    <input name="house_no" placeholder="House / Flat No" required>
+    <input name="landmark" placeholder="Landmark" required>
+    <input name="city" placeholder="City" required>
+    <input name="state" placeholder="State" required>
+    <input name="pincode" placeholder="Pincode" required>
+    <textarea name="delivery_note" placeholder="Delivery instructions (optional)"></textarea> 
+</div>
+    <!-- Save Address Option -->
+<label class="save-address">
+  <input type="checkbox" id="save-address">
+  <span>Save this address for future orders</span>
+</label>
 
                   <!-- Payment Info Message -->
         <div class="payment-info">
@@ -1325,7 +1383,7 @@ renderCart();
   window.onload = function () {
     if (window.location.hash === "#map-box") {
       document.getElementById("map-box")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        ?.scrollIntoView({ behavior: "smooth", block: "top" });
     }
   };
 </script>
@@ -1338,6 +1396,72 @@ renderCart();
 function syncTotals() {
     const miniTotal = document.getElementById("mini-total").innerText;
     document.getElementById("cta-total").innerText = miniTotal;
+}
+</script>
+<script>
+// ------------------ ADDRESS SAVE/LOAD ------------------
+
+// Save address (session + optional permanent)
+function saveAddress() {
+    const addressData = {};
+    document.querySelectorAll('.address-card input, .address-card select, .address-card textarea').forEach(el => {
+        addressData[el.name] = el.value;
+    });
+
+    // Save temporarily for current session
+    sessionStorage.setItem("savedAddress", JSON.stringify(addressData));
+
+    // Save permanently if checkbox is checked
+    const saveCheckbox = document.getElementById("save-address");
+    if (saveCheckbox && saveCheckbox.checked) {
+        localStorage.setItem("savedAddressPermanent", JSON.stringify(addressData));
+    }
+}
+
+// Load saved address on page load
+function loadSavedAddress() {
+    let saved = JSON.parse(localStorage.getItem("savedAddressPermanent")) || 
+                JSON.parse(sessionStorage.getItem("savedAddress"));
+
+    if (!saved) return;
+
+    for (const key in saved) {
+        const field = document.querySelector(`[name="${key}"]`);
+        if (field) field.value = saved[key];
+    }
+}
+
+window.addEventListener('DOMContentLoaded', loadSavedAddress);
+
+// Clear address after order (clears session + inputs)
+function clearAddressAfterOrder() {
+    // Remove session storage
+    sessionStorage.removeItem("savedAddress");
+
+    // Clear input fields
+    document.querySelectorAll('.address-card input, .address-card select, .address-card textarea')
+        .forEach(el => {
+            if (el.tagName === "SELECT") el.selectedIndex = 0;
+            else el.value = "";
+        });
+
+    // Uncheck "save address" checkbox
+    const saveCheckbox = document.getElementById("save-address");
+    if (saveCheckbox) saveCheckbox.checked = false;
+}
+
+// Attach input listeners to auto-save
+document.querySelectorAll('.address-card input, .address-card select, .address-card textarea')
+.forEach(el => el.addEventListener('input', saveAddress));
+
+// ------------------ EXAMPLE USAGE ------------------
+// Call this **after order is successfully placed**
+function placeOrderSuccess() {
+    // 1️⃣ Clear address
+    clearAddressAfterOrder();
+
+    // 2️⃣ Optionally show success message
+    alert("✅ Order placed successfully!");
 }
 </script>
 
