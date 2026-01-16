@@ -1131,7 +1131,7 @@ function updateTotals() {
         msg.className = "soft-success";
 
     } else if (deliveryCharge === 0) {
-        msg.innerText = "🎉 Free delivery";
+        
         msg.className = "soft-success";
 
     } else {
@@ -1139,20 +1139,25 @@ function updateTotals() {
         msg.className = "";
     }
 }
+let couponMsgLocked = false; // add at top
 
-
-/* ============================================================
-   APPLY COUPON
-============================================================ */
 async function applyCoupon() {
     const phone = document.querySelector('input[name="phone"]').value.trim();
     const fingerprint = document.getElementById("device_fingerprint").value;
     const itemsTotal = cart.items.reduce((s, i) => s + i.price * i.quantity, 0);
     const msg = document.getElementById("delivery-msg");
 
+    // reset
+    couponMsgLocked = false;
+    msg.innerText = "";
+    msg.className = "";
+    couponApplied = false;
+    couponDiscount = 0;
+
     if (!phone) {
-        msg.innerText = "Enter mobile number to unlock coupon";
+        msg.innerText = "📱 Enter mobile number to unlock coupon";
         msg.className = "soft-info";
+        couponMsgLocked = true;
         return;
     }
 
@@ -1168,24 +1173,30 @@ async function applyCoupon() {
     });
 
     const data = await res.json();
+
     if (!data.success) {
-        couponApplied = false;
-        couponDiscount = 0;
         msg.innerText = data.message;
         msg.className = "soft-warning";
+        couponMsgLocked = true; // ✅ lock the message
         updateTotals();
         return;
     }
 
+    // success
     couponApplied = true;
     couponDiscount = data.discount;
+
     document.getElementById("apply_coupon_input").value = "true";
-    document.getElementById("coupon-box").innerText = "FIRST20 applied";
+    document.getElementById("coupon-box").innerText = "✅ FIRST20 Applied";
+    document.getElementById("coupon-box").classList.add("disabled");
 
     msg.innerText = `🎉 Coupon applied · Saved ₹${couponDiscount}`;
     msg.className = "soft-success";
+    couponMsgLocked = true; // lock success message
+
     updateTotals();
 }
+
 
 /* ============================================================
    APPLY RESTAURANT OFFER
