@@ -1462,7 +1462,30 @@ function placeOrderSuccess() {
 
     // 2️⃣ Optionally show success message
     alert("✅ Order placed successfully!");
+} 
+
+
+
+async function getRoadDistanceKM(lat1, lng1, lat2, lng2) {
+    try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=false`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.routes || !data.routes.length) {
+            return null;
+        }
+
+        // meters → km
+        return data.routes[0].distance / 1000;
+
+    } catch (err) {
+        console.error("OSRM error:", err);
+        return null;
+    }
 }
+
 </script>
 
 
@@ -1478,22 +1501,7 @@ function placeOrderSuccess() {
 
 
 
-<div id="location-status-card" style="
-    position: fixed;
-    bottom: 90px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #fff;
-    padding: 12px 16px;
-    border-radius: 14px;
-    box-shadow: 0 10px 25px rgba(0,0,0,.15);
-    font-size: 14px;
-    font-weight: 600;
-    display: none;
-    z-index: 2000;
-">
-    ⏳ Fetching your live location…
-</div>
+
 
 {% endblock %}
 
