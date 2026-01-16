@@ -1095,13 +1095,10 @@ function updateTotals() {
 
     // ================= 1️⃣ OFFERS (ONLY ALLOWED OVERRIDE)
     if (offerApplied && !offerAlreadyUsed && itemsTotal >= minOrder) {
-
         if (offerType === "percent") {
             offerDiscount = (itemsTotal * restaurantOffer) / 100;
-
         } else if (offerType === "flat") {
             offerDiscount = restaurantOffer;
-
         } else if (offerType === "free_delivery") {
             deliveryCharge = 0;
             freeDeliveryReason = "offer";
@@ -1123,22 +1120,29 @@ function updateTotals() {
     document.getElementById("delivery_charge_input").value = deliveryCharge;
     document.getElementById("mini-total").innerText = itemsTotal.toFixed(2);
 
-    // ================= 5️⃣ DELIVERY MESSAGE
+    // ================= 5️⃣ DELIVERY / COUPON / OFFER MESSAGE
     const msg = document.getElementById("delivery-msg");
+    if (!msg) return;
 
-    if (freeDeliveryReason === "offer") {
-        msg.innerText = "🎉 Free delivery via offer";
-        msg.className = "soft-success";
-
-    } else if (deliveryCharge === 0) {
-        
-        msg.className = "soft-success";
-
-    } else {
-        msg.innerText = `📍 Delivery ₹${deliveryCharge}`;
-        msg.className = "";
+    // ✅ Only overwrite if no coupon or offer message locked
+    if (!couponMsgLocked && !offerMsgLocked) {
+        if (freeDeliveryReason === "offer") {
+            msg.innerText = "🎉 Free delivery via offer";
+            msg.className = "soft-success";
+        } else if (deliveryCharge === 0) {
+            msg.innerText = "🎉 Free delivery";
+            msg.className = "soft-success";
+        } else if (FREE_DELIVERY_LIMIT > 0 && itemsTotal < FREE_DELIVERY_LIMIT) {
+            msg.innerText =
+                `Add ₹${(FREE_DELIVERY_LIMIT - itemsTotal).toFixed(0)} more for free delivery`;
+            msg.className = "soft-info";
+        } else {
+            msg.innerText = `📍 Delivery ₹${deliveryCharge}`;
+            msg.className = "";
+        }
     }
 }
+
 let couponMsgLocked = false; // add at top
 
 async function applyCoupon() {
