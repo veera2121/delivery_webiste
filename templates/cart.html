@@ -377,55 +377,56 @@ body {
     right: 10px;
     background-color: #1e90ff;
 }
+/* ===============================
+   LOCATION BUTTON – FINAL CSS
+   Popup on arrival (mobile + desktop)
+   No hover popup issues
+================================ */
+/* ===============================
+   LOCATION BUTTON – ZOOM EFFECT
+   Desktop + Mobile safe
+================================ */
 
-/* Current location button on top left */
-.loc-btn {
-    left: 10px;
-    background-color: #28a745;
-}
+/* Base button */
 .location-btn {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 20px;
     padding: 15px 26px;
     font-size: 16px;
     font-weight: 700;
     color: #fff;
+
     background: linear-gradient(135deg, #ff00f2, #a0026b);
     border: none;
     border-radius: 999px;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+
     box-shadow: 0 8px 20px rgba(255, 0, 242, 0.35);
+
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
-/* 🔥 CLEAR HOVER */
-.location-btn:hover {
-    transform: translateY(-4px) scale(1.06);
-    filter: brightness(1.15);
-    box-shadow: 0 16px 40px rgba(255, 0, 242, 0.7);
+/* 🖥 Desktop: mouse hover zoom */
+@media (hover: hover) and (pointer: fine) {
+    .location-btn:hover {
+        transform: scale(1.08);
+        box-shadow: 0 18px 42px rgba(255, 0, 242, 0.75);
+    }
 }
 
-/* 🔥 STRONG CLICK */
-.location-btn:active {
-    transform: scale(0.92);
-    filter: brightness(0.9);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+/* 📱 Mobile + Touch devices: press zoom */
+@media (hover: none) and (pointer: coarse) {
+    .location-btn:active {
+        transform: scale(1.08);
+        box-shadow: 0 18px 42px rgba(255, 0, 242, 0.75);
+    }
 }
 
-/* ✅ SELECTED / DONE */
-.location-btn.selected {
-    background: linear-gradient(135deg, #00e676, #00c853);
-    box-shadow: 0 14px 35px rgba(0, 230, 118, 0.7);
-}
-
-/* Disable hover bounce after selected */
-.location-btn.selected:hover {
-    transform: scale(1.02);
-}
-
-
-/* Mobile Friendly */
+/* Mobile layout */
 @media (max-width: 480px) {
     .location-btn {
         width: 100%;
@@ -434,6 +435,55 @@ body {
         padding: 14px;
     }
 }
+
+/* Success / selected */
+.location-btn.selected {
+    background: linear-gradient(135deg, #00e676, #00c853);
+    box-shadow: 0 14px 35px rgba(0, 230, 118, 0.7);
+}
+
+
+
+
+/* ===============================
+   DESKTOP HOVER (NO POPUP FEEL)
+================================ */
+
+@media (hover: hover) and (pointer: fine) {
+    .location-btn:hover {
+        background: linear-gradient(135deg, #ff1cf4, #b30078);
+        box-shadow: 0 12px 28px rgba(255, 0, 242, 0.55);
+    }
+}
+
+/* ===============================
+   MOBILE TAP FEEDBACK
+================================ */
+
+@media (hover: none) and (pointer: coarse) {
+    .location-btn:active {
+        background: linear-gradient(135deg, #e600d4, #8a015c);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* ===============================
+   SUCCESS / LOCATION SELECTED
+================================ */
+
+.location-btn.selected {
+    background: linear-gradient(135deg, #00e676, #00c853);
+    box-shadow: 0 14px 35px rgba(0, 230, 118, 0.7);
+}
+
+/* Optional: stronger desktop hover after success */
+@media (hover: hover) and (pointer: fine) {
+    .location-btn.selected:hover {
+        box-shadow: 0 18px 42px rgba(0, 230, 118, 0.85);
+    }
+}
+
+
 .payment-info {
     margin: 18px 0 12px;
     padding: 12px 16px;
@@ -796,6 +846,65 @@ body {
   outline: 3px solid rgba(22,163,74,0.35);
   outline-offset: 2px;
 }
+.location-status {
+    margin-top: 10px;
+    font-weight: 600;
+    background-color: #111827;
+    font-size: 14px;
+    color: #ff9800;
+    display: none;
+}
+
+.location-status.success {
+    color: #00c853;
+}
+
+.location-status.error {
+    color: #d32f2f;
+}
+#map-box {
+    position: relative;
+}
+
+.map-status {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+
+    padding: 8px 14px;
+    border-radius: 999px;
+
+    font-size: 13px;
+    font-weight: 600;
+    display: none;
+
+    pointer-events: none; /* map still clickable */
+}
+
+/* Status colors */
+.map-status.wait {
+    background: rgba(255, 152, 0, 0.9);
+}
+
+.map-status.success {
+    background: rgba(0, 200, 83, 0.9);
+}
+
+.map-status.error {
+    background: rgba(211, 47, 47, 0.9);
+}
+.map-status {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.map-status.hide {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px);
+}
 
 </style>
 </head>
@@ -833,19 +942,31 @@ body {
         <input type="hidden" name="customer_lat" id="customer_lat">
         <input type="hidden" name="customer_lng" id="customer_lng">
 
-      <button type="button" class="location-btn" onclick="getUserLocation()">
-          📍 Click For Live Location
-      </button>
+   <div class="location-section">
+  <button type="button" class="location-btn" onclick="getUserLocation()">
+    📍 Click For Live Location
+  </button>
 
+  <ul class="location-steps">
+    <li>1️⃣ Click the button</li>
+    <li>2️⃣ Tap <b>Allow</b></li>
+    <li>3️⃣ Location auto-filled</li>
+  </ul>
+</div>
 
 <!-- MAP -->
 <div id="map-box">
+    <!-- MAP STATUS OVERLAY -->
+    <div id="location-status" class="location-status map-status"></div>
+
     <!-- Map -->
     <div id="map" style="height: 300px;"></div>
+
     <p class="text-danger mt-2">
         Please select your delivery location
     </p>
 </div>
+
 
 
 <!-- SINGLE SOURCE OF TRUTH -->
@@ -1336,17 +1457,50 @@ map.on("click", e => {
     marker.setLatLng(e.latlng);
     updateLocationInputs(e.latlng.lat, e.latlng.lng);
 });
-
 function getUserLocation() {
-    if (!navigator.geolocation) return alert("Geolocation not supported");
+    const status = document.getElementById("location-status");
+
+    if (!navigator.geolocation) {
+        status.style.display = "block";
+        status.className = "location-status error";
+        status.innerHTML = "❌ Geolocation not supported";
+        return;
+    }
+
     liveLocationClicked = true;
 
-    navigator.geolocation.getCurrentPosition(pos => {
-        const { latitude, longitude } = pos.coords;
-        marker.setLatLng([latitude, longitude]);
-        map.setView([latitude, longitude], 16);
-        updateLocationInputs(latitude, longitude);
-    });
+    // ⏳ WAIT MESSAGE
+    status.style.display = "block";
+    status.className = "location-status wait";
+    status.innerHTML = "⏳ Please wait, detecting your location...";
+
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            const { latitude, longitude } = pos.coords;
+
+            // Update map + marker
+            marker.setLatLng([latitude, longitude]);
+            map.setView([latitude, longitude], 16);
+            updateLocationInputs(latitude, longitude);
+
+            // ✅ SUCCESS MESSAGE
+            status.className = "location-status success";
+            status.innerHTML = "✅ Location detected successfully";
+
+            // Optional: auto-hide after 2 sec
+            setTimeout(() => {
+                status.style.display = "none";
+            }, 2000);
+        },
+        err => {
+            status.className = "location-status error";
+            status.innerHTML = "❌ Location permission denied";
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000
+        }
+    );
 }
 
 /* ============================================================
@@ -1466,25 +1620,6 @@ function placeOrderSuccess() {
 
 
 
-async function getRoadDistanceKM(lat1, lng1, lat2, lng2) {
-    try {
-        const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=false`;
-
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!data.routes || !data.routes.length) {
-            return null;
-        }
-
-        // meters → km
-        return data.routes[0].distance / 1000;
-
-    } catch (err) {
-        console.error("OSRM error:", err);
-        return null;
-    }
-}
 
 </script>
 
