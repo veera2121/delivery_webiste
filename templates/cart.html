@@ -1227,17 +1227,23 @@ async function fetchDistanceDelivery(itemsTotal) {
         });
 
         const data = await res.json();
-        currentDeliveryCharge = data.delivery_charge;
+
+        currentDeliveryCharge = Number(data.delivery_charge);
 
         document.getElementById("delivery-charge").innerText =
             currentDeliveryCharge.toFixed(2);
 
         document.getElementById("delivery-msg").innerText =
             `📍 ${data.distance_km} km · Delivery ₹${currentDeliveryCharge}`;
+
+        // ✅ THIS WAS MISSING
+        updateTotals();
+
     } catch (e) {
         console.error("Delivery fetch failed", e);
     }
 }
+
 function updateLocationInputs(lat, lng) {
     document.getElementById("latitude").value = lat;
     document.getElementById("longitude").value = lng;
@@ -1494,7 +1500,7 @@ function getUserLocation() {
         },
         err => {
             status.className = "location-status error";
-            status.innerHTML = "❌ Location permission denied";
+            status.innerHTML = "❌ Location permission denied Ple";
         },
         {
             enableHighAccuracy: true,
