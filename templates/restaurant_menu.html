@@ -1,0 +1,38 @@
+<!-- restaurant_menu.html -->
+{% for category, items in menu_by_category.items() %}
+    {% if items %}
+        <div id="{{ category }}" class="category-title">{{ category }}</div>
+        <div class="menu-grid">
+            {% for item in items %}
+                {% set food_type = item['type'] if item.get('type') else ('veg' if 'veg' in item['category'].lower() else 'nonveg') %}
+                <div class="menu-card-accent">
+                    <div class="card-left {{ food_type }}"></div>
+                    <div class="card-body-accent">
+                        <div class="item-header">
+                            <span class="food-dot {{ food_type }}"></span>
+                            <span class="item-name">{{ item['name'] }}</span>
+                        </div>
+                        <div class="item-price">₹{{ item['price'] }}</div>
+                        <div class="item-desc">{{ item['description'] }}</div>
+
+                        {% if item['availability'].lower() == 'yes' %}
+                        <div class="add-section">
+                            <button type="button" class="qty-btn minus">-</button>
+                            <input type="number" min="1" value="1" class="qty-box">
+                            <button type="button" class="qty-btn plus">+</button>
+                            <button class="add-btn"
+                                    data-id="{{ loop.index }}"
+                                    data-name="{{ item['name'] }}"
+                                    data-price="{{ item['price'] }}">
+                                Add +
+                            </button>
+                        </div>
+                        {% else %}
+                            <p class="out-stock">Out of Stock</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endfor %}

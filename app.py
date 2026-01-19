@@ -34,7 +34,7 @@ from users.routes import users_bp
 from models import (
     db, Restaurant, RestaurantUser, MenuItem, Order,
     OrderItem, DeliveryPerson, FoodItem, OTP,
-    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings
+    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,ShopSettings
 )
 
 # ================= APP =================
@@ -137,30 +137,38 @@ def haversine(lat1, lon1, lat2, lon2):
 import math
 
 import math
+import requests
+import math
 
 def calculate_distance_km(lat1, lng1, lat2, lng2):
     if None in (lat1, lng1, lat2, lng2):
-        return 0  # fallback (or raise error)
+        return 0
 
-    lat1 = float(lat1)
-    lng1 = float(lng1)
-    lat2 = float(lat2)
-    lng2 = float(lng2)
+    lat1, lng1, lat2, lng2 = map(float, (lat1, lng1, lat2, lng2))
 
-    R = 6371  # Earth radius in KM
-    dlat = math.radians(lat2 - lat1)
-    dlng = math.radians(lng2 - lng1)
-
-    a = (
-        math.sin(dlat / 2) ** 2 +
-        math.cos(math.radians(lat1)) *
-        math.cos(math.radians(lat2)) *
-        math.sin(dlng / 2) ** 2
+    url = (
+        f"https://router.project-osrm.org/route/v1/driving/"
+        f"{lng1},{lat1};{lng2},{lat2}?overview=false"
     )
 
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return round(R * c, 2)
+    try:
+        r = requests.get(url, timeout=5)
+        if r.status_code != 200:
+            return 0
 
+        meters = r.json()["routes"][0]["distance"]
+        km = meters / 1000
+
+        # ✅ Small buffer for real-world variance (industry standard)
+        km = km * 1.07
+
+        # ✅ Round UP to nearest 0.5 km
+        km = math.ceil(km * 2) / 2
+
+        return km
+
+    except Exception:
+        return 0
 
 # ------------------ ADMIN CONFIG ------------------
 
@@ -171,7 +179,8 @@ ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")  # default username
 ADMIN_PASSWORD_HASH ="scrypt:32768:8:1$KjIRJyvNzAIMkq3H$93b2da15188e769f503cc5c4285c7281bd8b42b774b320355f476652eafc983e994d285b434753ae852d8faabec936e50b8f63d43d8d0ffd8ab09b4614501661"
 
-app.permanent_session_lifetime = timedelta(hours=6)
+app.permanent_session_lifetime = timedelta(days=30)
+
 from flask import request
 from flask import request, session, render_template
  # make sure you have this function or library 
@@ -219,6 +228,11 @@ def sitemap():
 from datetime import datetime 
 from zoneinfo import ZoneInfo
 
+from datetime import datetime
+import pytz
+from flask import request, render_template, session
+from sqlalchemy import or_
+
 @app.route("/")
 def home():
     ist = pytz.timezone("Asia/Kolkata")
@@ -226,21 +240,25 @@ def home():
 
     selected_location = request.args.get("location", "").strip()
 
-    # 🔹 Restaurants by location
+    # 🔹 FETCH RESTAURANTS (restaurant + bakery)
     if selected_location:
-        restaurants = Restaurant.query.filter_by(location=selected_location).all()
+        restaurants = Restaurant.query.filter(
+            Restaurant.location == selected_location,
+            Restaurant.category_type.in_(["restaurant", "bakery"])
+        ).all()
     else:
-        restaurants = Restaurant.query.all()
+        restaurants = Restaurant.query.filter(
+            Restaurant.category_type.in_(["restaurant", "bakery"])
+        ).all()
 
-    # 🔹 Location dropdown
+    # 🔹 LOCATION DROPDOWN
     all_locations = [
         loc[0]
         for loc in db.session.query(Restaurant.location).distinct()
         if loc[0]
     ]
 
-
-    # 🔹 Trending items
+    # 🔹 TRENDING ITEMS
     if selected_location:
         trending_items = (
             db.session.query(FoodItem)
@@ -256,17 +274,17 @@ def home():
     else:
         trending_items = []
 
-    # 🔹 User location
+    # 🔹 USER LOCATION
     user_lat = session.get("user_lat")
     user_lng = session.get("user_lng")
     user_location_set = user_lat is not None and user_lng is not None
 
-    # 🔹 Calculate status
+    # 🔹 CALCULATE STATUS FOR EACH RESTAURANT
     for r in restaurants:
         r.deliverable = True
         r.distance = None
 
-        # 🚚 Delivery radius
+        # 🚚 DELIVERY RADIUS CHECK
         if (
             user_location_set
             and r.latitude is not None
@@ -282,20 +300,26 @@ def home():
             r.distance = round(dist, 1)
             r.deliverable = dist <= r.delivery_radius_km
 
-        # 🕒 Open status
+        # 🕒 OPEN / CLOSE STATUS (OVERNIGHT SAFE)
         if r.opening_time and r.closing_time:
-            r.is_open = r.opening_time <= now <= r.closing_time
+            if r.opening_time < r.closing_time:
+                r.is_open = r.opening_time <= now <= r.closing_time
+            else:
+                # Overnight (eg: 6 PM – 2 AM)
+                r.is_open = now >= r.opening_time or now <= r.closing_time
         else:
-            r.is_open = False
+            # IMPORTANT: Do NOT hide bakery
+            r.is_open = True
 
-    # ⭐⭐ FINAL SORT (THIS IS THE KEY FIX)
+    # ⭐ FINAL SORT (BAKERY SAFE)
     restaurants.sort(
         key=lambda r: (
-            not r.deliverable,            # deliverable first
-            not r.is_open,                # open first
-            not r.can_accept_orders,      # active first
-            r.status == "suspended",      # suspended last
-            r.status == "coming_soon"     # coming soon after open
+            not r.deliverable,               # deliverable first
+            not r.is_open,                   # open first
+            not r.can_accept_orders,         # accepting orders first
+            r.category_type != "bakery",     # 🧁 bakery boost
+            r.status == "suspended",
+            r.status == "coming_soon"
         )
     )
 
@@ -303,25 +327,19 @@ def home():
     if selected_location:
         seo_title = f"Online Food Delivery in {selected_location} | RuchiGo"
         seo_description = (
-            f"Order food online from nearby restaurants in {selected_location}. "
-            "Fast delivery from trusted local kitchens."
+            f"Order food online from nearby restaurants and bakeries in "
+            f"{selected_location}. Fast local delivery."
         )
-        seo_keywords = (
-            f"{selected_location} food delivery, "
-            f"online food {selected_location}, RuchiGo"
-        )
+        seo_keywords = f"{selected_location} food delivery, bakery, RuchiGo"
     else:
-        seo_title = "Online Food Delivery in Malikipuram & Sakhinetipalli | RuchiGo"
+        seo_title = "Online Food Delivery | RuchiGo"
         seo_description = (
-            "Order food online from trusted local restaurants in "
-            "Malikipuram and Sakhinetipalli. Fast delivery, less waiting."
+            "Order food online from trusted local restaurants and bakeries. "
+            "Fast delivery, fresh food."
         )
-        seo_keywords = (
-            "Malikipuram food delivery, "
-            "Sakhinetipalli food delivery, RuchiGo"
-        )
+        seo_keywords = "food delivery, bakery delivery, RuchiGo"
 
-    # 🔹 AJAX load
+    # 🔹 AJAX PARTIAL LOAD
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return render_template(
             "_restaurants.html",
@@ -330,6 +348,7 @@ def home():
             now=now
         )
 
+    # 🔹 FULL PAGE LOAD
     return render_template(
         "index.html",
         restaurants=restaurants,
@@ -342,6 +361,7 @@ def home():
         seo_description=seo_description,
         seo_keywords=seo_keywords
     )
+
 
 @app.route("/city/<city_slug>")
 def city_page(city_slug):
@@ -1482,108 +1502,155 @@ def add_delivery_person():
     # GET request
     restaurants = Restaurant.query.all()
     return render_template("add_delivery_person.html", restaurants=restaurants)
-
-
 @app.route("/admin/add_restaurant", methods=["GET", "POST"])
 def add_restaurant():
     if not session.get("admin_logged_in"):
         return redirect(url_for("admin_login"))
 
     if request.method == "POST":
-        # ---- Restaurant data ----
-        name = request.form.get("name")
-        phone = request.form.get("phone")
-        email = request.form.get("email")
-        address = request.form.get("address")
-        sheet_url = request.form.get("sheet_url")
-        location = request.form.get("location")
+        try:
+            # ---- GET FORM DATA ----
+            name = request.form.get("name", "").strip()
+            phone = request.form.get("phone", "").strip()
+            email = request.form.get("email", "").strip()
+            address = request.form.get("address", "").strip()
+            sheet_url = request.form.get("sheet_url", "").strip()
+            location = request.form.get("location", "").strip()
+            category_type = request.form.get("category_type", "").strip().lower()
 
-        if not name or not phone or not email or not sheet_url:
-            flash("Name, phone, email, and Google Sheet URL are required!", "danger")
-            return redirect(url_for("add_restaurant"))
-
-        if Restaurant.query.filter_by(name=name).first():
-            flash("Restaurant already exists!", "danger")
-            return redirect(url_for("add_restaurant"))
-
-        restaurant = Restaurant(
-            name=name,
-            phone=phone,
-            email=email,
-            address=address,
-            sheet_url=sheet_url,
-            location=location
-        )
-        db.session.add(restaurant)
-        db.session.commit()  # save restaurant first to get ID
-
-        # ---- Admin user for this restaurant ----
-        admin_username = request.form.get("admin_username")
-        admin_password = request.form.get("admin_password")
-
-        if admin_username and admin_password:
-            if RestaurantUser.query.filter_by(username=admin_username).first():
-                flash("Admin username already exists!", "danger")
+            # ---- VALIDATION ----
+            if not name or not phone or not email or not sheet_url:
+                flash("Name, phone, email, and Google Sheet URL are required!", "danger")
                 return redirect(url_for("add_restaurant"))
 
-            admin_user = RestaurantUser(
-                username=admin_username,
-                restaurant_id=restaurant.id
+            if category_type not in ["restaurant", "bakery"]:
+                flash("Please select a valid business type!", "danger")
+                return redirect(url_for("add_restaurant"))
+
+            if Restaurant.query.filter_by(name=name).first():
+                flash("Restaurant already exists!", "danger")
+                return redirect(url_for("add_restaurant"))
+
+            # ---- CREATE NEW RESTAURANT ----
+            restaurant = Restaurant(
+                name=name,
+                phone=phone,
+                email=email,
+                address=address,
+                sheet_url=sheet_url,
+                location=location,
+                category_type=category_type  # ✅ ALWAYS SAVES CORRECTLY
             )
-            admin_user.set_password(admin_password)
-            db.session.add(admin_user)
+
+            db.session.add(restaurant)
             db.session.commit()
 
-        flash(f"Restaurant '{name}' added successfully with admin '{admin_username}'!", "success")
-        return redirect(url_for("admin_dashboard"))
+            # ---- OPTIONAL ADMIN USER ----
+            admin_username = request.form.get("admin_username")
+            admin_password = request.form.get("admin_password")
 
+            if admin_username and admin_password:
+                if RestaurantUser.query.filter_by(username=admin_username).first():
+                    flash("Admin username already exists!", "danger")
+                    return redirect(url_for("add_restaurant"))
+
+                admin_user = RestaurantUser(
+                    username=admin_username,
+                    restaurant_id=restaurant.id
+                )
+                admin_user.set_password(admin_password)
+                db.session.add(admin_user)
+                db.session.commit()
+
+            flash(
+                f"{category_type.capitalize()} '{name}' added successfully!",
+                "success"
+            )
+            return redirect(url_for("admin_dashboard"))
+
+        except Exception as e:
+            db.session.rollback()
+            print("ERROR:", e)
+            flash("Error while adding restaurant. Check server logs.", "danger")
+            return redirect(url_for("add_restaurant"))
+
+    # ---- GET REQUEST ----
     return render_template("add_restaurant.html")
 
 
-
-from datetime import datetime
-from flask import abort, flash, redirect, url_for
 @app.route("/menu/<int:restaurant_id>")
 def menu(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
+    print("OPENING MENU FOR:", restaurant.name, restaurant.category_type)
 
+    # TIME CHECK
+    import pytz
+    from datetime import datetime
     ist = pytz.timezone("Asia/Kolkata")
     now = datetime.now(ist).time()
 
-    # 🕒 OPEN STATUS
-    is_open = (
-        restaurant.opening_time and
-        restaurant.closing_time and
-        restaurant.opening_time <= now <= restaurant.closing_time
-    )
+    if restaurant.opening_time and restaurant.closing_time:
+        is_open = restaurant.opening_time <= now <= restaurant.closing_time
+    else:
+        is_open = True
 
-    # 🚫 HARD BLOCK
     if not is_open or not restaurant.can_accept_orders:
-
+        from flask import flash, redirect, url_for
         flash("Restaurant is currently not accepting orders", "warning")
         return redirect(url_for("home"))
 
     if not restaurant.sheet_url:
-        return "Error: No Google Sheet URL set for this restaurant"
+        return "Error: No Google Sheet URL set"
 
-    try:
-        df = pd.read_csv(restaurant.sheet_url)
-        items = df.to_dict(orient="records")
+    # LOAD SHEET
+    import pandas as pd
+    df = pd.read_csv(restaurant.sheet_url)
+    print("RAW SHEET DATA:\n", df.head())  # 🔥 Check first 5 rows
 
-        menu_by_category = {}
-        for item in items:
-            category = item.get("category", "Other")
-            menu_by_category.setdefault(category, []).append(item)
+    # CLEAN NaNs
+    df = df.fillna("")
 
+    items = []
+    for i, item in enumerate(df.to_dict(orient="records")):
+        price_raw = str(item.get("price", "")).strip()
+        weight_raw = str(item.get("weight_prices", "")).strip()
+
+        # DEBUG PRINT EACH ITEM
+        print(f"ITEM {i}: name={item.get('name')}, price_raw='{price_raw}', weight_raw='{weight_raw}'")
+
+        # Convert price safely
+        try:
+            item["price"] = float(price_raw) if price_raw != "" else 0
+        except Exception as e:
+            print(f"⚠️ PRICE PARSE ERROR for {item.get('name')}: {e}")
+            item["price"] = 0
+
+        item["weight_prices"] = weight_raw
+        items.append(item)
+
+    # Group by category
+    menu_by_category = {}
+    for item in items:
+        category = item.get("category", "Other")
+        menu_by_category.setdefault(category, []).append(item)
+
+    print("✅ MENU BY CATEGORY:\n", menu_by_category)  # 🔥 Check final structure
+
+    # RENDER TEMPLATE
+    if restaurant.category_type == "bakery":
+        print("👉 Loading BAKERY menu")
         return render_template(
-            "menu.html",
+            "bakery_menu.html",
             restaurant=restaurant,
             menu_by_category=menu_by_category
         )
 
-    except Exception as e:
-        return f"Error loading menu: {e}"
-
+    print("👉 Loading NORMAL restaurant menu")
+    return render_template(
+        "menu.html",
+        restaurant=restaurant,
+        menu_by_category=menu_by_category
+    )
 
 @app.route("/restaurant/assign_delivery/<int:order_id>", methods=["POST"])
 def restaurant_assign_delivery(order_id):
@@ -2351,17 +2418,23 @@ def delete_offer(offer_id):
 
 from datetime import datetime
 from datetime import datetime
-
 @app.route("/dashboard/restaurant/<int:restaurant_id>/edit", methods=["GET", "POST"])
 def edit_restaurant_card(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
 
     if request.method == "POST":
         # ================= BASIC INFO =================
-        restaurant.name = request.form.get("name")
+        restaurant.name = request.form.get("name", "").strip()
         restaurant.address = request.form.get("address")
         restaurant.phone = request.form.get("phone")
         restaurant.email = request.form.get("email")
+
+        # ================= CATEGORY TYPE =================
+        restaurant.category_type = (
+            request.form.get("category_type")
+            if request.form.get("category_type") in ["restaurant", "bakery"]
+            else "restaurant"
+        )
 
         # ================= CARD DETAILS =================
         restaurant.is_veg = request.form.get("is_veg") == "yes"
@@ -2377,53 +2450,47 @@ def edit_restaurant_card(restaurant_id):
         restaurant.latitude = request.form.get("latitude") or None
         restaurant.longitude = request.form.get("longitude") or None
         restaurant.delivery_radius_km = float(request.form.get("delivery_radius_km") or 5)
-        # ================= FORCE DELIVERY CHARGE =================
-        restaurant.force_delivery_charge = True if request.form.get("force_delivery_charge") == "1" else False
 
-        # ================= OPEN / CLOSE TIME =================
-        opening_time_str = request.form.get("opening_time")
-        closing_time_str = request.form.get("closing_time")
+        # ================= FORCE DELIVERY =================
+        restaurant.force_delivery_charge = request.form.get("force_delivery_charge") == "1"
 
+        # ================= OPEN / CLOSE =================
         restaurant.opening_time = (
-            datetime.strptime(opening_time_str, "%H:%M").time()
-            if opening_time_str else None
+            datetime.strptime(request.form.get("opening_time"), "%H:%M").time()
+            if request.form.get("opening_time") else None
         )
 
         restaurant.closing_time = (
-            datetime.strptime(closing_time_str, "%H:%M").time()
-            if closing_time_str else None
+            datetime.strptime(request.form.get("closing_time"), "%H:%M").time()
+            if request.form.get("closing_time") else None
         )
 
-        # ================= ACCEPT ORDERS MANUAL =================
-        # ✅ Fixed: properly set True/False
-        restaurant.is_accepting_orders = True if request.form.get("is_accepting_orders") == "1" else False
+        # ================= ACCEPT ORDERS =================
+        restaurant.is_accepting_orders = request.form.get("is_accepting_orders") == "1"
 
-        # ================= ACCEPT ORDERS UNTIL =================
-        accept_until_str = request.form.get("accept_orders_until")
         restaurant.accept_orders_until = (
-            datetime.strptime(accept_until_str, "%H:%M").time()
-            if accept_until_str else None
+            datetime.strptime(request.form.get("accept_orders_until"), "%H:%M").time()
+            if request.form.get("accept_orders_until") else None
         )
 
-        # ================= START DATE (COMING SOON) =================
-        start_date_str = request.form.get("start_date")
+        # ================= START DATE =================
         restaurant.start_date = (
-            datetime.strptime(start_date_str, "%Y-%m-%d").date()
-            if start_date_str else None
+            datetime.strptime(request.form.get("start_date"), "%Y-%m-%d").date()
+            if request.form.get("start_date") else None
         )
 
-        # ================= STATUS CONTROL =================
+        # ================= STATUS =================
         status = request.form.get("status")
         if status in ["active", "coming_soon", "suspended"]:
             restaurant.status = status
 
-        # 🔒 SAFETY RULES
+        # 🔒 SAFETY RULE
         if restaurant.status == "coming_soon" and not restaurant.start_date:
-            flash("Start date is required for Coming Soon restaurants", "danger")
+            flash("Start date is required for Coming Soon", "danger")
             return redirect(request.url)
 
         db.session.commit()
-        flash("Restaurant card updated successfully!", "success")
+        flash("Updated successfully!", "success")
         return redirect(url_for("restaurant_dashboard", restaurant_id=restaurant.id))
 
     return render_template(
@@ -2932,8 +2999,6 @@ def calculate_delivery_charge(distance_km, items_total, restaurant):
         msg = f"🚚 Delivery charge ₹{charge}"
 
     return charge, msg
-
-    return charge, msg
 @app.route("/calculate_delivery", methods=["POST"])
 def calculate_delivery():
     data = request.get_json()
@@ -3007,6 +3072,133 @@ def safe_int(value, default=0):
         return int(value)
     except (TypeError, ValueError):
         return default
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+
+
+
+@app.route('/checkout', methods=['GET', 'POST'])
+def checkout():
+    cart_items = session.get('cart', [])  # list of dicts: [{'item_id':1, 'quantity':2}, ...]
+    
+    # Fetch items from DB
+    items = [Item.query.get(ci['item_id']) for ci in cart_items]
+    
+    # Organize totals by shop
+    shop_totals = {}
+    for item, ci in zip(items, cart_items):
+        total_price = item.price * ci['quantity']
+        if item.shop_name in shop_totals:
+            shop_totals[item.shop_name] += total_price
+        else:
+            shop_totals[item.shop_name] = total_price
+
+    # Check minimum delivery per shop
+    for shop_name, total in shop_totals.items():
+        shop_setting = ShopSettings.query.filter_by(shop_name=shop_name).first()
+        min_amount = shop_setting.min_delivery_amount if shop_setting else 0
+        if total < min_amount:
+            flash(f"Minimum order for {shop_name} delivery is ₹{min_amount}. Add ₹{min_amount - total} more.")
+            return redirect(url_for('cart'))  # send back to cart
+    
+    # If all minimums met
+    return render_template('checkout.html', items=items, shop_totals=shop_totals)
+
+
+@app.route('/admin/min_delivery', methods=['GET', 'POST'])
+def admin_min_delivery():
+    shops = ShopSettings.query.all()
+
+    if request.method == "POST":
+        for shop in shops:
+            new_amount = request.form.get(f'min_{shop.id}')
+            if new_amount:
+                shop.min_delivery_amount = float(new_amount)
+        db.session.commit()
+        flash("Updated successfully!")
+        return redirect(url_for('admin_min_delivery'))
+
+    return render_template('admin_min_delivery.html', shops=shops)
+
+
+@app.route('/admin/add_shop', methods=['POST'])
+def add_shop():
+    if not session.get('is_admin'):
+        flash("Access denied!")
+        return redirect(url_for('login'))
+    
+    name = request.form.get('shop_name')
+    min_amount = request.form.get('min_amount')
+    
+    if name and min_amount:
+        shop = ShopSettings(shop_name=name, min_delivery_amount=float(min_amount))
+        db.session.add(shop)
+        db.session.commit()
+        flash(f"{name} added successfully!")
+    
+    return redirect(url_for('admin_min_delivery'))
+
+# routes.py
+from flask import render_template, abort
+import pandas as pd
+@app.route("/bakery/<int:restaurant_id>")
+def bakery_menu(restaurant_id):
+    restaurant = Restaurant.query.get_or_404(restaurant_id)
+
+    if restaurant.category_type != "bakery":
+        abort(404)
+
+    if not restaurant.sheet_url:
+        return "No bakery menu sheet configured"
+
+    df = pd.read_csv(restaurant.sheet_url)
+
+    print("\n================ BAKERY SHEET RAW DATA ================")
+    print(df)
+    print("\nCOLUMN TYPES:")
+    print(df.dtypes)
+
+    # ✅ CLEAN NaN VALUES
+    df = df.fillna("")
+
+    print("\n================ AFTER fillna('') =====================")
+    print(df)
+
+    items = []
+    for i, item in enumerate(df.to_dict(orient="records")):
+        print(f"\n--- ROW {i+1} BEFORE CLEAN ---")
+        print(item)
+
+        # PRICE CLEAN
+        raw_price = str(item.get("price", "")).strip()
+        item["price"] = float(raw_price) if raw_price != "" else 0
+
+        # WEIGHT CLEAN
+        raw_weights = str(item.get("weight_prices", "")).strip()
+        item["weight_prices"] = raw_weights
+
+        print(f"PRICE PARSED: {item['price']}")
+        print(f"WEIGHTS PARSED: '{item['weight_prices']}'")
+
+        items.append(item)
+
+    print("\n================ FINAL ITEMS SENT TO TEMPLATE ===========")
+    for item in items:
+        print(item)
+
+    menu_by_category = {}
+    for item in items:
+        category = item.get("category", "Other")
+        menu_by_category.setdefault(category, []).append(item)
+
+    print("\n================ CATEGORY GROUPING =====================")
+    for k, v in menu_by_category.items():
+        print(f"{k}: {len(v)} items")
+
+    return render_template(
+        "bakery_menu.html",
+        restaurant=restaurant,
+        menu_by_category=menu_by_category
+    )
 
 # ------------------ DB INIT ------------------
 

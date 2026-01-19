@@ -1062,7 +1062,24 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("locationToggle")?.click();
     });
 });
+</script> 
+<script>
+function openEmptyCartModal() {
+  const modal = document.getElementById("emptyCartModal");
+  if (modal) modal.classList.remove("hidden");
+}
+
+function closeEmptyCartModal() {
+  const modal = document.getElementById("emptyCartModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function goToHome() {
+  closeEmptyCartModal();
+  window.location.href = "/";
+}
 </script>
+
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="flash-container">

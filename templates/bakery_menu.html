@@ -1,0 +1,693 @@
+{% extends "base.html" %}
+{% block title %}{{ restaurant.name }} Bakery{% endblock %}
+{% block content %}
+
+<style>
+body{
+    font-family:Poppins,sans-serif;
+    background:linear-gradient(180deg,#fff1f6,#ffffff);
+    padding-bottom:150px;
+}
+/* HEADER */
+.bakery-header{
+    padding:22px;
+    text-align:center;
+    font-size:26px;
+    font-weight:900;
+    color:#fff;
+    background:linear-gradient(135deg,#ff3e7f,#ff7eb3,#ffc1d9);
+    border-radius:0 0 28px 28px;
+    box-shadow:0 12px 30px rgba(255,62,127,.45);
+}
+
+
+/* CATEGORY */
+.category-title{
+    margin:26px 16px 10px;
+    font-size:20px;
+    font-weight:800;
+    color:#e11d48;
+}
+
+/* CARD */
+.bakery-card{
+    display:flex;
+    gap:14px;
+    background:#fff;
+    margin:14px;
+    padding:14px;
+    border-radius:22px;
+    box-shadow:0 14px 34px rgba(0,0,0,.14);
+}
+.bakery-card:active{ transform:scale(.98); }
+
+/* LEFT */
+.card-left{ flex:1; }
+.card-left h3{ font-size:16px; font-weight:800; }
+.card-left p{ font-size:12px; color:#6b7280; margin-bottom:6px; }
+
+/* PRICE */
+.price{ font-size:17px; font-weight:900; color:#16a34a; margin:6px 0; }
+
+/* IMAGE */
+.card-right img{ width:96px; height:96px; object-fit:cover; border-radius:16px; }
+
+/* WEIGHTS */
+.weight-wrap{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+.weight-pill{ padding:5px 12px; border-radius:18px; font-size:12px; font-weight:700; background:#ffe4ef; color:#e11d48; cursor:pointer; }
+.weight-pill.active{ background:linear-gradient(135deg,#ff4081,#ff6aa2); color:#fff; }
+
+/* QTY */
+.qty-wrap{ display:flex; align-items:center; gap:10px; margin:6px 0; }
+.qty-btn{ width:28px; height:28px; border-radius:50%; border:none; background:#ffe4ef; color:#e11d48; font-size:18px; font-weight:900; }
+.qty{ font-size:14px; font-weight:800; }
+
+/* ADD BUTTON */
+.add-btn{ width:100%; padding:10px; margin-top:6px; border:none; border-radius:16px; font-size:14px; font-weight:800; background:linear-gradient(135deg,#ff4081,#ff6aa2); color:#fff; cursor:pointer; }
+
+/* OUT */
+.out{ color:#dc2626; font-weight:800; }
+
+/* FLOAT CART */
+.floating-cart{
+    position:fixed; bottom:24px; right:18px; padding:14px 22px;
+    background:linear-gradient(135deg,#16a34a,#22c55e); color:#fff; font-weight:900; border-radius:999px;
+    box-shadow:0 14px 34px rgba(0,0,0,.35); text-decoration:none; display:flex; align-items:center; gap:6px;
+}
+
+/* MENU INCENTIVE */
+
+.menu-total{ font-size:16px; font-weight:700; }
+.menu-message{ font-size:13px; opacity:0.9; margin:6px 0 10px; }
+.progress-bar{ height:7px; background:rgba(255,255,255,0.25); border-radius:20px; overflow:hidden; }
+.progress-fill{ height:100%; background:linear-gradient(90deg,#22c55e,#4ade80); transition: width 0.4s ease; }
+
+/* CONFETTI */
+#confetti{ position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999; } 
+/* CAKE TYPE BADGE */
+.type-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    color: #fff;
+}
+
+/* COLORS FOR TYPES */
+.type-badge.cool { background: #3b82f6; }       /* blue for cool */
+.type-badge.custom { background: #f59e0b; }    /* orange for custom */
+.type-badge.ordinary { background: #10b981; }  /* green for ordinary */
+.type-badge.cake { background: #8b5cf6; }      /* purple for normal cake */
+.category-selector {
+    position: sticky;
+    top: 70px; /* adjust based on your header */
+    background: #fff;
+    padding: 8px 12px;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    border-bottom: 1px solid #eee;
+    z-index: 1200;
+}
+/* MENU INCENTIVE — STAYS AT VERY TOP */
+.menu-incentive{
+    position: sticky;
+    top: 0;
+    z-index: 1300;
+    background:linear-gradient(135deg,#065f46,#047857);
+    color:#fff;
+    margin:0 14px 8px;
+    padding:10px 12px;
+    border-radius:14px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.18);
+}
+
+
+
+
+/* CATEGORY SELECTOR — PREMIUM WOW UI */
+.category-selector {
+    position: sticky;
+    top: 72px;
+    z-index: 1250;
+
+    display: flex;
+    gap: 12px;
+    padding: 10px 14px;
+
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+
+    overflow-x: auto;
+    scroll-behavior: smooth;
+}
+
+/* hide scrollbar */
+.category-selector::-webkit-scrollbar {
+    display: none;
+}
+
+/* CATEGORY BUTTON */
+.category-btn {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: none;
+
+    background: linear-gradient(135deg,#ffe4ef,#fff);
+    color: #e11d48;
+
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* hover feel */
+.category-btn:hover {
+    transform: translateY(-1px);
+}
+
+/* ACTIVE WOW STATE */
+.category-btn.active {
+    background: linear-gradient(135deg,#ff4081,#ff6aa2);
+    color: #fff;
+
+    box-shadow:
+        0 10px 28px rgba(255,64,129,0.45),
+        inset 0 0 0 1px rgba(255,255,255,0.25);
+
+    transform: scale(1.05);
+}
+
+
+.cart-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  backdrop-filter: blur(3px);
+}
+
+/* Hidden state */
+.cart-modal.hidden {
+  display: none;
+}
+
+/* Modal box */
+.cart-modal-box {
+  width: 90%;
+  max-width: 340px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 18px;
+  text-align: center;
+  animation: scaleIn 0.25s ease;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Title */
+.cart-modal-box h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #111;
+}
+
+/* Description */
+.cart-modal-box p {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Highlight restaurant name */
+.highlight-restaurant {
+  font-weight: 600;
+  color: #e11d48;
+}
+
+/* Buttons container */
+.cart-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+/* Buttons */
+.cart-modal-actions button {
+  flex: 1;
+  border: none;
+  padding: 11px 0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Cancel button */
+.btn-cancel {
+  background: #f1f1f1;
+  color: #333;
+}
+
+.btn-cancel:active {
+  transform: scale(0.96);
+}
+
+/* Replace button */
+.btn-confirm {
+  background: #10b981;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(16, 185, 129, 0.35);
+}
+
+.btn-confirm:active {
+  transform: scale(0.96);
+}
+
+/* Animation */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+</style>
+<div class="bakery-header">{{ restaurant.name }} Bakery</div>
+
+<!-- CATEGORY SELECTOR -->
+
+
+<!-- MENU INCENTIVE CARD -->
+<div id="menu-incentive" class="menu-incentive hidden">
+  <div class="menu-total">🛒 Items Total: ₹<span id="menu-total-amount">0</span></div>
+  <div class="menu-message" id="menu-message"></div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+<div id="category-selector" class="category-selector">
+    {% for category in menu_by_category.keys() %}
+    <button class="category-btn" data-category="{{ category }}">{{ category }}</button>
+    {% endfor %}
+</div>
+<!-- FLASH MESSAGE CONTAINER -->
+<div id="flash-msg-container"></div>
+
+{% for category, items in menu_by_category.items() %}
+<div class="category-section" id="category-{{ loop.index }}">
+    <div class="category-title">{{ category }}</div>
+
+    {% for item in items %}
+    <div class="bakery-card" data-weights="{{ item.weight_prices }}">
+        <div class="card-left">
+            {% if item.type %}
+            <div class="type-badge {{ item.type|lower }}">{{ item.type|capitalize }}</div>
+            {% endif %}
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.description }}</p>
+
+            {% if item.weight_prices and item.weight_prices != "nan" %}
+            <div class="weight-wrap"></div>
+            {% else %}
+            <div class="qty-wrap">
+                <button class="qty-btn minus">−</button>
+                <div class="qty">1</div>
+                <button class="qty-btn plus">+</button>
+            </div>
+            {% endif %}
+
+            <div class="price">₹<span class="price-value">{% if item.weight_prices and item.weight_prices != "nan" %}0{% else %}{{ item.price }}{% endif %}</span></div>
+
+            {% if item.availability == "yes" %}
+            <button class="add-btn" data-name="{{ item.name }}" data-price="{% if not item.weight_prices or item.weight_prices == 'nan' %}{{ item.price }}{% endif %}">Add to Cart</button>
+            {% else %}
+            <div class="out">Out of Stock</div>
+            {% endif %}
+        </div>
+        <div class="card-right">
+            <img src="{{ item.image_url or '/static/images/cake_placeholder.jpg' }}">
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+
+<!-- FLOATING CART -->
+<!-- FLOATING CART -->
+<a href="{{ url_for('cart_page', restaurant_id=restaurant.id) }}" class="floating-cart" id="cartBtn">🛒 <span id="cart-count">0</span></a>
+
+<script>
+const RESTAURANT_ID = "{{ restaurant.id }}";
+const RESTAURANT_NAME = "{{ restaurant.name }}";
+const FREE_DELIVERY_LIMIT = {{ restaurant.free_delivery_limit or 0 }};
+const OFFER_MIN_AMOUNT = {{ active_offer.min_order_amount if active_offer else 0 }};
+let carts = JSON.parse(localStorage.getItem("carts")) || {};
+let offerUnlocked = false;
+
+/* ================= QTY BUTTONS ================= */
+document.querySelectorAll(".qty-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const qtyEl = btn.parentElement.querySelector(".qty");
+        let v = parseInt(qtyEl.innerText) || 1;
+        qtyEl.innerText = btn.classList.contains("plus") ? v + 1 : Math.max(1, v - 1);
+    });
+});
+
+/* ================= WEIGHT SELECTION ================= */
+document.querySelectorAll(".weight-wrap").forEach(wrap => {
+    const card = wrap.closest(".bakery-card");
+    const priceSpan = card.querySelector(".price-value");
+    const addBtn = card.querySelector(".add-btn");
+    const raw = card.dataset.weights;
+    if(raw){
+        raw.split(",").forEach((pair,i)=>{
+            const [label,price] = pair.split(":");
+            const pill = document.createElement("div");
+            pill.className="weight-pill"; 
+            pill.innerText = label;
+            pill.dataset.price = price;
+            pill.onclick = () => {
+                wrap.querySelectorAll(".weight-pill").forEach(p => p.classList.remove("active"));
+                pill.classList.add("active");
+                priceSpan.innerText = price;
+                addBtn.dataset.price = price;
+            };
+            wrap.appendChild(pill);
+            if(i===0) pill.click(); // select first by default
+        });
+    }
+});
+
+/* ================= ADD TO CART ================= */
+document.querySelectorAll(".add-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const card = btn.closest(".bakery-card");
+        const name = btn.dataset.name;
+        const qtyEl = card.querySelector(".qty");
+        const qty = qtyEl ? parseInt(qtyEl.innerText) || 1 : 1;
+        const weight = card.querySelector(".weight-pill.active")?.innerText || null;
+        const price = parseFloat(btn.dataset.price) || 0;
+
+        // Check for items from other restaurants
+        const otherIds = Object.keys(carts).filter(id => id !== RESTAURANT_ID && carts[id]?.items?.length > 0);
+
+        const addFn = () => {
+            if(!carts[RESTAURANT_ID]){
+                carts[RESTAURANT_ID] = { items: [], restaurantName: RESTAURANT_NAME };
+            }
+            const cart = carts[RESTAURANT_ID];
+            const existing = cart.items.find(i => i.name === name && i.weight === weight);
+
+            if(existing){
+                existing.quantity += qty; // Add correctly
+            } else {
+                cart.items.push({ name, price, quantity: qty, weight });
+            }
+
+            cart.restaurantName = RESTAURANT_NAME;
+            localStorage.setItem("carts", JSON.stringify(carts));
+
+            // Reset UI qty to 1 after add
+            if(qtyEl) qtyEl.innerText = 1;
+
+            updateCartCount();
+            updateMenuIncentive();
+            showAddedAnimation(`${qty} × ${name} added`);
+        };
+
+        if(otherIds.length > 0){
+            showReplaceModal(addFn);
+            return;
+        }
+
+        addFn();
+    });
+});
+/* ================= FLOATING CART ================= */
+const floatingCart = document.getElementById("cartBtn");
+
+if (floatingCart) {
+    floatingCart.addEventListener("click", (e) => {
+        const cart = carts[RESTAURANT_ID] || { items: [] };
+
+        /* ❌ EMPTY CART */
+        if (cart.items.length === 0) {
+            e.preventDefault();
+            openEmptyCartModal();   // ✅ custom modal
+            return;
+        }
+
+        /* ❌ MIN ORDER ₹100 */
+        const total = cart.items.reduce(
+            (sum, i) => sum + i.price * i.quantity,
+            0
+        );
+
+        if (total < 100) {
+            e.preventDefault();
+            showFlashMessage("Please add items worth ₹100 or more to place an order!");
+            return;
+        }
+
+        /* ✅ OK → allow navigation */
+    });
+}
+
+
+/* ================= CART COUNT ================= */
+function updateCartCount(){
+    const cart = carts[RESTAURANT_ID] || { items: [] };
+    document.getElementById("cart-count").innerText = cart.items.reduce((s,i)=>s+i.quantity,0);
+}
+updateCartCount();
+
+/* ================= MENU INCENTIVE ================= */
+function getItemsTotal(){
+    const cart = carts[RESTAURANT_ID] || { items: [] };
+    return cart.items.reduce((s,i)=>s+i.price*i.quantity,0);
+}
+function updateMenuIncentive(){
+    const card = document.getElementById("menu-incentive");
+    const totalEl = document.getElementById("menu-total-amount");
+    const msgEl = document.getElementById("menu-message");
+    const fill = document.getElementById("progress-fill");
+    const total = getItemsTotal();
+    totalEl.innerText = total;
+    if(total===0){ card.classList.add("hidden"); return; }
+    card.classList.remove("hidden");
+
+    let target=0, msg="";
+    if(FREE_DELIVERY_LIMIT>0 && total<FREE_DELIVERY_LIMIT){
+        target = FREE_DELIVERY_LIMIT;
+        msg = `🚚 Add ₹${FREE_DELIVERY_LIMIT - total} more for <b>FREE DELIVERY</b>`;
+        offerUnlocked=false;
+    } else if(OFFER_MIN_AMOUNT>0 && total<OFFER_MIN_AMOUNT){
+        target = OFFER_MIN_AMOUNT;
+        msg = `🎁 Add ₹${OFFER_MIN_AMOUNT - total} more to unlock <b>Restaurant Offer</b>`;
+        offerUnlocked=false;
+    } else{
+        target = total;
+        msg = `🎉 Congratulations! Offer Unlocked`;
+        if(!offerUnlocked){ fireConfetti(); offerUnlocked=true; }
+    }
+
+    msgEl.innerHTML = msg;
+    fill.style.width = Math.min((total/target)*100,100)+"%";
+}
+updateMenuIncentive();
+
+/* ================= ADDED ANIMATION ================= */
+function showAddedAnimation(text){
+    const anim=document.createElement("div");
+    anim.innerText=text;
+    anim.style.cssText="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;z-index:9999;";
+    document.body.appendChild(anim);
+    setTimeout(()=>anim.remove(),1600);
+}
+
+/* ================= CONFETTI ================= */
+function fireConfetti(){
+    const canvas = document.getElementById("confetti");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const pieces = Array.from({length:120}).map(()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*6+4,d:Math.random()*20,color:`hsl(${Math.random()*360},100%,50%)`}));
+    let frame=0;
+    function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        pieces.forEach(p=>{
+            ctx.beginPath();
+            ctx.fillStyle = p.color;
+            ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+            ctx.fill();
+            p.y += Math.cos(frame+p.d) + 1;
+        });
+        frame++;
+        if(frame<60) requestAnimationFrame(draw);
+        else ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+    draw();
+}
+
+/* ================= REPLACE MODAL ================= */
+function showReplaceModal(onConfirm) {
+    const modal = document.getElementById("cartModal");
+    const cancelBtn = document.getElementById("cancelReplace");
+    const confirmBtn = document.getElementById("confirmReplace");
+    const oldNameSpan = document.getElementById("old-restaurant-name");
+
+    const existingRestaurantId = Object.keys(carts)
+        .find(id => carts[id]?.items?.length > 0);
+
+    if (!existingRestaurantId) {
+        onConfirm();
+        return;
+    }
+
+    oldNameSpan.innerText =
+        carts[existingRestaurantId].restaurantName || "another restaurant";
+
+    modal.classList.remove("hidden");
+
+    cancelBtn.onclick = () => {
+        modal.classList.add("hidden");
+    };
+
+    confirmBtn.onclick = () => {
+        carts = {};                // ✅ SAME AS RESTAURANT PAGE
+        localStorage.setItem("carts", JSON.stringify(carts));
+        modal.classList.add("hidden");
+        onConfirm();
+    };
+}
+
+/* ================= SHOW FLASH MESSAGE ================= */
+function showFlashMessage(text) {
+    const container = document.getElementById("flash-msg-container");
+    const msg = document.createElement("div");
+    msg.innerHTML = text;
+    msg.style.cssText = `
+        background:#f87171; color:#fff; padding:12px 20px; border-radius:16px;
+        font-weight:700; font-size:14px; margin-top:10px; box-shadow:0 6px 18px rgba(0,0,0,0.15);
+        opacity:0; transition:opacity 0.3s ease, transform 0.3s ease; transform:translateY(-20px);
+    `;
+    container.appendChild(msg);
+
+    // Animate in
+    requestAnimationFrame(() => {
+        msg.style.opacity = 1;
+        msg.style.transform = "translateY(0)";
+    });
+
+    // Remove after 2.5s
+    setTimeout(() => {
+        msg.style.opacity = 0;
+        msg.style.transform = "translateY(-20px)";
+        setTimeout(() => msg.remove(), 300);
+    }, 3500);
+} 
+
+/* ================= CATEGORY SCROLL ================= */
+
+const categoryButtons = document.querySelectorAll(".category-btn");
+
+categoryButtons.forEach((btn, index) => {
+    btn.addEventListener("click", () => {
+
+        console.log("Category clicked:", btn.dataset.category);
+
+        // Active button UI
+        categoryButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        // Scroll to category section
+        const targetSection = document.getElementById(`category-${index + 1}`);
+
+        if (!targetSection) {
+            console.error("❌ Category section not found:", index + 1);
+            return;
+        }
+
+        targetSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    });
+});
+
+
+</script> 
+<script>
+function showEmptyCartModal() {
+    document.getElementById("emptyCartModal").classList.remove("hidden");
+}
+
+function closeEmptyCartModal() {
+    document.getElementById("emptyCartModal").classList.add("hidden");
+}
+
+function goToHome() {
+    window.location.href = "/";
+} 
+const carts = JSON.parse(localStorage.getItem("carts")) || {};
+const RESTAURANT_ID = "{{ restaurant.id }}";
+
+const cartBtn = document.getElementById("cartBtn"); // floating cart
+
+cartBtn.addEventListener("click", (e) => {
+  const cart = carts[RESTAURANT_ID];
+
+  if (!cart || cart.items.length === 0) {
+    e.preventDefault();          // 🚫 stop navigation
+    openEmptyCartModal();        // ✅ show custom modal
+    return;
+  }
+
+  // ✅ cart has items → allow normal navigation
+});
+
+</script>
+
+<!-- FLASH MESSAGE CONTAINER (put this somewhere in your template, e.g., just below <body>) -->
+<div id="flash-msg-container" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;"></div>
+<div id="cartModal" class="cart-modal hidden">
+  <div class="cart-modal-box">
+    <h3>Replace Cart?</h3>
+    <p>
+      Your cart already contains items from
+      <span id="old-restaurant-name" class="highlight-restaurant"></span>.
+    </p>
+    <div class="cart-modal-actions">
+      <button id="cancelReplace" class="btn-cancel">Cancel</button>
+      <button id="confirmReplace" class="btn-confirm">Replace</button>
+    </div>
+  </div>
+</div>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="alert alert-danger">
+      {% for msg in messages %}
+        <p>{{ msg }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+{% endblock %}

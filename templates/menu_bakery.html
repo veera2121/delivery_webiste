@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}{{ restaurant.name }} - Bakery{% endblock %}
+{% block install_button %}{% endblock %}
+
+{% block content %}
+
+<style>
+body { font-family: Poppins, sans-serif; background:#fff7fb; padding-bottom:120px; }
+.bakery-header { position:sticky; top:0; z-index:1200; padding:20px; text-align:center;
+    color:#fff; font-size:26px; font-weight:700;
+    background:linear-gradient(135deg,#ff5fa2,#ff8ccf);
+    border-bottom-left-radius:18px; border-bottom-right-radius:18px;
+}
+.bakery-hero { margin:16px; padding:20px; border-radius:22px;
+    background:linear-gradient(135deg,#ffe0ef,#ffffff); text-align:center; }
+.bakery-section-title { margin:24px 16px 10px; font-size:20px; font-weight:700; color:#e11d48; }
+
+.cake-card { background:#fff; border-radius:20px; overflow:hidden;
+    box-shadow:0 8px 22px rgba(0,0,0,.12); margin:16px; }
+.cake-card img { width:100%; height:150px; object-fit:cover; }
+.cake-info { padding:12px; text-align:center; }
+.cake-desc { font-size:13px; color:#555; }
+
+.cake-price { font-size:16px; font-weight:700; color:#16a34a; margin:6px 0; }
+.weight-pill { background:#ffe4ef; padding:6px 14px; border-radius:18px;
+    font-size:13px; font-weight:600; cursor:pointer; margin:4px; }
+.weight-pill.active { background:#ff4081; color:#fff; }
+
+.add-btn { background:#ff4081; color:#fff; border:none; padding:8px 18px;
+    border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; }
+
+.debug-box {
+    background:#000;
+    color:#00ff9c;
+    font-size:12px;
+    text-align:left;
+    padding:10px;
+    margin-top:10px;
+    border-radius:10px;
+    overflow:auto;
+}
+</style>
+
+<!-- HEADER -->
+<div class="bakery-header">{{ restaurant.name }}</div>
+
+<!-- HERO -->
+<div class="bakery-hero">
+    <p>Freshly baked cakes • Custom designs • Pre-order available</p>
+</div>
+
+<!-- ================= NORMAL CAKES ================= -->
+{% for category, items in menu_by_category.items() %}
+    {% for item in items %}
+        {% if item.type != "custom" %}
+
+<div class="cake-card" data-weights="{{ item.weight_prices }}">
+    <img src="{{ item.image_url or '/static/images/cake_placeholder.jpg' }}">
+
+    <div class="cake-info">
+        <h4>{{ item.name }}</h4>
+        <p class="cake-desc">{{ item.description }}</p>
+
+        <!-- WEIGHT BUTTONS -->
+        <div class="weights"></div>
+
+        <!-- PRICE -->
+        <div class="cake-price">
+            ₹<span class="price-value"></span>
+        </div>
+
+        <!-- ADD BUTTON -->
+        {% if item.availability == "yes" %}
+        <button class="add-btn"
+            data-name="{{ item.name }}"
+            data-price="{% if item.weight_prices %}{{ item.weight_prices.split(',')[0].split(':')[1] }}{% elif item.price is not none %}{{ item.price }}{% endif %}">
+            Add to Cart
+        </button>
+        {% else %}
+        <p>Out of Stock</p>
+        {% endif %}
+
+        <!-- 🔍 DEBUG OUTPUT -->
+        <div class="debug-box">
+<pre>
+DEBUG ITEM:
+name          = {{ item.name }}
+weight_prices= {{ item.weight_prices }}
+price         = {{ item.price }}
+availability  = {{ item.availability }}
+</pre>
+        </div>
+    </div>
+</div>
+
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+<!-- ================= CUSTOM CAKES ================= -->
+<h3 class="bakery-section-title">🎨 Custom Cakes</h3>
+
+{% for category, items in menu_by_category.items() %}
+    {% for item in items %}
+        {% if item.type == "custom" %}
+<div class="cake-card">
+    <img src="{{ item.image_url or '/static/images/custom_cake.jpg' }}">
+    <div class="cake-info">
+        <h4>{{ item.name }}</h4>
+        <p class="cake-desc">{{ item.description }}</p>
+        <div class="cake-price">₹{{ item.price }}</div>
+
+        <!-- 🔍 DEBUG -->
+        <div class="debug-box">
+<pre>
+DEBUG CUSTOM:
+name  = {{ item.name }}
+price = {{ item.price }}
+</pre>
+        </div>
+    </div>
+</div>
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+<!-- ================= JS ================= -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".cake-card").forEach(card => {
+        const raw = card.dataset.weights;
+        if (!raw) return;
+
+        const weightsDiv = card.querySelector(".weights");
+        const priceSpan = card.querySelector(".price-value");
+        const addBtn = card.querySelector(".add-btn");
+
+        raw.split(",").forEach((pair, index) => {
+            const [label, price] = pair.split(":");
+            if (!label || !price) return;
+
+            const pill = document.createElement("span");
+            pill.className = "weight-pill";
+            pill.innerText = `${label} - ₹${price}`;
+
+            pill.onclick = () => {
+                weightsDiv.querySelectorAll(".weight-pill").forEach(p => p.classList.remove("active"));
+                pill.classList.add("active");
+                priceSpan.innerText = price;
+                addBtn?.setAttribute("data-price", price);
+            };
+
+            weightsDiv.appendChild(pill);
+            if (index === 0) pill.click();
+        });
+    });
+}); 
+function showReplaceModal(onConfirm) {
+    const modal = document.getElementById("cartModal");
+    const cancelBtn = document.getElementById("cancelReplace");
+    const confirmBtn = document.getElementById("confirmReplace");
+    const oldNameSpan = document.getElementById("old-restaurant-name");
+
+    const existingRestaurantId = Object.keys(carts)
+        .find(id => carts[id]?.items?.length > 0);
+
+    if (!existingRestaurantId) {
+        onConfirm();
+        return;
+    }
+
+    oldNameSpan.innerText =
+        carts[existingRestaurantId].restaurantName || "another restaurant";
+
+    modal.classList.remove("hidden");
+
+    cancelBtn.onclick = () => {
+        modal.classList.add("hidden");
+    };
+
+    confirmBtn.onclick = () => {
+        carts = {};                // ✅ SAME AS RESTAURANT PAGE
+        localStorage.setItem("carts", JSON.stringify(carts));
+        modal.classList.add("hidden");
+        onConfirm();
+    };
+}
+
+</script> 
+
+<div id="cartModal" class="cart-modal hidden">
+  <div class="cart-modal-box">
+    <h3>Replace Cart?</h3>
+    <p>
+      Your cart already contains items from
+      <span id="old-restaurant-name" class="highlight-restaurant"></span>.
+    </p>
+    <div class="cart-modal-actions">
+      <button id="cancelReplace" class="btn-cancel">Cancel</button>
+      <button id="confirmReplace" class="btn-confirm">Replace</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,44 @@
+<h2>Set Minimum Delivery Amount</h2>
+
+<form method="POST">
+  <table border="1" cellpadding="10">
+    <tr>
+      <th>Shop Name</th>
+      <th>Minimum Delivery Amount (₹)</th>
+    </tr>
+    {% for shop in shops %}
+    <tr>
+      <td>{{ shop.shop_name }}</td>
+      <td>
+        <input type="number"
+               name="min_{{ shop.id }}"
+               value="{{ shop.min_delivery_amount }}"
+               min="0"
+               required>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <br>
+  <button type="submit">Update Amounts</button>
+</form>
+
+<hr>
+
+<h3>Add New Shop</h3>
+
+<form method="POST" action="{{ url_for('add_shop') }}">
+  <input type="text"
+         name="shop_name"
+         placeholder="Shop Name"
+         required>
+
+  <input type="number"
+         name="min_amount"
+         placeholder="Minimum Delivery Amount ₹"
+         min="0"
+         required>
+
+  <button type="submit">Add Shop</button>
+</form>

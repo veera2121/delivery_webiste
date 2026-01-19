@@ -1,10 +1,5 @@
-{% extends "base.html" %}
 
-{% block title %}Menu{% endblock %}
-{% block install_button %}{% endblock %}
 
-{% block content %}
-<title>{{ restaurant.name }} - Menu</title>
 
 <style>
 /* ---------- GENERAL ---------- */
@@ -480,7 +475,7 @@ body {
 
 </style>
 
-</style>
+
 
 
 
@@ -589,7 +584,7 @@ body {
 
 <script>
 document.getElementById("cartBtn").addEventListener("click", function (e) {
-    if (!RESTAURANT_IS_OPEN) {+++
+    if (!RESTAURANT_IS_OPEN) {
         e.preventDefault(); // 🚫 stop navigation
         alert("❌ Restaurant is currently CLOSED.\nPlease come back during opening hours.");
     }
@@ -846,14 +841,7 @@ function fireConfetti() {
 
 </script>
 <script>
-function scrollToCategory(categoryId) {
-    // Find the element by ID (even if it's generated dynamically)
-    const el = document.getElementById(categoryId);
-    if (!el) return;
 
-    // Scroll smoothly to that element
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-} 
 function scrollToCategory(id) {
     const target = document.getElementById(id);
     if (target) {
@@ -878,4 +866,5 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-{% endblock %}
+
+

@@ -4,7 +4,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy.orm import relationship
-
+from sqlalchemy import CheckConstraint
 db = SQLAlchemy()  # Keep this here, do NOT move to app.py
 
 from datetime import time
@@ -20,14 +20,22 @@ class Restaurant(db.Model):
     address = db.Column(db.String(500))
     phone = db.Column(db.String(20))
     email = db.Column(db.String(200))
-    sheet_url = db.Column(db.String(500))  # CSV URL
-    location = db.Column(db.String(100))   # city / area filter
+    sheet_url = db.Column(db.String(500))
+    location = db.Column(db.String(100))
+
+    # ✅ SINGLE SOURCE OF TRUTH
+    category_type = db.Column(
+        db.String(20),
+        nullable=False,
+        default="restaurant"   # VERY IMPORTANT
+    )
 
     # ================= CARD DETAILS =================
     is_veg = db.Column(db.Boolean, default=True)
     rating = db.Column(db.Float, default=4.0)
     price_level = db.Column(db.String(10), default="₹₹")
-    delivery_time = db.Column(db.String(20), default="30–40 mins") 
+    delivery_time = db.Column(db.String(20), default="30–40 mins")
+
     # ================= ORDER ACCEPTANCE =================
     is_accepting_orders = db.Column(db.Boolean, default=True, nullable=False)
     accept_orders_until = db.Column(db.Time, nullable=True)
@@ -37,29 +45,27 @@ class Restaurant(db.Model):
         default="Biryani • Pizza • Rolls • Chinese"
     )
 
-    # ================= LAUNCH & STATUS =================
+    # ================= STATUS =================
     start_date = db.Column(db.Date, nullable=True)
 
     status = db.Column(
         db.String(20),
         default="coming_soon"
-        # active | coming_soon | suspended
     )
 
     # ================= DELIVERY =================
     delivery_charge = db.Column(db.Float, default=30, nullable=False)
     free_delivery_limit = db.Column(db.Float, default=499, nullable=False)
-    # ================= ADVANCED DELIVERY CONTROL =================
     force_delivery_charge = db.Column(db.Boolean, default=False, nullable=False)
 
-    # ================= OPEN / CLOSE TIME =================
-    opening_time = db.Column(db.Time, default=time(10, 0))   # 10:00 AM
-    closing_time = db.Column(db.Time, default=time(22, 0))   # 10:00 PM
+    # ================= OPEN / CLOSE =================
+    opening_time = db.Column(db.Time, default=time(10, 0))
+    closing_time = db.Column(db.Time, default=time(22, 0))
 
-    # ================= DELIVERY LOCATION =================
-    latitude = db.Column(db.Float, nullable=True)
-    longitude = db.Column(db.Float, nullable=True)
-    delivery_radius_km = db.Column(db.Float, default=5, nullable=True)
+    # ================= LOCATION =================
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+    delivery_radius_km = db.Column(db.Float, default=5)
 
     # ================= RELATIONSHIPS =================
     users = db.relationship("RestaurantUser", backref="restaurant", lazy=True)
@@ -67,7 +73,14 @@ class Restaurant(db.Model):
     delivery_persons = db.relationship("DeliveryPerson", backref="restaurant", lazy=True)
     menu_items = db.relationship("MenuItem", backref="restaurant", lazy=True)
     offers = db.relationship("RestaurantOffer", backref="restaurant", lazy=True)
-
+    
+    # ================= CHECK CONSTRAINT =================
+    __table_args__ = (
+        CheckConstraint(
+            "category_type IN ('restaurant', 'bakery')",
+            name="category_type_check"
+        ),
+    )
     # ================= ACTIVE OFFER =================
     @property
     def active_offer(self):
@@ -139,10 +152,33 @@ class RestaurantUser(db.Model):
 # ----------------- Menu Item -----------------
 class MenuItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurant.id"))
-    name = db.Column(db.String(200), nullable=False)
-    price = db.Column(db.Float, nullable=False)
 
+    restaurant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant.id"),
+        nullable=False
+    )
+
+    # BASIC
+    name = db.Column(db.String(200), nullable=False)
+    category = db.Column(db.String(100))          # Cakes, Custom Cakes
+    description = db.Column(db.Text)
+
+    # PRICING
+    price = db.Column(db.Float, default=0)
+    weight_prices = db.Column(db.Text)            # 0.5kg:350,1kg:650
+
+    # MEDIA
+    image_url = db.Column(db.String(500))
+
+    # STATUS / TYPE
+    availability = db.Column(db.String(10), default="yes")
+    type = db.Column(db.String(20), default="ordinary")  
+    # ordinary | cool
+
+    # EXTRA
+    flavour = db.Column(db.Text)
+    order_type = db.Column(db.String(20))  # instant | custom
 
 # ----------------- Delivery Person -----------------
 class DeliveryPerson(db.Model):
@@ -505,3 +541,17 @@ class DeliverySettings(db.Model):
     is_night_surge_active = db.Column(db.Boolean, default=False)
 
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Item(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(50), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    shop_name = db.Column(db.String(50), nullable=False)  # which restaurant
+    is_combo = db.Column(db.Boolean, default=False)
+    combo_items = db.Column(db.String(200))  # optional, for combo names
+
+class ShopSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    shop_name = db.Column(db.String(50), unique=True)
+    min_delivery_amount = db.Column(db.Float, default=0)  # minimum delivery
