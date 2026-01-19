@@ -290,6 +290,17 @@ body{
     opacity: 1;
   }
 }
+#flash-msg-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none; /* doesn't block clicks */
+}
 
 </style>
 <div class="bakery-header">{{ restaurant.name }} Bakery</div>
@@ -581,28 +592,41 @@ function showReplaceModal(onConfirm) {
 /* ================= SHOW FLASH MESSAGE ================= */
 function showFlashMessage(text) {
     const container = document.getElementById("flash-msg-container");
+
     const msg = document.createElement("div");
     msg.innerHTML = text;
+
     msg.style.cssText = `
-        background:#f87171; color:#fff; padding:12px 20px; border-radius:16px;
-        font-weight:700; font-size:14px; margin-top:10px; box-shadow:0 6px 18px rgba(0,0,0,0.15);
-        opacity:0; transition:opacity 0.3s ease, transform 0.3s ease; transform:translateY(-20px);
+        background:#f87171;
+        color:#fff;
+        padding:14px 22px;
+        border-radius:18px;
+        font-weight:700;
+        font-size:15px;
+        margin-top:10px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.25);
+        opacity:0;
+        transform:scale(0.9);
+        transition:opacity 0.3s ease, transform 0.3s ease;
+        pointer-events:auto;
     `;
+
     container.appendChild(msg);
 
     // Animate in
     requestAnimationFrame(() => {
-        msg.style.opacity = 1;
-        msg.style.transform = "translateY(0)";
+        msg.style.opacity = "1";
+        msg.style.transform = "scale(1)";
     });
 
-    // Remove after 2.5s
+    // Remove after 3.5s
     setTimeout(() => {
-        msg.style.opacity = 0;
-        msg.style.transform = "translateY(-20px)";
+        msg.style.opacity = "0";
+        msg.style.transform = "scale(0.9)";
         setTimeout(() => msg.remove(), 300);
     }, 3500);
-} 
+}
+
 
 /* ================= CATEGORY SCROLL ================= */
 
@@ -680,6 +704,7 @@ cartBtn.addEventListener("click", (e) => {
     </div>
   </div>
 </div>
+<div id="flash-msg-container"></div>
 
 {% with messages = get_flashed_messages() %}
   {% if messages %}
