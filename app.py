@@ -3199,6 +3199,15 @@ def bakery_menu(restaurant_id):
         restaurant=restaurant,
         menu_by_category=menu_by_category
     )
+from sqlalchemy import event, inspect
+
+@event.listens_for(Restaurant, "before_update")
+def protect_bakery(mapper, connection, target):
+    state = inspect(target)
+    if state.attrs.category_type.history.has_changes():
+        old = state.attrs.category_type.history.deleted
+        if old and old[0] == "bakery":
+            target.category_type = "bakery"
 
 # ------------------ DB INIT ------------------
 
