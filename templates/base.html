@@ -413,17 +413,54 @@ html {
 
 .location-icon {
     font-size: 22px;
-    background: #a337a3;
+    background: linear-gradient(135deg, #ff3e7f, #ff7eb3);
     border: none;
     padding: 10px 12px;
     border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     cursor: pointer;
+
     display: flex;
     align-items: center;
     justify-content: center;
     color: #ffffff;
+
+    /* 🔥 ATTENTION EFFECT */
+    box-shadow:
+        0 0 0 0 rgba(255, 62, 127, 0.7),
+        0 6px 18px rgba(0,0,0,0.35);
+
+    animation: locationPulse 1.3s ease-out infinite;
+
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
+
+/* Hover = clear click hint */
+.location-icon:hover {
+    transform: scale(1.15);
+    box-shadow:
+        0 0 0 12px rgba(255, 62, 127, 0.15),
+        0 10px 28px rgba(0,0,0,0.45);
+}
+
+/* 🔴 Pulse animation */
+@keyframes locationPulse {
+    0% {
+        box-shadow:
+            0 0 0 0 rgba(255, 62, 127, 0.6),
+            0 6px 18px rgba(0,0,0,0.35);
+    }
+    70% {
+        box-shadow:
+            0 0 0 16px rgba(255, 62, 127, 0),
+            0 6px 18px rgba(0,0,0,0.35);
+    }
+    100% {
+        box-shadow:
+            0 0 0 0 rgba(255, 62, 127, 0),
+            0 6px 18px rgba(0,0,0,0.35);
+    }
+}
+
 
 .mobile-location-dropdown {
     display: none;
@@ -538,7 +575,7 @@ html {
   transition: all 0.25s ease;
   animation: installPulse 2s infinite;
 }
-
+}
 /* Hover effect */
 .install-fab:hover {
   transform: translateY(-3px) scale(1.05);
@@ -578,58 +615,138 @@ html {
     --install-btn-bottom: 80px;      /* ㉑ Distance from bottom of screen for mobile */
   }
 }
-
+/* Popup wrapper */
 .location-popup {
   position: fixed;
+  top: 80px;
+  right: 10px;
+  z-index: 9999;
+  animation: popFade 0.35s cubic-bezier(.4,0,.2,1);
+}
+
+/* Card */
+.popup-card {
+  position: relative;
+  width: 300px;
+  background: linear-gradient(180deg, #ffffff, #f9f9f9);
+  padding: 18px 18px 20px;
+  border-radius: 16px;
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.18),
+    0 0 0 1px rgba(0,0,0,0.03);
+}
+
+/* Soft glow border */
+.popup-card::before {
+  content: "";
+  position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  border-radius: 16px;
+  box-shadow: 0 0 0 1.5px rgba(255,62,127,0.25);
+  pointer-events: none;
+}
+
+/* Arrow */
+.popup-arrow {
+  position: absolute;
+  top: -9px;
+  right: 20px;
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 12px solid #ffffff;
+  filter: drop-shadow(0 -2px 2px rgba(0,0,0,0.1));
+}
+
+/* Title */
+.popup-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #222;
+  margin-bottom: 6px;
+}
+
+/* Icon bubble */
+.popup-title .location-icon {
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  background: linear-gradient(135deg, #ff3e7f, #ff7eb3);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 16px;
 }
 
-.location-popup.hidden {
+/* Description */
+.popup-card p {
+  font-size: 14px;
+  color: #666;
+  margin: 8px 0 14px;
+  line-height: 1.4;
+}
+
+/* Button */
+#popupOk {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(135deg, #ff3e7f, #ff7eb3);
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+#popupOk:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(255,62,127,0.35);
+}
+
+/* Hide popup */
+.hidden {
   display: none;
 }
+@media (min-width: 992px) {
+  .location-popup {
+    top: 120px;
+    right: 650px;
+    left: auto;
+    bottom: auto;
+    transform: none;
+  }
 
-.popup-card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  width: 300px;
-  text-align: center;
+  /* Arrow points to top icon */
+  .popup-arrow {
+    position: absolute;
+    top: -10px;
+    right: 28px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid white;
+  }
 }
 
-.popup-card h3 {
-  margin-bottom: 8px;
+/* Animation */
+@keyframes popFade {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
-
-.popup-card button {
-  background: #10b981;
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.flash-container {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-}
-.alert {
-    padding: 12px 20px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    color: #fff;
-}
-.alert-danger { background: #e74c3c; }
-.alert-warning { background: #f39c12; }
-.alert-success { background: #27ae60; }
-
 
   </style> 
 
