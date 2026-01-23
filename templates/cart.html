@@ -905,6 +905,43 @@ body {
     opacity: 0;
     transform: translateX(-50%) translateY(-6px);
 }
+.location-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.location-hint {
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    color: #fff;
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    white-space: nowrap;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    animation: bounce 1.6s infinite;
+    z-index: 20;
+}
+
+/* Arrow */
+.location-hint::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 7px solid transparent;
+    border-top-color: #111;
+}
+
+/* Bounce animation */
+@keyframes bounce {
+    0%, 100% { transform: translate(-50%, 0); }
+    50% { transform: translate(-50%, -6px); }
+}
 
 </style>
 </head>
@@ -942,16 +979,26 @@ body {
         <input type="hidden" name="customer_lat" id="customer_lat">
         <input type="hidden" name="customer_lng" id="customer_lng">
 
-   <div class="location-section">
-  <button type="button" class="location-btn" onclick="getUserLocation()">
-    📍 Click For Live Location
-  </button>
+<div class="location-section">
+    <div class="location-wrapper">
 
-  <ul class="location-steps">
-    <li>1️⃣ Click the button</li>
-    <li>2️⃣ Tap <b>Allow</b></li>
-    <li>3️⃣ Location auto-filled</li>
-  </ul>
+        <button type="button" class="location-btn" onclick="handleLocationClick()">
+            📍 Click For Live Location
+        </button>
+
+        <!-- 👆 Hint Popup -->
+        <div class="location-hint" id="locationHint">
+            👆 Tap here to enable live location
+        </div>
+
+        <!-- 📋 Steps -->
+        <ul class="location-steps">
+            <li>1️⃣ Click the button</li>
+            <li>2️⃣ Tap <b>Allow</b></li>
+            <li>3️⃣ Location auto-filled</li>
+        </ul>
+
+    </div>
 </div>
 
 <!-- MAP -->
@@ -1629,6 +1676,12 @@ function placeOrderSuccess() {
 
 </script>
 
+<script>
+function handleLocationClick() {
+    document.getElementById("locationHint").style.display = "none";
+    getUserLocation(); // your existing function
+}
+</script>
 
 {% with messages = get_flashed_messages() %}
   {% if messages %}
