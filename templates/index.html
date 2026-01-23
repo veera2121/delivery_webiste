@@ -682,10 +682,66 @@ body {
 }
 
 .popular {
-    font-size: 13px;
-    margin-bottom: 6px;
-    color: #666;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    margin-bottom: 10px;
+    color: #fff;
+
+    background: linear-gradient(
+        120deg,
+        #00ffbf,
+        #00ffb3,
+        #ea00ff
+    );
+    background-size: 200% 200%;
+
+    border-radius: 999px;
+    box-shadow:
+        0 0 10px rgba(255, 61, 0, 0.6),
+        0 6px 16px rgba(0, 0, 0, 0.25);
+
+    animation: gradientMove 3s infinite linear,
+               pulseGlow 1.6s infinite ease-in-out;
 }
+
+/* 🔥 Fire icon */
+.popular::before {
+    content: "🔥";
+    font-size: 13px;
+}
+
+/* 🌈 Gradient motion */
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+/* 💓 Pulse glow */
+@keyframes pulseGlow {
+    0% {
+        transform: scale(1);
+        box-shadow:
+            0 0 10px rgba(255, 61, 0, 0.6),
+            0 6px 16px rgba(0, 0, 0, 0.25);
+    }
+    50% {
+        transform: scale(1.08);
+        box-shadow:
+            0 0 20px rgba(0, 255, 170, 0.9),
+            0 10px 22px rgba(0, 0, 0, 0.35);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+
 
 .free-delivery,
 .delivery-charge {
@@ -1546,6 +1602,61 @@ body {
     color: #e11d48;
     font-weight: 600;
 }
+/* ================= BAKERY CARD UI ================= */
+
+.bakery-card {
+    background: linear-gradient(135deg, #fff5f7, #ffffff);
+    border-radius: 22px;
+    border: 1px solid #ffd6e0;
+    box-shadow: 0 10px 25px rgba(255, 182, 193, 0.25);
+}
+
+.bakery-card img {
+    height: 190px;
+    object-fit: cover;
+    border-radius: 18px;
+}
+
+.bakery-card .restaurant-name {
+    font-size: 20px;
+    font-weight: 800;
+    color: #d6336c;
+}
+
+.bakery-tags {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.bakery-tags .tag {
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 14px;
+}
+
+.tag.eggless {
+    background: #e6fffa;
+    color: #087f5b;
+}
+
+.tag.fresh {
+    background: #fff3bf;
+    color: #b08900;
+}
+
+.bakery-details {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+.bakery-card .view-btn {
+    background: linear-gradient(135deg, #ff5f9e, #ff85b3);
+    border-radius: 16px;
+}
 
 </style>
 
@@ -1636,30 +1747,31 @@ body {
     <h2>Food Categories</h2>
 
     <div class="category-row">
-        <div class="category-card">
-            <img src="{{ url_for('static', filename='images/biryani.jpg') }}">
-            <span> Chicken Biryani</span>
-        </div>
+        <div class="category-card" data-category="biryanis" role="button">
+    <img src="{{ url_for('static', filename='images/biryani.jpg') }}">
+    <span>Chicken Biryani</span>
+</div>
 
-        <div class="category-card">
-            <img src="{{ url_for('static', filename='images/mutton_biryani.jpg') }}">
-            <span>Mutton Biryani</span>
-        </div>
+<div class="category-card" data-category="biryanis" role="button">
+    <img src="{{ url_for('static', filename='images/mutton_biryani.jpg') }}">
+    <span>Mutton Biryani</span>
+</div>
 
-        <div class="category-card">
-            <img src="{{ url_for('static', filename='images/veg _biryani.jpg') }}">
-            <span>Veg Biryani</span>
-        </div>
+<div class="category-card" data-category="biryanis" role="button">
+    <img src="{{ url_for('static', filename='images/veg_biryani.jpg') }}">
+    <span>Veg Biryani</span>
+</div>
 
-        <div class="category-card">
-            <img src="{{ url_for('static', filename='images/prawns_biryani.jpg') }}">
-            <span>Prawns Biryani</span>
-        </div>
+<div class="category-card" data-category="starters" role="button">
+    <img src="{{ url_for('static', filename='images/starters.jpg') }}">
+    <span>Starters</span>
+</div>
 
-        <div class="category-card">
-            <img src="{{ url_for('static', filename='images/starters.jpg') }}">
-            <span>Starters</span>
-        </div>
+<div class="category-card" data-category="noodles" role="button">
+    <img src="{{ url_for('static', filename='images/noodles.jpg') }}">
+    <span>Noodles</span>
+</div>
+
 
         <div class="category-card">
             <img src="{{ url_for('static', filename='images/noodles.jpg') }}">
@@ -1677,9 +1789,25 @@ body {
 </section>
 <section class="restaurants-section" id="restaurantsSection">
   <div class="container" id="restaurants">
-    <!-- Restaurants will load here -->
+
+    <div class="restaurant-card" data-categories="biryanis,starters">
+        <h3>Royal Biryani</h3>
+        <p>Biryanis • Starters</p>
+    </div>
+
+    <div class="restaurant-card" data-categories="noodles,chinese">
+        <h3>Dragon Express</h3>
+        <p>Noodles • Chinese</p>
+    </div>
+
+    <div class="restaurant-card" data-categories="biryanis,noodles">
+        <h3>Spicy Hub</h3>
+        <p>Biryanis • Noodles</p>
+    </div>
+
   </div>
 </section>
+
 
 
 <link rel="icon" href="/static/favicon.ico">
@@ -2134,7 +2262,29 @@ function closeModal(e) {
     document.body.style.overflow = "auto";
   }
 }
+</script> 
+<script>
+document.querySelectorAll('.category-card').forEach(card => {
+    card.addEventListener('click', () => {
+        const selectedCategory = card.dataset.category.toLowerCase();
+
+        document.querySelectorAll('.restaurant-card').forEach(restaurant => {
+            const categories = restaurant.dataset.categories.toLowerCase();
+
+            if (categories.includes(selectedCategory)) {
+                restaurant.style.display = "block";
+            } else {
+                restaurant.style.display = "none";
+            }
+        });
+
+        // Scroll to restaurants (nice UX)
+        document.getElementById("restaurantsSection")
+            .scrollIntoView({ behavior: "smooth" });
+    });
+});
 </script>
+
 <div id="locationPopup" class="location-popup hidden">
   <div class="popup-card">
     <span class="popup-arrow"></span>
