@@ -1,0 +1,33 @@
+{% if restaurants|length > 0 %}
+<div class="container restaurant-preview">
+    <h3>🍽️ Restaurants on RuchiGo</h3>
+
+    <div class="restaurant-scroll">
+        {% for r in restaurants %}
+        <a href="/menu/{{ r.id }}" class="mini-card-link">
+
+            <div class="mini-card
+                {% if not r.deliverable or not r.is_open or not r.can_accept_orders %}
+                    disabled
+                {% endif %}
+            ">
+                <img
+                    src="/static/images/restaurants/{{ r.id }}.jpg"
+                    alt="{{ r.name }}"
+                    onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';"
+                >
+
+                <div class="mini-name two-line">{{ r.name }}</div>
+
+                {% if r.is_veg %}
+                    <span class="mini-badge veg">Veg</span>
+                {% else %}
+                    <span class="mini-badge nonveg">Non-Veg</span>
+                {% endif %}
+            </div>
+
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

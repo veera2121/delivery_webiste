@@ -1,8 +1,5 @@
-
-
-{# ================= CLICKABLE RESTAURANT PREVIEW STRIP ================= #}
 {% if restaurants|length > 0 %}
-<section class="restaurant-preview">
+<div class="container restaurant-preview">
     <h3>🍽️ Restaurants on RuchiGo</h3>
 
     <div class="restaurant-scroll">
@@ -20,7 +17,7 @@
                     onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';"
                 >
 
-                <div class="mini-name">{{ r.name }}</div>
+                <div class="mini-name two-line">{{ r.name }}</div>
 
                 {% if r.is_veg %}
                     <span class="mini-badge veg">Veg</span>
@@ -32,8 +29,9 @@
         </a>
         {% endfor %}
     </div>
-</section>
+</div>
 {% endif %}
+
 <div class="restaurant-row">
 {% for r in restaurants %}
 
