@@ -1783,7 +1783,181 @@ body {
 .mini-card:hover::after {
     opacity: 1;
 }
+/* ================= Flash / Limited Card ================= */
+.limited-card {
+    position: relative;
+    width: 220px;
+    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    color: #fff;
+    border-radius: 20px;
+    padding: 15px;
+    margin: 10px;
+    flex-shrink: 0;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
+.limited-card:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 18px 35px rgba(0,0,0,0.4);
+}
+
+/* 🔥 Badge */
+.hype-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #fff;
+    color: #ff416c;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+/* Restaurant Name */
+.restaurant-name {
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 40px;
+    line-height: 1.2;
+}
+
+/* Items */
+.items {
+    font-size: 13px;
+    margin: 6px 0;
+}
+
+/* Stock Left */
+.stock {
+    background: rgba(255,255,255,0.3);
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+    margin-top: 5px;
+}
+
+/* Countdown Timer */
+.countdown {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 8px 0;
+    color: #fff;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+/* Buttons */
+.join-btn, .notify-btn {
+    display: inline-block;
+    background: #fff;
+    color: #ff416c;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 14px;
+    text-decoration: none;
+    margin-top: 6px;
+    transition: transform 0.2s ease;
+}
+
+.join-btn:hover, .notify-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Sold Out Overlay */
+.sold-out {
+    opacity: 0.6;
+    filter: grayscale(1);
+    pointer-events: none;
+}
+
+.sold-text {
+    font-weight: 700;
+    color: #ffe3e3;
+    margin-top: 8px;
+}
+
+/* ===============================
+   MINI CATEGORY SECTION
+================================ */
+
+.fc-mini-section{
+    padding: 30px 12px;
+}
+
+.fc-mini-title{
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 18px;
+    text-align: center;
+}
+
+/* GRID */
+.fc-mini-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px,1fr));
+    gap: 18px;
+}
+
+/* CARD – default hidden for scroll animation */
+.fc-mini-card{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+    transition: opacity .45s ease, transform .45s ease;
+}
+
+/* IMAGE */
+.fc-mini-card img{
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+
+/* TEXT */
+.fc-mini-card span{
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    color: #333;
+}
+
+/* CARD VISIBLE (on scroll) */
+.fc-mini-card.in-view{
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* ===============================
+   DESKTOP HOVER ONLY
+================================ */
+@media (hover: hover) and (pointer: fine) {
+
+    .fc-mini-card:hover img{
+        transform: scale(1.12);
+        box-shadow: 0 10px 22px rgba(255,62,125,0.4);
+    }
+
+    .fc-mini-card:hover{
+        transform: translateY(-4px);
+    }
+}
+
+/* ===============================
+   MOBILE TAP FEEDBACK
+================================ */
+.fc-mini-card:active img{
+    transform: scale(0.95);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
 
 </style>
 
@@ -1870,51 +2044,65 @@ body {
 </div>
 
 
-
-
-<section id="category" class="category-section">
-    <h2>Food Categories</h2>
-
-    <div class="category-row">
-        <div class="category-card">
-            <img src="{{ url_for('static', filename='images/biryani.jpg') }}">
-            <span> Chicken Biryani</span>
-        </div>
-
-        <div class="category-card">
-            <img src="{{ url_for('static', filename='images/mutton_biryani.jpg') }}">
-            <span>Mutton Biryani</span>
-        </div>
-
-        <div class="category-card">
-            <img src="{{ url_for('static', filename='images/veg _biryani.jpg') }}">
-            <span>Veg Biryani</span>
-        </div>
-
-        <div class="category-card">
-            <img src="{{ url_for('static', filename='images/prawns_biryani.jpg') }}">
-            <span>Prawns Biryani</span>
-        </div>
-
-        <div class="category-card">
-            <img src="{{ url_for('static', filename='images/starters.jpg') }}">
-            <span>Starters</span>
-        </div>
-
-        <div class="category-card">
-            <img src="{{ url_for('static', filename='images/noodles.jpg') }}">
-            <span>Noodles</span>
-        </div> 
-         <div class="category-card">
-            <img src="{{ url_for('static', filename='images/ice_cream.jpg') }}">
-            <span>Ice Cream</span>
-        </div>
-         <div class="category-card">
-            <img src="{{ url_for('static', filename='images/Beverages.jpg') }}">
-            <span>Beverages</span>
-        </div>
+{% if limited_restaurants|length > 0 %}
+<section class="limited-section">
+    <h2>🔥 Limited Drops</h2>
+    <div class="limited-scroll">
+        {% for r in limited_restaurants %}
+            {% include 'limited_restaurant_card.html' %}
+        {% endfor %}
     </div>
 </section>
+{% endif %}
+<section id="food-categories" class="fc-mini-section">
+    <h2 class="fc-mini-title">Food Categories</h2>
+
+    <div class="fc-mini-grid">
+
+        <div class="fc-mini-card">
+            <img src="{{ url_for('static', filename='images/biryani.jpg') }}">
+            <span>Biryanis</span>
+        </div>
+
+        <div class="fc-mini-card">
+            <img src="{{ url_for('static', filename='images/starters.jpg') }}">
+            <span>Starters</span>
+        </div> 
+           <div class="fc-mini-card">
+            <img src="{{ url_for('static', filename='images/noodles1.jpg') }}">
+            <span>Noodles</span>
+        </div>
+
+        <div class="fc-mini-card">
+            <img src="{{ url_for('static', filename='images/friedrice.jpg') }}">
+            <span>Fried Rice</span>
+        </div> 
+
+        <div class="fc-mini-card">
+            <img src="{{ url_for('static', filename='images/ice_cream.jpg') }}">
+            <span>Ice Creams & Ice Cream Cakes</span>
+        </div>
+
+        <div class="fc-mini-card">
+            <img src="{{ url_for('static', filename='images/cake.jpg') }}">
+            <span>Cakes</span>
+        </div>
+
+        <div class="fc-mini-card">
+            <img src="{{ url_for('static', filename='images/dosa.jpg') }}">
+            <span>Tiffins</span>
+        </div>
+
+     
+         <div class="fc-mini-card">
+            <img src="{{ url_for('static', filename='images/icecake.jpg') }}">
+            <span>Ice Cream Cakes</span>
+        </div>
+
+    </div>
+</section>
+
+
 <section class="restaurants-section" id="restaurantsSection">
   <div class="container" id="restaurants">
     <!-- Restaurants will load here -->
@@ -2398,6 +2586,61 @@ document.querySelectorAll('.category-card').forEach(card => {
     });
 });
 </script>
+<script>
+function startCountdown() {
+    const countdowns = document.querySelectorAll('.countdown');
+
+    countdowns.forEach(cd => {
+        const endTime = new Date(cd.dataset.end).getTime();
+
+        const interval = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = endTime - now;
+
+            if (distance <= 0) {
+                clearInterval(interval);
+                cd.innerHTML = "⏰ Sale Ended!";
+                const card = cd.closest('.limited-card');
+                if (card) {
+                    card.classList.add('sold-out');
+                    const btn = card.querySelector('.join-btn');
+                    if (btn) btn.remove();
+                    const soldText = document.createElement('div');
+                    soldText.className = 'sold-text';
+                    soldText.innerText = "❌ Sold Out";
+                    card.appendChild(soldText);
+                }
+            } else {
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000*60*60));
+                const minutes = Math.floor((distance % (1000*60*60)) / (1000*60));
+                const seconds = Math.floor((distance % (1000*60)) / 1000);
+                cd.innerHTML = `⏳ ${hours}h ${minutes}m ${seconds}s`;
+            }
+        }, 1000);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", startCountdown);
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const cards = document.querySelectorAll(".fc-mini-card");
+
+    const observer = new IntersectionObserver(
+        entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("in-view");
+                }
+            });
+        },
+        { threshold: 0.35 }
+    );
+
+    cards.forEach(card => observer.observe(card));
+});
+</script>
+
 
 <div id="locationPopup" class="location-popup hidden">
   <div class="popup-card">
