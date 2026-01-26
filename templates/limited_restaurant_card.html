@@ -1,119 +1,211 @@
 {# ================= LIMITED RESTAURANT CARD ================= #}
-<div class="limited-card {% if r.sold_out %}sold-out{% endif %}">
+<div class="limited-card {% if r.sold_out %}sold-out{% endif %}"
+     data-stock="{{ r.limited_remaining_qty or 0 }}">
 
-    {# 🔥 Flash Badge #}
     {% if r.is_limited_drop and not r.sold_out %}
-    <div class="hype-badge">🔥 Limited Drop</div>
+        <div class="hype-badge">🔥 LIMITED DROP</div>
     {% endif %}
 
-    {# 🍽 Restaurant Name #}
     <h3 class="restaurant-name">{{ r.name }}</h3>
 
-    {# 🍛 Popular Item(s) #}
-    <p class="items">🍽️ {{ r.display_item }}</p>
+    <p class="items">🍽 {{ r.display_item }}</p>
 
-    {# ⚠ Stock & Countdown #} 
     {% if r.is_limited_drop %}
         {% if not r.sold_out %}
-            <div class="stock">⚠️ Only {{ r.limited_remaining_qty }} left!</div>
+            <div class="stock urgency">
+                ⚠️ Only <span class="stock-num">{{ r.limited_remaining_qty }}</span> left!
+            </div>
+
+            <div class="social-proof">
+                🔥 {{ r.viewing_now or 7 }} people viewing now
+            </div>
 
             {% if r.limited_end_datetime %}
-                {# JS countdown using full datetime #}
-                <div class="countdown" data-end="{{ r.limited_end_datetime.isoformat() }}"></div>
+                <div class="countdown"
+                     data-end="{{ r.limited_end_datetime.isoformat() }}">
+                </div>
             {% endif %}
 
-            <a href="/menu/{{ r.id }}" class="join-btn">Join Queue</a>
+            <a href="/menu/{{ r.id }}" class="join-btn">
+                ⚡ Join Queue
+            </a>
         {% else %}
-            <div class="sold-text">❌ Sold Out</div>
-            <button class="notify-btn">Notify Me</button>
+            <div class="sold-text">❌ Sold Out in Minutes</div>
+            <button class="notify-btn">🔔 Alert me next drop</button>
         {% endif %}
     {% endif %}
-
 </div>
+
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const countdownElems = document.querySelectorAll(".limited-card .countdown");
 
-    countdownElems.forEach(elem => {
-        const endTimeStr = elem.dataset.end;
-        const endTime = new Date(endTimeStr);
+    document.querySelectorAll(".countdown").forEach(elem => {
+        const endTime = new Date(elem.dataset.end);
 
-        function updateCountdown() {
+        function update() {
             const now = new Date();
             let diff = endTime - now;
 
-            if(diff <= 0) {
-                elem.innerText = "⏰ Time's up!";
+            if (diff <= 0) {
+                elem.innerText = "⏰ Drop Ended!";
                 return;
             }
 
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            diff -= hours * 1000 * 60 * 60;
-            const minutes = Math.floor(diff / (1000 * 60));
-            diff -= minutes * 1000 * 60;
-            const seconds = Math.floor(diff / 1000);
+            const h = Math.floor(diff / 3600000);
+            diff %= 3600000;
+            const m = Math.floor(diff / 60000);
+            diff %= 60000;
+            const s = Math.floor(diff / 1000);
 
-            // ⚠ Add urgency styling if < 10 min left
-            if(hours === 0 && minutes < 10) {
-                elem.style.color = "#dc2626"; // red
-                elem.style.fontWeight = "700";
+            elem.innerHTML = `⏳ <strong>${h}h ${m}m ${s}s</strong> left`;
+
+            if (h === 0 && m < 5) {
+                elem.classList.add("panic");
             }
-
-            elem.innerText = `⏳ ${hours}h ${minutes}m ${seconds}s left`;
         }
 
-        updateCountdown();
-        setInterval(updateCountdown, 1000);
+        update();
+        setInterval(update, 1000);
     });
+
 });
 </script>
 
+
+
 <style>
 .limited-card {
-    background: #fff3e0;
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 20px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border-radius: 18px;
+    padding: 38px;
+    margin-bottom: 22px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     position: relative;
-    transition: transform 0.2s;
+    transition: transform .25s ease;
 }
-.limited-card:hover { transform: translateY(-4px); }
 
+.limited-card:hover {
+    transform: translateY(-6px);
+}
+
+/* 🔥 Badge */
 .hype-badge {
     position: absolute;
     top: 12px;
     right: 12px;
-    background: #ff3d00;
+    background: linear-gradient(135deg, #dc2626, #f97316);
     color: #fff;
     font-size: 12px;
-    font-weight: 700;
-    padding: 4px 8px;
+    font-weight: 900;
+    padding: 6px 10px;
     border-radius: 999px;
+    animation: pulse 1.2s infinite;
 }
 
-.restaurant-name { font-size: 18px; font-weight: 700; margin: 8px 0; }
-.items { font-size: 14px; color: #555; margin-bottom: 10px; }
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 rgba(255,0,0,.6); }
+    50% { transform: scale(1.08); box-shadow: 0 0 18px rgba(255,0,0,.8); }
+    100% { transform: scale(1); }
+}
 
-.stock { font-size: 14px; font-weight: 600; color: #d97706; margin-bottom: 6px; }
-.sold-text { font-size: 14px; font-weight: 600; color: #c92a2a; margin-bottom: 6px; }
+/* Title */
+.restaurant-name {
+    font-size: 19px;
+    font-weight: 800;
+    margin: 10px 0 6px;
+}
 
-.countdown { font-size: 13px; color: #1d4ed8; margin-bottom: 8px; font-weight: 600; }
+.items {
+    font-size: 14px;
+    color: #444;
+}
 
-.join-btn, .notify-btn {
+/* Stock */
+.stock {
+    font-size: 15px;
+    font-weight: 900;
+    color: #b91c1c;
+    margin: 8px 0 4px;
+}
+
+.urgency {
+    animation: shake 1.4s infinite;
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    50% { transform: translateX(2px); }
+    75% { transform: translateX(-2px); }
+    100% { transform: translateX(0); }
+}
+
+/* Social proof */
+.social-proof {
+    font-size: 13px;
+    font-weight: 600;
+    color: #7c2d12;
+    margin-bottom: 6px;
+}
+
+/* Countdown */
+.countdown {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1d4ed8;
+    margin-bottom: 10px;
+}
+
+.countdown.panic {
+    color: #dc2626;
+    animation: blink .8s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: .4; }
+    100% { opacity: 1; }
+}
+
+/* CTA */
+.join-btn {
     display: inline-block;
+    padding: 12px 18px;
+    border-radius: 16px;
+    font-weight: 900;
+    font-size: 15px;
+    color: #fff;
+    background: linear-gradient(135deg, #dc2626, #f97316);
+    text-decoration: none;
+    animation: bounce 1.6s infinite;
+}
+
+@keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* Sold */
+.sold-text {
+    font-weight: 800;
+    color: #991b1b;
+}
+
+.notify-btn {
+    margin-top: 6px;
     padding: 8px 12px;
     border-radius: 12px;
-    text-decoration: none;
+    border: none;
     font-weight: 700;
-    font-size: 14px;
+    background: #111;
     color: #fff;
-    background: linear-gradient(135deg, #ff5722, #ff784e);
-    transition: 0.2s;
 }
-.join-btn:hover, .notify-btn:hover {
-    background: linear-gradient(135deg, #ff784e, #ff5722);
+
+/* Sold-out state */
+.sold-out {
+    opacity: .5;
+    pointer-events: none;
 }
-.sold-out { opacity: 0.5; pointer-events: none; }
+
 </style>
