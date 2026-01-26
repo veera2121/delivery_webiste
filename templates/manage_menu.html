@@ -1,0 +1,31 @@
+<h2>Manage Menu – {{ restaurant.name }}</h2>
+
+<!-- ADD MENU ITEM FORM -->
+<form method="POST" class="menu-form">
+  <input name="name" placeholder="Item name" required>
+
+  <input name="category" placeholder="Category (Pizza, Biryani)" required>
+
+  <input name="price" type="number" step="0.01" placeholder="Base price" required>
+
+  <input name="weight_prices" placeholder="0.5kg:350,1kg:650">
+
+  <button type="submit">➕ Add Item</button>
+</form>
+
+<hr>
+<h3>Existing Items</h3>
+
+{% for item in items %}
+  <div class="menu-item">
+    <strong>{{ item.name }}</strong>
+    <span>({{ item.category }})</span>
+    <span>₹{{ item.price }}</span>
+
+    {% if item.weight_prices %}
+      <div class="text-muted">Weights: {{ item.weight_prices }}</div>
+    {% endif %}
+  </div>
+{% else %}
+  <p>No items added yet.</p>
+{% endfor %}

@@ -10,7 +10,11 @@ db = SQLAlchemy()  # Keep this here, do NOT move to app.py
 from datetime import time
 from datetime import datetime, date, time
 import pytz
+from datetime import datetime, date, time
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import CheckConstraint
 
+db = SQLAlchemy()
 
 class Restaurant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -23,11 +27,11 @@ class Restaurant(db.Model):
     sheet_url = db.Column(db.String(500))
     location = db.Column(db.String(100))
 
-    # ✅ SINGLE SOURCE OF TRUTH
+    # ================= CATEGORY =================
     category_type = db.Column(
         db.String(20),
         nullable=False,
-        default="restaurant"   # VERY IMPORTANT
+        default="restaurant"
     )
 
     # ================= CARD DETAILS =================
@@ -47,11 +51,7 @@ class Restaurant(db.Model):
 
     # ================= STATUS =================
     start_date = db.Column(db.Date, nullable=True)
-
-    status = db.Column(
-        db.String(20),
-        default="coming_soon"
-    )
+    status = db.Column(db.String(20), default="coming_soon")
 
     # ================= DELIVERY =================
     delivery_charge = db.Column(db.Float, default=30, nullable=False)
@@ -67,20 +67,29 @@ class Restaurant(db.Model):
     longitude = db.Column(db.Float)
     delivery_radius_km = db.Column(db.Float, default=5)
 
+    # ================= 🔥 LIMITED DROP =================
+    is_limited_drop = db.Column(db.Boolean, default=False)
+    limited_item_name = db.Column(db.String(100))
+    limited_total_qty = db.Column(db.Integer, default=0)
+    limited_remaining_qty = db.Column(db.Integer, default=0)
+    limited_start_datetime = db.Column(db.DateTime)
+    limited_end_datetime = db.Column(db.DateTime)
+
     # ================= RELATIONSHIPS =================
     users = db.relationship("RestaurantUser", backref="restaurant", lazy=True)
     orders = db.relationship("Order", backref="restaurant", lazy=True)
     delivery_persons = db.relationship("DeliveryPerson", backref="restaurant", lazy=True)
     menu_items = db.relationship("MenuItem", backref="restaurant", lazy=True)
     offers = db.relationship("RestaurantOffer", backref="restaurant", lazy=True)
-    
-    # ================= CHECK CONSTRAINT =================
+
+    # ================= CONSTRAINT =================
     __table_args__ = (
         CheckConstraint(
             "category_type IN ('restaurant', 'bakery')",
             name="category_type_check"
         ),
     )
+
     # ================= ACTIVE OFFER =================
     @property
     def active_offer(self):
@@ -96,44 +105,71 @@ class Restaurant(db.Model):
             None
         )
 
-        # ================= SINGLE SOURCE OF TRUTH =================
-    from datetime import datetime
-    import pytz
+    # ================= ORDER LOGIC =================
     @property
     def can_accept_orders(self):
-        now = datetime.now().time()  # IST or local
+        now_time = datetime.now().time()
+        now_dt = datetime.now()
 
-        # 1️⃣ Manual OFF
+        # ❌ Sold out (LIMITED DROP)
+        if self.is_limited_drop and self.sold_out:
+            return False
+
+        # ❌ Manual OFF
         if not self.is_accepting_orders:
             return False
 
-        # 2️⃣ Suspended
+        # ❌ Suspended
         if self.status == "suspended":
             return False
 
-        # 3️⃣ Coming soon
+        # ❌ Coming soon
         if self.status == "coming_soon":
             if not self.start_date or date.today() < self.start_date:
                 return False
 
-        # 4️⃣ Check opening/closing
+        # 🕒 Limited drop time window
+        if self.is_limited_drop and self.limited_start_datetime and self.limited_end_datetime:
+            if not (self.limited_start_datetime <= now_dt <= self.limited_end_datetime):
+                return False
+
+        # 🕒 Normal opening hours
         if self.opening_time and self.closing_time:
             if self.opening_time < self.closing_time:
-                if not (self.opening_time <= now <= self.closing_time):
+                if not (self.opening_time <= now_time <= self.closing_time):
                     return False
             else:
-                # overnight
-                if not (now >= self.opening_time or now <= self.closing_time):
+                # Overnight
+                if not (now_time >= self.opening_time or now_time <= self.closing_time):
                     return False
 
-        # 5️⃣ Accept orders until (manual pause)
-        if self.accept_orders_until:
-            if now > self.accept_orders_until:
-                return False
+        # ⏸ Accept orders until
+        if self.accept_orders_until and now_time > self.accept_orders_until:
+            return False
 
         return True
 
+    # ================= LIMITED DROP HELPERS =================
+    @property
+    def sold_out(self):
+        return self.is_limited_drop and self.limited_remaining_qty <= 0
 
+    @property
+    def stock_percent(self):
+        if not self.is_limited_drop or self.limited_total_qty == 0:
+            return 100
+        return int((self.limited_remaining_qty / self.limited_total_qty) * 100)
+
+    @property
+    def stock_warning(self):
+        if not self.is_limited_drop:
+            return False
+        threshold = max(5, int(self.limited_total_qty * 0.1))
+        return self.limited_remaining_qty <= threshold
+
+    @property
+    def display_item(self):
+        return self.limited_item_name if self.is_limited_drop else self.popular_items
 
 # ----------------- Restaurant Admin User -----------------
 class RestaurantUser(db.Model):

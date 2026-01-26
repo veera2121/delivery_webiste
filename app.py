@@ -232,7 +232,6 @@ from datetime import datetime
 import pytz
 from flask import request, render_template, session
 from sqlalchemy import or_
-
 @app.route("/")
 def home():
     ist = pytz.timezone("Asia/Kolkata")
@@ -280,6 +279,7 @@ def home():
     user_location_set = user_lat is not None and user_lng is not None
 
     # 🔹 CALCULATE STATUS FOR EACH RESTAURANT
+    limited_restaurants = []  # NEW: for limited drop section
     for r in restaurants:
         r.deliverable = True
         r.distance = None
@@ -305,19 +305,21 @@ def home():
             if r.opening_time < r.closing_time:
                 r.is_open = r.opening_time <= now <= r.closing_time
             else:
-                # Overnight (eg: 6 PM – 2 AM)
                 r.is_open = now >= r.opening_time or now <= r.closing_time
         else:
-            # IMPORTANT: Do NOT hide bakery
             r.is_open = True
+
+        # 🔥 LIMITED DROP CHECK
+        if r.is_limited_drop and r.can_accept_orders:
+            limited_restaurants.append(r)
 
     # ⭐ FINAL SORT (BAKERY SAFE)
     restaurants.sort(
         key=lambda r: (
-            not r.deliverable,               # deliverable first
-            not r.is_open,                   # open first
-            not r.can_accept_orders,         # accepting orders first
-            r.category_type != "bakery",     # 🧁 bakery boost
+            not r.deliverable,
+            not r.is_open,
+            not r.can_accept_orders,
+            r.category_type != "bakery",
             r.status == "suspended",
             r.status == "coming_soon"
         )
@@ -352,6 +354,7 @@ def home():
     return render_template(
         "index.html",
         restaurants=restaurants,
+        limited_restaurants=limited_restaurants,  # NEW
         all_locations=all_locations,
         selected_location=selected_location,
         trending_items=trending_items,
@@ -2415,9 +2418,10 @@ def delete_offer(offer_id):
     flash("Offer deleted successfully", "success")
     return redirect(url_for("manage_offers", restaurant_id=restaurant_id))
 
+from datetime import datetime
+from flask import request, redirect, url_for, flash, render_template
 
-from datetime import datetime
-from datetime import datetime
+
 @app.route("/dashboard/restaurant/<int:restaurant_id>/edit", methods=["GET", "POST"])
 def edit_restaurant_card(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
@@ -2446,12 +2450,9 @@ def edit_restaurant_card(restaurant_id):
         # ================= DELIVERY =================
         restaurant.delivery_charge = float(request.form.get("delivery_charge") or 30)
         restaurant.free_delivery_limit = float(request.form.get("free_delivery_limit") or 499)
-
         restaurant.latitude = request.form.get("latitude") or None
         restaurant.longitude = request.form.get("longitude") or None
         restaurant.delivery_radius_km = float(request.form.get("delivery_radius_km") or 5)
-
-        # ================= FORCE DELIVERY =================
         restaurant.force_delivery_charge = request.form.get("force_delivery_charge") == "1"
 
         # ================= OPEN / CLOSE =================
@@ -2459,7 +2460,6 @@ def edit_restaurant_card(restaurant_id):
             datetime.strptime(request.form.get("opening_time"), "%H:%M").time()
             if request.form.get("opening_time") else None
         )
-
         restaurant.closing_time = (
             datetime.strptime(request.form.get("closing_time"), "%H:%M").time()
             if request.form.get("closing_time") else None
@@ -2467,7 +2467,6 @@ def edit_restaurant_card(restaurant_id):
 
         # ================= ACCEPT ORDERS =================
         restaurant.is_accepting_orders = request.form.get("is_accepting_orders") == "1"
-
         restaurant.accept_orders_until = (
             datetime.strptime(request.form.get("accept_orders_until"), "%H:%M").time()
             if request.form.get("accept_orders_until") else None
@@ -2483,14 +2482,41 @@ def edit_restaurant_card(restaurant_id):
         status = request.form.get("status")
         if status in ["active", "coming_soon", "suspended"]:
             restaurant.status = status
-
-        # 🔒 SAFETY RULE
         if restaurant.status == "coming_soon" and not restaurant.start_date:
             flash("Start date is required for Coming Soon", "danger")
             return redirect(request.url)
 
+        # ================= LIMITED DROP / FLASH SALE =================
+        restaurant.is_limited_drop = request.form.get("is_limited_drop") == "1"
+        restaurant.limited_item_name = request.form.get("limited_item_name") or None
+        restaurant.limited_total_qty = int(request.form.get("limited_total_qty") or 0)
+        restaurant.limited_remaining_qty = int(request.form.get("limited_remaining_qty") or 0)
+
+        # Limited drop start/end datetime
+        limited_start = request.form.get("limited_start_datetime")
+        limited_end = request.form.get("limited_end_datetime")
+
+        restaurant.limited_start_datetime = (
+            datetime.strptime(limited_start, "%Y-%m-%dT%H:%M") if limited_start else None
+        )
+        restaurant.limited_end_datetime = (
+            datetime.strptime(limited_end, "%Y-%m-%dT%H:%M") if limited_end else None
+        )
+
+        # 🔒 Validation: limited drop requires item name and qty
+        if restaurant.is_limited_drop:
+            if not restaurant.limited_item_name:
+                flash("Limited item name is required for Limited Drop", "danger")
+                return redirect(request.url)
+            if restaurant.limited_total_qty <= 0:
+                flash("Total quantity must be greater than 0 for Limited Drop", "danger")
+                return redirect(request.url)
+            if not restaurant.limited_start_datetime or not restaurant.limited_end_datetime:
+                flash("Start and End time required for Limited Drop", "danger")
+                return redirect(request.url)
+
         db.session.commit()
-        flash("Updated successfully!", "success")
+        flash("Restaurant updated successfully!", "success")
         return redirect(url_for("restaurant_dashboard", restaurant_id=restaurant.id))
 
     return render_template(
@@ -2848,34 +2874,40 @@ def notify_all():
   
 from datetime import datetime
 import pytz
+@property
+def can_accept_orders(self):
+    now_time = datetime.now().time()
+    now_dt = datetime.now()
 
-def update_can_accept_orders(restaurant):
-    ist = pytz.timezone("Asia/Kolkata")
-    now = datetime.now(ist).time()
+    # Sold out
+    if self.is_limited_drop and self.sold_out:
+        return False
 
-    if restaurant.status != "active":
-        restaurant.can_accept_orders = False
-        return
+    # Manual OFF or Suspended or Coming soon
+    if not self.is_accepting_orders or self.status == "suspended":
+        return False
+    if self.status == "coming_soon" and (not self.start_date or date.today() < self.start_date):
+        return False
 
-    if not restaurant.opening_time or not restaurant.closing_time:
-        restaurant.can_accept_orders = False
-        return
+    # Limited drop time check
+    if self.is_limited_drop and self.limited_start_datetime and self.limited_end_datetime:
+        if not (self.limited_start_datetime <= now_dt <= self.limited_end_datetime):
+            return False
 
-    if not (restaurant.opening_time <= now <= restaurant.closing_time):
-        restaurant.can_accept_orders = False
-        return
+    # Normal opening hours
+    if self.opening_time and self.closing_time:
+        if self.opening_time < self.closing_time:
+            if not (self.opening_time <= now_time <= self.closing_time):
+                return False
+        else:  # Overnight
+            if not (now_time >= self.opening_time or now_time <= self.closing_time):
+                return False
 
-    # Manual ON
-    if restaurant.is_accepting_orders:
-        restaurant.can_accept_orders = True
-        return
+    # Accept orders until
+    if self.accept_orders_until and now_time > self.accept_orders_until:
+        return False
 
-    # Auto resume after time
-    if restaurant.accept_orders_until and now >= restaurant.accept_orders_until:
-        restaurant.can_accept_orders = True
-        return
-
-    restaurant.can_accept_orders = False
+    return True
 
 # =======================
 # Feedback Form Route
@@ -3208,6 +3240,26 @@ def protect_bakery(mapper, connection, target):
         old = state.attrs.category_type.history.deleted
         if old and old[0] == "bakery":
             target.category_type = "bakery"
+@app.route("/restaurant/<int:restaurant_id>/menu", methods=["GET", "POST"])
+def manage_menu(restaurant_id):
+    restaurant = Restaurant.query.get_or_404(restaurant_id)
+
+    if request.method == "POST":
+        item = MenuItem(
+            restaurant_id=restaurant.id,
+            name=request.form["name"],
+            category=request.form["category"],
+            price=float(request.form["price"]),
+            weight_prices=request.form.get("weight_prices"),
+            availability="yes"
+        )
+        db.session.add(item)
+        db.session.commit()
+
+        flash("Item added successfully", "success")
+
+    items = MenuItem.query.filter_by(restaurant_id=restaurant.id).all()
+    return render_template("manage_menu.html", restaurant=restaurant, items=items)
 
 # ------------------ DB INIT ------------------
 

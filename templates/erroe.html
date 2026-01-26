@@ -1,591 +1,504 @@
- <!-- Start Delivery -->
-  <button class="deliver-btn"
-          id="start-btn-{{ order.id }}"
-          onclick="startDelivery({{ order.id }})">
-    🚀 Start Delivery
-  </button>
 
-  <form class="deliver-form"
-        method="POST"
-        action="{{ url_for('delivery_dashboard') }}"
-        data-order-id="{{ order.id }}"
-        style="display:none;">
-    <input type="hidden" name="order_id" value="{{ order.id }}">
-    <input type="text" name="otp" class="otp-input" placeholder="Enter OTP" required>
-    <select name="payment_type" required>
-      <option value="">Payment Type</option>
-      <option value="COD">COD</option>
-      <option value="Online">Online</option>
-    </select>
-    <button type="submit" class="deliver-btn">✔ Confirm Delivery</button>
-  </form>
+from models import Restaurant, Order, OrderItem
+from sqlalchemy import func, case
+@app.route("/admin/reports")
+def admin_reports():
+    restaurants = Restaurant.query.all()
 
-{% elif order.status == "Started" %}
+    restaurant_id = request.args.get("restaurant_id")
+    report_type = request.args.get("type", "day")   # day / week
+    from_date = request.args.get("from")
+    to_date = request.args.get("to")
 
-  <span style="color:blue;font-weight:bold">🚚 Delivery Started</span>
+    # =====================================================
+    # CASE STATEMENTS
+    # =====================================================
+    delivered_case = case((Order.status == "Delivered", 1), else_=0)
+    cancelled_case = case((Order.status == "Cancelled", 1), else_=0)
 
-  <!-- OTP Form -->
-  <form class="deliver-form"
-        method="POST"
-        action="{{ url_for('delivery_dashboard') }}"
-        data-order-id="{{ order.id }}">
-    <input type="hidden" name="order_id" value="{{ order.id }}">
-    <input type="text" name="otp" class="otp-input" placeholder="Enter OTP" required>
-    <select name="payment_type" required>
-      <option value="">Payment Type</option>
-      <option value="COD">COD</option>
-      <option value="Online">Online</option>
-    </select>
-    <button type="submit" class="deliver-btn">✔ Confirm Delivery</button>
-  </form>
+    items_case = case((Order.status == "Delivered", Order.items_total), else_=0)
+    delivery_case = case((Order.status == "Delivered", Order.delivery_charge), else_=0)
 
-  <!-- 👇 OUTSIDE FORM -->
-  <button type="button"
-          onclick="markNotDelivered({{ order.id }})"
-          style="margin-top:6px;background:#f44336;color:#fff;border:none;
-                 padding:6px 10px;border-radius:6px;cursor:pointer;">
-    Customer Not Available
-  </button>
-
-{% elif order.status == "Delivered" %}
-
-  <span style="color:green;font-weight:bold">✔ Delivered</span>
-
-{% elif order.status == "Cancelled" %}
-
-  <span style="color:red;font-weight:bold">❌ Cancelled</span>
-
-{% else %}
-
-  <span style="color:gray;font-style:italic;">{{ order.status }}</span>
-
-{% endif %}
-
-</td>
-
-
-<div class="restaurant-row">
-{% for r in restaurants %}
-
-    {# 🔹 OPEN STATUS #}
-    
-    {% set is_open = (
-        r.opening_time and r.closing_time and
-        r.opening_time <= now <= r.closing_time
-    ) %}
-
-       
-
-    <div class="card
-        {% if not r.deliverable or not is_open %} disabled {% endif %}"
-        {% if r.deliverable and is_open %}
-            onclick="window.location.href='/menu/{{ r.id }}'"
-        {% endif %}
-    >
-
-        {# 🚫 NOT DELIVERABLE #}
-        {% if not r.deliverable %}
-            <div class="info-box not-deliverable">
-                🚫 Not delivering to your location
-            </div>
-        {% endif %}
-          
-        {# ⏰ STATUS MESSAGE #}
-        {% if not r.opening_time or not r.closing_time %}
-            <div class="info-box closed-box">
-                ❌ Closed — Timing not updated
-            </div>
-
-        {% elif now < r.opening_time %}
-            <div class="info-box closed-box">
-                ⏳ Opens today at {{ r.opening_time.strftime("%I:%M %p") }}
-
-            </div>
-
-        {% elif now > r.closing_time %}
-            <div class="info-box closed-box">
-                🌙 Closed for today — Opens tomorrow at {{ r.opening_str }}
-            </div>
-
-        {% endif %}
-             
-        {# 🔥 OFFER #}
-        {% if r.active_offer and r.deliverable and is_open %}
-            <div class="info-box offer-box">
-                🔥 {{ r.active_offer.title }} — {{ r.active_offer.description }}
-            </div>
-        {% endif %}
-
-        <img src="https://source.unsplash.com/600x400/?restaurant,food,{{ r.name }}" alt="Restaurant">
-
-        <div class="content">
-            <div class="restaurant-name">{{ r.name }}</div>
-
-            {% if r.is_veg %}
-                <div class="veg-badge">Veg</div>
-            {% else %}
-                <div class="nonveg-badge">Non-Veg</div>
-            {% endif %}
-
-            <div class="details">
-                <div class="rating">{{ r.rating }} ⭐</div>
-                <div class="price">{{ r.price_level }}</div>
-                <div class="time">{{ r.delivery_time }}</div>
-            </div>
-
-            <div class="popular">🍽️ {{ r.popular_items }}</div>
-
-            {% if r.free_delivery_limit > 0 %}
-                <div class="free-delivery">
-                    🚚 Free Delivery on ₹{{ r.free_delivery_limit }}+
-                </div>
-            {% else %}
-                <div class="delivery-charge">
-                    🚚 Delivery ₹{{ r.delivery_charge }}
-                </div>
-            {% endif %}
-
-            <div class="open-close">
-                🕒
-                {% if r.opening_time and r.closing_time %}
-                    {{ r.opening_time.strftime("%I:%M %p") }}
-                    -
-                    {{ r.closing_time.strftime("%I:%M %p") }}
-                {% else %}
-                    Timing not available
-                {% endif %}
-            </div>
-
-
-            {# ✅ BUTTON #}
-            {% if r.deliverable and is_open %}
-                <a href="/menu/{{ r.id }}" class="view-btn">View Menu</a>
-            {% else %}
-                <span class="view-btn disabled-btn">Not Available</span>
-            {% endif %}
-        </div>
-
-    </div>
-
-
-{% endfor %}
-</div>
-{% if trending_items %}
-<section class="trending-section">
-    <h2>🔥 Trending Near You</h2>
-
-    <div class="trending-grid">
-        {% for item in trending_items %}
-        <div class="food-card">
-            <span class="badge">🔥 Trending</span>
-            <h4>{{ item.name }}</h4>
-            <p>₹{{ item.price }}</p>
-            <small>From {{ item.restaurant.name }}</small>
-        </div>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
-
-
-
-
-<script>
-function changeLocation(type) {
-    let select = type === 'desktop' ? document.getElementById('locationFilter') :
-                                     document.getElementById('mobileLocationSelect');
-    if (select.value) {
-        // Convert to URL slug
-        let slug = select.value.toLowerCase().replace(/ /g, '-');
-        // Navigate to city page
-        window.location.href = '/city/' + slug;
-    }
-}
-</script>
-
-# ---------------- DELIVERY ACCEPT FLOW ----------------
-    delivery_accept_status = db.Column(
-        db.String(20),
-        default="pending"
-    )  # pending / accepted / rejected
-
-    delivery_response_time = db.Column(db.DateTime, nullable=True)
-
-
-    # models.py
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
-from sqlalchemy.orm import relationship
-
-db = SQLAlchemy()  # Keep this here, do NOT move to app.py
-
-from datetime import time
-from datetime import datetime, date, time
-
-
-
-class Restaurant(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-
-    # ================= BASIC INFO =================
-    name = db.Column(db.String(200), nullable=False)
-    address = db.Column(db.String(500))
-    phone = db.Column(db.String(20))
-    email = db.Column(db.String(200))
-    sheet_url = db.Column(db.String(500))  # CSV URL
-    location = db.Column(db.String(100))   # city / area filter
-
-    # ================= CARD DETAILS =================
-    is_veg = db.Column(db.Boolean, default=True)
-    rating = db.Column(db.Float, default=4.0)
-    price_level = db.Column(db.String(10), default="₹₹")
-    delivery_time = db.Column(db.String(20), default="30–40 mins")
-    popular_items = db.Column(
-        db.String(255),
-        default="Biryani • Pizza • Rolls • Chinese"
+    coupon_discount_case = case((Order.status == "Delivered", Order.discount), else_=0)
+    restaurant_offer_case = case(
+        (Order.status == "Delivered", Order.restaurant_offer_discount),
+        else_=0
     )
 
-    # ================= LAUNCH & STATUS =================
-    start_date = db.Column(db.Date, nullable=True)
+    # =====================================================
+    # MAIN REPORT (PER RESTAURANT / DAY / WEEK)
+    # =====================================================
+    query = (
+        db.session.query(
+            Restaurant.name.label("restaurant"),
 
-    status = db.Column(
-        db.String(20),
-        default="coming_soon"
-        # active | coming_soon | suspended
-    )
+            func.count(func.distinct(Order.id)).label("total_orders"),
+            func.sum(delivered_case).label("delivered"),
+            func.sum(cancelled_case).label("cancelled"),
 
-    # ================= DELIVERY =================
-    delivery_charge = db.Column(db.Float, default=30, nullable=False)
-    free_delivery_limit = db.Column(db.Float, default=499, nullable=False)
+            func.coalesce(func.sum(items_case), 0).label("items_total"),
+            func.coalesce(func.sum(delivery_case), 0).label("delivery_total"),
+            func.coalesce(func.sum(coupon_discount_case), 0).label("coupon_discount_total"),
+            func.coalesce(func.sum(restaurant_offer_case), 0).label("restaurant_offer_total"),
 
-    # ================= OPEN / CLOSE TIME =================
-    opening_time = db.Column(db.Time, default=time(10, 0))   # 10:00 AM
-    closing_time = db.Column(db.Time, default=time(22, 0))   # 10:00 PM
-
-    # ================= DELIVERY LOCATION =================
-    latitude = db.Column(db.Float, nullable=True)
-    longitude = db.Column(db.Float, nullable=True)
-    delivery_radius_km = db.Column(db.Float, default=5, nullable=True)
-
-    # ================= RELATIONSHIPS =================
-    users = db.relationship("RestaurantUser", backref="restaurant", lazy=True)
-    orders = db.relationship("Order", backref="restaurant", lazy=True)
-    delivery_persons = db.relationship("DeliveryPerson", backref="restaurant", lazy=True)
-    menu_items = db.relationship("MenuItem", backref="restaurant", lazy=True)
-    offers = db.relationship("RestaurantOffer", backref="restaurant", lazy=True)
-
-    # ================= ACTIVE OFFER =================
-    @property
-    def active_offer(self):
-        now = datetime.utcnow()
-        return next(
             (
-                o for o in self.offers
-                if o.is_active
-                and o.start_date
-                and o.end_date
-                and o.start_date <= now <= o.end_date
-            ),
-            None
+                func.coalesce(func.sum(items_case), 0)
+                + func.coalesce(func.sum(delivery_case), 0)
+                - func.coalesce(func.sum(coupon_discount_case), 0)
+                - func.coalesce(func.sum(restaurant_offer_case), 0)
+            ).label("total_earning")
         )
+        .join(Order, Order.restaurant_id == Restaurant.id)
+        .group_by(Restaurant.name)
+    )
 
-    # ================= SINGLE SOURCE OF TRUTH =================
-    @property
-    def can_accept_orders(self):
-        # Suspended → never accept
-        if self.status == "suspended":
-            return False
+    # ---------- FILTERS ----------
+    if restaurant_id:
+        query = query.filter(Order.restaurant_id == restaurant_id)
 
-        # Coming soon → only after start_date
-        if self.status == "coming_soon":
-            if not self.start_date:
-                return False
-            return date.today() >= self.start_date
+    if from_date and to_date:
+        query = query.filter(Order.created_at.between(from_date, to_date))
 
-        # Active
-        return self.status == "active"
+    # ---------- GROUPING ----------
+    if report_type == "day":
+        query = query.add_columns(
+            func.date(Order.created_at).label("period")
+        ).group_by(Restaurant.name, func.date(Order.created_at))
+    else:
+        query = query.add_columns(
+            func.strftime('%Y-%W', Order.created_at).label("period")
+        ).group_by(Restaurant.name, func.strftime('%Y-%W', Order.created_at))
 
-# ----------------- Restaurant Admin User -----------------
-class RestaurantUser(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(200), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
-    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
+    query = query.order_by(func.date(Order.created_at).desc())
+    reports = query.all()
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+    # =====================================================
+    # PER-RESTAURANT SUMMARY (NO DATE GROUPING)
+    # =====================================================
+    summary_query = (
+        db.session.query(
+            Restaurant.name.label("restaurant"),
+
+            func.coalesce(func.sum(items_case), 0).label("items_total"),
+            func.coalesce(func.sum(delivery_case), 0).label("delivery_total"),
+            func.coalesce(func.sum(coupon_discount_case), 0).label("coupon_discount_total"),
+            func.coalesce(func.sum(restaurant_offer_case), 0).label("restaurant_offer_total"),
+
+            (
+                func.coalesce(func.sum(items_case), 0)
+                + func.coalesce(func.sum(delivery_case), 0)
+                - func.coalesce(func.sum(coupon_discount_case), 0)
+                - func.coalesce(func.sum(restaurant_offer_case), 0)
+            ).label("total_earning")
+        )
+        .join(Order, Order.restaurant_id == Restaurant.id)
+        .group_by(Restaurant.name)
+    )
+
+    if restaurant_id:
+        summary_query = summary_query.filter(Order.restaurant_id == restaurant_id)
+
+    if from_date and to_date:
+        summary_query = summary_query.filter(Order.created_at.between(from_date, to_date))
+
+    summary = summary_query.all()
+
+    # =====================================================
+    # 🌍 OVERALL PLATFORM SUMMARY (ALL RESTAURANTS)
+    # =====================================================
+    overall_query = db.session.query(
+        func.count(Order.id).label("total_orders"),
+        func.sum(delivered_case).label("delivered_orders"),
+        func.sum(cancelled_case).label("cancelled_orders"),
+
+        func.coalesce(func.sum(items_case), 0).label("items_total"),
+        func.coalesce(func.sum(delivery_case), 0).label("delivery_total"),
+        func.coalesce(func.sum(coupon_discount_case), 0).label("coupon_discount_total"),
+        func.coalesce(func.sum(restaurant_offer_case), 0).label("restaurant_offer_total"),
+
+        (
+            func.coalesce(func.sum(items_case), 0)
+            + func.coalesce(func.sum(delivery_case), 0)
+            - func.coalesce(func.sum(coupon_discount_case), 0)
+            - func.coalesce(func.sum(restaurant_offer_case), 0)
+        ).label("grand_total")
+    )
+
+    if restaurant_id:
+        overall_query = overall_query.filter(Order.restaurant_id == restaurant_id)
+
+    if from_date and to_date:
+        overall_query = overall_query.filter(Order.created_at.between(from_date, to_date))
+
+    overall = overall_query.first()
+
+    # =====================================================
+    # RENDER
+    # =====================================================
+    return render_template(
+        "admin_reports.html",
+        restaurants=restaurants,
+        reports=reports,
+        summary=summary,
+        overall=overall,
+        report_type=report_type,
+        selected_restaurant=restaurant_id,
+        from_date=from_date,
+        to_date=to_date
+    )
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restaurant Reports</title>
+
+<style>
+body {
+  font-family: "Inter", sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* ===== FILTER FORM ===== */
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+select, input, button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0056b3;
+}
+
+/* ===== TABLE ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+th, td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+th {
+  background: #007bff;
+  color: #fff;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* ===== BADGES ===== */
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #fff;
+}
+.badge-green { background: #28a745; }
+.badge-red { background: #dc3545; }
+.badge-blue { background: #17a2b8; }
+
+/* ===== MOBILE VIEW ===== */
+@media (max-width: 768px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+    width: 100%;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tr {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  td {
+    text-align: right;
+    position: relative;
+    padding-left: 50%;
+    border: none;
+    border-bottom: 1px solid #eee;
+  }
+
+  td::before {
+    position: absolute;
+    left: 10px;
+    top: 12px;
+    font-weight: bold;
+    text-align: left;
+  }
+
+  td:nth-of-type(1)::before { content: "Restaurant"; }
+  td:nth-of-type(2)::before { content: "Period"; }
+  td:nth-of-type(3)::before { content: "Total Orders"; }
+  td:nth-of-type(4)::before { content: "Delivered"; }
+  td:nth-of-type(5)::before { content: "Cancelled"; }
+  td:nth-of-type(6)::before { content: "Earnings"; }
+}
+</style>
+</head>
+
+<body>
+<div class="container">   
     
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+
+<h1>📊 Restaurant Reports</h1>
+<div style="margin-bottom:20px;">
+    <a href="{{ url_for('admin_dashboard') }}"
+       style="
+            display:inline-block;
+            padding:10px 18px;
+            background:#2c3e50;
+            color:white;
+            text-decoration:none;
+            border-radius:6px;
+            font-weight:bold;
+       ">
+        ← Back to Super Dashboard
+    </a>
+</div>
+
+<!-- ===== FILTER FORM ===== -->
+<form method="GET">
+  <select name="restaurant_id">
+
+    <option value="">All Restaurants</option>
+    {% for r in restaurants %}
+      <option value="{{ r.id }}"
+        {% if request.args.get('restaurant_id') == r.id|string %}selected{% endif %}>
+        {{ r.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <select name="type">
+    <option value="day" {% if report_type=='day' %}selected{% endif %}>Day Wise</option>
+    <option value="week" {% if report_type=='week' %}selected{% endif %}>Week Wise</option>
+  </select>
+
+  <input type="date" name="from" value="{{ request.args.get('from','') }}">
+  <input type="date" name="to" value="{{ request.args.get('to','') }}">
+
+  <button type="submit">Apply</button> 
+    <a href="{{ url_for('admin_reports') }}"
+     style="padding:6px 12px;
+            background:#e74c3c;
+            color:white;
+            border-radius:5px;
+            text-decoration:none;">
+     ❌ Clear
+  </a>
+<h2>🌍 Overall Platform Summary</h2>
+
+<table>
+<thead>
+<tr>
+  <th>Total Orders</th>
+  <th>Delivered</th>
+  <th>Cancelled</th>
+  <th>Items Total (₹)</th>
+  <th>Delivery Total (₹)</th>
+  <th>Coupon Discount (₹)</th>
+  <th>Restaurant Offer (₹)</th>
+  <th>Grand Total (₹)</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+  <td><strong>{{ overall.total_orders or 0 }}</strong></td>
+
+  <td>
+    <span class="badge badge-green">
+      {{ overall.delivered_orders or 0 }}
+    </span>
+  </td>
+
+  <td>
+    <span class="badge badge-red">
+      {{ overall.cancelled_orders or 0 }}
+    </span>
+  </td>
+
+  <td>₹{{ "%.2f"|format(overall.items_total or 0) }}</td>
+
+  <td>₹{{ "%.2f"|format(overall.delivery_total or 0) }}</td>
+
+  <td>-₹{{ "%.2f"|format(overall.coupon_discount_total or 0) }}</td>
+
+  <td>-₹{{ "%.2f"|format(overall.restaurant_offer_total or 0) }}</td>
+
+  <td>
+    <strong>
+      ₹{{ "%.2f"|format(
+        (overall.items_total or 0)
+        + (overall.delivery_total or 0)
+        - (overall.coupon_discount_total or 0)
+        - (overall.restaurant_offer_total or 0)
+      ) }}
+    </strong>
+  </td>
+</tr>
+</tbody>
+</table>
+
+</form> 
+
+<h2 style="margin-top:20px;">Restaurant Earnings Summary</h2>
+
+<table border="1" cellpadding="10" cellspacing="0" width="100%">
+<thead style="background:#f4f4f4;">
+<tr>
+    <th>Restaurant</th>
+    <th>Items Earning (₹)</th>
+    <th>Delivery Charges (₹)</th>
+    <th>Coupon Discount (₹)</th>
+    <th>R-Offer (₹)</th>
+    <th>Total Earning (₹)</th>
+</tr>
+</thead>
+
+<tbody>
+{% if summary %}
+{% for row in summary %}
+<tr>
+    <td>{{ row.restaurant }}</td>
+
+    <td>₹{{ "%.2f"|format(row.items_total or 0) }}</td>
+
+    <td>₹{{ "%.2f"|format(row.delivery_total or 0) }}</td>
+
+    <td>-₹{{ "%.2f"|format(row.coupon_discount_total or 0) }}</td>
+
+    <td>-₹{{ "%.2f"|format(row.restaurant_offer_total or 0) }}</td>
+
+    <td>
+        <strong>
+            ₹{{ "%.2f"|format(
+                (row.items_total or 0)
+                + (row.delivery_total or 0)
+                - (row.coupon_discount_total or 0)
+                - (row.restaurant_offer_total or 0)
+            ) }}
+        </strong>
+    </td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+    <td colspan="6" style="text-align:center;">No data available</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+
+<!-- ===== REPORT TABLE ===== -->
+<!-- ===== REPORT TABLE ===== -->
+
+<table border="1" cellpadding="10" cellspacing="0" width="100%">
+<thead style="background:#f4f4f4;">
+<tr>
+  <th>Restaurant</th>
+  <th>Date</th>
+  <th>Total Orders</th>
+  <th>Delivered</th>
+  <th>Cancelled</th>
+  <th>Items Total (₹)</th>
+  <th>Delivery Total (₹)</th>
+  <th>Coupon Discount (₹)</th>
+  <th>R-Offer (₹)</th>
+  <th>Grand Total (₹)</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in reports %}
+<tr>
+  <td><strong>{{ r.restaurant }}</strong></td>
+
+  <td>
+    {{ r.period.strftime('%d/%m/%Y') if r.period is not string else r.period }}
+  </td>
+
+  <td>{{ r.total_orders }}</td>
+
+  <td><span class="badge badge-green">{{ r.delivered }}</span></td>
+
+  <td><span class="badge badge-red">{{ r.cancelled }}</span></td>
+
+  <td>₹{{ "%.2f"|format(r.items_total or 0) }}</td>
+
+  <td>₹{{ "%.2f"|format(r.delivery_total or 0) }}</td>
+
+  <td>-₹{{ "%.2f"|format(r.coupon_discount_total or 0) }}</td>
+
+  <td>-₹{{ "%.2f"|format(r.restaurant_offer_total or 0) }}</td>
+
+  <td>
+    <strong>
+      ₹{{ "%.2f"|format(
+        (r.items_total or 0)
+        + (r.delivery_total or 0)
+        - (r.coupon_discount_total or 0)
+        - (r.restaurant_offer_total or 0)
+      ) }}
+    </strong>
+  </td>
+</tr>
+{% else %}
+<tr>
+  <td colspan="10" style="text-align:center;">No data found</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
 
 
-# ----------------- Menu Item -----------------
-class MenuItem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurant.id"))
-    name = db.Column(db.String(200), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-
-
-# ----------------- Delivery Person -----------------
-class DeliveryPerson(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200))
-    username = db.Column(db.String(100), unique=True)
-    password_hash = db.Column(db.String(200))
-    phone = db.Column(db.String(20), unique=True)
-    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
-     # ✅ ADD THESE
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-    last_seen = db.Column(db.DateTime)
-
-    is_active = db.Column(db.Boolean, default=True)
-    is_online = db.Column(db.Boolean, default=False)  # ✅ real-time status
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-    
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-class Order(db.Model):
-   
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-
-    order_id = db.Column(db.String(64), unique=True, index=True)
-
-    # ---------------- CUSTOMER DETAILS ----------------
-    customer_name = db.Column(db.String(200))
-    phone = db.Column(db.String(20))
-    alt_phone = db.Column(db.String(20))
-    email = db.Column(db.String(200))
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=True)
-
-    # ---------------- ORDER TOTALS ----------------
-    items_total = db.Column(db.Float, default=0.0)          # Sum of all items
-    discount = db.Column(db.Float, default=0.0)             # FIRST30 discount
-    delivery_charge = db.Column(db.Float, default=0.0)
-    final_total = db.Column(db.Float, default=0.0)          # items_total - discount + delivery_charge
-    coupon_used = db.Column(db.String(50), nullable=True)
-    device_fingerprint = db.Column(db.Text, nullable=True)
-
-    restaurant_offer_discount = db.Column(db.Float, default=0)
-    # ---------------- ORDER STATUS ----------------
-    status = db.Column(db.String(50), default="Pending")    # Pending / Completed / Cancelled
-    otp = db.Column(db.String(10))
-
-    # ---------------- PAYMENT & ORDER TYPE ----------------
-    payment_type = db.Column(db.String(20), nullable=True)  # COD / Online
-    order_type = db.Column(db.String(50))                   # Delivery / Pickup
-
-    # ---------------- ADDRESS ----------------
-    house_no = db.Column(db.String(255))
-    landmark = db.Column(db.String(255))
-    city = db.Column(db.String(100))
-    state = db.Column(db.String(100))
-    pincode = db.Column(db.String(20))
-    address_type = db.Column(db.String(50))                # Home / Office
-    delivery_note = db.Column(db.Text)                     # Optional instructions
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-    map_link = db.Column(db.String(300))
-    address = db.Column(db.String(500))
-    
-    # ---------------- RELATIONSHIPS ----------------
-    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
-    delivery_person_id = db.Column(db.Integer, db.ForeignKey('delivery_person.id'), nullable=True)
-    delivery_person = db.relationship("DeliveryPerson", backref="orders", lazy=True)
-    items = db.relationship("OrderItem", backref="order", lazy=True)
-
-    # ---------------- TIMESTAMPS ----------------
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    delivered_time = db.Column(db.DateTime, nullable=True)
-    not_delivered_time = db.Column(db.DateTime, nullable=True)
-
-    # ---------------- DELIVERY FEEDBACK ----------------
-    delay_reason = db.Column(db.String(300))
-    cancel_reason = db.Column(db.String(300))
-    not_delivered_reason = db.Column(db.String(300))
-    delivery_attempts = db.Column(db.Integer, default=0)
-    delivery_feedback = db.Column(db.String(300), nullable=True)
-    packing_photo = db.Column(db.String(300))
-    delivered_photo = db.Column(db.String(300))
-    distance_km = db.Column(db.Float)
-    profit_amount = db.Column(db.Float, default=0.0)
-    admin_notes = db.Column(db.String(300)) 
-    
-    
-  
- 
-    restaurant_offer_id = db.Column(
-        db.Integer,
-        db.ForeignKey('restaurant_offer.id'),
-        nullable=True
-    )
-
-    restaurant_offer_discount = db.Column(
-        db.Float,
-        default=0
-    )
-
-    
-    # ---------------- HELPER FUNCTION ----------------
-    def get_final_total(self):
-        items_total = self.items_total or 0
-        delivery = self.delivery_charge or 0
-        discount = self.discount or 0
-        return round(items_total + delivery - discount, 2)
-    
-# ----------------- Order Item -----------------
-class OrderItem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
-    item_name = db.Column(db.String(200))
-    quantity = db.Column(db.Integer)
-    price = db.Column(db.Float)
-
-    def item_total(self):
-        return round((self.price or 0) * (self.quantity or 0), 2)
-# ----------------- Category -----------------
-class Category(db.Model):
-    __tablename__ = "category"   # ⭐ VERY IMPORTANT
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False, unique=True)
-# ----------------- Food Item (For Trending & Analytics) ----------------- 
-class FoodItem(db.Model):
-    __tablename__ = "food_item"
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-
-    restaurant_id = db.Column(
-        db.Integer,
-        db.ForeignKey('restaurant.id'),
-        nullable=False
-    )
-
-    category_id = db.Column(
-        db.Integer,
-        db.ForeignKey('category.id'),
-        nullable=False
-    )
-
-    order_count = db.Column(db.Integer, default=0)
-
-    # ✅ ADD THESE
-    restaurant = db.relationship("Restaurant", backref="food_items")
-    category = db.relationship("Category", backref="food_items")
-# ----------------- Customer / App User -----------------
-class Customer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), default="User")  # optional default
-    mobile = db.Column(db.String(20), unique=True, nullable=False)
-    email = db.Column(db.String(200), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    # Relationship: a customer can have multiple orders
-    orders = db.relationship("Order", backref="customer", lazy=True)
-
-
-
-
-class OTP(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-
-    mobile = db.Column(db.String(15), nullable=False, index=True)
-
-    otp_hash = db.Column(db.String(255), nullable=False)
-
-    purpose = db.Column(db.String(30), nullable=False)  # login | order_receive
-
-    order_id = db.Column(db.Integer, nullable=True)
-
-    attempts = db.Column(db.Integer, default=0)
-
-    expires_at = db.Column(db.DateTime, nullable=False)
-
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-
-class CouponUsage(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    coupon_code = db.Column(db.String(50))
-    phone = db.Column(db.String(20))
-    device_fingerprint = db.Column(db.Text, nullable=True)
-
-    order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-class RestaurantOffer(db.Model):
-    __tablename__ = "restaurant_offer"
-
-    id = db.Column(db.Integer, primary_key=True)
-    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurant.id"))
-    title = db.Column(db.String(200))
-    description = db.Column(db.String(300))
-    offer_type = db.Column(db.String(50))
-    offer_value = db.Column(db.Float)
-    min_order_amount = db.Column(db.Float, default=0.0)
-    start_date = db.Column(db.DateTime)
-    end_date = db.Column(db.DateTime)
-    is_active = db.Column(db.Boolean, default=True)
-class PlatformOffer(db.Model):
-    __tablename__ = "platform_offer"
-
-    id = db.Column(db.Integer, primary_key=True)
-    coupon_code = db.Column(db.String(50), unique=True)
-
-    offer_type = db.Column(db.String(20))   # percent / flat
-    offer_value = db.Column(db.Float)       # 30 = 30%
-
-    min_order_amount = db.Column(db.Float, default=0)
-    max_discount = db.Column(db.Float)      # eg: 60
-
-    free_delivery = db.Column(db.Boolean, default=False)  # ✅ NEW
-
-    is_first_order = db.Column(db.Boolean, default=False)
-    is_active = db.Column(db.Boolean, default=True)
-
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-         # ✅ ADD THIS
-    
-class OrderAssignment(db.Model):
-    __tablename__ = "order_assignment"
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    order_id = db.Column(
-        db.Integer,
-        db.ForeignKey("order.id"),
-        nullable=False
-    )
-
-    delivery_person_id = db.Column(
-        db.Integer,
-        db.ForeignKey("delivery_person.id"),
-        nullable=False
-    )
-
-    status = db.Column(
-        db.String(20),
-        default="assigned"
-    )
-    # assigned | accepted | rejected | expired
-
-    assigned_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow
-    )
-
-    responded_at = db.Column(
-        db.DateTime,
-        nullable=True
-    )
-
-    order = db.relationship("Order", backref="assignments")
-    delivery_person = db.relationship("DeliveryPerson", backref="assignments")
+</div>
+</body>
+</html>

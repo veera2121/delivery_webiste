@@ -1,0 +1,119 @@
+{# ================= LIMITED RESTAURANT CARD ================= #}
+<div class="limited-card {% if r.sold_out %}sold-out{% endif %}">
+
+    {# 🔥 Flash Badge #}
+    {% if r.is_limited_drop and not r.sold_out %}
+    <div class="hype-badge">🔥 Limited Drop</div>
+    {% endif %}
+
+    {# 🍽 Restaurant Name #}
+    <h3 class="restaurant-name">{{ r.name }}</h3>
+
+    {# 🍛 Popular Item(s) #}
+    <p class="items">🍽️ {{ r.display_item }}</p>
+
+    {# ⚠ Stock & Countdown #} 
+    {% if r.is_limited_drop %}
+        {% if not r.sold_out %}
+            <div class="stock">⚠️ Only {{ r.limited_remaining_qty }} left!</div>
+
+            {% if r.limited_end_datetime %}
+                {# JS countdown using full datetime #}
+                <div class="countdown" data-end="{{ r.limited_end_datetime.isoformat() }}"></div>
+            {% endif %}
+
+            <a href="/menu/{{ r.id }}" class="join-btn">Join Queue</a>
+        {% else %}
+            <div class="sold-text">❌ Sold Out</div>
+            <button class="notify-btn">Notify Me</button>
+        {% endif %}
+    {% endif %}
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const countdownElems = document.querySelectorAll(".limited-card .countdown");
+
+    countdownElems.forEach(elem => {
+        const endTimeStr = elem.dataset.end;
+        const endTime = new Date(endTimeStr);
+
+        function updateCountdown() {
+            const now = new Date();
+            let diff = endTime - now;
+
+            if(diff <= 0) {
+                elem.innerText = "⏰ Time's up!";
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            diff -= hours * 1000 * 60 * 60;
+            const minutes = Math.floor(diff / (1000 * 60));
+            diff -= minutes * 1000 * 60;
+            const seconds = Math.floor(diff / 1000);
+
+            // ⚠ Add urgency styling if < 10 min left
+            if(hours === 0 && minutes < 10) {
+                elem.style.color = "#dc2626"; // red
+                elem.style.fontWeight = "700";
+            }
+
+            elem.innerText = `⏳ ${hours}h ${minutes}m ${seconds}s left`;
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    });
+});
+</script>
+
+<style>
+.limited-card {
+    background: #fff3e0;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    position: relative;
+    transition: transform 0.2s;
+}
+.limited-card:hover { transform: translateY(-4px); }
+
+.hype-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #ff3d00;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 999px;
+}
+
+.restaurant-name { font-size: 18px; font-weight: 700; margin: 8px 0; }
+.items { font-size: 14px; color: #555; margin-bottom: 10px; }
+
+.stock { font-size: 14px; font-weight: 600; color: #d97706; margin-bottom: 6px; }
+.sold-text { font-size: 14px; font-weight: 600; color: #c92a2a; margin-bottom: 6px; }
+
+.countdown { font-size: 13px; color: #1d4ed8; margin-bottom: 8px; font-weight: 600; }
+
+.join-btn, .notify-btn {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    background: linear-gradient(135deg, #ff5722, #ff784e);
+    transition: 0.2s;
+}
+.join-btn:hover, .notify-btn:hover {
+    background: linear-gradient(135deg, #ff784e, #ff5722);
+}
+.sold-out { opacity: 0.5; pointer-events: none; }
+</style>

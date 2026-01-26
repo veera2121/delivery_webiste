@@ -475,6 +475,23 @@ body {
   height: 100%;
   z-index: 9999;
 } 
+.limited-badge {
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 8px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
 
 
 
@@ -547,6 +564,10 @@ body {
                 <div class="menu-card-accent">
                     <div class="card-left {{ food_type }}"></div> <!-- Accent border -->
                     <div class="card-body-accent">
+                        {% if item.limited is defined and item.limited|string|lower == 'yes' %}
+                            <span class="limited-badge">🔥 Limited</span>
+                        {% endif %}
+
                         <div class="item-header">
                             <span class="food-dot {{ food_type }}"></span>
                             <span class="item-name">{{ item['name'] }}</span>
