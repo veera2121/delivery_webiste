@@ -2073,7 +2073,8 @@ from sqlalchemy import func, case
 
 from models import Restaurant, Order, OrderItem
 from sqlalchemy import func, case
-
+from models import Restaurant, Order, OrderItem
+from sqlalchemy import func, case
 @app.route("/admin/reports")
 def admin_reports():
     restaurants = Restaurant.query.all()
@@ -2083,7 +2084,9 @@ def admin_reports():
     from_date = request.args.get("from")
     to_date = request.args.get("to")
 
-    # ---------- CASE STATEMENTS (SQLAlchemy 2.x compatible) ----------
+    # =====================================================
+    # CASE STATEMENTS
+    # =====================================================
     delivered_case = case((Order.status == "Delivered", 1), else_=0)
     cancelled_case = case((Order.status == "Cancelled", 1), else_=0)
 
@@ -2091,24 +2094,32 @@ def admin_reports():
     delivery_case = case((Order.status == "Delivered", Order.delivery_charge), else_=0)
 
     coupon_discount_case = case((Order.status == "Delivered", Order.discount), else_=0)
-    restaurant_offer_case = case((Order.status == "Delivered", Order.restaurant_offer_discount), else_=0)
+    restaurant_offer_case = case(
+        (Order.status == "Delivered", Order.restaurant_offer_discount),
+        else_=0
+    )
 
-    # ---------- MAIN REPORT QUERY ----------
+    # =====================================================
+    # MAIN REPORT (PER RESTAURANT / DAY / WEEK)
+    # =====================================================
     query = (
         db.session.query(
             Restaurant.name.label("restaurant"),
+
             func.count(func.distinct(Order.id)).label("total_orders"),
             func.sum(delivered_case).label("delivered"),
             func.sum(cancelled_case).label("cancelled"),
+
             func.coalesce(func.sum(items_case), 0).label("items_total"),
             func.coalesce(func.sum(delivery_case), 0).label("delivery_total"),
             func.coalesce(func.sum(coupon_discount_case), 0).label("coupon_discount_total"),
             func.coalesce(func.sum(restaurant_offer_case), 0).label("restaurant_offer_total"),
+
             (
-                func.coalesce(func.sum(items_case), 0) +
-                func.coalesce(func.sum(delivery_case), 0) -
-                func.coalesce(func.sum(coupon_discount_case), 0) -
-                func.coalesce(func.sum(restaurant_offer_case), 0)
+                func.coalesce(func.sum(items_case), 0)
+                + func.coalesce(func.sum(delivery_case), 0)
+                - func.coalesce(func.sum(coupon_discount_case), 0)
+                - func.coalesce(func.sum(restaurant_offer_case), 0)
             ).label("total_earning")
         )
         .join(Order, Order.restaurant_id == Restaurant.id)
@@ -2118,36 +2129,40 @@ def admin_reports():
     # ---------- FILTERS ----------
     if restaurant_id:
         query = query.filter(Order.restaurant_id == restaurant_id)
+
     if from_date and to_date:
         query = query.filter(Order.created_at.between(from_date, to_date))
 
     # ---------- GROUPING ----------
     if report_type == "day":
-        query = query.add_columns(func.date(Order.created_at).label("period")).group_by(
-            Restaurant.name, func.date(Order.created_at)
-        )
+        query = query.add_columns(
+            func.date(Order.created_at).label("period")
+        ).group_by(Restaurant.name, func.date(Order.created_at))
     else:
-        query = query.add_columns(func.strftime('%Y-%W', Order.created_at).label("period")).group_by(
-            Restaurant.name, func.strftime('%Y-%W', Order.created_at)
-        )
+        query = query.add_columns(
+            func.strftime('%Y-%W', Order.created_at).label("period")
+        ).group_by(Restaurant.name, func.strftime('%Y-%W', Order.created_at))
 
-    # ---------- ORDER ----------
-    query = query.order_by(func.date(Order.created_at).desc(), Restaurant.name.asc())
+    query = query.order_by(func.date(Order.created_at).desc())
     reports = query.all()
 
-    # ---------- SUMMARY QUERY ----------
+    # =====================================================
+    # PER-RESTAURANT SUMMARY (NO DATE GROUPING)
+    # =====================================================
     summary_query = (
         db.session.query(
             Restaurant.name.label("restaurant"),
-            func.coalesce(func.sum(case((Order.status == "Delivered", Order.items_total), else_=0)), 0).label("items_total"),
-            func.coalesce(func.sum(case((Order.status == "Delivered", Order.delivery_charge), else_=0)), 0).label("delivery_total"),
-            func.coalesce(func.sum(case((Order.status == "Delivered", Order.discount), else_=0)), 0).label("coupon_discount_total"),
-            func.coalesce(func.sum(case((Order.status == "Delivered", Order.restaurant_offer_discount), else_=0)), 0).label("restaurant_offer_total"),
+
+            func.coalesce(func.sum(items_case), 0).label("items_total"),
+            func.coalesce(func.sum(delivery_case), 0).label("delivery_total"),
+            func.coalesce(func.sum(coupon_discount_case), 0).label("coupon_discount_total"),
+            func.coalesce(func.sum(restaurant_offer_case), 0).label("restaurant_offer_total"),
+
             (
-                func.coalesce(func.sum(case((Order.status == "Delivered", Order.items_total), else_=0)), 0) +
-                func.coalesce(func.sum(case((Order.status == "Delivered", Order.delivery_charge), else_=0)), 0) -
-                func.coalesce(func.sum(case((Order.status == "Delivered", Order.discount), else_=0)), 0) -
-                func.coalesce(func.sum(case((Order.status == "Delivered", Order.restaurant_offer_discount), else_=0)), 0)
+                func.coalesce(func.sum(items_case), 0)
+                + func.coalesce(func.sum(delivery_case), 0)
+                - func.coalesce(func.sum(coupon_discount_case), 0)
+                - func.coalesce(func.sum(restaurant_offer_case), 0)
             ).label("total_earning")
         )
         .join(Order, Order.restaurant_id == Restaurant.id)
@@ -2156,22 +2171,55 @@ def admin_reports():
 
     if restaurant_id:
         summary_query = summary_query.filter(Order.restaurant_id == restaurant_id)
+
     if from_date and to_date:
         summary_query = summary_query.filter(Order.created_at.between(from_date, to_date))
 
     summary = summary_query.all()
 
+    # =====================================================
+    # 🌍 OVERALL PLATFORM SUMMARY (ALL RESTAURANTS)
+    # =====================================================
+    overall_query = db.session.query(
+        func.count(Order.id).label("total_orders"),
+        func.sum(delivered_case).label("delivered_orders"),
+        func.sum(cancelled_case).label("cancelled_orders"),
+
+        func.coalesce(func.sum(items_case), 0).label("items_total"),
+        func.coalesce(func.sum(delivery_case), 0).label("delivery_total"),
+        func.coalesce(func.sum(coupon_discount_case), 0).label("coupon_discount_total"),
+        func.coalesce(func.sum(restaurant_offer_case), 0).label("restaurant_offer_total"),
+
+        (
+            func.coalesce(func.sum(items_case), 0)
+            + func.coalesce(func.sum(delivery_case), 0)
+            - func.coalesce(func.sum(coupon_discount_case), 0)
+            - func.coalesce(func.sum(restaurant_offer_case), 0)
+        ).label("grand_total")
+    )
+
+    if restaurant_id:
+        overall_query = overall_query.filter(Order.restaurant_id == restaurant_id)
+
+    if from_date and to_date:
+        overall_query = overall_query.filter(Order.created_at.between(from_date, to_date))
+
+    overall = overall_query.first()
+
+    # =====================================================
+    # RENDER
+    # =====================================================
     return render_template(
         "admin_reports.html",
         restaurants=restaurants,
         reports=reports,
         summary=summary,
+        overall=overall,
         report_type=report_type,
         selected_restaurant=restaurant_id,
         from_date=from_date,
         to_date=to_date
     )
-
 @app.route("/delivery/not-delivered/<int:order_id>", methods=["POST"])
 def mark_not_delivered(order_id):
     order = Order.query.get(order_id)

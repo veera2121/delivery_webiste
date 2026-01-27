@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -185,6 +186,59 @@ tr:last-child td {
             text-decoration:none;">
      ❌ Clear
   </a>
+<h2>🌍 Overall Platform Summary</h2>
+
+<table>
+<thead>
+<tr>
+  <th>Total Orders</th>
+  <th>Delivered</th>
+  <th>Cancelled</th>
+  <th>Items Total (₹)</th>
+  <th>Delivery Total (₹)</th>
+  <th>Coupon Discount (₹)</th>
+  <th>Restaurant Offer (₹)</th>
+  <th>Grand Total (₹)</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+  <td><strong>{{ overall.total_orders or 0 }}</strong></td>
+
+  <td>
+    <span class="badge badge-green">
+      {{ overall.delivered_orders or 0 }}
+    </span>
+  </td>
+
+  <td>
+    <span class="badge badge-red">
+      {{ overall.cancelled_orders or 0 }}
+    </span>
+  </td>
+
+  <td>₹{{ "%.2f"|format(overall.items_total or 0) }}</td>
+
+  <td>₹{{ "%.2f"|format(overall.delivery_total or 0) }}</td>
+
+  <td>-₹{{ "%.2f"|format(overall.coupon_discount_total or 0) }}</td>
+
+  <td>-₹{{ "%.2f"|format(overall.restaurant_offer_total or 0) }}</td>
+
+  <td>
+    <strong>
+      ₹{{ "%.2f"|format(
+        (overall.items_total or 0)
+        + (overall.delivery_total or 0)
+        - (overall.coupon_discount_total or 0)
+        - (overall.restaurant_offer_total or 0)
+      ) }}
+    </strong>
+  </td>
+</tr>
+</tbody>
+</table>
 
 </form> 
 
