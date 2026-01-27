@@ -955,10 +955,11 @@ body {
 {% block content %} 
 
 <div class="page">
-    <div class="cart-header">
+    <div class="cart-header" id="cart-header">
         <h2 id="restaurant-name" class="cart-restaurant-name"></h2>
         <p class="cart-subtitle">Review your order</p>
-    </div>  
+    </div>
+</div>
 
     <div class="conv-urgency"> 
       Hungry? Complete your order in <b>10 seconds 🍽️</b>
@@ -1000,6 +1001,15 @@ body {
 
     </div>
 </div>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="alert alert-danger">
+      {% for msg in messages %}
+        <p>{{ msg }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 
 <!-- MAP -->
 <div id="map-box">
@@ -1138,9 +1148,10 @@ body {
 🧾 Order value: ₹<span id="mini-total">0</span>
 </div>
 
-<button type="submit" class="conv-cta">
-🍔 Confirm Order</span>
+<button type="submit" class="conv-cta" onclick="lockOrderBtn(this)">
+  🍔 Confirm Order
 </button>
+
 
     </form>
 </div>
@@ -1303,10 +1314,36 @@ function updateLocationInputs(lat, lng) {
 
     fetchDistanceDelivery(itemsTotal);
 }
-document.querySelector("form").addEventListener("submit", function () {
-    console.log("FORM SUBMIT LAT:", document.getElementById("latitude").value);
-    console.log("FORM SUBMIT LNG:", document.getElementById("longitude").value);
+
+let formSubmitting = false;
+
+document.querySelector("form").addEventListener("submit", function (e) {
+  if (formSubmitting) {
+    e.preventDefault(); // 🚫 block second submit
+    return false;
+  }
+
+  formSubmitting = true;
+
+  console.log(
+    "FORM SUBMIT LAT:",
+    document.getElementById("latitude").value
+  );
+  console.log(
+    "FORM SUBMIT LNG:",
+    document.getElementById("longitude").value
+  );
+
+  // 🔒 Lock button
+  const btn = this.querySelector(".conv-cta");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = "⏳ Placing Order...";
+    btn.style.opacity = "0.6";
+  }
 });
+
+
 
 /* ============================================================
    TOTALS
@@ -1587,18 +1624,20 @@ renderCart();
 </script>
 
 <script>
-  window.onload = function () {
-    if (window.location.hash === "#map-box") {
-      document.getElementById("map-box")
-        ?.scrollIntoView({ behavior: "smooth", block: "top" });
-    }
-  };
-</script>
-<script>
+window.addEventListener("load", function () {
   if (window.location.hash === "#map-box") {
-    document.getElementById("map-box")?.classList.add("error");
+
+    // 👇 Scroll to HEADER instead of map
+    document.getElementById("cart-header")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    // Optional: highlight map for clarity
+    document.getElementById("map-box")
+      ?.classList.add("error");
   }
+});
 </script>
+
 <script>
 function syncTotals() {
     const miniTotal = document.getElementById("mini-total").innerText;
@@ -1683,17 +1722,27 @@ function handleLocationClick() {
 }
 </script>
 
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <div class="alert alert-danger">
-      {% for msg in messages %}
-        <p>{{ msg }}</p>
-      {% endfor %}
-    </div>
-  {% endif %}
-{% endwith %}
 
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const flashes = document.querySelectorAll(".flash-message");
+
+  flashes.forEach(flash => {
+    // ⏱️ SHOW TIME (change this)
+    const SHOW_TIME = 8000; // 6 seconds
+
+    setTimeout(() => {
+      flash.style.opacity = "0";
+      flash.style.transform = "translateY(-6px)";
+
+      setTimeout(() => {
+        flash.remove();
+      }, 600);
+    }, SHOW_TIME);
+  });
+});
+</script>
 
 
 
