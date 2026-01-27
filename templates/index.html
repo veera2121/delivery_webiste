@@ -2095,9 +2095,11 @@ body {
 
 <div class="mobile-slider">
   <div class="slider-track">
-    <img src="{{ url_for('static', filename='images/image1.jpg') }}" alt="">
+    <img src="{{ url_for('static', filename='images/image1.jpg') }}" alt=""> 
+    <img src="{{ url_for('static', filename='images/image4.jpg') }}" alt="">
     <img src="{{ url_for('static', filename='images/image2.jpg') }}" alt="">
-    <img src="{{ url_for('static', filename='images/image3.jpg') }}" alt="">
+    <img src="{{ url_for('static', filename='images/image3.jpg') }}" alt=""> 
+
   </div>
 </div>
 
@@ -2728,12 +2730,20 @@ document.addEventListener("DOMContentLoaded", function () {
   const slides = track.querySelectorAll("img");
   let index = 0;
 
+  // 🔥 Set correct width
+  track.style.width = `${slides.length * 100}%`;
+
+  slides.forEach(slide => {
+    slide.style.width = `${100 / slides.length}%`;
+  });
+
   slides[index].classList.add("active");
 
   setInterval(() => {
     slides[index].classList.remove("active");
     index = (index + 1) % slides.length;
-    track.style.transform = `translateX(-${index * 100}%)`;
+
+    track.style.transform = `translateX(-${index * (100 / slides.length)}%)`;
     slides[index].classList.add("active");
   }, 3500);
 });
