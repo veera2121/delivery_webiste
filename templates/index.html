@@ -2010,6 +2010,79 @@ body {
   }
 }
 
+.festival-banner {
+  width: 100%;
+  background: linear-gradient(135deg, #ff512f, #dd2476);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  animation: slideDown 0.8s ease;
+}
+
+.banner-content {
+  text-align: center;
+  color: #fff;
+  max-width: 900px;
+}
+
+.banner-content h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 15px;
+  letter-spacing: 1px;
+}
+
+.banner-content p {
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.resume-date {
+  background: rgba(255,255,255,0.2);
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 20px;
+  font-weight: bold;
+  margin: 15px 0;
+}
+
+.resume-date span {
+  color: #ffe600;
+}
+
+.thanks {
+  font-size: 16px;
+  opacity: 0.95;
+}
+
+/* Animation */
+@keyframes slideDown {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  .banner-content h1 {
+    font-size: 24px;
+  }
+  .banner-content p {
+    font-size: 16px;
+  }
+  .resume-date {
+    font-size: 16px;
+  }
+}
 
 
 </style>
@@ -2072,6 +2145,19 @@ body {
 <div class="search-box mobile-search" id="mobileSearch">
     <input type="text" id="mobileSearchInput" placeholder="Search restaurants...">
 </div>  
+<div class="festival-banner">
+  <div class="banner-content">
+    <h1>🚧 TEMPORARY ORDER PAUSE 🚧</h1>
+    <p>
+      Due to <strong>Antervedi Festival & heavy traffic</strong>,<br>
+      we are temporarily not accepting orders.
+    </p>
+    <div class="resume-date">
+      🗓 Orders will resume on <span>30-01-2026</span>
+    </div>
+    <p class="thanks">🙏 Thank you for your patience & support</p>
+  </div>
+</div>
 
 <!-- MOBILE LOCATION FILTER -->
 <div class="hero-row full">
