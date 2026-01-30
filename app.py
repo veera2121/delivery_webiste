@@ -908,7 +908,15 @@ def place_order():
     print("🚚 FINAL DELIVERY:", new_order.delivery_charge)
 
     flash(f"Order placed successfully! Order ID: {new_order.order_id}", "success")
-    return redirect(url_for("myorders", restaurant_id=restaurant_id))
+    return redirect(url_for("order_placed", order_id=new_order.order_id))
+
+@app.route("/order-placed/<order_id>")
+def order_placed(order_id):
+    return render_template(
+        "order_placed.html",
+        order_id=order_id
+    )
+
 
 # ------------------ SUPER ADMIN ------------------
 
