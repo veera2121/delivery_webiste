@@ -1721,7 +1721,6 @@ def edit_restaurant(restaurant_id):
 
 
 
-
 @app.route("/delivery/history")
 def delivery_history():
     delivery_person_id = session.get("delivery_person_id")
@@ -1731,13 +1730,13 @@ def delivery_history():
     today = datetime.utcnow().date()
     yesterday = today - timedelta(days=1)
 
-    # ✅ ONLY completed orders (Delivered + Not Delivered)
+    # ✅ ONLY completed orders
     history = Order.query.filter(
-    Order.delivery_person_id == delivery_person_id,
-    Order.status.in_(["Delivered", "Customer Not Available"])
+        Order.delivery_person_id == delivery_person_id,
+        Order.status.in_(["Delivered", "Customer Not Available"])
     ).order_by(Order.updated_at.desc()).all()
 
-    # Classify orders by day
+    # ✅ Classify orders by day
     for o in history:
         if o.created_at.date() == today:
             o.day_category = "Today"
@@ -1754,14 +1753,24 @@ def delivery_history():
             if o.day_category == day and o.status == "Delivered"
         ]
 
+        cod_amount = sum(
+            o.get_final_total() for o in day_orders if o.payment_type == "COD"
+        )
+
+        online_amount = sum(
+            o.get_final_total() for o in day_orders if o.payment_type == "Online"
+        )
+
+        delivery_charge_total = sum(
+            o.delivery_charge or 0 for o in day_orders
+        )
+
         totals[day] = {
             "count": len(day_orders),
-            "cod_amount": sum(
-                o.get_final_total() for o in day_orders if o.payment_type == "COD"
-            ),
-            "online_amount": sum(
-                o.get_final_total() for o in day_orders if o.payment_type == "Online"
-            ),
+            "cod_amount": cod_amount,
+            "online_amount": online_amount,
+            "delivery_charge": delivery_charge_total,
+            "grand_total": cod_amount + online_amount + delivery_charge_total
         }
 
     return render_template(
@@ -1769,7 +1778,6 @@ def delivery_history():
         history=history,
         totals=totals
     )
-
 
 
 @app.route("/delivery/mark-delivered", methods=["POST"])

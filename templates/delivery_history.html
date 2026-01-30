@@ -119,35 +119,42 @@ ul li{ font-size:13px; }
   </select>
   <button onclick="clearFilters()">Clear</button>
 </div>
-
 <!-- STATS CARDS -->
 <div class="stats-scroll">
+
+  <!-- TODAY -->
   <div class="stats-card today">
     <h3>Today</h3>
     <p><strong>Orders:</strong> {{ totals['Today'].count }}</p>
     <p><strong>COD:</strong> ₹{{ totals['Today'].cod_amount }}</p>
     <p><strong>Online:</strong> ₹{{ totals['Today'].online_amount }}</p>
+    <p><strong>Delivery Charges:</strong> ₹{{ totals['Today'].delivery_charge }}</p>
     <hr>
-    <p><strong>Total:</strong> ₹{{ totals['Today'].cod_amount + totals['Today'].online_amount }}</p>
+    <p><strong>Grand Total:</strong> ₹{{ totals['Today'].grand_total }}</p>
   </div>
 
+  <!-- YESTERDAY -->
   <div class="stats-card yesterday">
     <h3>Yesterday</h3>
     <p><strong>Orders:</strong> {{ totals['Yesterday'].count }}</p>
     <p><strong>COD:</strong> ₹{{ totals['Yesterday'].cod_amount }}</p>
     <p><strong>Online:</strong> ₹{{ totals['Yesterday'].online_amount }}</p>
+    <p><strong>Delivery Charges:</strong> ₹{{ totals['Yesterday'].delivery_charge }}</p>
     <hr>
-    <p><strong>Total:</strong> ₹{{ totals['Yesterday'].cod_amount + totals['Yesterday'].online_amount }}</p>
+    <p><strong>Grand Total:</strong> ₹{{ totals['Yesterday'].grand_total }}</p>
   </div>
 
+  <!-- OLDER -->
   <div class="stats-card older">
     <h3>Older</h3>
     <p><strong>Orders:</strong> {{ totals['Older'].count }}</p>
     <p><strong>COD:</strong> ₹{{ totals['Older'].cod_amount }}</p>
     <p><strong>Online:</strong> ₹{{ totals['Older'].online_amount }}</p>
+    <p><strong>Delivery Charges:</strong> ₹{{ totals['Older'].delivery_charge }}</p>
     <hr>
-    <p><strong>Total:</strong> ₹{{ totals['Older'].cod_amount + totals['Older'].online_amount }}</p>
+    <p><strong>Grand Total:</strong> ₹{{ totals['Older'].grand_total }}</p>
   </div>
+
 </div>
 
 <!-- ORDER CARDS -->
