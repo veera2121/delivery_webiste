@@ -121,6 +121,16 @@ ul li{ font-size:13px; }
 </div>
 <!-- STATS CARDS -->
 <div class="stats-scroll">
+<!-- ALL TOTALS CARD -->
+<div class="stats-card" style="background:linear-gradient(135deg,#fff3e0,#ffe0b2);border-left:5px solid #ff9800;">
+  <h3>All Totals</h3>
+  <p><strong>Orders:</strong> {{ all_totals.count }}</p>
+  <p><strong>COD:</strong> ₹{{ all_totals.cod_amount }}</p>
+  <p><strong>Online:</strong> ₹{{ all_totals.online_amount }}</p>
+  <p><strong>Delivery Charges:</strong> ₹{{ all_totals.delivery_charge }}</p>
+  <hr>
+  <p><strong>Grand Total:</strong> ₹{{ all_totals.grand_total }}</p>
+</div>
 
   <!-- TODAY -->
   <div class="stats-card today">

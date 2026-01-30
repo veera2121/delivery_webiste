@@ -1745,7 +1745,7 @@ def delivery_history():
         else:
             o.day_category = "Older"
 
-    # ✅ Totals ONLY for Delivered orders
+    # ✅ Day-wise totals (Delivered only)
     totals = {}
     for day in ["Today", "Yesterday", "Older"]:
         day_orders = [
@@ -1773,10 +1773,25 @@ def delivery_history():
             "grand_total": cod_amount + online_amount + delivery_charge_total
         }
 
+    # ✅ ALL TOTALS (Today + Yesterday + Older)
+    all_totals = {
+        "count": sum(totals[d]["count"] for d in totals),
+        "cod_amount": sum(totals[d]["cod_amount"] for d in totals),
+        "online_amount": sum(totals[d]["online_amount"] for d in totals),
+        "delivery_charge": sum(totals[d]["delivery_charge"] for d in totals),
+    }
+
+    all_totals["grand_total"] = (
+        all_totals["cod_amount"]
+        + all_totals["online_amount"]
+        + all_totals["delivery_charge"]
+    )
+
     return render_template(
         "delivery_history.html",
         history=history,
-        totals=totals
+        totals=totals,
+        all_totals=all_totals
     )
 
 
