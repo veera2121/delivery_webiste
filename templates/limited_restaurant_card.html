@@ -75,42 +75,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 <style>
+    /* ===============================
+   LIMITED DEAL CARD TEMPLATE
+   =============================== */
+
+/* CONTAINER */
+.limited-scroll {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+/* CARD */
 .limited-card {
+    position: relative;
     background: linear-gradient(135deg, #fff7ed, #ffedd5);
     border-radius: 18px;
-    padding: 38px;
-    margin-bottom: 22px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    position: relative;
-    transition: transform .25s ease;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.15);
+    transition: translate .25s ease, box-shadow .25s ease;
 }
 
 .limited-card:hover {
-    transform: translateY(-6px);
+    translate: 0 -6px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.2);
 }
 
+/* SOLD OUT STATE */
+.limited-card.sold-out {
+    opacity: .5;
+    pointer-events: none;
+}
 
-/* 🔥 Badge */
+/* 🔥 HYPE BADGE */
 .hype-badge {
     position: absolute;
     top: 12px;
     right: 12px;
-    background: linear-gradient(135deg, #dc2626, #f97316);
-    color: #fff;
+    padding: 6px 12px;
     font-size: 12px;
     font-weight: 900;
-    padding: 6px 10px;
+    color: #fff;
+    background: linear-gradient(135deg, #dc2626, #f97316);
     border-radius: 999px;
     animation: pulse 1.2s infinite;
 }
 
 @keyframes pulse {
-    0% { transform: scale(1); box-shadow: 0 0 0 rgba(255,0,0,.6); }
-    50% { transform: scale(1.08); box-shadow: 0 0 18px rgba(255,0,0,.8); }
-    100% { transform: scale(1); }
+    0%   { box-shadow: 0 0 0 rgba(255,0,0,.6); }
+    50%  { box-shadow: 0 0 18px rgba(255,0,0,.8); }
+    100% { box-shadow: 0 0 0 rgba(255,0,0,.6); }
 }
 
-/* Title */
+/* TEXT */
 .restaurant-name {
     font-size: 19px;
     font-weight: 800;
@@ -122,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
     color: #444;
 }
 
-/* Stock */
+/* STOCK */
 .stock {
     font-size: 15px;
     font-weight: 900;
@@ -135,14 +153,13 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 
 @keyframes shake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-2px); }
-    50% { transform: translateX(2px); }
-    75% { transform: translateX(-2px); }
-    100% { transform: translateX(0); }
+    0%,100% { translate: 0; }
+    25% { translate: -2px; }
+    50% { translate: 2px; }
+    75% { translate: -2px; }
 }
 
-/* Social proof */
+/* SOCIAL PROOF */
 .social-proof {
     font-size: 13px;
     font-weight: 600;
@@ -150,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
     margin-bottom: 6px;
 }
 
-/* Countdown */
+/* COUNTDOWN */
 .countdown {
     font-size: 14px;
     font-weight: 700;
@@ -164,12 +181,10 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 
 @keyframes blink {
-    0% { opacity: 1; }
     50% { opacity: .4; }
-    100% { opacity: 1; }
 }
 
-/* CTA */
+/* CTA BUTTON */
 .join-btn {
     display: inline-block;
     padding: 12px 18px;
@@ -177,25 +192,26 @@ document.addEventListener("DOMContentLoaded", () => {
     font-weight: 900;
     font-size: 15px;
     color: #fff;
-    background: linear-gradient(135deg, #dc2626, #f97316);
     text-decoration: none;
+    background: linear-gradient(135deg, #dc2626, #f97316);
     animation: bounce 1.6s infinite;
 }
 
 @keyframes bounce {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
+    0%,100% { translate: 0; }
+    50% { translate: 0 -5px; }
 }
 
-/* Sold */
+/* SOLD TEXT */
 .sold-text {
     font-weight: 800;
     color: #991b1b;
 }
 
+/* NOTIFY BUTTON */
 .notify-btn {
     margin-top: 6px;
-    padding: 8px 12px;
+    padding: 8px 14px;
     border-radius: 12px;
     border: none;
     font-weight: 700;
@@ -203,23 +219,15 @@ document.addEventListener("DOMContentLoaded", () => {
     color: #fff;
 }
 
-/* Sold-out state */
-.sold-out {
-    opacity: .5;
-    pointer-events: none;
-}
-.limited-scroll {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 🔥 2 cards everywhere */
-    gap: 12px;
-}
+/* ===============================
+   MOBILE – HORIZONTAL SCROLL
+   =============================== */
 @media (max-width: 640px) {
     .limited-scroll {
         display: flex;
         gap: 14px;
         overflow-x: auto;
-        padding-bottom: 8px;
-
+        padding-bottom: 10px;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
     }
@@ -230,9 +238,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     .limited-card {
         min-width: 80%;
+        padding: 18px;
         flex-shrink: 0;
         scroll-snap-align: start;
-        padding: 16px;
     }
 }
 
