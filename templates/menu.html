@@ -502,9 +502,93 @@ body {
         0 1px 4px rgba(0,0,0,0.25),
         0 0 6px rgba(249,115,22,0.6);
 }
+/* ===== Overlay ===== */
+.urgency-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 9998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+}
+
+/* ===== Center Modal ===== */
+.urgency-modal-center {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -45%) scale(.9);
+    width: calc(100% - 32px);
+    max-width: 360px;
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border-radius: 18px;
+    padding: 24px 18px 20px;
+    z-index: 9999;
+    box-shadow: 0 20px 50px rgba(0,0,0,.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: all .3s ease;
+}
+
+/* Show state */
+.urgency-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.urgency-modal-center.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Close button */
+.urgency-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,.08);
+    font-size: 18px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.urgency-close:hover {
+    background: rgba(0,0,0,.15);
+}
+
+/* Text */
+.conv-urgency {
+    font-size: 14px;
+    font-weight: 700;
+    color: #7c2d12;
+    line-height: 1.5;
+    margin: 20px 0 16px;
+    text-align: center;
+}
+
+/* CTA Button */
+.urgency-cta {
+    width: 100%;
+    padding: 12px;
+    border-radius: 14px;
+    border: none;
+    font-size: 15px;
+    font-weight: 900;
+    color: #fff;
+    background: linear-gradient(135deg, #dc2626, #f97316);
+    cursor: pointer;
+}
 
 
-</style>
 
 </style>
 
@@ -906,6 +990,51 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
+</script> 
+<script>
+
+function openUrgency() {
+    document.getElementById("urgencyModal").classList.add("show");
+    document.getElementById("urgencyOverlay").classList.add("show");
+}
+
+function closeUrgency() {
+    document.getElementById("urgencyModal").classList.remove("show");
+    document.getElementById("urgencyOverlay").classList.remove("show");
+}
+
+function goToCart() {
+    window.location.href = "/cart";
+}
+
+/* Open popup when menu loads */
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(openUrgency, 700);
+});
+
+if (!sessionStorage.getItem("urgencyShown")) {
+    setTimeout(() => {
+        openUrgency();
+        sessionStorage.setItem("urgencyShown", "1");
+    }, 700);
+}
+
+
 </script>
+<!-- Overlay -->
+<div id="urgencyOverlay" class="urgency-overlay" onclick="closeUrgency()"></div>
+
+<!-- Center Popup -->
+<div id="urgencyModal" class="urgency-modal-center">
+    <button class="urgency-close" onclick="closeUrgency()">✕</button>
+
+    <div class="conv-urgency">
+        Hungry? Complete your order in <b>10 seconds 🍽️</b><br>
+        ⚡ High demand right now • Fast delivery in <b>25–30 mins</b>
+    </div>
+
+
+</div>
+
 
 {% endblock %}
