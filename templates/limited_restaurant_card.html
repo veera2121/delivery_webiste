@@ -213,5 +213,27 @@ document.addEventListener("DOMContentLoaded", () => {
     grid-template-columns: repeat(2, 1fr); /* 🔥 2 cards everywhere */
     gap: 12px;
 }
+@media (max-width: 640px) {
+    .limited-scroll {
+        display: flex;
+        gap: 14px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .limited-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .limited-card {
+        min-width: 80%;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+        padding: 16px;
+    }
+}
 
 </style>

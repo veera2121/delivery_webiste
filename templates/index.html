@@ -2110,16 +2110,6 @@ body {
 
 
 
-{% if limited_restaurants|length > 0 %}
-<section class="limited-section">
-    <h2>🔥 Limited Drops</h2>
-    <div class="limited-scroll">
-        {% for r in limited_restaurants %}
-            {% include 'limited_restaurant_card.html' %}
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
 <section id="food-categories" class="fc-mini-section">
     <h2 class="fc-mini-title">Food Categories</h2>
 
@@ -2187,6 +2177,16 @@ body {
 </section>
 
 
+{% if limited_restaurants|length > 0 %}
+<section class="limited-section">
+    <h2>🔥 Limited Drops</h2>
+    <div class="limited-scroll">
+        {% for r in limited_restaurants %}
+            {% include 'limited_restaurant_card.html' %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
 <section class="restaurants-section" id="restaurantsSection">
   <div class="container" id="restaurants">
     <!-- Restaurants will load here -->
