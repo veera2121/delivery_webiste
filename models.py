@@ -111,15 +111,13 @@ class Restaurant(db.Model):
         )
 
     # ================= ORDER LOGIC =================
+
+
+
     @property
     def can_accept_orders(self):
-        # 🌍 Convert UTC → restaurant local time
-        tz = pytz.timezone(self.timezone or "Asia/Kolkata")
-        now_utc = datetime.now(pytz.UTC)
-        now_local = now_utc.astimezone(tz)
-
-        now_time = now_local.time()
-        now_dt = now_local
+        now_time = datetime.utcnow().time()
+        now_dt = datetime.utcnow()
 
         # ❌ Sold out (LIMITED DROP)
         if self.is_limited_drop and self.sold_out:
@@ -138,18 +136,18 @@ class Restaurant(db.Model):
             if not self.start_date or date.today() < self.start_date:
                 return False
 
-        # 🕒 Limited drop datetime window
+        # 🕒 Limited drop window (UTC-naive safe)
         if self.is_limited_drop and self.limited_start_datetime and self.limited_end_datetime:
             if not (self.limited_start_datetime <= now_dt <= self.limited_end_datetime):
                 return False
 
-        # 🕒 Opening hours (MIDNIGHT SAFE)
+        # 🕒 Opening hours (time-only, UTC-safe)
         if self.opening_time and self.closing_time:
             if self.opening_time < self.closing_time:
                 if not (self.opening_time <= now_time <= self.closing_time):
                     return False
             else:
-                # Overnight (e.g. 6 PM → 2 AM)
+                # Overnight
                 if not (now_time >= self.opening_time or now_time <= self.closing_time):
                     return False
 
@@ -158,6 +156,7 @@ class Restaurant(db.Model):
             return False
 
         return True
+
 
     # ================= LIMITED DROP HELPERS =================
     @property

@@ -2553,18 +2553,23 @@ def edit_restaurant_card(restaurant_id):
         restaurant.limited_total_qty = int(request.form.get("limited_total_qty") or 0)
         restaurant.limited_remaining_qty = int(request.form.get("limited_remaining_qty") or 0)
 
-        # Limited drop start/end datetime
+       # Limited drop start/end datetime
         limited_start = request.form.get("limited_start_datetime")
         limited_end = request.form.get("limited_end_datetime")
+
         tz = pytz.timezone(restaurant.timezone or "Asia/Kolkata")
 
         restaurant.limited_start_datetime = (
-            tz.localize(datetime.strptime(limited_start, "%Y-%m-%dT%H:%M")).astimezone(pytz.UTC)
+            tz.localize(datetime.strptime(limited_start, "%Y-%m-%dT%H:%M"))
+            .astimezone(pytz.UTC)
+            .replace(tzinfo=None)
             if limited_start else None
         )
 
         restaurant.limited_end_datetime = (
-            tz.localize(datetime.strptime(limited_end, "%Y-%m-%dT%H:%M")).astimezone(pytz.UTC)
+            tz.localize(datetime.strptime(limited_end, "%Y-%m-%dT%H:%M"))
+            .astimezone(pytz.UTC)
+            .replace(tzinfo=None)
             if limited_end else None
         )
 
