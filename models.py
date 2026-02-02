@@ -57,6 +57,11 @@ class Restaurant(db.Model):
     delivery_charge = db.Column(db.Float, default=30, nullable=False)
     free_delivery_limit = db.Column(db.Float, default=499, nullable=False)
     force_delivery_charge = db.Column(db.Boolean, default=False, nullable=False)
+    timezone = db.Column(
+    db.String(50),
+    default="Asia/Kolkata",
+    nullable=False
+    )
 
     # ================= OPEN / CLOSE =================
     opening_time = db.Column(db.Time, default=time(10, 0))
@@ -108,8 +113,13 @@ class Restaurant(db.Model):
     # ================= ORDER LOGIC =================
     @property
     def can_accept_orders(self):
-        now_time = datetime.now().time()
-        now_dt = datetime.now()
+        # 🌍 Convert UTC → restaurant local time
+        tz = pytz.timezone(self.timezone or "Asia/Kolkata")
+        now_utc = datetime.now(pytz.UTC)
+        now_local = now_utc.astimezone(tz)
+
+        now_time = now_local.time()
+        now_dt = now_local
 
         # ❌ Sold out (LIMITED DROP)
         if self.is_limited_drop and self.sold_out:
@@ -128,18 +138,18 @@ class Restaurant(db.Model):
             if not self.start_date or date.today() < self.start_date:
                 return False
 
-        # 🕒 Limited drop time window
+        # 🕒 Limited drop datetime window
         if self.is_limited_drop and self.limited_start_datetime and self.limited_end_datetime:
             if not (self.limited_start_datetime <= now_dt <= self.limited_end_datetime):
                 return False
 
-        # 🕒 Normal opening hours
+        # 🕒 Opening hours (MIDNIGHT SAFE)
         if self.opening_time and self.closing_time:
             if self.opening_time < self.closing_time:
                 if not (self.opening_time <= now_time <= self.closing_time):
                     return False
             else:
-                # Overnight
+                # Overnight (e.g. 6 PM → 2 AM)
                 if not (now_time >= self.opening_time or now_time <= self.closing_time):
                     return False
 

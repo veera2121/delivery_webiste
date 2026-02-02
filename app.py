@@ -692,18 +692,7 @@ def generate_otp():
     return str(random.randint(100000, 999999))
 from datetime import datetime
 
-def is_restaurant_open(restaurant):
-    now = datetime.now().time()
 
-    if not restaurant.opening_time or not restaurant.closing_time:
-        return False
-
-    # Normal same-day timing
-    if restaurant.opening_time < restaurant.closing_time:
-        return restaurant.opening_time <= now <= restaurant.closing_time
-
-    # Overnight timing (e.g., 8 PM – 2 AM)
-    return now >= restaurant.opening_time or now <= restaurant.closing_time
 
 
 from flask import request, flash, redirect, url_for, session
@@ -785,20 +774,13 @@ def place_order():
         return redirect("/")
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
-    now = datetime.now().time()
+ 
 
-    # ================= RESTAURANT STATUS =================
-    if restaurant.status != "active":
-        flash("Restaurant not available", "danger")
+    # ================= RESTAURANT STATUS (SINGLE SOURCE OF TRUTH) =================
+    if not restaurant.can_accept_orders:
+        flash("Restaurant is currently closed", "danger")
         return redirect("/")
 
-    if not restaurant.is_accepting_orders:
-        flash("Restaurant not accepting orders", "danger")
-        return redirect("/")
-
-    if now < restaurant.opening_time or now > restaurant.closing_time:
-        flash("Restaurant closed now", "danger")
-        return redirect("/")
 
     # ================= ITEMS TOTAL =================
     items_total = sum(
@@ -2574,12 +2556,16 @@ def edit_restaurant_card(restaurant_id):
         # Limited drop start/end datetime
         limited_start = request.form.get("limited_start_datetime")
         limited_end = request.form.get("limited_end_datetime")
+        tz = pytz.timezone(restaurant.timezone or "Asia/Kolkata")
 
         restaurant.limited_start_datetime = (
-            datetime.strptime(limited_start, "%Y-%m-%dT%H:%M") if limited_start else None
+            tz.localize(datetime.strptime(limited_start, "%Y-%m-%dT%H:%M")).astimezone(pytz.UTC)
+            if limited_start else None
         )
+
         restaurant.limited_end_datetime = (
-            datetime.strptime(limited_end, "%Y-%m-%dT%H:%M") if limited_end else None
+            tz.localize(datetime.strptime(limited_end, "%Y-%m-%dT%H:%M")).astimezone(pytz.UTC)
+            if limited_end else None
         )
 
         # 🔒 Validation: limited drop requires item name and qty
@@ -3339,6 +3325,24 @@ def manage_menu(restaurant_id):
 
     items = MenuItem.query.filter_by(restaurant_id=restaurant.id).all()
     return render_template("manage_menu.html", restaurant=restaurant, items=items)
+from collections import defaultdict
+
+def build_category_index(menu_items):
+    category_index = defaultdict(set)
+
+    for item in menu_items:
+        if not item.category:
+            continue
+
+        # split multiple categories: "Cakes, Custom Cakes"
+        categories = item.category.split(",")
+
+        for cat in categories:
+            clean_cat = cat.strip().lower()
+            if clean_cat:
+                category_index[clean_cat].add(item.restaurant_id)
+
+    return {k: sorted(list(v)) for k, v in category_index.items()}
 
 # ------------------ DB INIT ------------------
 
