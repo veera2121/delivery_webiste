@@ -114,10 +114,15 @@ class Restaurant(db.Model):
 
 
 
+    from datetime import datetime, date
+    import pytz
+
     @property
     def can_accept_orders(self):
-        now_time = datetime.utcnow().time()
-        now_dt = datetime.utcnow()
+        # 🌍 Restaurant timezone
+        tz = pytz.timezone(self.timezone or "Asia/Kolkata")
+        now_dt = datetime.now(tz)        # timezone-aware
+        now_time = now_dt.time()
 
         # ❌ Sold out (LIMITED DROP)
         if self.is_limited_drop and self.sold_out:
@@ -136,18 +141,29 @@ class Restaurant(db.Model):
             if not self.start_date or date.today() < self.start_date:
                 return False
 
-        # 🕒 Limited drop window (UTC-naive safe)
+        # 🕒 Limited drop window (FIXED: timezone-safe)
         if self.is_limited_drop and self.limited_start_datetime and self.limited_end_datetime:
-            if not (self.limited_start_datetime <= now_dt <= self.limited_end_datetime):
+            start_dt = self.limited_start_datetime
+            end_dt = self.limited_end_datetime
+
+            # 🔧 Make DB datetimes timezone-aware if needed
+            if start_dt.tzinfo is None:
+                start_dt = tz.localize(start_dt)
+
+            if end_dt.tzinfo is None:
+                end_dt = tz.localize(end_dt)
+
+            if not (start_dt <= now_dt <= end_dt):
                 return False
 
-        # 🕒 Opening hours (time-only, UTC-safe)
+        # 🕒 Opening & closing hours
         if self.opening_time and self.closing_time:
             if self.opening_time < self.closing_time:
+                # Same-day close
                 if not (self.opening_time <= now_time <= self.closing_time):
                     return False
             else:
-                # Overnight
+                # Overnight (e.g. 7 PM – 2 AM)
                 if not (now_time >= self.opening_time or now_time <= self.closing_time):
                     return False
 
@@ -156,6 +172,7 @@ class Restaurant(db.Model):
             return False
 
         return True
+
 
 
     # ================= LIMITED DROP HELPERS =================

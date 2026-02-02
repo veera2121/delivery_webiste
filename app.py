@@ -732,16 +732,17 @@ from datetime import datetime
 import pytz
 from sqlalchemy import func 
 
+from datetime import datetime
+import pytz
+
 @app.route("/place_order", methods=["POST"])
 def place_order():
-
     # ================= BASIC DETAILS =================
     name = request.form.get("name")
     phone = request.form.get("phone")
     email = request.form.get("email")
     alt_phone = request.form.get("alt_phone")
     payment_type = request.form.get("payment_type")
-
     address_type = request.form.get("address_type")
     house_no = request.form.get("house_no")
     landmark = request.form.get("landmark")
@@ -749,20 +750,12 @@ def place_order():
     state = request.form.get("state")
     pincode = request.form.get("pincode")
     delivery_note = request.form.get("delivery_note")
-
     restaurant_id = int(request.form.get("restaurant_id"))
     device_fingerprint = request.form.get("device_fingerprint")
 
-    # ================= LOCATION (SUPPORT OLD + NEW) =================
-    customer_lat = safe_float(
-        request.form.get("customer_lat") or request.form.get("lat")
-    )
-    customer_lng = safe_float(
-        request.form.get("customer_lng") or request.form.get("lng")
-    )
-
-    print("📍 CUSTOMER LAT:", customer_lat)
-    print("📍 CUSTOMER LNG:", customer_lng)
+    # ================= LOCATION =================
+    customer_lat = safe_float(request.form.get("customer_lat") or request.form.get("lat"))
+    customer_lng = safe_float(request.form.get("customer_lng") or request.form.get("lng"))
 
     # ================= ITEMS =================
     item_names = request.form.getlist("item_name[]")
@@ -774,20 +767,19 @@ def place_order():
         return redirect("/")
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
- 
 
-    # ================= RESTAURANT STATUS (SINGLE SOURCE OF TRUTH) =================
+    # ================= CURRENT TIME IN RESTAURANT TIMEZONE =================
+    tz = pytz.timezone(restaurant.timezone or "Asia/Kolkata")
+    now_dt = datetime.now(tz)
+    now_time = now_dt.time()
+
+    # ================= RESTAURANT STATUS CHECK =================
     if not restaurant.can_accept_orders:
         flash("Restaurant is currently closed", "danger")
         return redirect("/")
 
-
     # ================= ITEMS TOTAL =================
-    items_total = sum(
-        int(quantities[i]) * float(prices[i])
-        for i in range(len(item_names))
-    )
-
+    items_total = sum(int(quantities[i]) * float(prices[i]) for i in range(len(item_names)))
     print("🧾 ITEMS TOTAL:", items_total)
 
     # ================= LOCATION VALIDATION =================
@@ -802,16 +794,10 @@ def place_order():
         customer_lat,
         customer_lng
     )
-
     print("📏 DISTANCE (KM):", round(distance_km, 2))
 
-    # ================= DELIVERY CHARGE (FINAL AUTHORITY) =================
-    delivery_charge, delivery_msg = calculate_delivery_charge(
-        distance_km,
-        items_total,
-        restaurant
-    )
-
+    # ================= DELIVERY CHARGE =================
+    delivery_charge, delivery_msg = calculate_delivery_charge(distance_km, items_total, restaurant)
     print("🚚 DELIVERY CHARGE:", delivery_charge)
     print("ℹ DELIVERY MSG:", delivery_msg)
 
@@ -819,16 +805,7 @@ def place_order():
     final_total = round(items_total + delivery_charge, 2)
 
     # ================= MAP LINK =================
-    map_link = generate_map_link(
-        customer_lat,
-        customer_lng,
-        house_no,
-        landmark,
-        city,
-        state,
-        pincode
-    )
-
+    map_link = generate_map_link(customer_lat, customer_lng, house_no, landmark, city, state, pincode)
     print("🗺 MAP LINK:", map_link)
 
     # ================= CREATE ORDER =================
@@ -847,16 +824,13 @@ def place_order():
         delivery_note=delivery_note,
         payment_type=payment_type,
         device_fingerprint=device_fingerprint,
-
         items_total=items_total,
         delivery_charge=delivery_charge,
         final_total=final_total,
-
         latitude=customer_lat,
         longitude=customer_lng,
         distance_km=round(distance_km, 2),
         map_link=map_link,
-
         otp=generate_otp(),
         created_at=datetime.utcnow()
     )
@@ -878,7 +852,6 @@ def place_order():
                 quantity=qty,
                 price=float(prices[i])
             ))
-
     db.session.commit()
 
     # ================= FINAL DEBUG =================
@@ -888,7 +861,7 @@ def place_order():
     print("📍 FINAL LNG:", new_order.longitude)
     print("📏 FINAL KM:", new_order.distance_km)
     print("🚚 FINAL DELIVERY:", new_order.delivery_charge)
-
+    
     flash(f"Order placed successfully! Order ID: {new_order.order_id}", "success")
     return redirect(url_for("order_placed", order_id=new_order.order_id))
 
