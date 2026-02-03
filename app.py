@@ -3332,6 +3332,14 @@ def build_category_index(menu_items):
                 category_index[clean_cat].add(item.restaurant_id)
 
     return {k: sorted(list(v)) for k, v in category_index.items()}
+@app.route("/api/live-order-count")
+def live_order_count():
+    total_orders = db.session.query(Order).count()
+
+    return {
+        "count": total_orders,
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
 # ------------------ DB INIT ------------------
 
