@@ -942,6 +942,11 @@ body {
     0%, 100% { transform: translate(-50%, 0); }
     50% { transform: translate(-50%, -6px); }
 }
+.conv-cta.disabled {
+    background: #444;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 
 </style>
 </head>
@@ -1152,9 +1157,16 @@ body {
 🧾 Order value: ₹<span id="mini-total">0</span>
 </div>
 
-<button type="submit" class="conv-cta" onclick="lockOrderBtn(this)">
-  🍔 Confirm Order
+{% if not restaurant.can_accept_orders %}
+<button type="button" class="conv-cta disabled" disabled
+        title="Orders are not accepted at this time">
+    ⏰ Closed Now
 </button>
+{% else %}
+<button type="submit" class="conv-cta" onclick="lockOrderBtn(this)">
+    🍔 Confirm Order
+</button>
+{% endif %}
 
 
     </form>

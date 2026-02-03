@@ -775,8 +775,12 @@ def place_order():
 
     # ================= RESTAURANT STATUS CHECK =================
     if not restaurant.can_accept_orders:
-        flash("Restaurant is currently closed", "danger")
-        return redirect("/")
+        flash(
+            f"⏰ {restaurant.name} is closed right now. Orders are accepted during working hours.",
+            "warning"
+        )
+        return redirect(request.referrer or url_for("home"))
+
 
     # ================= ITEMS TOTAL =================
     items_total = sum(int(quantities[i]) * float(prices[i]) for i in range(len(item_names)))
@@ -2561,6 +2565,13 @@ def edit_restaurant_card(restaurant_id):
         db.session.commit()
         flash("Restaurant updated successfully!", "success")
         return redirect(url_for("restaurant_dashboard", restaurant_id=restaurant.id))
+        tz = pytz.timezone(r.timezone or "Asia/Kolkata")
+
+        r.limited_end_local = None
+        if r.limited_end_datetime:
+            r.limited_end_local = pytz.UTC.localize(
+                r.limited_end_datetime
+            ).astimezone(tz)
 
     return render_template(
         "dashboard/edit_restaurant_card.html",
