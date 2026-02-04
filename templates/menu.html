@@ -89,14 +89,17 @@ body {
 /* =========================
    CATEGORY BAR (STICKY)
 ========================= */
+/* =========================
+   CATEGORY + FILTER BAR
+========================= */
 .top-cat-wrapper {
     position: sticky;
     top: var(--incentive-height, 78px);
     z-index: 999;
 
     display: flex;
+    align-items: center;
     gap: 12px;
-    overflow-x: auto;
 
     padding: 10px 14px;
     background: #ffffff;
@@ -105,13 +108,33 @@ body {
     box-shadow: 0 4px 14px rgba(0,0,0,0.08);
 }
 
+/* =========================
+   FILTER SECTION (FIXED)
+========================= */
+.filter-section {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0; /* 🔥 prevents scroll */
+}
+
+/* =========================
+   CATEGORY SCROLL AREA
+========================= */
+.category-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    flex: 1;
+}
 
 /* Hide scrollbar */
-.top-cat-wrapper::-webkit-scrollbar {
+.category-scroll::-webkit-scrollbar {
     display: none;
 }
 
-/* CATEGORY CHIP */
+/* =========================
+   CATEGORY / FILTER CHIP
+========================= */
 .top-cat {
     padding: 8px 14px;
     white-space: nowrap;
@@ -125,14 +148,44 @@ body {
 
     cursor: pointer;
     user-select: none;
-    transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease;
+
+    transition: background 0.25s ease,
+                color 0.25s ease,
+                transform 0.2s ease;
 }
 
-/* Hover effect */
+/* Hover */
 .top-cat:hover {
     background: #ff2b2b;
     color: #ffffff;
     transform: translateY(-1px);
+}
+
+/* =========================
+   ACTIVE PRICE FILTER
+========================= */
+.active-filter {
+    background: #0f172a;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Remove X */
+.remove-filter {
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.remove-filter:hover {
+    opacity: 1;
+}
+
+/* Utility */
+.hidden {
+    display: none;
 }
 
 /* =========================
@@ -744,26 +797,29 @@ body {
 <!-- CATEGORY BAR (sticky below incentive) -->
 <div class="top-cat-wrapper">
 
-    <!-- PRICE FILTER BUTTON -->
-    <div class="top-cat" id="openPriceFilter">
-        💰 Price
+    <!-- FIXED FILTER SECTION (PART OF SCROLL ROW) -->
+    <div class="filter-section">
+        <div class="top-cat" id="openPriceFilter">
+            💰 Price
+        </div>
+
+        <div class="top-cat active-filter hidden" id="activePriceFilter">
+            <span id="activePriceLabel"></span>
+            <span class="remove-filter" id="removePriceFilter">✕</span>
+        </div>
     </div>
 
-    <!-- ACTIVE PRICE FILTER (HIDDEN INITIALLY) -->
-    <div class="top-cat active-filter hidden" id="activePriceFilter">
-        <span id="activePriceLabel"></span>
-        <span class="remove-filter" id="removePriceFilter">✕</span>
+    <!-- SCROLLABLE CATEGORY SECTION -->
+    <div class="category-scroll">
+        {% for category, items in menu_by_category.items() %}
+            {% if items %}
+                <div class="top-cat"
+                     onclick="scrollToCategory('{{ category }}')">
+                    {{ category }}
+                </div>
+            {% endif %}
+        {% endfor %}
     </div>
-
-    <!-- CATEGORY CHIPS -->
-    {% for category, items in menu_by_category.items() %}
-        {% if items %}
-            <div class="top-cat"
-                 onclick="scrollToCategory('{{ category }}')">
-                {{ category }}
-            </div>
-        {% endif %}
-    {% endfor %}
 
 </div>
 
