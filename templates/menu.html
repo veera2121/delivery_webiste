@@ -20,52 +20,57 @@ body {
     padding-bottom: 120px;
     overflow-x: hidden;
 }
+/* ================= PREMIUM NON-STICKY HEADER ================= */
 
 .header {
-    position: sticky;
-    top: 0;
-    height: 64px;              /* ✅ fixed height */
-    padding: 0 20px;
+    position: relative;   /* ✅ scrolls with page */
+    z-index: 1;
+
+    height: 68px;
+    padding: 0 22px;
+
     display: flex;
     align-items: center;
     justify-content: center;
-}
 
-/* HEADER */
-.header {
-    position: sticky;
-    top: 0;
-    z-index: 1100;
-    background: linear-gradient(135deg, #6bfff3, #f06595, #4385ff); /* multi-color gradient */
-    padding: 18px 24px;
-    color: #fff;
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 700;
-    text-align: center;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
-    backdrop-filter: blur(4px); /* subtle blur effect */
+    letter-spacing: 0.4px;
+
+    color: #0f172a;
+
+    /* Luxury glass feel */
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+
+    box-shadow:
+        0 1px 0 rgba(255,255,255,0.6),
+        0 10px 30px rgba(0,0,0,0.08);
+
     transition: all 0.3s ease;
 }
 
-/* Hover or scroll effect */
+/* Gold accent line */
+.header::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 80px;
+    height: 3px;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, #c9a227, #facc15, #c9a227);
+    border-radius: 99px;
+}
+
+/* Soft hover polish */
 .header:hover {
-    transform: scale(1.02);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.35);
-}
-
-/* Optional: animated gradient */
-@keyframes gradientMove {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-.header {
-    background: linear-gradient(135deg, #ff6b6b, #f06595, #ff9f43);
-    background-size: 300% 300%;
-    animation: gradientMove 6s ease infinite;
+    box-shadow:
+        0 2px 0 rgba(255,255,255,0.6),
+        0 16px 40px rgba(0,0,0,0.12);
 }
 
 
@@ -81,55 +86,69 @@ body {
     color: #ff2b2b;
     font-weight: 600;
 }
-
-/* CATEGORY BAR */
+/* =========================
+   CATEGORY BAR (STICKY)
+========================= */
 .top-cat-wrapper {
     position: sticky;
-    top: 140px; /* header + incentive */
-    z-index: 1000;
+    top: var(--incentive-height, 78px);
+    z-index: 999;
 
-    background: #ffffff;
-    padding: 10px 12px;
     display: flex;
-    gap: 10px;
-
+    gap: 12px;
     overflow-x: auto;
-    scrollbar-width: none;
-    border-bottom: 1px solid #e5e7eb;
+
+    padding: 10px 14px;
+    background: #ffffff;
+
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
 }
 
+
+/* Hide scrollbar */
 .top-cat-wrapper::-webkit-scrollbar {
     display: none;
 }
 
+/* CATEGORY CHIP */
 .top-cat {
-    background: #f3f4f6;
-    padding: 8px 18px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 600;
-    border: 1px solid #e5e7eb;
+    padding: 8px 14px;
     white-space: nowrap;
-    transition: all 0.25s ease;
+    border-radius: 999px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    background: #f1f5f9;
+    color: #0f172a;
+
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease;
 }
 
+/* Hover effect */
 .top-cat:hover {
     background: #ff2b2b;
-    color: #fff;
-    border-color: #ff2b2b;
+    color: #ffffff;
+    transform: translateY(-1px);
 }
 
-/* CATEGORY TITLE */
+/* =========================
+   CATEGORY TITLE
+========================= */
 .category-title {
     font-size: 22px;
     font-weight: 700;
-    margin: 40px 20px 16px;
-    color: #111;
+    margin: 42px 20px 16px;
+    color: #111111;
 
     border-left: 4px solid #ff2b2b;
-    padding-left: 10px;
+    padding-left: 12px;
 
-    /* ✅ KEY FIX */
+    /* 🔥 CRITICAL FIX
+       header + incentive + category bar height */
     scroll-margin-top: 160px;
 }
 
@@ -415,21 +434,21 @@ body {
     opacity: 1;
   }
 }
-
 .menu-incentive {
     position: sticky;
-    top: 84px; /* below header */
-    z-index: 1250;
+    top: 0;
+    z-index: 1000;
 
-    background: linear-gradient(135deg, #065f46, #047857);
-    color: #ffffff;
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    padding: 12px 16px;
+    margin: 0;
 
-    margin: 10px 14px;
-    padding: 10px 12px;
-    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
 
-    box-shadow: 0 8px 20px rgba(0,0,0,0.18);
-    transition: transform 0.2s ease;
+.menu-incentive.hidden {
+    display: none;
 }
 
 .menu-incentive:hover {
@@ -660,6 +679,30 @@ body {
 .hidden {
     display: none !important;
 }
+/* ACTIVE FILTER CHIP */
+.active-filter {
+    background: #0f172a;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* HIDE */
+.hidden {
+    display: none;
+}
+
+/* REMOVE FILTER X */
+.remove-filter {
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.remove-filter:hover {
+    opacity: 1;
+}
 
 </style>
 
@@ -677,52 +720,53 @@ body {
   {% endif %}
 {% endwith %}
 
-<!-- HEADER -->
-<div class="header">{{ restaurant.name }} - Menu</div>
-<!-- MENU INCENTIVE CARD -->
+<!-- HEADER (scrolls with page) -->
+<div class="header">
+    {{ restaurant.name }} - Menu
+</div>
+
+<!-- MENU INCENTIVE CARD (sticky) -->
 <div id="menu-incentive" class="menu-incentive hidden">
-  <div class="menu-total">🛒 Items Total: ₹<span id="menu-total-amount">0</span></div>
+    <div class="menu-total">
+        🛒 Items Total: ₹<span id="menu-total-amount">0</span>
+    </div>
 
-  <div class="menu-message" id="menu-message"></div>
+    <div class="menu-message" id="menu-message"></div>
 
-  <div class="progress-bar">
-    <div class="progress-fill" id="progress-fill"></div>
-  </div>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+    </div>
 </div>
 
 <!-- CONFETTI -->
 <canvas id="confetti"></canvas>
 
-<!-- LINKS 
-<div class="top-links">
-    <a href="{{ url_for('home') }}"></a>
-</div> -->
-
-<!-- CATEGORY BAR -->
-<!-- TOP FILTER + CATEGORY BAR -->
+<!-- CATEGORY BAR (sticky below incentive) -->
 <div class="top-cat-wrapper">
 
-    <!-- PRICE FILTER -->
+    <!-- PRICE FILTER BUTTON -->
     <div class="top-cat" id="openPriceFilter">
-        💰 Price Filter
+        💰 Price
     </div>
 
-    <!-- ACTIVE FILTER CHIP -->
+    <!-- ACTIVE PRICE FILTER (HIDDEN INITIALLY) -->
     <div class="top-cat active-filter hidden" id="activePriceFilter">
         <span id="activePriceLabel"></span>
         <span class="remove-filter" id="removePriceFilter">✕</span>
     </div>
 
-    <!-- CATEGORIES -->
+    <!-- CATEGORY CHIPS -->
     {% for category, items in menu_by_category.items() %}
         {% if items %}
-        <div class="top-cat" onclick="scrollToCategory('{{ category }}')">
-            {{ category }}
-        </div>
+            <div class="top-cat"
+                 onclick="scrollToCategory('{{ category }}')">
+                {{ category }}
+            </div>
         {% endif %}
     {% endfor %}
 
 </div>
+
 
 
 <!-- REPLACE CART MODAL -->
@@ -1227,6 +1271,47 @@ document.addEventListener("DOMContentLoaded", () => {
     closeBtn.onclick = () => modal.classList.add("hidden");
     removeBtn.onclick = clearFilter;
 
+});
+</script>
+<script>
+function updateIncentiveHeight() {
+    const incentive = document.getElementById("menu-incentive");
+    if (!incentive) return;
+
+    const height = incentive.offsetHeight;
+    document.documentElement.style.setProperty(
+        "--incentive-height",
+        height + "px"
+    );
+}
+
+// run on load
+window.addEventListener("load", updateIncentiveHeight);
+
+// run when incentive content changes (free delivery, cart updates)
+const observer = new MutationObserver(updateIncentiveHeight);
+observer.observe(document.getElementById("menu-incentive"), {
+    childList: true,
+    subtree: true,
+    characterData: true
+});
+</script>
+<script>
+const openFilter = document.getElementById("openPriceFilter");
+const activeFilter = document.getElementById("activePriceFilter");
+const activeLabel = document.getElementById("activePriceLabel");
+const removeFilter = document.getElementById("removePriceFilter");
+
+openFilter.addEventListener("click", () => {
+    // example filter
+    
+    activeFilter.classList.remove("hidden");
+});
+
+removeFilter.addEventListener("click", (e) => {
+    e.stopPropagation();
+    activeFilter.classList.add("hidden");
+    activeLabel.textContent = "";
 });
 </script>
 
