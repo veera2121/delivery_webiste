@@ -699,12 +699,29 @@ body {
 </div> -->
 
 <!-- CATEGORY BAR -->
+<!-- TOP FILTER + CATEGORY BAR -->
 <div class="top-cat-wrapper">
+
+    <!-- PRICE FILTER -->
+    <div class="top-cat" id="openPriceFilter">
+        💰 Price Filter
+    </div>
+
+    <!-- ACTIVE FILTER CHIP -->
+    <div class="top-cat active-filter hidden" id="activePriceFilter">
+        <span id="activePriceLabel"></span>
+        <span class="remove-filter" id="removePriceFilter">✕</span>
+    </div>
+
+    <!-- CATEGORIES -->
     {% for category, items in menu_by_category.items() %}
         {% if items %}
-        <div class="top-cat" onclick="scrollToCategory('{{ category }}')">{{ category }}</div>
+        <div class="top-cat" onclick="scrollToCategory('{{ category }}')">
+            {{ category }}
+        </div>
         {% endif %}
     {% endfor %}
+
 </div>
 
 
