@@ -1,52 +1,62 @@
-from sqlalchemy import func
+@app.route("/get-latest-otp")
+def get_latest_otp():
+    if "customer_id" not in session:
+        return jsonify({"otp": ""})
 
-# 1️⃣ Reset
-FoodItem.query.update({FoodItem.order_count: 0})
-db.session.commit()
+    order = (Order.query
+             .filter(Order.customer_id == session["customer_id"])
+             .order_by(Order.id.desc())
+             .first())
 
-# 2️⃣ Recalculate from order items
-results = (
-    db.session.query(
-        Order.restaurant_id,
-        OrderItem.item_name,
-        func.sum(OrderItem.quantity).label("total_qty")
-    )
-    .join(Order, Order.id == OrderItem.order_id)
-    .group_by(Order.restaurant_id, OrderItem.item_name)
-    .all()
-)
+    if order and order.otp:
+        return jsonify({"otp": order.otp})
 
-for restaurant_id, item_name, total in results:
-    food = FoodItem.query.filter_by(
-        restaurant_id=restaurant_id,
-        name=item_name
-    ).first()
-    if food:
-        food.order_count = total
+    return jsonify({"otp": ""})
 
-db.session.commit()
-FoodItem.query.filter(FoodItem.order_count > 0).count()
+<script>
+async function loadHomeOtp(){
+    try{
+        const res = await fetch("/get-latest-otp");
+        const data = await res.json();
 
-# ================= ORDER ITEMS + TRENDING UPDATE =================
-for i in range(len(item_names)):
-    qty = int(quantities[i])
+        if(data.otp && data.order_id){
 
-    if qty > 0:
-        # Save ordered item
-        db.session.add(OrderItem(
-            order_id=new_order.id,
-            item_name=item_names[i],
-            quantity=qty,
-            price=float(prices[i])
-        ))
+            document.getElementById("homeOtp").innerText = data.otp;
+            document.getElementById("homeOrderId").innerText = data.order_id;
 
-        # 🔥 UPDATE TRENDING COUNT
-        food_item = FoodItem.query.filter_by(
-            restaurant_id=restaurant_id,
-            name=item_names[i]
-        ).first()
+            document.getElementById("homeTrackCard").style.display = "block";
 
-        if food_item:
-            food_item.order_count = (food_item.order_count or 0) + qty
+        } else {
+            document.getElementById("homeTrackCard").style.display = "none";
+        }
 
-db.session.commit()
+    }catch(e){
+        console.log(e);
+    }
+}
+
+function goToTrack(){
+    window.location.href = "{{ url_for('myorders') }}";
+}
+
+document.addEventListener("DOMContentLoaded", loadHomeOtp);
+</script>
+{% if session.get('customer_id') %}
+
+
+<div class="home-track-card" id="homeTrackCard">
+    <div class="home-order-id">
+    Order ID: <span id="homeOrderId">--</span>
+</div>
+    <div class="track-left">
+        <h4>🧾 Your Order OTP</h4>
+        <div class="home-otp" id="homeOtp">----</div>
+    </div>
+
+    <div class="track-right">
+        <button class="track-btn" onclick="goToTrack()">Track Order</button>
+    </div>
+</div>
+
+{% endif %}
+

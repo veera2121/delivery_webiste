@@ -2124,6 +2124,42 @@ body {
     color: #6b7c72;
     margin-top: 4px;
 }
+.home-track-card{
+    position:fixed;
+    bottom:90px;
+    right:15px;
+    background:#111;
+    color:#fff;
+    padding:14px 16px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    z-index:9999;
+    box-shadow:0 12px 30px rgba(0,0,0,.4);
+}
+
+.track-left h4{
+    font-size:13px;
+    opacity:.8;
+}
+
+.home-otp{
+    font-size:22px;
+    font-weight:800;
+    letter-spacing:3px;
+    color:#00ff9c;
+}
+
+.track-btn{
+    background:#ff4d6d;
+    border:none;
+    color:white;
+    padding:8px 14px;
+    border-radius:10px;
+    font-weight:700;
+    cursor:pointer;
+}
 
 
 </style>
@@ -2186,7 +2222,6 @@ body {
 <div class="search-box mobile-search" id="mobileSearch">
     <input type="text" id="mobileSearchInput" placeholder="Search restaurants...">
 </div>  
-
 
 <!-- MOBILE LOCATION FILTER -->
 <div class="hero-row full">
@@ -2917,6 +2952,7 @@ async function updateMomentum() {
 updateMomentum();
 setInterval(updateMomentum, 30000);
 </script>
+
 
 
 <div id="locationPopup" class="location-popup hidden">

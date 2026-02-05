@@ -815,6 +815,7 @@ def place_order():
     # ================= CREATE ORDER =================
     new_order = Order(
         restaurant_id=restaurant_id,
+        customer_id=session.get("customer_id"),
         customer_name=name,
         phone=phone,
         email=email,
