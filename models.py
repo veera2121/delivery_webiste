@@ -113,18 +113,17 @@ class Restaurant(db.Model):
     # ================= ORDER LOGIC =================
 
 
-
     from datetime import datetime, date
     import pytz
 
     @property
     def can_accept_orders(self):
-        # 🌍 Restaurant timezone
+        # 🌍 Local time (for opening hours)
         tz = pytz.timezone(self.timezone or "Asia/Kolkata")
-        now_dt = datetime.now(tz)        # timezone-aware
-        now_time = now_dt.time()
+        now_local = datetime.now(tz)
+        now_time = now_local.time()
 
-        # ❌ Sold out (LIMITED DROP)
+        # ❌ Sold out
         if self.is_limited_drop and self.sold_out:
             return False
 
@@ -141,29 +140,19 @@ class Restaurant(db.Model):
             if not self.start_date or date.today() < self.start_date:
                 return False
 
-        # 🕒 Limited drop window (FIXED: timezone-safe)
+        # 🕒 LIMITED DROP (UTC ONLY — FIXED)
         if self.is_limited_drop and self.limited_start_datetime and self.limited_end_datetime:
-            start_dt = self.limited_start_datetime
-            end_dt = self.limited_end_datetime
-
-            # 🔧 Make DB datetimes timezone-aware if needed
-            if start_dt.tzinfo is None:
-                start_dt = tz.localize(start_dt)
-
-            if end_dt.tzinfo is None:
-                end_dt = tz.localize(end_dt)
-
-            if not (start_dt <= now_dt <= end_dt):
+            now_utc = datetime.utcnow()
+            if not (self.limited_start_datetime <= now_utc <= self.limited_end_datetime):
                 return False
 
-        # 🕒 Opening & closing hours
+        # 🕒 Opening & closing hours (LOCAL)
         if self.opening_time and self.closing_time:
             if self.opening_time < self.closing_time:
-                # Same-day close
                 if not (self.opening_time <= now_time <= self.closing_time):
                     return False
             else:
-                # Overnight (e.g. 7 PM – 2 AM)
+                # Overnight
                 if not (now_time >= self.opening_time or now_time <= self.closing_time):
                     return False
 
@@ -172,7 +161,6 @@ class Restaurant(db.Model):
             return False
 
         return True
-
 
 
     # ================= LIMITED DROP HELPERS =================

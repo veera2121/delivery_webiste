@@ -10,71 +10,111 @@
 
     <p class="items">🍽 {{ r.display_item }}</p>
 
-    {% if r.is_limited_drop %}
-        {% if not r.sold_out %}
-            <div class="stock urgency">
-                ⚠️ Only <span class="stock-num">{{ r.limited_remaining_qty }}</span> left!
-            </div>
+    {% if r.is_limited_drop and not r.sold_out %}
 
-            <div class="social-proof">
-                🔥 {{ r.viewing_now or 7 }} people viewing now
-            </div>
+        <div class="stock urgency">
+            ⚠️ Only <span class="stock-num">{{ r.limited_remaining_qty }}</span> left!
+        </div>
 
-            {% if r.limited_end_datetime %}
-                <div class="countdown"
-                     data-end="{{ r.limited_end_datetime.isoformat() }}">
-                </div>
-            {% endif %}
+        <div class="social-proof">
+            🔥 {{ r.viewing_now or 7 }} people viewing now
+        </div>
 
-            <a href="/menu/{{ r.id }}" class="join-btn">
-                ⚡ Join Queue
-            </a>
-        {% else %}
-            <div class="sold-text">❌ Sold Out in Minutes</div>
-            <button class="notify-btn">🔔 Alert me next drop</button>
-        {% endif %}
-    {% endif %}
+        {% if r.limited_end_datetime %}
+<div class="countdown"
+     data-start="{{ r.limited_start_datetime.strftime('%Y-%m-%dT%H:%M:%S') }}"
+     data-end="{{ r.limited_end_datetime.strftime('%Y-%m-%dT%H:%M:%S') }}">
 </div>
 
+        {% endif %}
 
+        <a href="/menu/{{ r.id }}" class="join-btn">
+            ⚡ Join Queue
+        </a>
+
+    {% elif r.sold_out %}
+        <div class="sold-text">❌ Sold Out in Minutes</div>
+        <button class="notify-btn">🔔 Alert me next drop</button>
+    {% endif %}
+
+</div>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-    document.querySelectorAll(".countdown").forEach(elem => {
-        const endTime = new Date(elem.dataset.end);
+  document.querySelectorAll(".countdown").forEach(timer => {
 
-        function update() {
-            const now = new Date();
-            let diff = endTime - now;
+ const startTime = new Date(timer.dataset.start);
+const endTime   = new Date(timer.dataset.end);
 
-            if (diff <= 0) {
-                elem.innerText = "⏰ Drop Ended!";
-                return;
-            }
+    function updateTimer() {
+      const now = new Date();
 
-            const h = Math.floor(diff / 3600000);
-            diff %= 3600000;
-            const m = Math.floor(diff / 60000);
-            diff %= 60000;
-            const s = Math.floor(diff / 1000);
+      // ⏳ Not started yet
+      if (now < startTime) {
+        const diff = startTime - now;
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        timer.innerHTML = `🕒 Starts in ${h}h ${m}m`;
+        return;
+      }
 
-            elem.innerHTML = `⏳ <strong>${h}h ${m}m ${s}s</strong> left`;
+      // ❌ Ended
+      if (now >= endTime) {
+        timer.innerHTML = "⏰ Drop Ended";
+        timer.classList.add("ended");
+        return;
+      }
 
-            if (h === 0 && m < 5) {
-                elem.classList.add("panic");
-            }
-        }
+      // 🔥 Live countdown
+      const diff = endTime - now;
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
 
-        update();
-        setInterval(update, 1000);
-    });
+      timer.innerHTML = `⏳ <strong>${h}h ${m}m ${s}s</strong> left`;
+
+      if (h === 0 && m < 30) {
+        timer.classList.add("panic");
+      }
+    }
+
+    updateTimer();
+    setInterval(updateTimer, 1000);
+  });
 
 });
 </script>
 
 
-
 <style>
+    .countdown {
+    font-size: 14px;
+    font-weight: 800;
+    color: #1d4ed8;
+    margin: 10px 0;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    display: inline-block;
+}
+
+.countdown.panic {
+    color: #b91c1c;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    animation: blink 0.8s infinite;
+}
+
+.countdown.ended {
+    color: #555;
+    background: #eee;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: .4; }
+    100% { opacity: 1; }
+}
+
 .limited-card {
     background: linear-gradient(135deg, #fff7ed, #ffedd5);
     border-radius: 18px;

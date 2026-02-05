@@ -2457,14 +2457,24 @@ def delete_offer(offer_id):
     return redirect(url_for("manage_offers", restaurant_id=restaurant_id))
 
 from datetime import datetime
-from flask import request, redirect, url_for, flash, render_template
+import pytz
 
+IST = pytz.timezone("Asia/Kolkata")
+
+def ist_to_utc(dt_str):
+    local_dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M")
+    local_dt = IST.localize(local_dt)
+    return local_dt.astimezone(pytz.utc)
+
+from datetime import datetime
+from flask import request, render_template, redirect, url_for, flash
 
 @app.route("/dashboard/restaurant/<int:restaurant_id>/edit", methods=["GET", "POST"])
 def edit_restaurant_card(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
 
     if request.method == "POST":
+
         # ================= BASIC INFO =================
         restaurant.name = request.form.get("name", "").strip()
         restaurant.address = request.form.get("address")
@@ -2472,11 +2482,8 @@ def edit_restaurant_card(restaurant_id):
         restaurant.email = request.form.get("email")
 
         # ================= CATEGORY TYPE =================
-        restaurant.category_type = (
-            request.form.get("category_type")
-            if request.form.get("category_type") in ["restaurant", "bakery"]
-            else "restaurant"
-        )
+        category = request.form.get("category_type")
+        restaurant.category_type = category if category in ["restaurant", "bakery"] else "restaurant"
 
         # ================= CARD DETAILS =================
         restaurant.is_veg = request.form.get("is_veg") == "yes"
@@ -2498,6 +2505,7 @@ def edit_restaurant_card(restaurant_id):
             datetime.strptime(request.form.get("opening_time"), "%H:%M").time()
             if request.form.get("opening_time") else None
         )
+
         restaurant.closing_time = (
             datetime.strptime(request.form.get("closing_time"), "%H:%M").time()
             if request.form.get("closing_time") else None
@@ -2515,63 +2523,73 @@ def edit_restaurant_card(restaurant_id):
             datetime.strptime(request.form.get("start_date"), "%Y-%m-%d").date()
             if request.form.get("start_date") else None
         )
+        start_raw = request.form.get("limited_start_datetime")
+        end_raw   = request.form.get("limited_end_datetime")
 
-        # ================= STATUS =================
+        if start_raw and end_raw:
+            restaurant.limited_start_datetime = ist_to_utc(start_raw)
+            restaurant.limited_end_datetime   = ist_to_utc(end_raw)
+
+                # ================= STATUS =================
         status = request.form.get("status")
         if status in ["active", "coming_soon", "suspended"]:
             restaurant.status = status
+
         if restaurant.status == "coming_soon" and not restaurant.start_date:
             flash("Start date is required for Coming Soon", "danger")
             return redirect(request.url)
 
-        # ================= LIMITED DROP / FLASH SALE =================
+        # ================= LIMITED DROP =================
         restaurant.is_limited_drop = request.form.get("is_limited_drop") == "1"
         restaurant.limited_item_name = request.form.get("limited_item_name") or None
         restaurant.limited_total_qty = int(request.form.get("limited_total_qty") or 0)
         restaurant.limited_remaining_qty = int(request.form.get("limited_remaining_qty") or 0)
 
-       # Limited drop start/end datetime
         limited_start = request.form.get("limited_start_datetime")
         limited_end = request.form.get("limited_end_datetime")
 
-        tz = pytz.timezone(restaurant.timezone or "Asia/Kolkata")
-
+        # ✅ STORE DIRECTLY AS IST (NO UTC CONVERSION)
         restaurant.limited_start_datetime = (
-            tz.localize(datetime.strptime(limited_start, "%Y-%m-%dT%H:%M"))
-            .astimezone(pytz.UTC)
-            .replace(tzinfo=None)
+            datetime.strptime(limited_start, "%Y-%m-%dT%H:%M")
             if limited_start else None
         )
 
         restaurant.limited_end_datetime = (
-            tz.localize(datetime.strptime(limited_end, "%Y-%m-%dT%H:%M"))
-            .astimezone(pytz.UTC)
-            .replace(tzinfo=None)
+            datetime.strptime(limited_end, "%Y-%m-%dT%H:%M")
             if limited_end else None
         )
 
-        # 🔒 Validation: limited drop requires item name and qty
+        # ================= VALIDATION =================
         if restaurant.is_limited_drop:
             if not restaurant.limited_item_name:
-                flash("Limited item name is required for Limited Drop", "danger")
+                flash("Limited item name is required", "danger")
                 return redirect(request.url)
+
             if restaurant.limited_total_qty <= 0:
-                flash("Total quantity must be greater than 0 for Limited Drop", "danger")
+                flash("Total quantity must be greater than 0", "danger")
                 return redirect(request.url)
+
             if not restaurant.limited_start_datetime or not restaurant.limited_end_datetime:
-                flash("Start and End time required for Limited Drop", "danger")
+                flash("Start and End time required", "danger")
                 return redirect(request.url)
+
+            if restaurant.limited_end_datetime <= restaurant.limited_start_datetime:
+                flash("End time must be after start time", "danger")
+                return redirect(request.url)
+        print("RAW FORM START:", request.form.get("limited_start_datetime"))
+        print("RAW FORM END:", request.form.get("limited_end_datetime"))
+        print("UTC START:", restaurant.limited_start_datetime)
+        print("UTC END:", restaurant.limited_end_datetime)
+        print("HOURS:",
+            (restaurant.limited_end_datetime - restaurant.limited_start_datetime).total_seconds() / 3600)
 
         db.session.commit()
         flash("Restaurant updated successfully!", "success")
         return redirect(url_for("restaurant_dashboard", restaurant_id=restaurant.id))
-        tz = pytz.timezone(r.timezone or "Asia/Kolkata")
 
-        r.limited_end_local = None
-        if r.limited_end_datetime:
-            r.limited_end_local = pytz.UTC.localize(
-                r.limited_end_datetime
-            ).astimezone(tz)
+    # ================= DISPLAY IN FORM =================
+    restaurant.limited_start_local = restaurant.limited_start_datetime
+    restaurant.limited_end_local = restaurant.limited_end_datetime
 
     return render_template(
         "dashboard/edit_restaurant_card.html",
@@ -2926,42 +2944,7 @@ def notify_all():
 
     return jsonify({"success": True})
   
-from datetime import datetime
-import pytz
-@property
-def can_accept_orders(self):
-    now_time = datetime.now().time()
-    now_dt = datetime.now()
 
-    # Sold out
-    if self.is_limited_drop and self.sold_out:
-        return False
-
-    # Manual OFF or Suspended or Coming soon
-    if not self.is_accepting_orders or self.status == "suspended":
-        return False
-    if self.status == "coming_soon" and (not self.start_date or date.today() < self.start_date):
-        return False
-
-    # Limited drop time check
-    if self.is_limited_drop and self.limited_start_datetime and self.limited_end_datetime:
-        if not (self.limited_start_datetime <= now_dt <= self.limited_end_datetime):
-            return False
-
-    # Normal opening hours
-    if self.opening_time and self.closing_time:
-        if self.opening_time < self.closing_time:
-            if not (self.opening_time <= now_time <= self.closing_time):
-                return False
-        else:  # Overnight
-            if not (now_time >= self.opening_time or now_time <= self.closing_time):
-                return False
-
-    # Accept orders until
-    if self.accept_orders_until and now_time > self.accept_orders_until:
-        return False
-
-    return True
 
 # =======================
 # Feedback Form Route
