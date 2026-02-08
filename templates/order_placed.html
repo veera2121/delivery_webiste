@@ -75,20 +75,43 @@ p{
   <p>Your order <strong>#{{ order_id }}</strong> has been placed successfully.</p>
   <p>Redirecting to <strong>My Orders</strong> in <span class="timer">5</span> seconds…</p>
 </div>
+<script>
+/* ===============================
+   CLEAR CART ITEMS ONLY (KEEP ADDRESS)
+================================ */
+
+let carts = JSON.parse(localStorage.getItem("carts")) || {};
+
+// Clear items for ALL restaurants (safe after order)
+Object.keys(carts).forEach(rid => {
+    carts[rid].items = [];
+});
+
+localStorage.setItem("carts", JSON.stringify(carts));
+
+console.log("✅ Cart items cleared, address untouched");
+</script>
 
 <script>
+/* ===============================
+   REDIRECT TIMER
+================================ */
 let time = 5;
 const timerEl = document.querySelector(".timer");
 
-setInterval(() => {
+const interval = setInterval(() => {
   time--;
   timerEl.innerText = time;
 
   if (time <= 0) {
+    clearInterval(interval);
     window.location.href = "{{ url_for('myorders') }}";
   }
 }, 1000);
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
