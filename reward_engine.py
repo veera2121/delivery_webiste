@@ -130,16 +130,20 @@ from models import RewardBadge, db
 
 def update_customer_badge(customer):
 
+    # ✅ Prevent None coins crash
+    if customer.coins is None:
+        customer.coins = 0
+
     badge = RewardBadge.query.filter(
         RewardBadge.active == True,
-        RewardBadge.required_coins <= customer.coins
+        RewardBadge.required_coins <= int(customer.coins)
     ).order_by(
         RewardBadge.required_coins.desc()
     ).first()
 
     if badge:
         customer.badge_id = badge.id
-        db.session.commit()
+
 
 # --------------------------
 # Checkout route
