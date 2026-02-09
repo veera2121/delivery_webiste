@@ -9,7 +9,8 @@ import secrets
 import uuid
 import pandas as pd
 from datetime import datetime, timedelta
-import pytz
+import pytz 
+
 # ================= FLASK =================
 from flask import (
     Flask, render_template, send_from_directory,
@@ -23,19 +24,26 @@ from flask_migrate import Migrate
 from sqlalchemy import or_, case
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, current_user
+
+
 # app.py
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from push import VAPID_PUBLIC_KEY, register_subscription, send_push, subscriptions
 from functools import wraps
 
+
+
 # ================= LOCAL IMPORTS =================
 from push import send_push
-from users.routes import users_bp
+from users.routes import users_bp 
+from extensions import db
 from models import (
     db, Restaurant, RestaurantUser, MenuItem, Order,
     OrderItem, DeliveryPerson, FoodItem, OTP,
-    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,ShopSettings
+    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,ShopSettings,RewardSetting,RewardBadge
 )
+from reward_engine import add_coins, redeem_coins
 
 # ================= APP =================
 # ================= APP =================
@@ -55,10 +63,15 @@ if os.getenv("FLASK_ENV") == "production":
 
 # 🔐 INIT CSRF (AFTER config)
 csrf = CSRFProtect(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "users.login"
 
 # ================= DATABASE =================
 import os
 import sys
+# after app = Flask(__name__) and db.init_app(app)
+
 
 # Get DATABASE_URL from environment (for production)
 db_url = os.getenv("DATABASE_URL")
@@ -224,6 +237,9 @@ def sitemap():
     xml += '</urlset>'
 
     return Response(xml, mimetype='application/xml')
+@login_manager.user_loader
+def load_user(user_id):
+    return None
 
 from datetime import datetime 
 from zoneinfo import ZoneInfo
@@ -231,6 +247,8 @@ from zoneinfo import ZoneInfo
 from datetime import datetime
 import pytz
 from flask import request, render_template, session
+from reward_engine import update_customer_badge
+from flask_login import current_user
 from sqlalchemy import or_
 @app.route("/")
 def home():
@@ -239,7 +257,78 @@ def home():
 
     selected_location = request.args.get("location", "").strip()
 
-    # 🔹 FETCH RESTAURANTS (restaurant + bakery)
+    coins = 0
+    earned_coins = 0
+    customer = None
+    badge = "No Badge" 
+    next_badge = None
+    coins_to_next_badge = 0
+    progress_percent = 0
+    # ===== BADGE COUNTS (GLOBAL STATS) =====
+    silver_count = Customer.query.join(RewardBadge)\
+        .filter(RewardBadge.name == "Silver").count()
+
+    gold_count = Customer.query.join(RewardBadge)\
+        .filter(RewardBadge.name == "Gold").count()
+
+    platinum_count = Customer.query.join(RewardBadge)\
+        .filter(RewardBadge.name == "Platinum").count()
+
+    # ================= CUSTOMER COINS =================
+    if current_user.is_authenticated:
+        customer = current_user
+
+        coins = customer.coins or 0
+
+        # 🔁 ALWAYS RECALCULATE BADGE
+        update_customer_badge(customer)
+        db.session.commit()
+
+        badge = customer.badge.name if customer.badge else "No Badge"
+
+        # ⭐ ONE-TIME COINS FOR UI ANIMATION
+        earned_coins = 0
+        if customer.last_reward_coins and customer.last_reward_coins > 0:
+            earned_coins = customer.last_reward_coins
+            customer.last_reward_coins = 0
+            db.session.commit()
+
+        # ===== BADGE PROGRESS SYSTEM =====
+        next_badge = None
+        coins_to_next_badge = 0
+        progress_percent = 0
+
+        badges = RewardBadge.query.filter_by(active=True)\
+            .order_by(RewardBadge.required_coins.asc()).all()
+
+        for b in badges:
+            if customer.coins < b.required_coins:
+                next_badge = b
+                break
+
+        if next_badge:
+            current_min = customer.badge.required_coins if customer.badge else 0
+            span = next_badge.required_coins - current_min
+
+            if span > 0:
+                progress_percent = int(
+                    ((customer.coins - current_min) / span) * 100
+                )
+
+            progress_percent = max(0, min(progress_percent, 100))
+            coins_to_next_badge = max(
+                0,
+                next_badge.required_coins - customer.coins
+            )
+        else:
+            progress_percent = 100
+            coins_to_next_badge = 0
+
+
+    print("TOTAL COINS:", coins)
+    print("EARNED COINS (ANIMATION):", earned_coins)
+
+    # ================= FETCH RESTAURANTS =================
     if selected_location:
         restaurants = Restaurant.query.filter(
             Restaurant.location == selected_location,
@@ -250,14 +339,14 @@ def home():
             Restaurant.category_type.in_(["restaurant", "bakery"])
         ).all()
 
-    # 🔹 LOCATION DROPDOWN
+    # ================= LOCATION DROPDOWN =================
     all_locations = [
         loc[0]
         for loc in db.session.query(Restaurant.location).distinct()
         if loc[0]
     ]
 
-    # 🔹 TRENDING ITEMS
+    # ================= TRENDING ITEMS =================
     if selected_location:
         trending_items = (
             db.session.query(FoodItem)
@@ -273,18 +362,19 @@ def home():
     else:
         trending_items = []
 
-    # 🔹 USER LOCATION
+    # ================= USER LOCATION =================
     user_lat = session.get("user_lat")
     user_lng = session.get("user_lng")
     user_location_set = user_lat is not None and user_lng is not None
 
-    # 🔹 CALCULATE STATUS FOR EACH RESTAURANT
-    limited_restaurants = []  # NEW: for limited drop section
+    # ================= RESTAURANT STATUS =================
+    limited_restaurants = []
+
     for r in restaurants:
         r.deliverable = True
         r.distance = None
 
-        # 🚚 DELIVERY RADIUS CHECK
+        # 🚚 DELIVERY CHECK
         if (
             user_location_set
             and r.latitude is not None
@@ -300,7 +390,7 @@ def home():
             r.distance = round(dist, 1)
             r.deliverable = dist <= r.delivery_radius_km
 
-        # 🕒 OPEN / CLOSE STATUS (OVERNIGHT SAFE)
+        # 🕒 OPEN / CLOSE (OVERNIGHT SAFE)
         if r.opening_time and r.closing_time:
             if r.opening_time < r.closing_time:
                 r.is_open = r.opening_time <= now <= r.closing_time
@@ -309,11 +399,11 @@ def home():
         else:
             r.is_open = True
 
-        # 🔥 LIMITED DROP CHECK
+        # 🔥 LIMITED DROP
         if r.is_limited_drop and r.can_accept_orders:
             limited_restaurants.append(r)
 
-    # ⭐ FINAL SORT (BAKERY SAFE)
+    # ================= SORT =================
     restaurants.sort(
         key=lambda r: (
             not r.deliverable,
@@ -325,7 +415,7 @@ def home():
         )
     )
 
-    # 🔹 SEO
+    # ================= SEO =================
     if selected_location:
         seo_title = f"Online Food Delivery in {selected_location} | RuchiGo"
         seo_description = (
@@ -341,7 +431,7 @@ def home():
         )
         seo_keywords = "food delivery, bakery delivery, RuchiGo"
 
-    # 🔹 AJAX PARTIAL LOAD
+    # ================= AJAX LOAD =================
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return render_template(
             "_restaurants.html",
@@ -350,11 +440,11 @@ def home():
             now=now
         )
 
-    # 🔹 FULL PAGE LOAD
+    # ================= FULL PAGE =================
     return render_template(
         "index.html",
         restaurants=restaurants,
-        limited_restaurants=limited_restaurants,  # NEW
+        limited_restaurants=limited_restaurants,
         all_locations=all_locations,
         selected_location=selected_location,
         trending_items=trending_items,
@@ -362,8 +452,21 @@ def home():
         now=now,
         seo_title=seo_title,
         seo_description=seo_description,
-        seo_keywords=seo_keywords
+        seo_keywords=seo_keywords,
+        coins=coins,
+        customer=customer,
+        badge=badge,  
+        earned_coins=earned_coins, # ⭐ REQUIRED FOR ANIMATION
+        next_badge=next_badge,
+        coins_to_next_badge=coins_to_next_badge,
+        silver_count=silver_count,
+        gold_count=gold_count,
+        platinum_count=platinum_count,
+        progress_percent=progress_percent
+
     )
+
+
 
 
 @app.route("/city/<city_slug>")
@@ -606,14 +709,21 @@ from sqlalchemy import func
 
 from sqlalchemy import func
 from datetime import datetime
+from models import Customer
+from flask import session, render_template
+from sqlalchemy import func
+from datetime import datetime
+
+
 @app.route("/cart/<int:restaurant_id>")
 def cart_page(restaurant_id):
+    # -------------------- RESTAURANT --------------------
     restaurant = Restaurant.query.get_or_404(restaurant_id)
     cart_items = session.get("cart", [])
 
+    # -------------------- ITEMS & TOTAL --------------------
     items = []
     items_total = 0
-
     for c in cart_items:
         item = FoodItem.query.get(c["id"])
         if item:
@@ -627,10 +737,9 @@ def cart_page(restaurant_id):
                 "total": total
             })
 
-    # ================= DISTANCE =================
+    # -------------------- DISTANCE --------------------
     user_lat = session.get("latitude")
     user_lon = session.get("longitude")
-
     distance_km = 0
     if user_lat and user_lon and restaurant.latitude and restaurant.longitude:
         distance_km = calculate_distance_km(
@@ -640,30 +749,32 @@ def cart_page(restaurant_id):
             restaurant.longitude
         )
 
-    # ✅ DELIVERY (CORRECT CALL)
+    # -------------------- DELIVERY CHARGE --------------------
     delivery_charge, delivery_msg = calculate_delivery_charge(
         distance_km,
         items_total,
         restaurant
     )
 
-    # ================= FIRST TIME USER =================
+    # -------------------- CUSTOMER & REWARD --------------------
+    customer_id = session.get("customer_id")
+    customer = Customer.query.get(customer_id) if customer_id else None
+    reward_setting = RewardSetting.query.first()
+
+    # -------------------- FIRST TIME USER --------------------
     phone = session.get("phone")
     device_fingerprint = session.get("device_fingerprint")
-
     delivered_orders = Order.query.filter(
         ((Order.phone == phone) | (Order.device_fingerprint == device_fingerprint)) &
         (func.lower(Order.status) == "delivered")
     ).count()
-
     first_time_user = delivered_orders == 0
 
-    # ================= OFFER =================
+    # -------------------- ACTIVE OFFER --------------------
     active_offer = RestaurantOffer.query.filter_by(
         restaurant_id=restaurant.id,
         is_active=True
     ).first()
-
     offer_already_used = False
     if active_offer:
         offer_already_used = Order.query.filter(
@@ -672,18 +783,25 @@ def cart_page(restaurant_id):
             (Order.restaurant_offer_id == active_offer.id) &
             (func.lower(Order.status) == "delivered")
         ).first() is not None
+    order = None
 
+    # -------------------- RENDER --------------------
     return render_template(
         "cart.html",
         restaurant=restaurant,
         items=items,
         items_total=items_total,
         delivery_charge=delivery_charge,
-        delivery_msg=delivery_msg,   # ✅ single source
+        delivery_msg=delivery_msg,
         first_time_user=first_time_user,
         active_offer=active_offer,
-        offer_already_used=offer_already_used
+        offer_already_used=offer_already_used,
+        customer=customer,
+        reward_setting=reward_setting,
+        order=order
+
     )
+
 
 import random
 from datetime import datetime
@@ -731,12 +849,13 @@ from flask import request, flash, redirect, url_for, session
 from datetime import datetime
 import pytz
 from sqlalchemy import func 
-
+from reward_engine import add_coins
 from datetime import datetime
 import pytz
 
 @app.route("/place_order", methods=["POST"])
 def place_order():
+
     # ================= BASIC DETAILS =================
     name = request.form.get("name")
     phone = request.form.get("phone")
@@ -768,28 +887,18 @@ def place_order():
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
 
-    # ================= CURRENT TIME IN RESTAURANT TIMEZONE =================
-    tz = pytz.timezone(restaurant.timezone or "Asia/Kolkata")
-    now_dt = datetime.now(tz)
-    now_time = now_dt.time()
-
-    # ================= RESTAURANT STATUS CHECK =================
+    # ================= RESTAURANT STATUS =================
     if not restaurant.can_accept_orders:
-        flash(
-            f"⏰ {restaurant.name} is closed right now. Orders are accepted during working hours.",
-            "warning"
-        )
+        flash(f"{restaurant.name} is closed now", "warning")
         return redirect(request.referrer or url_for("home"))
-
 
     # ================= ITEMS TOTAL =================
     items_total = sum(int(quantities[i]) * float(prices[i]) for i in range(len(item_names)))
-    print("🧾 ITEMS TOTAL:", items_total)
 
     # ================= LOCATION VALIDATION =================
     if not customer_lat or not customer_lng:
-        flash("📍 Please select your delivery location on the map", "danger")
-        return redirect(request.referrer + "#map-box")
+        flash("Please select delivery location", "danger")
+        return redirect(request.referrer)
 
     # ================= DISTANCE =================
     distance_km = calculate_distance_km(
@@ -798,24 +907,25 @@ def place_order():
         customer_lat,
         customer_lng
     )
-    print("📏 DISTANCE (KM):", round(distance_km, 2))
 
     # ================= DELIVERY CHARGE =================
-    delivery_charge, delivery_msg = calculate_delivery_charge(distance_km, items_total, restaurant)
-    print("🚚 DELIVERY CHARGE:", delivery_charge)
-    print("ℹ DELIVERY MSG:", delivery_msg)
+    delivery_charge, delivery_msg = calculate_delivery_charge(
+        distance_km, items_total, restaurant
+    )
 
-    # ================= FINAL TOTAL =================
+    # ================= FINAL TOTAL (INITIAL) =================
     final_total = round(items_total + delivery_charge, 2)
 
     # ================= MAP LINK =================
-    map_link = generate_map_link(customer_lat, customer_lng, house_no, landmark, city, state, pincode)
-    print("🗺 MAP LINK:", map_link)
+    map_link = generate_map_link(
+        customer_lat, customer_lng, house_no, landmark, city, state, pincode
+    )
+    
 
     # ================= CREATE ORDER =================
     new_order = Order(
         restaurant_id=restaurant_id,
-        customer_id=session.get("customer_id"),
+        customer_id=current_user.id if current_user.is_authenticated else None,  # <-- FIXED
         customer_name=name,
         phone=phone,
         email=email,
@@ -840,8 +950,27 @@ def place_order():
         created_at=datetime.utcnow()
     )
 
+    
     db.session.add(new_order)
-    db.session.commit()
+    db.session.commit()   # ✅ IMPORTANT: new_order.id created here
+    
+    # ================= COINS REDEMPTION =================
+    coins_to_redeem = int(request.form.get("redeem_coins") or 0)
+
+    if coins_to_redeem > 0 and session.get("customer_id"):
+        success, msg, redeem_amount = redeem_coins(
+            customer_id=session.get("customer_id"),
+            coins_to_redeem=coins_to_redeem,
+            order_id=new_order.id,
+            order_total=new_order.items_total + new_order.delivery_charge
+        )
+
+        if success:
+            new_order.final_total -= redeem_amount
+            db.session.commit()
+            flash(msg, "success")
+        else:
+            flash(msg, "warning")
 
     # ================= ORDER CODE =================
     new_order.order_id = generate_order_code(new_order.id)
@@ -859,16 +988,10 @@ def place_order():
             ))
     db.session.commit()
 
-    # ================= FINAL DEBUG =================
-    print("✅ ORDER PLACED")
-    print("🆔 ORDER ID:", new_order.order_id)
-    print("📍 FINAL LAT:", new_order.latitude)
-    print("📍 FINAL LNG:", new_order.longitude)
-    print("📏 FINAL KM:", new_order.distance_km)
-    print("🚚 FINAL DELIVERY:", new_order.delivery_charge)
-    
+    # ================= FINAL =================
     flash(f"Order placed successfully! Order ID: {new_order.order_id}", "success")
     return redirect(url_for("order_placed", order_id=new_order.order_id))
+
 
 @app.route("/order-placed/<order_id>")
 def order_placed(order_id):
@@ -1299,8 +1422,6 @@ def delivery_login():
             return render_template("delivery_login.html")
 
     return render_template("delivery_login.html")
-
-
 @app.route("/delivery/dashboard", methods=["GET", "POST"])
 def delivery_dashboard():
 
@@ -1329,16 +1450,38 @@ def delivery_dashboard():
         if order.status != "Started":
             flash("Delivery not started yet", "danger")
             return redirect(url_for("delivery_dashboard"))
+        print("=== DEBUG COINS ===")
+        print("Order ID:", order.id)
+        print("Customer ID:", order.customer_id)
+        print("Items Total:", order.items_total)
+        setting = RewardSetting.query.first()
+        print("RewardSetting:", setting.earn_per_rupees if setting else "None")
 
         # ✅ OTP CHECK
         if order.otp == entered_otp:
             order.status = "Delivered"
             order.delivered_time = datetime.utcnow()
             order.payment_type = entered_payment_type
+
+            coins_earned = add_coins(
+                order.customer_id,
+                order.items_total,
+                order.id
+            )
+
             db.session.commit()
-            flash(f"Order {order.order_id} delivered successfully", "success")
+
+
+            # ✅ SAFE SESSION STORE
+            session["earned_coins"] = coins_earned
+
+
+            flash(
+                f"Order {order.order_id} delivered successfully",
+                "success"
+            )
+
         else:
-            # ❗ NOTHING changes on wrong OTP
             flash("❌ Invalid OTP. Try again.", "danger")
 
         return redirect(url_for("delivery_dashboard"))
@@ -1371,7 +1514,7 @@ def delivery_dashboard():
         "cod_total": sum(o.final_total or 0 for o in all_orders if o.payment_type == "COD"),
         "online_total": sum(o.final_total or 0 for o in all_orders if o.payment_type == "Online"),
     }
-    
+
     return render_template(
         "delivery_dashboard.html",
         delivery_person=delivery_person,
@@ -1548,15 +1691,32 @@ def add_restaurant():
     # ---- GET REQUEST ----
     return render_template("add_restaurant.html")
 
+from sqlalchemy import func
+from flask_login import current_user
+import re, unicodedata
+from sqlalchemy import func
+from datetime import datetime
+import pytz
+import pandas as pd
 
+
+# ================= NORMALIZER =================
+def normalize_name(name):
+    name = unicodedata.normalize("NFKD", str(name))
+    name = name.lower()
+    name = re.sub(r"[^a-z0-9() ]", "", name)
+    name = re.sub(r"\s+", " ", name)
+    return name.strip()
+
+
+# ================= MENU ROUTE =================
 @app.route("/menu/<int:restaurant_id>")
 def menu(restaurant_id):
+
     restaurant = Restaurant.query.get_or_404(restaurant_id)
     print("OPENING MENU FOR:", restaurant.name, restaurant.category_type)
 
-    # TIME CHECK
-    import pytz
-    from datetime import datetime
+    # ================= TIME CHECK =================
     ist = pytz.timezone("Asia/Kolkata")
     now = datetime.now(ist).time()
 
@@ -1573,41 +1733,74 @@ def menu(restaurant_id):
     if not restaurant.sheet_url:
         return "Error: No Google Sheet URL set"
 
-    # LOAD SHEET
-    import pandas as pd
+    # ================= LOAD SHEET =================
     df = pd.read_csv(restaurant.sheet_url)
-    print("RAW SHEET DATA:\n", df.head())  # 🔥 Check first 5 rows
+    print("RAW SHEET DATA:\n", df.head())
 
-    # CLEAN NaNs
     df = df.fillna("")
 
+    # ================= REORDER DATA =================
+    reorder_map = {}
+
+    if current_user.is_authenticated:
+
+        raw = (
+            db.session.query(
+                OrderItem.item_name,
+                func.count(OrderItem.id)
+            )
+            .join(Order, Order.id == OrderItem.order_id)
+            .filter(Order.customer_id == current_user.id)
+            .group_by(OrderItem.item_name)
+            .all()
+        )
+
+        reorder_map = {
+            normalize_name(name): count
+            for name, count in raw
+        }
+
+    print("\n================ USER REORDER MAP =================")
+    print(reorder_map)
+
+    # ================= PROCESS ITEMS =================
     items = []
+
     for i, item in enumerate(df.to_dict(orient="records")):
+
         price_raw = str(item.get("price", "")).strip()
         weight_raw = str(item.get("weight_prices", "")).strip()
 
-        # DEBUG PRINT EACH ITEM
         print(f"ITEM {i}: name={item.get('name')}, price_raw='{price_raw}', weight_raw='{weight_raw}'")
 
-        # Convert price safely
+        # PRICE
         try:
-            item["price"] = float(price_raw) if price_raw != "" else 0
+            item["price"] = float(price_raw) if price_raw else 0
         except Exception as e:
             print(f"⚠️ PRICE PARSE ERROR for {item.get('name')}: {e}")
             item["price"] = 0
 
         item["weight_prices"] = weight_raw
+
+        # 🔥 NORMALIZED REORDER COUNT
+        item_name = normalize_name(item.get("name", ""))
+        item["reorder_count"] = reorder_map.get(item_name, 0)
+
+        print(f"NORMALIZED NAME: {item_name}")
+        print(f"REORDER COUNT: {item['reorder_count']}")
+
         items.append(item)
 
-    # Group by category
+    # ================= GROUP BY CATEGORY =================
     menu_by_category = {}
+
     for item in items:
         category = item.get("category", "Other")
         menu_by_category.setdefault(category, []).append(item)
 
-    print("✅ MENU BY CATEGORY:\n", menu_by_category)  # 🔥 Check final structure
+    print("✅ MENU BY CATEGORY:\n", menu_by_category)
 
-    # RENDER TEMPLATE
+    # ================= RENDER =================
     if restaurant.category_type == "bakery":
         print("👉 Loading BAKERY menu")
         return render_template(
@@ -2291,20 +2484,23 @@ def add_to_cart(restaurant_id, item_id):
     session["cart_count"] = sum(i["quantity"] for i in cart)
 
     return redirect(url_for("cart_page")) 
-@app.route("/profile")
-def profile():
-    # If user is not logged in, redirect to login
-    if "customer_id" not in session:
-        return redirect(url_for("users.login"))
+@login_manager.user_loader
+def load_user(user_id):
+    return Customer.query.get(int(user_id))
+from flask_login import login_required, current_user
 
-    # Fetch the logged-in customer
-    customer = Customer.query.get(session["customer_id"])
+@app.route("/profile")
+@login_required
+def profile():
+    print("USER:", current_user.is_authenticated)
+    print("USER ID:", current_user.get_id())
 
     return render_template(
         "profile.html",
         logged_in=True,
-        customer=customer
+        customer=current_user
     )
+
 
 # Logout
 @app.route("/logout")
@@ -2470,6 +2666,8 @@ def ist_to_utc(dt_str):
 from datetime import datetime
 from flask import request, render_template, redirect, url_for, flash
 
+
+
 @app.route("/dashboard/restaurant/<int:restaurant_id>/edit", methods=["GET", "POST"])
 def edit_restaurant_card(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
@@ -2524,14 +2722,8 @@ def edit_restaurant_card(restaurant_id):
             datetime.strptime(request.form.get("start_date"), "%Y-%m-%d").date()
             if request.form.get("start_date") else None
         )
-        start_raw = request.form.get("limited_start_datetime")
-        end_raw   = request.form.get("limited_end_datetime")
 
-        if start_raw and end_raw:
-            restaurant.limited_start_datetime = ist_to_utc(start_raw)
-            restaurant.limited_end_datetime   = ist_to_utc(end_raw)
-
-                # ================= STATUS =================
+        # ================= STATUS =================
         status = request.form.get("status")
         if status in ["active", "coming_soon", "suspended"]:
             restaurant.status = status
@@ -2546,22 +2738,24 @@ def edit_restaurant_card(restaurant_id):
         restaurant.limited_total_qty = int(request.form.get("limited_total_qty") or 0)
         restaurant.limited_remaining_qty = int(request.form.get("limited_remaining_qty") or 0)
 
-        limited_start = request.form.get("limited_start_datetime")
-        limited_end = request.form.get("limited_end_datetime")
+        start_raw = request.form.get("limited_start_datetime")
+        end_raw   = request.form.get("limited_end_datetime")
 
-        # ✅ STORE DIRECTLY AS IST (NO UTC CONVERSION)
-        restaurant.limited_start_datetime = (
-            datetime.strptime(limited_start, "%Y-%m-%dT%H:%M")
-            if limited_start else None
-        )
-
-        restaurant.limited_end_datetime = (
-            datetime.strptime(limited_end, "%Y-%m-%dT%H:%M")
-            if limited_end else None
-        )
+        # ---- Store as UTC (SINGLE SOURCE OF TRUTH) ----
+        if restaurant.is_limited_drop:
+            if start_raw and end_raw:
+                restaurant.limited_start_datetime = ist_to_utc(start_raw)
+                restaurant.limited_end_datetime   = ist_to_utc(end_raw)
+            else:
+                restaurant.limited_start_datetime = None
+                restaurant.limited_end_datetime = None
+        else:
+            restaurant.limited_start_datetime = None
+            restaurant.limited_end_datetime = None
 
         # ================= VALIDATION =================
         if restaurant.is_limited_drop:
+
             if not restaurant.limited_item_name:
                 flash("Limited item name is required", "danger")
                 return redirect(request.url)
@@ -2577,18 +2771,28 @@ def edit_restaurant_card(restaurant_id):
             if restaurant.limited_end_datetime <= restaurant.limited_start_datetime:
                 flash("End time must be after start time", "danger")
                 return redirect(request.url)
-        print("RAW FORM START:", request.form.get("limited_start_datetime"))
-        print("RAW FORM END:", request.form.get("limited_end_datetime"))
+
+        # ================= DEBUG LOGS =================
+        print("RAW FORM START:", start_raw)
+        print("RAW FORM END:", end_raw)
         print("UTC START:", restaurant.limited_start_datetime)
         print("UTC END:", restaurant.limited_end_datetime)
-        print("HOURS:",
-            (restaurant.limited_end_datetime - restaurant.limited_start_datetime).total_seconds() / 3600)
 
+        if restaurant.limited_start_datetime and restaurant.limited_end_datetime:
+            hours = (
+                restaurant.limited_end_datetime - restaurant.limited_start_datetime
+            ).total_seconds() / 3600
+        else:
+            hours = 0
+
+        print("HOURS:", hours)
+
+        # ================= SAVE =================
         db.session.commit()
         flash("Restaurant updated successfully!", "success")
         return redirect(url_for("restaurant_dashboard", restaurant_id=restaurant.id))
 
-    # ================= DISPLAY IN FORM =================
+    # ================= DISPLAY FORM =================
     restaurant.limited_start_local = restaurant.limited_start_datetime
     restaurant.limited_end_local = restaurant.limited_end_datetime
 
@@ -2596,6 +2800,7 @@ def edit_restaurant_card(restaurant_id):
         "dashboard/edit_restaurant_card.html",
         restaurant=restaurant
     )
+
 
 @app.route('/toggle-offer/<int:offer_id>', methods=['POST'])
 def toggle_offer_status(offer_id):
@@ -3206,12 +3411,29 @@ def add_shop():
         flash(f"{name} added successfully!")
     
     return redirect(url_for('admin_min_delivery'))
-
 # routes.py
 from flask import render_template, abort
 import pandas as pd
+from sqlalchemy import func
+from models import OrderItem, Order, Restaurant
+
+import re
+import unicodedata
+
+
+# ================= NORMALIZER =================
+def normalize_name(name):
+    name = unicodedata.normalize("NFKD", str(name))
+    name = name.lower()
+    name = re.sub(r"[^a-z0-9() ]", "", name)
+    name = re.sub(r"\s+", " ", name)
+    return name.strip()
+
+
+# ================= ROUTE =================
 @app.route("/bakery/<int:restaurant_id>")
 def bakery_menu(restaurant_id):
+
     restaurant = Restaurant.query.get_or_404(restaurant_id)
 
     if restaurant.category_type != "bakery":
@@ -3233,29 +3455,61 @@ def bakery_menu(restaurant_id):
     print("\n================ AFTER fillna('') =====================")
     print(df)
 
+    # ================= FETCH ORDERS =================
+    raw = (
+        db.session.query(
+            OrderItem.item_name,
+            func.count(OrderItem.id)
+        )
+        .join(Order, OrderItem.order_id == Order.id)
+        .filter(Order.restaurant_id == restaurant_id)
+        .group_by(OrderItem.item_name)
+        .all()
+    )
+
+    reorder_map = {
+        normalize_name(name): count
+        for name, count in raw
+    }
+
+    print("\n================ REORDER COUNT MAP ====================")
+    print(reorder_map)
+
+    # ================= PROCESS ITEMS =================
     items = []
+
     for i, item in enumerate(df.to_dict(orient="records")):
+
         print(f"\n--- ROW {i+1} BEFORE CLEAN ---")
         print(item)
 
         # PRICE CLEAN
         raw_price = str(item.get("price", "")).strip()
-        item["price"] = float(raw_price) if raw_price != "" else 0
+        item["price"] = float(raw_price) if raw_price else 0
 
         # WEIGHT CLEAN
         raw_weights = str(item.get("weight_prices", "")).strip()
         item["weight_prices"] = raw_weights
 
+        # ✅ NORMALIZE CSV NAME
+        item_name = normalize_name(item.get("name", ""))
+
+        item["reorder_count"] = reorder_map.get(item_name, 0)
+
         print(f"PRICE PARSED: {item['price']}")
         print(f"WEIGHTS PARSED: '{item['weight_prices']}'")
+        print(f"NORMALIZED NAME: {item_name}")
+        print(f"REORDER COUNT: {item['reorder_count']}")
 
         items.append(item)
 
-    print("\n================ FINAL ITEMS SENT TO TEMPLATE ===========")
+    print("\n================ FINAL ITEMS SENT TO TEMPLATE ==========")
     for item in items:
         print(item)
 
+    # ================= GROUP BY CATEGORY =================
     menu_by_category = {}
+
     for item in items:
         category = item.get("category", "Other")
         menu_by_category.setdefault(category, []).append(item)
@@ -3269,6 +3523,8 @@ def bakery_menu(restaurant_id):
         restaurant=restaurant,
         menu_by_category=menu_by_category
     )
+
+
 from sqlalchemy import event, inspect
 
 @event.listens_for(Restaurant, "before_update")
@@ -3324,6 +3580,94 @@ def live_order_count():
         "count": total_orders,
         "timestamp": datetime.utcnow().isoformat()
     }
+@app.route("/redeem_checkout", methods=["POST"])
+def redeem_checkout():
+    customer_id = session.get("customer_id")
+    if not customer_id:
+        flash("Please login to continue", "danger")
+        return redirect(url_for("cart_page"))
+
+    order_id = request.form.get("order_id")
+    order_total = float(request.form.get("order_total", 0))
+    coins_to_use = int(request.form.get("coins_to_use", 0))
+
+    # Attempt to redeem coins
+    success, msg, discount = redeem_coins(customer_id, coins_to_use, order_id, order_total)
+
+    if success:
+        final_total = round(order_total - discount, 2)
+        flash(f"✅ {msg}. New total: ₹{final_total}", "success")
+    else:
+        final_total = order_total
+        flash(f"⚠ {msg}", "warning")
+
+    # Update order final total
+    order = Order.query.get(order_id)
+    if order:
+        order.final_total = final_total
+        db.session.commit()
+
+    return redirect(url_for("order_summary", order_id=order_id))
+@app.route("/apply_coins", methods=["POST"])
+def apply_coins():
+    customer_id = session.get("customer_id")
+    order_id = request.form.get("order_id")
+    coins_to_use = int(request.form.get("coins_to_use", 0))
+    order_total = float(request.form.get("order_total"))
+
+    success, msg, discount = redeem_coins(customer_id, coins_to_use, order_id, order_total)
+
+    if success:
+        flash(f"{msg}. Discount applied: ₹{discount}", "success")
+    else:
+        flash(msg, "warning")
+
+    return redirect(url_for("cart_page", restaurant_id=request.form.get("restaurant_id")))
+@app.route("/clear-earned-coins")
+def clear_earned_coins():
+    session.pop("earned_coins", None)
+    return "", 204
+@app.route("/admin/reward-badges", methods=["GET","POST"])
+@admin_required
+def manage_reward_badges():
+
+    badges = RewardBadge.query.order_by(
+        RewardBadge.required_coins.asc()
+    ).all()
+
+    if request.method == "POST":
+
+        for badge in badges:
+            value = request.form.get(f"coins_{badge.id}")
+
+            if value:
+                badge.required_coins = int(value)
+
+        db.session.commit()
+        flash("Badge coin values updated successfully")
+
+        return redirect(url_for("manage_reward_badges"))
+
+    return render_template(
+        "admin/reward_badges.html",
+        badges=badges
+    )
+
+from sqlalchemy import func
+
+def get_reorder_items(customer_id):
+    results = (
+        db.session.query(
+            OrderItem.item_name,
+            func.count(OrderItem.id).label("order_count")
+        )
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(Order.customer_id == customer_id)
+        .group_by(OrderItem.item_name)
+        .all()
+    )
+
+    return {r.item_name: r.order_count for r in results}
 
 # ------------------ DB INIT ------------------
 

@@ -49,14 +49,17 @@
     <input type="hidden" name="next" value="{{ next or '' }}">
     <input type="hidden" name="restaurant_id" value="{{ restaurant_id or '' }}">
 
-    <button id="button" type="submit">Create Account</button>
+    <button id="button" type="submit">Create Account</button> 
+    <!-- ================= FLASH MESSAGES ================= -->
+{% for msg in get_flashed_messages() %}
+  <div class="flash">{{ msg }}</div>
+{% endfor %}
+
 </form>
 
 
   <!-- ================= FLASH MESSAGES ================= -->
-  {% for msg in get_flashed_messages() %}
-    <div class="flash">{{ msg }}</div>
-  {% endfor %}
+
 
   <!-- ================= COMMENTED OUT OTP ELEMENTS ================= -->
   {# 
@@ -152,12 +155,18 @@ body {
 }
 
 .flash {
-  margin-top: 8px;
-  font-size: .75em;
-  color: red;
-  font-weight: 900;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 10px;
+  padding: 8px;
+  font-size: 15px;
+  color: #c62828;
+  font-weight: 700;
   text-align: center;
+  background: #ffebee;
+  border-radius: 6px;
 }
+
 </style>
 
 {% endblock %}

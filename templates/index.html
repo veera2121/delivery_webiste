@@ -2160,7 +2160,255 @@ body {
     font-weight:700;
     cursor:pointer;
 }
+.reward-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
 
+.reward-card {
+  background: linear-gradient(135deg, #111827, #1f2933);
+  padding: 22px;
+  border-radius: 18px;
+  text-align: center;
+  color: #fff;
+  width: 260px;
+
+  animation: rewardEnter .5s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes rewardEnter {
+  from {
+    transform: translateY(40px) scale(.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+.reward-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+.reward-card {
+  background: linear-gradient(135deg, #111827, #1f2933);
+  padding: 22px;
+  border-radius: 18px;
+  text-align: center;
+  color: #fff;
+  width: 260px;
+
+  animation: rewardEnter .5s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes rewardEnter {
+  from {
+    transform: translateY(40px) scale(.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+.coin-spin {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 8px;
+
+  animation:
+    coinPop 0.5s ease-out,
+    coinRotate 1.6s linear infinite;
+
+  transform-style: preserve-3d;
+}
+
+@keyframes coinRotate {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
+}
+
+@keyframes coinPop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.coins-banner {
+  /* NORMAL FLOW */
+  position: relative;
+
+  width: 100%;
+  max-width: 420px;
+
+  background: linear-gradient(135deg, #1f2933, #111827);
+  border-radius: 16px;
+  padding: 14px;
+
+  display: flex;
+  gap: 12px;
+
+  box-shadow: 0 12px 30px rgba(0,0,0,.35);
+  animation: popIn .5s ease;
+
+  margin: 16px auto;   /* center banner */
+}
+
+/* SVG COIN */
+.coin-svg {
+  width: 36px;
+  height: 36px;
+  animation: svgCoinFlip 2.2s linear infinite;
+  transform-style: preserve-3d;
+}
+
+@keyframes svgCoinFlip {
+  from { transform: rotateY(0); }
+  to   { transform: rotateY(360deg); }
+}
+
+/* INFO */
+.banner-info {
+  flex: 1;
+  color: #fff;
+}
+
+.top-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge-icon {
+  font-size: 26px;
+}
+
+.text-info {
+  flex: 1;
+}
+
+.badge-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.next-text {
+  font-size: 21px;
+  color: #d1d5db;
+}
+
+/* COIN COUNT */
+.coin-count {
+  background: linear-gradient(135deg, #ffcc00, #ff9900);
+  color: #000;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* PROGRESS */
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 7px;
+  background: #374151;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+  transition: width .8s ease;
+}
+
+.progress-percent {
+  font-size: 11px;
+  color: #86efac;
+}
+
+@keyframes popIn {
+  from { transform: scale(.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.badge-stats{
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  margin-top:10px;
+}
+
+.stat-item{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:13px;
+  font-weight:600;
+  background:#1f2933;
+  color:#fff;
+  box-shadow:0 3px 8px rgba(0,0,0,.3);
+}
+
+.stat-item span{
+  font-weight:700;
+}
+
+.stat-item{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:700;
+  box-shadow:0 4px 10px rgba(0,0,0,.25);
+}
+
+/* 🥈 SILVER */
+.stat-item.silver{
+  background:linear-gradient(135deg,#eceff1,#b0bec5);
+  color:#263238;
+}
+
+/* 🥇 GOLD */
+.stat-item.gold{
+  background:linear-gradient(135deg,#ffeb3b,#f9a825);
+  color:#3e2723;
+}
+
+/* 💎 PLATINUM */
+.stat-item.platinum{
+  background:linear-gradient(135deg,#c7b6ff,#7c4dff);
+  color:#ffffff;
+}
+.stat-item{
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+
+.stat-item:hover{
+  transform:translateY(-2px) scale(1.03);
+  box-shadow:0 8px 20px rgba(0,0,0,.35);
+}
 
 </style>
 
@@ -2222,6 +2470,152 @@ body {
 <div class="search-box mobile-search" id="mobileSearch">
     <input type="text" id="mobileSearchInput" placeholder="Search restaurants...">
 </div>  
+<div class="coins-banner">
+
+  <!-- SVG COIN -->
+  <div class="coin-svg">
+    <svg viewBox="0 0 100 100" width="36" height="36">
+      <defs>
+        <radialGradient id="goldGrad" cx="30%" cy="30%">
+          <stop offset="0%" stop-color="#fff7cc"/>
+          <stop offset="40%" stop-color="#ffd34d"/>
+          <stop offset="70%" stop-color="#ffb700"/>
+          <stop offset="100%" stop-color="#c98a00"/>
+        </radialGradient>
+
+        <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="rgba(255,255,255,.7)"/>
+          <stop offset="60%" stop-color="rgba(255,255,255,0)"/>
+        </linearGradient>
+      </defs>
+
+      <circle cx="50" cy="50" r="45"
+              fill="url(#goldGrad)"
+              stroke="#b87b00"
+              stroke-width="4"/>
+
+      <circle cx="50" cy="50" r="34"
+              fill="none"
+              stroke="#e6b800"
+              stroke-width="3"/>
+
+      <text x="50%" y="56%" text-anchor="middle"
+            font-size="30" font-weight="bold"
+            fill="#8a5a00">₹</text>
+
+      <ellipse cx="30" cy="25" rx="18" ry="10"
+               fill="url(#shine)" opacity="0.5"/>
+    </svg>
+  </div>
+
+  <!-- INFO -->
+  <div class="banner-info">
+    <div class="top-row">
+      <div class="badge-icon">
+        {% if badge == "Silver" %}🥈
+        {% elif badge == "Gold" %}🥇
+        {% elif badge == "Platinum" %}💎
+        {% else %}🏅{% endif %}
+      </div>
+
+      <div class="text-info">
+        <div class="badge-name">{{ badge }} Member</div>
+        {% if next_badge %}
+          <div class="next-text">
+            {{ coins_to_next_badge }} coins to {{ next_badge.name }}
+          </div>
+        {% else %}
+          <div class="next-text">🎉 Top level reached</div>
+        {% endif %}
+      </div>
+
+      <!-- COIN COUNT -->
+      <div class="coin-count">
+        <span id="coinCount">{{ coins }}</span>
+      </div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-fill"
+             style="width: {{ progress_percent }}%"></div>
+      </div>
+      <div class="progress-percent">{{ progress_percent }}%</div>
+    </div> 
+    
+<h3 class="badge-title">Customers by Badge Level</h3>
+
+<div class="badge-stats">
+  <div class="stat-item silver">
+    🥈 <span>{{ silver_count }}</span>
+  </div>
+  <div class="stat-item gold">
+    🥇 <span>{{ gold_count }}</span>
+  </div>
+  <div class="stat-item platinum">
+    💎 <span>{{ platinum_count }}</span>
+  </div>
+
+  </div>
+</div>
+
+</div>
+
+
+
+{% if earned_coins > 0 %}
+<div id="rewardPopup" class="reward-popup">
+  <div class="reward-card">
+
+    <!-- SAME SVG COIN – SPINNING -->
+    <div class="coin-spin">
+      <svg viewBox="0 0 100 100" width="64" height="64">
+        <defs>
+          <radialGradient id="goldGrad" cx="30%" cy="30%">
+            <stop offset="0%" stop-color="#fff7cc"/>
+            <stop offset="40%" stop-color="#ffd34d"/>
+            <stop offset="70%" stop-color="#ffb700"/>
+            <stop offset="100%" stop-color="#c98a00"/>
+          </radialGradient>
+
+          <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.7)"/>
+            <stop offset="50%" stop-color="rgba(255,255,255,0)"/>
+          </linearGradient>
+        </defs>
+
+        <circle cx="50" cy="50" r="45"
+                fill="url(#goldGrad)"
+                stroke="#b87b00"
+                stroke-width="4"/>
+
+        <circle cx="50" cy="50" r="34"
+                fill="none"
+                stroke="#e6b800"
+                stroke-width="3"/>
+
+        <text x="50%" y="56%" text-anchor="middle"
+              font-size="30" font-weight="bold" fill="#8a5a00">₹</text>
+
+        <ellipse cx="30" cy="25" rx="18" ry="10"
+                 fill="url(#shine)" opacity="0.5"/>
+      </svg>
+    </div>
+
+    <h2>+{{ earned_coins }} Coins</h2>
+    <p>Added to your wallet</p>
+
+  </div>
+</div>
+
+
+<audio id="coinSound" preload="auto">
+  <source src="{{ url_for('static', filename='sounds/coin.mp3') }}" type="audio/mpeg">
+</audio>
+{% endif %}
+
+
 
 <!-- MOBILE LOCATION FILTER -->
 <div class="hero-row full">
@@ -2952,6 +3346,104 @@ async function updateMomentum() {
 updateMomentum();
 setInterval(updateMomentum, 30000);
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    // 🔒 prevent replay without refresh
+    if (window.__coinAnimationPlayed) return;
+    window.__coinAnimationPlayed = true;
+
+    const popup = document.getElementById("rewardPopup");
+    const badge = document.getElementById("coinsBadge");
+    const countEl = document.getElementById("coinCount");
+
+    if (!popup || !badge || !countEl) return;
+
+    console.log("🪙 Coin animation running");
+
+    // hide popup after short delay
+    setTimeout(() => {
+        popup.style.transition = "opacity .4s ease";
+        popup.style.opacity = "0";
+
+        const rect = badge.getBoundingClientRect();
+
+        // flying coin
+        const coin = document.createElement("div");
+        coin.innerHTML = "🪙";
+        coin.style.cssText = `
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            font-size: 52px;
+            z-index: 999999;
+            transform: translate(-50%, -50%);
+            transition: all 0.9s cubic-bezier(.4,0,.2,1);
+            pointer-events: none;
+        `;
+        document.body.appendChild(coin);
+
+        requestAnimationFrame(() => {
+            coin.style.left = rect.left + 10 + "px";
+            coin.style.top = rect.top + 10 + "px";
+            coin.style.transform = "scale(0.25)";
+            coin.style.opacity = "0";
+        });
+
+        // ✅ finalize
+        setTimeout(() => {
+            countEl.innerText =
+                parseInt(countEl.innerText) + {{ earned_coins|int }};
+            popup.remove();
+            coin.remove();
+        }, 950);
+
+    }, 900);
+});
+</script>
+
+
+
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const overlay = document.getElementById("coin-reward-overlay");
+    if (!overlay) return;
+
+    setTimeout(() => {
+        overlay.style.opacity = "0";
+        overlay.style.transition = "opacity 0.4s ease";
+
+        setTimeout(() => overlay.remove(), 400);
+    }, 1200);
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const popup = document.getElementById("rewardPopup");
+    const sound = document.getElementById("coinSound");
+
+    if (popup && sound) {
+
+        // play sound (safe way)
+        sound.volume = 0.7;
+        sound.play().catch(() => {
+            console.log("Sound blocked until user interaction");
+        });
+
+        // auto close popup
+        setTimeout(() => {
+            popup.classList.add("fade-out");
+
+            setTimeout(() => {
+                popup.remove();
+            }, 400);
+
+        }, 2500);
+    }
+});
+</script>
+
 
 
 

@@ -3,11 +3,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from models import Customer, db  # OTP removed from import
 import secrets
+from flask_login import login_user
+from flask_login import LoginManager, current_user
 
 users_bp = Blueprint("users", __name__, template_folder="../../templates")
 
-
-# ---------------- LOGIN / SIGNUP (NON-OTP) ----------------
 @users_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -15,7 +15,7 @@ def login():
         name = request.form.get("name", "").strip()
         is_new_user = request.form.get("is_new_user") == "1"
 
-        # Validate input
+        # Validate mobile
         if not mobile.isdigit() or len(mobile) != 10:
             flash("Please enter a valid 10-digit mobile number")
             return redirect(url_for("users.login"))
@@ -24,30 +24,32 @@ def login():
             flash("Please enter your name")
             return redirect(url_for("users.login"))
 
-        mobile_e164 = "+91" + mobile
+        # Normalize mobile with +91
+        normalized_mobile = "+91" + mobile[-10:]
 
-        # Check if user exists
-        customer = Customer.query.filter_by(mobile=mobile_e164).first()
+        # Try to find customer: first check +91 version, then old 10-digit version
+        customer = Customer.query.filter(
+            (Customer.mobile == normalized_mobile) |
+            (Customer.mobile == mobile)  # for old users
+        ).first()
 
         if is_new_user:
             if customer:
                 flash("User already exists. Please login.")
                 return redirect(url_for("users.login"))
 
-            # Create new user
-            customer = Customer(mobile=mobile_e164, name=name)
+            # Save new user with +91
+            customer = Customer(mobile=normalized_mobile, name=name)
             db.session.add(customer)
             db.session.commit()
-            flash("Account created successfully!")
+            flash(f"Welcome {customer.name}! Your account has been created.")
         else:
             if not customer:
                 flash("User not found. Please sign up.")
                 return redirect(url_for("users.login"))
 
-        # Set session
-        session["customer_id"] = customer.id 
-        session.permanent = True
-        flash(f"Welcome {customer.name}!")
+        login_user(customer)
+        flash(f"Welcome back {customer.name}!")
         return redirect(url_for("profile"))
 
     return render_template("login.html")

@@ -1,20 +1,14 @@
 # models.py
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
-from sqlalchemy.orm import relationship
-from sqlalchemy import CheckConstraint
-db = SQLAlchemy()  # Keep this here, do NOT move to app.py
 
-from datetime import time
 from datetime import datetime, date, time
 import pytz
-from datetime import datetime, date, time
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import CheckConstraint
 
-db = SQLAlchemy()
+from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import relationship
+from sqlalchemy import CheckConstraint
+from flask_login import UserMixin
+
+from extensions import db   # ✅ ONLY ONE db, coming from extensions.py
 
 class Restaurant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -39,7 +33,7 @@ class Restaurant(db.Model):
     rating = db.Column(db.Float, default=4.0)
     price_level = db.Column(db.String(10), default="₹₹")
     delivery_time = db.Column(db.String(20), default="30–40 mins")
-
+    
     # ================= ORDER ACCEPTANCE =================
     is_accepting_orders = db.Column(db.Boolean, default=True, nullable=False)
     accept_orders_until = db.Column(db.Time, nullable=True)
@@ -281,8 +275,14 @@ class Order(db.Model):
     # ---------------- PAYMENT & ORDER TYPE ----------------
     payment_type = db.Column(db.String(20), nullable=True)  # COD / Online
     order_type = db.Column(db.String(50))                   # Delivery / Pickup
+    # ---------------- REWARD SYSTEM ----------------
+    coins_given = db.Column(db.Boolean, default=False, nullable=False)
 
-    # ---------------- ADDRESS ----------------
+    # 🔥 COIN REDEMPTION
+    coins_redeemed = db.Column(db.Integer, default=0, nullable=False)
+    coins_discount_amount = db.Column(db.Float, default=0.0, nullable=False)
+
+            # ---------------- ADDRESS ----------------
     house_no = db.Column(db.String(255))
     landmark = db.Column(db.String(255))
     city = db.Column(db.String(100))
@@ -382,18 +382,30 @@ class FoodItem(db.Model):
     restaurant = db.relationship("Restaurant", backref="food_items")
     category = db.relationship("Category", backref="food_items")
 # ----------------- Customer / App User -----------------
-class Customer(db.Model):
+class Customer(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), default="User")  # optional default
+    name = db.Column(db.String(200), default="User")
     mobile = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(200), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationship: a customer can have multiple orders
+    # 🔥 Reward Coins
+    coins = db.Column(db.Integer, default=0)
+
+    # ✅ Used ONLY for animation trigger
+    last_reward_coins = db.Column(db.Integer, default=0)
+
+    # Orders
     orders = db.relationship("Order", backref="customer", lazy=True)
 
+    # Coin history
+    coin_logs = db.relationship("CoinLedger", backref="customer", lazy=True)
 
-
+    badge_id = db.Column(
+        db.Integer,
+        db.ForeignKey("reward_badge.id")
+    )
+    badge = db.relationship("RewardBadge")
 
 class OTP(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -562,7 +574,8 @@ class User(db.Model):
     city = db.Column(db.String(50))
     pincode = db.Column(db.String(10))
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow) 
+    coins = db.Column(db.Integer, default=0)
 class DeliverySettings(db.Model):
     __tablename__ = "delivery_settings"
 
@@ -605,3 +618,49 @@ class ShopSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     shop_name = db.Column(db.String(50), unique=True)
     min_delivery_amount = db.Column(db.Float, default=0)  # minimum delivery
+
+
+
+
+class RewardSetting(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    earn_per_rupees = db.Column(db.Integer, default=100)
+    earn_coins = db.Column(db.Integer, default=10)
+    coin_value_rupees = db.Column(db.Float, default=0.10)
+    min_redeem_coins = db.Column(db.Integer, default=500)
+    max_redeem_percent = db.Column(db.Integer, default=20)
+    coins_expiry_days = db.Column(db.Integer, default=180)
+
+
+class RewardEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    multiplier = db.Column(db.Float, default=1.0)
+    start_time = db.Column(db.DateTime)
+    end_time = db.Column(db.DateTime)
+    active = db.Column(db.Boolean, default=True)
+
+class CoinLedger(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    customer_id = db.Column(
+        db.Integer,
+        db.ForeignKey("customer.id"),
+        nullable=False
+    )
+
+    order_id = db.Column(
+        db.Integer,
+        db.ForeignKey("order.id"),
+        nullable=True
+    )
+
+    coins = db.Column(db.Integer, nullable=False)
+    action = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+class RewardBadge(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    required_coins = db.Column(db.Integer, nullable=False)
+    benefits = db.Column(db.Text)
+    active = db.Column(db.Boolean, default=True)
