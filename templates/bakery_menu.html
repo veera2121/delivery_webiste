@@ -386,7 +386,39 @@ body{
     background: linear-gradient(135deg, #dc2626, #f97316);
     cursor: pointer;
 }
+.reorder-badge {
+    position: absolute;
+    top: 6px;
+    left: 10px;
+    background: linear-gradient(135deg, #01c4ff, #ff22ed);
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    z-index: 10;
+}
 
+.reorder-progress {
+    position: absolute;
+    top: 38px;
+    left: 10px;
+    width: 60px;
+    height: 4px;
+    background: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.reorder-fill {
+    height: 100%;
+    background: #ff9800;
+    transition: width 0.3s ease;
+}
+
+.bakery-card {
+    position: relative; /* REQUIRED */
+}
 </style>
 <div class="bakery-header">{{ restaurant.name }} Bakery</div>
 
@@ -411,41 +443,71 @@ body{
 <div class="category-section" id="category-{{ loop.index }}">
     <div class="category-title">{{ category }}</div>
 
-    {% for item in items %}
-    <div class="bakery-card" data-weights="{{ item.weight_prices }}">
-        <div class="card-left">
-            {% if item.type %}
-            <div class="type-badge {{ item.type|lower }}">{{ item.type|capitalize }}</div>
-            {% endif %}
-            <h3>{{ item.name }}</h3>
-            <p>{{ item.description }}</p>
 
-            {% if item.weight_prices and item.weight_prices != "nan" %}
+
+{% for item in items %}
+<div class="bakery-card" data-weights="{{ item.weight_prices }}">
+
+    {# 🔥 REORDER TAG – TOP RIGHT #}
+    {% if item.reorder_count is defined and item.reorder_count >= 2 %}
+        <span class="reorder-badge">Reorder</span>
+
+        {% set progress = (item.reorder_count / 5) * 100 %}
+        <div class="reorder-progress">
+            <div class="reorder-fill"
+                 style="width: {{ 100 if progress > 100 else progress }}%">
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="card-left">
+        {% if item.type %}
+            <div class="type-badge {{ item.type|lower }}">
+                {{ item.type|capitalize }}
+            </div>
+        {% endif %}
+
+        <h3>{{ item.name }}</h3>
+        <p>{{ item.description }}</p>
+
+        {% if item.weight_prices and item.weight_prices != "nan" %}
             <div class="weight-wrap"></div>
-            {% else %}
+        {% else %}
             <div class="qty-wrap">
                 <button class="qty-btn minus">−</button>
                 <div class="qty">1</div>
                 <button class="qty-btn plus">+</button>
             </div>
-            {% endif %}
+        {% endif %}
 
-            <div class="price">₹<span class="price-value">{% if item.weight_prices and item.weight_prices != "nan" %}0{% else %}{{ item.price }}{% endif %}</span></div>
+        <div class="price">
+            ₹<span class="price-value">
+                {% if item.weight_prices and item.weight_prices != "nan" %}
+                    0
+                {% else %}
+                    {{ item.price }}
+                {% endif %}
+            </span>
+        </div>
 
-            {% if item.availability == "yes" %}
-            <button class="add-btn" data-name="{{ item.name }}" data-price="{% if not item.weight_prices or item.weight_prices == 'nan' %}{{ item.price }}{% endif %}">Add to Cart</button>
-            {% else %}
+        {% if item.availability == "yes" %}
+            <button class="add-btn"
+                data-name="{{ item.name }}"
+                data-price="{% if not item.weight_prices or item.weight_prices == 'nan' %}{{ item.price }}{% endif %}">
+                Add to Cart
+            </button>
+        {% else %}
             <div class="out">Out of Stock</div>
-            {% endif %}
-        </div>
-        <div class="card-right">
-            <img src="{{ item.image_url or '/static/images/cake_placeholder.jpg' }}">
-        </div>
+        {% endif %}
     </div>
-    {% endfor %}
+
+    <div class="card-right">
+        <img src="{{ item.image_url or '/static/images/cake_placeholder.jpg' }}">
+    </div>
 </div>
 {% endfor %}
-
+</div>   {# ✅ CLOSE category-section div #}
+{% endfor %}  {# ✅ CLOSE category loop #}
 <!-- FLOATING CART -->
 <!-- FLOATING CART -->
 <a href="{{ url_for('cart_page', restaurant_id=restaurant.id) }}" class="floating-cart" id="cartBtn">🛒 <span id="cart-count">0</span></a>
