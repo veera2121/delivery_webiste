@@ -143,6 +143,21 @@ def update_customer_badge(customer):
 
     if badge:
         customer.badge_id = badge.id
+def get_next_badge_target(customer):
+
+    coins = customer.coins or 0
+
+    next_badge = RewardBadge.query.filter(
+        RewardBadge.active == True,
+        RewardBadge.required_coins > coins
+    ).order_by(
+        RewardBadge.required_coins.asc()
+    ).first()
+
+    if next_badge:
+        return next_badge.required_coins
+
+    return coins   # user already at top badge
 
 
 # --------------------------
