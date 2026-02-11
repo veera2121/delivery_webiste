@@ -899,14 +899,16 @@ body {
     <div class="card-body-accent">
 
         <!-- 🔹 Optional Progress Bar (below header) -->
-        {% if item.reorder_count is defined and item.reorder_count >= 2 %}
-            {% set progress = (item.reorder_count / 5 * 100) %}
-            <div class="reorder-progress">
-                <div class="reorder-fill"
-                     style="width: {{ 100 if progress > 100 else progress }}%">
-                </div>
-            </div>
-        {% endif %}
+{% if item['reorder_count'] is defined and item['reorder_count'] >= 2 %}
+    {% set progress = (item['reorder_count'] / 5 * 100) %}
+    <div class="reorder-progress">
+        <div class="reorder-fill"
+             style="width: {{ 100 if progress > 100 else progress }}%">
+        </div>
+    </div>
+{% endif %}
+
+
 
         {% if item.limited is defined and item.limited|string|lower == 'yes' %}
             <span class="limited-badge">🔥 Limited</span>

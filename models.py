@@ -9,7 +9,11 @@ from sqlalchemy import CheckConstraint
 from flask_login import UserMixin
 
 from extensions import db   # ✅ ONLY ONE db, coming from extensions.py
-
+restaurant_categories = db.Table(
+    "restaurant_categories",
+    db.Column("restaurant_id", db.Integer, db.ForeignKey("restaurant.id")),
+    db.Column("category_id", db.Integer, db.ForeignKey("category.id"))
+)
 class Restaurant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
@@ -20,6 +24,8 @@ class Restaurant(db.Model):
     email = db.Column(db.String(200))
     sheet_url = db.Column(db.String(500))
     location = db.Column(db.String(100))
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     # ================= CATEGORY =================
     category_type = db.Column(
@@ -79,7 +85,15 @@ class Restaurant(db.Model):
     orders = db.relationship("Order", backref="restaurant", lazy=True)
     delivery_persons = db.relationship("DeliveryPerson", backref="restaurant", lazy=True)
     menu_items = db.relationship("MenuItem", backref="restaurant", lazy=True)
-    offers = db.relationship("RestaurantOffer", backref="restaurant", lazy=True)
+    offers = db.relationship("RestaurantOffer", backref="restaurant", lazy=True) 
+    categories = db.relationship(
+        "Category",
+        secondary=restaurant_categories,
+        backref="restaurants",
+        lazy="subquery"   # loads categories automatically
+    )
+
+
 
     # ================= CONSTRAINT =================
     __table_args__ = (
@@ -356,6 +370,8 @@ class Category(db.Model):
     __tablename__ = "category"   # ⭐ VERY IMPORTANT
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
+    image = db.Column(db.String(200))
+
 # ----------------- Food Item (For Trending & Analytics) ----------------- 
 class FoodItem(db.Model):
     __tablename__ = "food_item"

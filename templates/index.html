@@ -40,7 +40,7 @@ section {
   scroll-margin-top: 80px; /* height of your fixed header */
 }
 body {
-  padding-top: 148px;
+  padding-top: 84px;
 }
 
          body {
@@ -524,7 +524,7 @@ body {
    RESTAURANTS SECTION
 ========================= */
 .restaurants-section {
-    padding: 40px 16px;
+    padding: 25px 8px;
     overflow: visible;
 }
 
@@ -541,7 +541,7 @@ body {
 ========================= */
 .restaurant-row {
     display: flex;
-    gap: 18px;
+    gap: 8px;
 
     overflow-x: auto;
     overflow-y: visible;
@@ -1085,20 +1085,7 @@ body {
         padding: 12px;
     }
 }
-.banner {
-    width: 100%;
-    border-radius: 16px;
-    overflow: hidden;
-}
 
-/* IMAGE ITSELF */
-.banner img { 
-    padding-bottom: 40px;
-    width: 100%;
-    height: auto;          /* 🔥 KEY FOR MOBILE */
-    display: block;
-    object-fit: contain;   /* Shows full image */
-}
 
 
 
@@ -1660,7 +1647,7 @@ body {
 /* ================= HORIZONTAL RESTAURANT STRIP ================= */
 
 .restaurant-preview {
-    margin: 20px 0;
+    margin: 10px 0;
 }
 
 .restaurant-preview h3 {
@@ -1671,7 +1658,7 @@ body {
 
 .restaurant-scroll {
     display: flex;
-    gap: 14px;
+    gap: 6px;
     overflow-x: auto;
     padding-bottom: 6px;
     scrollbar-width: thin;
@@ -1881,10 +1868,44 @@ body {
    MINI CATEGORY SECTION
 ================================ */
 
-.fc-mini-section{
-    padding: 30px 12px;
+.fc-mini-section {
+    padding: 6px 2px;
+
+    position: sticky;      /* Stick to top */
+    top: 150px;                /* We'll adjust dynamically via JS */
+    z-index: 999;
+   
+    transition: top 0.3s ease;
+}
+.fc-mini-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
 }
 
+/* All Icon Circle */
+.all-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    top: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+
+    background: linear-gradient(135deg, #8c6a00, #d4af37);
+    color: #2b1e00;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.3),
+        inset 0 1px 2px rgba(255,255,255,0.4);
+}
 .fc-mini-title{
     font-size: 22px;
     font-weight: 800;
@@ -1895,9 +1916,59 @@ body {
 /* GRID */
 .fc-mini-grid{
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(80px,1fr));
-    gap: 18px;
+
+    /* Exactly 2 rows */
+    grid-template-rows: repeat(2, auto);
+
+    /* Flow items vertically first */
+    grid-auto-flow: column;
+
+    /* Fixed width per category */
+    grid-auto-columns: 90px;
+
+    gap: 14px 12px;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    scroll-behavior: smooth;
+    padding-bottom: 6px;
 }
+
+/* Hide scrollbar (optional clean look) */
+.fc-mini-grid::-webkit-scrollbar{
+    height: 6px;
+}
+.fc-mini-grid::-webkit-scrollbar-thumb{
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+/* Royal Selected Text */
+.fc-mini-card.selected span{
+    color: #C6A75E;   /* Elegant muted gold */
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Royal Gold Underline */
+.fc-mini-card.selected::after{
+    content: "";
+    display: block;
+    width: 28px;
+    height: 3px;
+    margin: 6px auto 0;
+    border-radius: 50px;
+
+    background: linear-gradient(
+        90deg,
+        #8B6B2E,
+        #D4AF37,
+        #F5E6B3,
+        #D4AF37,
+        #8B6B2E
+    );
+}
+
 
 /* CARD – default hidden for scroll animation */
 .fc-mini-card{
@@ -1914,11 +1985,11 @@ body {
 
 /* IMAGE */
 .fc-mini-card img{
-    width: 70px;
-    height: 70px;
+    width: 90px;
+    height:90px;
     border-radius: 50%;
-    object-fit: cover;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+    object-fit: contain;
+  
     transition: transform .3s ease, box-shadow .3s ease;
 }
 
@@ -2244,25 +2315,38 @@ body {
   60%  { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); }
 }
-
 .coins-banner {
-  /* NORMAL FLOW */
   position: relative;
-
   width: 100%;
   max-width: 420px;
-
-  background: linear-gradient(135deg, #1f2933, #111827);
-  border-radius: 16px;
-  padding: 14px;
+  padding: 20px 18px;
+  border-radius: 18px;
 
   display: flex;
   gap: 12px;
 
-  box-shadow: 0 12px 30px rgba(0,0,0,.35);
-  animation: popIn .5s ease;
+  /* Deep royal metallic gold */
+  background: linear-gradient(
+    135deg,
+    #3e2c00 0%,
+    #8c6a00 25%,
+    #c6a756 50%,
+    #8c6a00 75%,
+    #3e2c00 100%
+  );
 
-  margin: 16px auto;   /* center banner */
+  border: 1px solid rgba(255, 215, 0, 0.35);
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.5);
+
+  margin: 20px auto;
+
+  color: #1a1200;
+  font-weight: 600;
+  letter-spacing: 0.4px;
 }
 
 /* SVG COIN */
@@ -2281,31 +2365,49 @@ body {
 /* INFO */
 .banner-info {
   flex: 1;
-  color: #fff;
+  color: #2b1e00;   /* Deep royal brown instead of white */
 }
 
+/* Top row layout */
 .top-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
+/* Crown / badge icon */
 .badge-icon {
   font-size: 26px;
+  color: #5a3e00;   /* Dark antique gold */
 }
 
+/* Text container */
 .text-info {
   flex: 1;
 }
 
+/* Badge Name (Main Title) */
 .badge-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+
+  background: linear-gradient(
+    90deg,
+    #4d3600,
+    #8c6a00,
+    #c6a756
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
+/* Sub text */
 .next-text {
-  font-size: 21px;
-  color: #d1d5db;
+  font-size: 14px;
+  color: rgba(43, 30, 0, 0.75);
+  font-weight: 500;
 }
 
 /* COIN COUNT */
@@ -2326,29 +2428,56 @@ body {
   margin-top: 8px;
 }
 
+/* PROGRESS */
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Track */
 .progress-bar {
   flex: 1;
-  height: 7px;
-  background: #374151;
-  border-radius: 10px;
+  height: 8px;
+  background: rgba(60, 45, 0, 0.35); /* Deep gold shadow base */
+  border-radius: 50px;
   overflow: hidden;
+
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.5),
+    inset 0 -1px 2px rgba(255,255,255,0.2);
 }
 
+/* Fill */
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #22c55e, #4ade80);
-  transition: width .8s ease;
+  border-radius: 50px;
+
+  background: linear-gradient(
+    90deg,
+    #5c4200,
+    #b8860b,
+    #ffd700,
+    #fff2a8,
+    #b8860b,
+    #5c4200
+  );
+
+  box-shadow:
+    0 0 8px rgba(212, 175, 55, 0.6),
+    inset 0 1px 2px rgba(255,255,255,0.5);
+
+  transition: width .8s cubic-bezier(.4,0,.2,1);
 }
 
+/* Percentage Text */
 .progress-percent {
-  font-size: 11px;
-  color: #86efac;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4d3600;
 }
 
-@keyframes popIn {
-  from { transform: scale(.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
 .badge-stats{
   display:flex;
   justify-content:center;
@@ -2409,6 +2538,61 @@ body {
   transform:translateY(-2px) scale(1.03);
   box-shadow:0 8px 20px rgba(0,0,0,.35);
 }
+.badge.new-badge {
+  background: #ff3b30;
+  color: white;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.status.open {
+  color: #16a34a;
+  font-weight: bold;
+}
+
+.status.closed {
+  color: #dc2626;
+  font-weight: bold;
+}
+/* IMAGE WRAPPER */
+.image-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+}
+
+/* COMMON BADGE */
+.corner-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-radius: 999px;
+    z-index: 5;
+    backdrop-filter: blur(6px);
+}
+
+/* NEW BADGE */
+.new-badge {
+    background: linear-gradient(135deg, #ff512f, #f09819);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(255, 81, 47, 0.5);
+    animation: pulseGlow 1.8s infinite;
+}
+
+/* Subtle glow animation */
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 rgba(255, 152, 0, 0.6); }
+    50% { box-shadow: 0 0 14px rgba(255, 152, 0, 0.9); }
+    100% { box-shadow: 0 0 0 rgba(255, 152, 0, 0.6); }
+}
+
+/* All Icon Circle */
 
 </style>
 
@@ -2618,23 +2802,7 @@ body {
 
 
 <!-- MOBILE LOCATION FILTER -->
-<div class="hero-row full">
-  <picture>
-    <source srcset="{{ url_for('static', filename='images/mobile_banner5.svg') }}"
-            media="(max-width: 768px)">
-    <img src="{{ url_for('static', filename='images/hero_banner2.svg') }}"
-         alt="Banner 1">
-  </picture>
-</div>
 
-<div class="hero-row full">
-  <picture>
-    <source srcset="{{ url_for('static', filename='images/mobile21.svg') }}"
-            media="(max-width: 768px)">
-    <img src="{{ url_for('static', filename='images/herobanner_new.jpg') }}"
-         alt="Banner 2">
-  </picture>
-</div>
 
 <section class="order-momentum">
     <div class="momentum-header">
@@ -2654,6 +2822,7 @@ body {
 
 <div class="mobile-slider">
   <div class="slider-track">
+    <img src="{{ url_for('static', filename='images/gold.png') }}" alt="">  
     <img src="{{ url_for('static', filename='images/image1.jpg') }}" alt="">  
     <img src="{{ url_for('static', filename='images/limited.jpg') }}" alt=""> 
     <img src="{{ url_for('static', filename='images/image4.jpg') }}" alt="">
@@ -2668,72 +2837,31 @@ body {
 
 
 
-
 <section id="food-categories" class="fc-mini-section">
+
     <h2 class="fc-mini-title">Food Categories</h2>
 
     <div class="fc-mini-grid">
 
-        <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/biryani.jpg') }}">
-            <span>Biryanis</span>
-        </div>
+        <!-- ALL -->
+ <!-- ALL -->
+<div class="fc-mini-card selected" data-category-id="all">
+    <div class="fc-mini-icon all-icon">ALL</div>
+    <span></span>
+</div>
 
-        <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/starters.jpg') }}">
-            <span>Starters</span>
-        </div> 
-           <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/noodles1.jpg') }}">
-            <span>Noodles</span>
-        </div>
 
-        <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/friedrice.jpg') }}">
-            <span>Fried Rice</span>
-        </div> 
-
-        <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/ice.jpg') }}">
-            <span>Ice Creams </span>
-        </div> 
-           <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/icecake.jpg') }}">
-            <span>Ice Cream Cakes </span>
+        {% for cat in categories %}
+        <div class="fc-mini-card" data-category-id="{{ cat.id }}">
+            <img src="{{ url_for('static', filename=cat.image) }}">
+            <span>{{ cat.name }}</span>
         </div>
-
-        <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/cake.jpg') }}">
-            <span>Cakes</span>
-        </div>
-
-        <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/dosa.jpg') }}">
-            <span>Tiffins</span>
-        </div>
-
-     
-         <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/shawarma.jpg') }}">
-            <span>Shawarma</span>
-        </div>
-                <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/burger.jpg') }}">
-            <span>Burger</span>
-        </div> 
-                   <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/frenchfry.jpg') }}">
-            <span>French fries</span>
-        </div>
-
-     
-         <div class="fc-mini-card">
-            <img src="{{ url_for('static', filename='images/pizza.jpg') }}">
-            <span>Pizza</span>
-        </div>
+        {% endfor %}
 
     </div>
+
 </section>
+
 
 
 {% if limited_restaurants|length > 0 %}
@@ -2762,9 +2890,6 @@ body {
 
 
 
-<div class="banner">
-    <img src="/static/images/bannerimg.svg" alt="Banner">
-</div>
 
 
 
@@ -3443,8 +3568,130 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 </script>
+<script>
+document.querySelectorAll(".fc-mini-card").forEach(card => {
+  card.addEventListener("click", () => {
+
+    const catId = card.dataset.categoryId;
+
+    // highlight selected
+    document.querySelectorAll(".fc-mini-card")
+      .forEach(c => c.classList.remove("selected"));
+    card.classList.add("selected");
+
+    // BIG CARDS
+    document.querySelectorAll(".restaurant-card, .bakery-card")
+      .forEach(r => filterCard(r, catId));
+
+    // MINI CARDS
+    document.querySelectorAll(".mini-card")
+      .forEach(r => filterCard(r, catId));
+
+    // SCROLL TO RESTAURANTS SECTION
+    const target = document.getElementById("restaurantsSection");
+    if(target){
+      const headerOffset = 80; // adjust to your header height
+      const elementPosition = target.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  });
+});
+
+function filterCard(card, catId) {
+  const ids = card.dataset.categoryIds;
+
+  if (catId === "all") {
+    card.style.display = "block";
+    return;
+  }
+
+  if (!ids || ids.trim() === "") {
+    card.style.display = "none";
+    return;
+  }
+
+  if (ids.split(",").includes(catId)) {
+    card.style.display = "block";
+  } else {
+    card.style.display = "none";
+  }
+}
 
 
+
+function setCategorySticky() {
+    const header = document.querySelector('.app-header');
+    const categoryBar = document.querySelector('.fc-mini-section');
+
+    if(header && categoryBar){
+        const headerHeight = header.offsetHeight;
+        categoryBar.style.top = headerHeight + "px";
+    }
+}
+
+// Run on load
+window.addEventListener('load', setCategorySticky);
+// Run on resize
+window.addEventListener('resize', setCategorySticky);
+document.querySelectorAll(".fc-mini-card").forEach(card => {
+  card.addEventListener("click", () => {
+    const catId = card.dataset.categoryId;
+
+    // Highlight selected
+    document.querySelectorAll(".fc-mini-card").forEach(c => c.classList.remove("selected"));
+    card.classList.add("selected");
+
+    // Filter cards
+    document.querySelectorAll(".restaurant-card, .bakery-card, .mini-card")
+      .forEach(r => filterCard(r, catId));
+
+    // Scroll restaurants section into view below sticky category bar
+    const target = document.getElementById("restaurantsSection");
+    if(target){
+        const categoryBar = document.querySelector('.fc-mini-section');
+        const headerHeight = document.querySelector('.app-header').offsetHeight;
+        const offset = categoryBar.offsetHeight + headerHeight;
+        const elementPos = target.getBoundingClientRect().top + window.scrollY - offset;
+
+        window.scrollTo({ top: elementPos, behavior: "smooth" });
+    }
+
+    // Optional: scroll category card into view (mobile)
+    card.scrollIntoView({ behavior: "smooth", inline: "center" });
+  });
+});
+
+</script>
+<script>
+document.querySelectorAll(".fc-mini-card").forEach(card => {
+    card.addEventListener("click", function () {
+
+        // Remove selected from all
+        document.querySelectorAll(".fc-mini-card")
+            .forEach(c => c.classList.remove("selected"));
+
+        // Add selected to clicked one
+        this.classList.add("selected");
+
+        // 🔥 Smooth Scroll Part
+        const targetId = this.getAttribute("data-target");
+        const targetSection = document.getElementById(targetId);
+
+        if (targetSection) {
+            targetSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+        }
+
+    });
+});
+</script>
 
 
 <div id="locationPopup" class="location-popup hidden">

@@ -6,11 +6,18 @@
         {% for r in restaurants %}
         <a href="/menu/{{ r.id }}" class="mini-card-link">
 
-            <div class="mini-card
-                {% if not r.deliverable or not r.is_open or not r.can_accept_orders %}
-                    disabled
-                {% endif %}
-            ">
+<div class="mini-card
+    {% if not r.deliverable or not r.is_open or not r.can_accept_orders %}
+        disabled
+    {% endif %}
+"
+
+     data-category-ids="{{ r.categories | map(attribute='id') | join(',') }}"
+
+>
+
+
+
                 <img
                     src="/static/images/restaurants/{{ r.id }}.jpg"
                     alt="{{ r.name }}"
@@ -46,15 +53,13 @@
 {% set is_bakery = (r.type == 'bakery') %}
 
 <div class="card
-    {{ 'bakery-card' if is_bakery else 'restaurant-card' }}
-    {% if is_suspended or not can_accept or not r.deliverable or not is_open %}
-        disabled
-    {% endif %}
+    {{ 'bakery-card' if r.type == 'bakery' else 'restaurant-card' }}
+    {% if not r.deliverable or not r.can_accept_orders or not r.is_open %} disabled {% endif %}
 "
-{% if can_accept and r.deliverable and is_open %}
-    onclick="window.location.href='/menu/{{ r.id }}'"
-{% endif %}
->
+data-category-ids="{{ r.categories | map(attribute='id') | join(',') }}">
+
+
+
 
 {# ================= STATUS BANNERS ================= #}
 
@@ -94,11 +99,18 @@
     </div>
 {% endif %}
 
-<img 
-    src="/static/images/restaurants/{{ r.id }}.jpg"
-    alt="{{ r.name }}"
-    onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';"
->
+<div class="image-wrap">
+
+    {% if is_new_restaurant(r) %}
+        <span class="corner-badge new-badge">NEW</span>
+    {% endif %}
+
+    <img 
+        src="/static/images/restaurants/{{ r.id }}.jpg"
+        alt="{{ r.name }}"
+        onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';"
+    >
+</div>
 
 <div class="content">
 
@@ -172,3 +184,5 @@
     </div>
 </section>
 {% endif %}
+
+

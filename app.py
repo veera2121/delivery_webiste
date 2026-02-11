@@ -41,7 +41,7 @@ from extensions import db
 from models import (
     db, Restaurant, RestaurantUser, MenuItem, Order,
     OrderItem, DeliveryPerson, FoodItem, OTP,
-    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,ShopSettings,RewardSetting,RewardBadge
+    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,ShopSettings,RewardSetting,RewardBadge,Category
 )
 from reward_engine import add_coins, redeem_coins
 
@@ -240,10 +240,25 @@ def sitemap():
 @login_manager.user_loader
 def load_user(user_id):
     return None
+from datetime import datetime, timedelta, timezone
+
+def is_new_restaurant(restaurant):
+    if not restaurant.created_at:
+        return False
+
+    now = datetime.now(timezone.utc)
+
+    created = restaurant.created_at
+    if created.tzinfo is None:
+        created = created.replace(tzinfo=timezone.utc)
+
+    return created >= now - timedelta(days=7)
+
+app.jinja_env.globals["is_new_restaurant"] = is_new_restaurant
 
 from datetime import datetime 
 from zoneinfo import ZoneInfo
-
+from sqlalchemy.orm import joinedload
 from datetime import datetime
 import pytz
 from flask import request, render_template, session
@@ -256,7 +271,14 @@ def home():
     now = datetime.now(ist).time()
 
     selected_location = request.args.get("location", "").strip()
+   
 
+    restaurants = (
+        Restaurant.query
+        .options(joinedload(Restaurant.categories))
+        .all()
+    )
+    categories = Category.query.all()
     coins = 0
     earned_coins = 0
     customer = None
@@ -403,17 +425,8 @@ def home():
         if r.is_limited_drop and r.can_accept_orders:
             limited_restaurants.append(r)
 
-    # ================= SORT =================
-    restaurants.sort(
-        key=lambda r: (
-            not r.deliverable,
-            not r.is_open,
-            not r.can_accept_orders,
-            r.category_type != "bakery",
-            r.status == "suspended",
-            r.status == "coming_soon"
-        )
-    )
+    restaurants = get_sorted_restaurants(restaurants)
+
 
     # ================= SEO =================
     if selected_location:
@@ -462,7 +475,8 @@ def home():
         silver_count=silver_count,
         gold_count=gold_count,
         platinum_count=platinum_count,
-        progress_percent=progress_percent
+        progress_percent=progress_percent,
+        categories=categories
 
     )
 
@@ -825,9 +839,11 @@ def generate_order_code(order_db_id):
     rand = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     return f"ORD-{order_db_id}-{rand}"
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date
 from models import Order, OrderItem, RestaurantOffer, Restaurant
 from utils import generate_otp, generate_order_code
+
+
 from sqlalchemy import func
 def safe_float(val):
     try:
@@ -2070,21 +2086,25 @@ def get_status(order_id):
         }
     })
 
-
+from sqlalchemy.orm import joinedload
 
 
 @app.route('/restaurants')
 def restaurants_page():
-    selected_location = request.args.get('location', '')  # get selected location from URL
+    selected_location = request.args.get('location', '')
 
-    # Fetch restaurants
+    query = Restaurant.query.options(joinedload(Restaurant.categories))
+
     if selected_location:
-        restaurants = Restaurant.query.filter_by(location=selected_location).all()
-    else:
-        restaurants = Restaurant.query.all()
+        query = query.filter_by(location=selected_location)
 
-    # Get all unique locations from DB for dropdown
-    all_locations = [loc[0] for loc in db.session.query(Restaurant.location).distinct().all() if loc[0]]
+    restaurants = query.all()
+
+    all_locations = [
+        loc[0]
+        for loc in db.session.query(Restaurant.location).distinct().all()
+        if loc[0]
+    ]
 
     return render_template(
         'index.html',
@@ -2652,6 +2672,61 @@ def delete_offer(offer_id):
     db.session.commit()
     flash("Offer deleted successfully", "success")
     return redirect(url_for("manage_offers", restaurant_id=restaurant_id))
+NEW_DAYS = 3
+
+def is_new_restaurant(restaurant):
+    if not restaurant.created_at:
+        return False
+    return restaurant.created_at >= datetime.utcnow() - timedelta(days=NEW_DAYS)
+def is_open_now(restaurant):
+    if not restaurant.opening_time or not restaurant.closing_time:
+        return False
+
+    tz = pytz.timezone(restaurant.timezone)
+    now = datetime.now(tz).time()
+
+    open_t = restaurant.opening_time
+    close_t = restaurant.closing_time
+
+    # Normal same-day timing
+    if open_t <= close_t:
+        return restaurant.is_accepting_orders and open_t <= now <= close_t
+
+    # Overnight timing (e.g. 7 PM – 2 AM)
+    return restaurant.is_accepting_orders and (now >= open_t or now <= close_t)
+from datetime import date
+import random
+
+def get_sorted_restaurants(restaurants):
+    random.seed(date.today().toordinal())
+
+    def sort_key(r):
+        new = is_new_restaurant(r)
+        open_now = r.is_open
+        accepting = r.can_accept_orders
+        deliverable = r.deliverable
+
+        available = open_now and accepting and deliverable
+
+        # 1️⃣ NEW + AVAILABLE → TOP
+        if new and available:
+            return (0, -r.created_at.timestamp())
+
+        # 2️⃣ AVAILABLE → MIDDLE (daily rotation)
+        if available:
+            return (1, random.random())
+
+        # 3️⃣ NEW but NOT AVAILABLE
+        if new and not available:
+            return (2, -r.created_at.timestamp())
+
+        # 4️⃣ EVERYTHING ELSE → BOTTOM
+        return (3,)
+
+    restaurants.sort(key=sort_key)
+    return restaurants
+
+
 
 from datetime import datetime
 import pytz
@@ -2671,8 +2746,30 @@ from flask import request, render_template, redirect, url_for, flash
 @app.route("/dashboard/restaurant/<int:restaurant_id>/edit", methods=["GET", "POST"])
 def edit_restaurant_card(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
-
+    categories = Category.query.all()
     if request.method == "POST":
+        # 1️⃣ Get selected category IDs from form
+        selected_ids = request.form.getlist("categories")
+        print("Selected IDs:", selected_ids)
+
+        # 2️⃣ Fetch Category objects from DB
+        if selected_ids:
+            selected_categories = Category.query.filter(
+                Category.id.in_(selected_ids)
+            ).all()
+        else:
+            selected_categories = []
+
+        # 3️⃣ Assign categories to the restaurant
+        restaurant.categories = selected_categories
+
+        # 4️⃣ Commit changes
+        db.session.commit()  # no need to flush separately here
+
+        # 5️⃣ Debug: print categories
+        print("AFTER COMMIT:", [(c.id, c.name) for c in restaurant.categories])
+
+
 
         # ================= BASIC INFO =================
         restaurant.name = request.form.get("name", "").strip()
@@ -2690,6 +2787,7 @@ def edit_restaurant_card(restaurant_id):
         restaurant.price_level = request.form.get("price_level")
         restaurant.delivery_time = request.form.get("delivery_time")
         restaurant.popular_items = request.form.get("popular_items")
+        
 
         # ================= DELIVERY =================
         restaurant.delivery_charge = float(request.form.get("delivery_charge") or 30)
@@ -2740,7 +2838,7 @@ def edit_restaurant_card(restaurant_id):
 
         start_raw = request.form.get("limited_start_datetime")
         end_raw   = request.form.get("limited_end_datetime")
-
+        
         # ---- Store as UTC (SINGLE SOURCE OF TRUTH) ----
         if restaurant.is_limited_drop:
             if start_raw and end_raw:
@@ -2798,7 +2896,8 @@ def edit_restaurant_card(restaurant_id):
 
     return render_template(
         "dashboard/edit_restaurant_card.html",
-        restaurant=restaurant
+        restaurant=restaurant,
+        categories=categories
     )
 
 
@@ -3668,6 +3767,79 @@ def get_reorder_items(customer_id):
     )
 
     return {r.item_name: r.order_count for r in results}
+from werkzeug.utils import secure_filename
+import os
+from uuid import uuid4
+
+@app.route("/admin/categories", methods=["GET", "POST"])
+def manage_categories():
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        image = request.files.get("image")   # NEW
+
+        if name:
+            existing = Category.query.filter_by(name=name).first()
+            if not existing:
+
+                filename = secure_filename(image.filename)
+                save_path = os.path.join("static/images/categories", filename)
+                image.save(save_path)
+
+                new_cat = Category(
+                    name=name,
+                    image="images/categories/" + filename
+                )
+
+                db.session.add(new_cat)
+                db.session.commit()
+
+    categories = Category.query.all()
+    return render_template("admin_categories.html", categories=categories)
+
+@app.route("/category/<int:category_id>")
+def restaurants_by_category(category_id):
+    category = Category.query.get_or_404(category_id)
+
+    # Get restaurants in this category
+    restaurants = category.restaurants
+
+    # Pass current time for open/closed logic
+    from datetime import datetime
+    now = datetime.now().time()
+
+    return render_template(
+        "restaurants_by_category.html",
+        category=category,
+        restaurants=restaurants,
+        now=now  # needed for open/closed checks in your template
+    )
+
+@app.route("/admin/category/<int:category_id>/edit", methods=["POST"])
+def edit_category(category_id):
+    cat = Category.query.get_or_404(category_id)
+    new_name = request.form.get("name")
+    image = request.files.get("image")
+
+    if new_name:
+        cat.name = new_name
+
+    if image and image.filename != "":
+        upload_folder = os.path.join("static", "images", "categories")
+        os.makedirs(upload_folder, exist_ok=True)
+        unique_name = f"{uuid4().hex}_{secure_filename(image.filename)}"
+        save_path = os.path.join(upload_folder, unique_name)
+        image.save(save_path)
+        cat.image = f"images/categories/{unique_name}"
+
+    db.session.commit()
+    return redirect(url_for("manage_categories"))
+@app.route("/admin/category/<int:category_id>/delete", methods=["POST"])
+def delete_category(category_id):
+    cat = Category.query.get_or_404(category_id)
+    db.session.delete(cat)
+    db.session.commit()
+    return redirect(url_for("manage_categories"))
 
 # ------------------ DB INIT ------------------
 

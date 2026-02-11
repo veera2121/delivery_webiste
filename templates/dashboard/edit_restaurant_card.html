@@ -111,6 +111,24 @@
 
         <label>Popular Items</label>
         <input type="text" name="popular_items" value="{{ restaurant.popular_items }}">
+        <label>Food Categories</label>
+<label>Food Categories</label>
+
+<label>Food Categories</label>
+
+<div class="category-list">
+  {% for cat in categories %}
+    <label>
+      <input type="checkbox"
+             name="categories"
+             value="{{ cat.id }}"
+             {% if cat in restaurant.categories %}checked{% endif %}>
+      {{ cat.name }}
+    </label><br>
+  {% endfor %}
+</div>
+
+
 
         <!-- ================= DELIVERY ================= -->
         <label>Delivery Charge</label>
