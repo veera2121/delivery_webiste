@@ -72,6 +72,57 @@
         border-left: 4px solid #ff5722;
         padding-left: 10px;
     }
+    .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.category-card {
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #111;
+    color: #aaa;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #222;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.category-card:hover {
+    border-color: gold;
+    color: white;
+}
+
+.category-card.active {
+    background: linear-gradient(135deg, #c9a227, #f5d76e);
+    color: black;
+    font-weight: 600;
+    border: none;
+    .category-grid {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+}
+.category-card {
+    border: 1px solid #ddd;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.category-card.active {
+    background: linear-gradient(145deg, #d4af37, #f7e27c);
+    color: #000;
+    border-color: gold;
+    font-weight: 600;
+    transform: scale(1.03);
+}
+
   </style>
 </head>
 <body>
@@ -111,23 +162,24 @@
 
         <label>Popular Items</label>
         <input type="text" name="popular_items" value="{{ restaurant.popular_items }}">
-        <label>Food Categories</label>
-<label>Food Categories</label>
+<div class="category-header">
+    <span id="selectedCount">0 Selected</span>
+</div>
 
-<label>Food Categories</label>
-
-<div class="category-list">
+<div class="category-grid">
   {% for cat in categories %}
-    <label>
+    <label class="category-card {% if cat in restaurant.categories %}active{% endif %}">
+      
       <input type="checkbox"
              name="categories"
              value="{{ cat.id }}"
+             hidden
              {% if cat in restaurant.categories %}checked{% endif %}>
-      {{ cat.name }}
-    </label><br>
+      
+      <span>{{ cat.name }}</span>
+    </label>
   {% endfor %}
 </div>
-
 
 
         <!-- ================= DELIVERY ================= -->
@@ -207,6 +259,34 @@
         <button type="submit">Update Card</button>
     </form>
 </div>
+<script>
+function updateCardUI(card) {
+    const checkbox = card.querySelector("input");
+
+    if (checkbox.checked) {
+        card.classList.add("active");
+    } else {
+        card.classList.remove("active");
+    }
+}
+
+function updateAllCards() {
+    document.querySelectorAll(".category-card").forEach(card => {
+        updateCardUI(card);
+    });
+}
+
+document.querySelectorAll(".category-card input").forEach(checkbox => {
+    checkbox.addEventListener("change", function () {
+        const card = this.closest(".category-card");
+        updateCardUI(card);
+    });
+});
+
+// On page load (important for edit mode)
+window.addEventListener("load", updateAllCards);
+</script>
+
 
 </body>
 </html>
