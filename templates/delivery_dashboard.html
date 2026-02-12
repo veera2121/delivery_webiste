@@ -431,6 +431,33 @@ select:focus {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+<style>
+.qr-modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+}
+
+.qr-content {
+  background: white;
+  margin: 10% auto;
+  padding: 20px;
+  width: 300px;
+  text-align: center;
+  border-radius: 10px;
+}
+
+.close-btn {
+  float: right;
+  cursor: pointer;
+  font-size: 22px;
+}
+</style>
 
 </style>
 
@@ -580,6 +607,14 @@ select:focus {
       </select>
       <button type="submit" class="deliver-btn">✔ Confirm Delivery</button>
     </form>
+<!-- Generate QR Button -->
+<button type="button"
+        class="deliver-btn"
+        style="background:#4CAF50; margin-top:6px;"
+        onclick="openQR({{ order.id }})">
+   💳 Generate QR
+</button>
+
 
     <!-- Customer Not Available Button -->
     <button type="button"
@@ -858,11 +893,29 @@ socket.on("new_order_assigned", (data) => {
   }, 2000);
 });
 </script>
+<script>
+function openQR(orderId) {
+    document.getElementById("qrImage").src = "/generate_qr/" + orderId;
+    document.getElementById("qrModal").style.display = "block";
+}
+
+function closeQR() {
+    document.getElementById("qrModal").style.display = "none";
+}
+</script>
 
 <script>
 const VAPID_PUBLIC_KEY = "{{ VAPID_PUBLIC_KEY }}";
 </script>
 <script src="{{ url_for('static', filename='js/push-subscribe.js') }}"></script>
+<!-- QR Modal -->
+<div id="qrModal" class="qr-modal">
+  <div class="qr-content">
+    <span class="close-btn" onclick="closeQR()">&times;</span>
+    <h3>Scan to Pay</h3>
+    <img id="qrImage" src="" width="250">
+  </div>
+</div>
 
 
 <!-- Customer Not Available Modal -->

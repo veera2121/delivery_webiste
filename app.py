@@ -3840,6 +3840,30 @@ def delete_category(category_id):
     db.session.delete(cat)
     db.session.commit()
     return redirect(url_for("manage_categories"))
+import qrcode
+import io
+import base64
+from flask import send_file
+
+@app.route('/generate_qr/<int:order_id>')
+def generate_qr(order_id):
+    order = Order.query.get(order_id)
+
+    upi_id = "96738250@ybl"
+    name = "RucHiGo"
+    amount = order.final_total
+
+    note = f"Order #{order.id}"
+
+    upi_link = f"upi://pay?pa={upi_id}&pn={name}&am={amount}&tn={note}&cu=INR"
+
+    qr = qrcode.make(upi_link)
+
+    img_io = io.BytesIO()
+    qr.save(img_io, 'PNG')
+    img_io.seek(0)
+
+    return send_file(img_io, mimetype='image/png')
 
 # ------------------ DB INIT ------------------
 
