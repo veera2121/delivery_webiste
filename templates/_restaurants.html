@@ -17,7 +17,9 @@
 >
 
 
-
+    {% if is_new_restaurant(r) %}
+        <span class="corner-badge new-badge">NEW</span>
+    {% endif %}
                 <img
                     src="/static/images/restaurants/{{ r.id }}.jpg"
                     alt="{{ r.name }}"
