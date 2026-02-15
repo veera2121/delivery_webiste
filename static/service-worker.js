@@ -1,4 +1,4 @@
-const CACHE_NAME = "ruchigo-v6";
+const CACHE_NAME = "ruchigo-10";
 
 const STATIC_FILES = [
   "/static/css/style.css",
@@ -15,10 +15,7 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
-      )
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
@@ -26,15 +23,12 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
 
+  // ✅ Cache only static files
   if (event.request.url.includes("/static/")) {
     event.respondWith(
-      caches.match(event.request)
-        .then(res => res || fetch(event.request))
+      caches.match(event.request).then(res => res || fetch(event.request))
     );
-    return;
   }
 
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
-  );
+  // ❌ Never cache pages or APIs
 });
