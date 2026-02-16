@@ -1148,7 +1148,11 @@ def admin_dashboard():
             "weekly_orders": len(weekly_orders),
             "weekly_earnings": sum(o.get_final_total() for o in weekly_orders),
             "pending": len([o for o in r_orders if o.status == "Pending"]),
-            "completed": len([o for o in r_orders if o.status == "Delivered"])
+            "completed": len([o for o in r_orders if o.status == "Delivered"]),
+                        # ✅ ADD THESE TWO
+            "is_best_seller": r.is_best_seller,
+            "is_fast_delivery": r.is_fast_delivery
+
         })
 
     return render_template(
@@ -2105,6 +2109,20 @@ def restaurants_page():
         for loc in db.session.query(Restaurant.location).distinct().all()
         if loc[0]
     ]
+    print("Total restaurants in DB:", Restaurant.query.count())
+    print("Restaurants sent to page:", len(restaurants))
+
+    for r in restaurants:
+        print(r.id, r.name)
+    print("====== DEBUG RESTAURANTS ======")
+    print("Selected Location:", selected_location)
+    print("Total Restaurants In DB:", Restaurant.query.count())
+    print("Restaurants After Filter:", len(restaurants))
+
+    for r in restaurants:
+        print("SHOWING:", r.id, r.name, r.location)
+    print("================================")
+
 
     return render_template(
         'index.html',
@@ -3864,6 +3882,21 @@ def generate_qr(order_id):
     img_io.seek(0)
 
     return send_file(img_io, mimetype='image/png')
+@app.route("/admin/update-tags/<int:id>", methods=["POST"])
+def update_tags(id):
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+    r = Restaurant.query.get_or_404(id)
+
+    r.is_best_seller = "best" in request.form
+    r.is_fast_delivery = "fast" in request.form
+
+    db.session.commit()
+
+    flash("Tags updated")
+    return redirect(url_for("admin_dashboard"))
 
 # ------------------ DB INIT ------------------
 

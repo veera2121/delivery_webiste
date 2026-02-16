@@ -26,7 +26,9 @@ class Restaurant(db.Model):
     location = db.Column(db.String(100))
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
+    
+    is_best_seller = db.Column(db.Boolean, nullable=False, server_default="0")
+    is_fast_delivery = db.Column(db.Boolean, nullable=False, server_default="0")
     # ================= CATEGORY =================
     category_type = db.Column(
         db.String(20),

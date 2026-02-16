@@ -1196,6 +1196,11 @@ function goToHome() {
   window.location.href = "/";
 }
 </script>
+<script>
+window.addEventListener("beforeunload", function () {
+    navigator.sendBeacon("/abandon_cart");
+});
+</script>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}

@@ -101,18 +101,37 @@ data-category-ids="{{ r.categories | map(attribute='id') | join(',') }}">
     </div>
 {% endif %}
 
+
+
 <div class="image-wrap">
 
     {% if is_new_restaurant(r) %}
         <span class="corner-badge new-badge">NEW</span>
     {% endif %}
 
+    <!-- Restaurant Image -->
     <img 
         src="/static/images/restaurants/{{ r.id }}.jpg"
         alt="{{ r.name }}"
+        class="restaurant-img"
         onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';"
     >
+
+    <!-- TAGS -->
+    <div class="tag-container">
+
+        {% if r.is_best_seller %}
+            <span class="tag best">🔥 Best Seller</span>
+        {% endif %}
+
+        {% if r.is_fast_delivery %}
+            <span class="tag fast">⚡ Fast Delivery</span>
+        {% endif %}
+
+    </div>
+
 </div>
+
 
 <div class="content">
 

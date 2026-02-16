@@ -250,7 +250,9 @@ button:hover { background: #0056b3; }
     <th>Pending</th>
     <th>Completed</th>
     <th>View</th>
-    <th>Edit</th>
+    <th>Edit</th> 
+    <th>Tags</th>
+
 </tr>
 {% for r in restaurant_stats %}
 <tr>
@@ -263,6 +265,26 @@ button:hover { background: #0056b3; }
     <td>{{ r.completed }}</td>
     <td><a href="{{ url_for('restaurant_dashboard') }}?id={{ r.id }}">Open</a></td>
     <td><a href="{{ url_for('edit_restaurant', restaurant_id=r.id) }}">Edit</a></td>
+    <td>
+<form method="POST" action="{{ url_for('update_tags', id=r.id) }}">
+
+<label>
+<input type="checkbox" name="best"
+{% if r.is_best_seller %}checked{% endif %}>
+🔥 Best Seller
+</label>
+
+<label>
+<input type="checkbox" name="fast"
+{% if r.is_fast_delivery %}checked{% endif %}>
+⚡ Fast Delivery
+</label>
+
+<button type="submit">Save</button>
+
+</form>
+</td>
+
 </tr>
 {% endfor %}
 </table>
