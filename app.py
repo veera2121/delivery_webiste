@@ -255,29 +255,49 @@ def is_new_restaurant(restaurant):
 
 app.jinja_env.globals["is_new_restaurant"] = is_new_restaurant
 
+import urllib.parse
+import re
 
-import urllib.parse
-import urllib.parse
-import urllib.parse
+def format_phone(phone):
+    phone = re.sub(r"\D", "", phone)   # remove spaces, +, -, etc
+
+    if phone.startswith("0"):
+        phone = phone[1:]
+
+    if len(phone) == 10:
+        phone = "91" + phone     # India country code
+
+    elif len(phone) == 12 and phone.startswith("91"):
+        pass
+    else:
+        return None
+
+    return phone
+
 
 def make_whatsapp_link(order):
 
     restaurant = Restaurant.query.get(order.restaurant_id)
     rname = restaurant.name if restaurant else "Restaurant"
 
+    phone = format_phone(order.phone)
+    if not phone:
+        return "#invalid-number"
+
     msg = (
         "*RucHiGo*\n\n"
         f"Dear *{order.customer_name}*,\n\n"
         f"Your order *#{order.order_id}* from *{rname}* is confirmed.\n"
         f"Total Amount: *Rs. {order.get_final_total()}*\n\n"
-        "The restaurant is preparing your food.\n" 
+        f"*{rname}* is preparing your food.\n"
+        "Our delivery partner will deliver it shortly.\n\n"
         "For support call: *9618319849*\n"
-        "Track orders on *RucHiGo  Website*\n\n"
+        "Track orders on *RucHiGo Website*\n\n"
         "Thank you for choosing *RucHiGo*."
     )
 
     encoded = urllib.parse.quote_plus(msg)
-    return f"https://wa.me/{order.phone}?text={encoded}"
+    return f"https://wa.me/{phone}?text={encoded}"
 
 from datetime import datetime 
 from zoneinfo import ZoneInfo
