@@ -10,7 +10,7 @@ import uuid
 import pandas as pd
 from datetime import datetime, timedelta
 import pytz 
-
+import urllib.parse
 # ================= FLASK =================
 from flask import (
     Flask, render_template, send_from_directory,
@@ -27,7 +27,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, current_user
 
 
-# app.py
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from push import VAPID_PUBLIC_KEY, register_subscription, send_push, subscriptions
 from functools import wraps
@@ -255,6 +254,30 @@ def is_new_restaurant(restaurant):
     return created >= now - timedelta(days=7)
 
 app.jinja_env.globals["is_new_restaurant"] = is_new_restaurant
+
+
+import urllib.parse
+import urllib.parse
+import urllib.parse
+
+def make_whatsapp_link(order):
+
+    restaurant = Restaurant.query.get(order.restaurant_id)
+    rname = restaurant.name if restaurant else "Restaurant"
+
+    msg = (
+        "*RucHiGo*\n\n"
+        f"Dear *{order.customer_name}*,\n\n"
+        f"Your order *#{order.order_id}* from *{rname}* is confirmed.\n"
+        f"Total Amount: *Rs. {order.get_final_total()}*\n\n"
+        "The restaurant is preparing your food.\n" 
+        "For support call: *9618319849*\n"
+        "Track orders on *RucHiGo  Website*\n\n"
+        "Thank you for choosing *RucHiGo*."
+    )
+
+    encoded = urllib.parse.quote_plus(msg)
+    return f"https://wa.me/{order.phone}?text={encoded}"
 
 from datetime import datetime 
 from zoneinfo import ZoneInfo
@@ -1165,7 +1188,8 @@ def admin_dashboard():
         date_filter=date_filter,
         restaurants=restaurants,
         stats=stats,
-        restaurant_stats=restaurant_performance
+        restaurant_stats=restaurant_performance,
+        make_whatsapp_link=make_whatsapp_link 
     )
 
 
@@ -3897,6 +3921,7 @@ def update_tags(id):
 
     flash("Tags updated")
     return redirect(url_for("admin_dashboard"))
+
 
 # ------------------ DB INIT ------------------
 

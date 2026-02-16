@@ -147,7 +147,7 @@ button:hover { background: #0056b3; }
     td:nth-of-type(8):before { content: "Placed"; }
     td:nth-of-type(9):before { content: "Assign Delivery"; }
 }
-<style>
+
 .coupon-used {
     background: #2ecc71;
     color: white;
@@ -159,7 +159,17 @@ button:hover { background: #0056b3; }
 .new-order {
     background-color: #fff9c4;
     transition: background-color 0.5s;
+} 
+.wa-btn{
+    background:#25D366;
+    color:white;
+    padding:6px 10px;
+    border-radius:6px;
+    text-decoration:none;
+    font-weight:bold;
+    display:inline-block;
 }
+
 </style>
 
 
@@ -304,7 +314,8 @@ button:hover { background: #0056b3; }
             <th>Restaurant</th>
             <th>Customer</th>
             <th>Phone</th>
-            <th>Items</th>
+            <th>Items</th> 
+            <th>WhatsApp</th>
             <th>Coupon</th>
             <th>Discount (₹)</th>
             <th>Final Total (₹)</th>
@@ -321,7 +332,7 @@ button:hover { background: #0056b3; }
             <td>{{ order.restaurant.name }}</td>
             <td>{{ order.customer_name }}</td>
             <td>{{ order.phone }}</td>
-
+             
             <td>
                 <ul>
                     {% for item in order.items %}
@@ -329,7 +340,13 @@ button:hover { background: #0056b3; }
                     {% endfor %}
                 </ul>
             </td>
-
+<td>
+    <a href="{{ make_whatsapp_link(order) }}"
+       target="_blank"
+       class="wa-btn">
+       📲 Send Msg
+    </a>
+</td>
             <!-- ✅ Coupon Code -->
             <td>
                 {% if order.coupon_used %}
