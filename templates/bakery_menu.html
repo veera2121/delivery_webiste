@@ -71,7 +71,7 @@ body{
 /* FLOAT CART */
 .floating-cart{
     position:fixed; bottom:50px; right:18px; padding:14px 22px;
-    background:linear-gradient(135deg,#16a34a,#22c55e); color:#fff; font-weight:900; border-radius:999px;
+    background:linear-gradient(135deg,#1be9ab,#0a868f); color:#000000; font-weight:900; border-radius:999px;
     box-shadow:0 14px 34px rgba(0,0,0,.35); text-decoration:none; display:flex; align-items:center; gap:6px;
 }
 
@@ -510,7 +510,12 @@ body{
 {% endfor %}  {# ✅ CLOSE category loop #}
 <!-- FLOATING CART -->
 <!-- FLOATING CART -->
-<a href="{{ url_for('cart_page', restaurant_id=restaurant.id) }}" class="floating-cart" id="cartBtn">🛒 <span id="cart-count">0</span></a>
+<a href="{{ url_for('cart_page', restaurant_id=restaurant.id) }}" 
+   class="floating-cart" id="cartBtn">
+    🛒 <span id="cart-count">0</span>
+    <span class="cart-text"> | View Items</span>
+    
+</a>
 
 <script>
 const RESTAURANT_ID = "{{ restaurant.id }}";
