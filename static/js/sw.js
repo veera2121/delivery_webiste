@@ -1,11 +1,13 @@
+const SW_VERSION = "v10";   // 🔴 change this every update
+
 self.addEventListener('install', event => {
-    console.log('✅ Service Worker installed');
-    self.skipWaiting();
+    console.log('✅ Service Worker installed', SW_VERSION);
+    self.skipWaiting();   // activate immediately
 });
 
 self.addEventListener('activate', event => {
-    console.log('✅ Service Worker activated');
-    self.clients.claim();
+    console.log('✅ Service Worker activated', SW_VERSION);
+    self.clients.claim(); // take control immediately
 });
 
 self.addEventListener('push', event => {
