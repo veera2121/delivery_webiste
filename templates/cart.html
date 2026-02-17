@@ -1403,7 +1403,17 @@ function updateTotals() {
     document.getElementById("final-total").innerText = finalTotal.toFixed(2);
 
     document.getElementById("delivery_charge_input").value = deliveryCharge;
-    document.getElementById("mini-total").innerText = itemsTotal.toFixed(2);
+    // ================= 4️⃣ UPDATE UI
+document.getElementById("items-total").innerText = itemsTotal.toFixed(2);
+document.getElementById("discount").innerText = totalDiscount.toFixed(2);
+document.getElementById("delivery-charge").innerText = deliveryCharge.toFixed(2);
+document.getElementById("final-total").innerText = finalTotal.toFixed(2);
+
+// mini-total should match final total
+document.getElementById("mini-total").innerText = finalTotal.toFixed(2);
+
+document.getElementById("delivery_charge_input").value = deliveryCharge;
+
 
     // ================= 5️⃣ DELIVERY / COUPON / OFFER MESSAGE
     const msg = document.getElementById("delivery-msg");
