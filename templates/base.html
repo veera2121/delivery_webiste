@@ -1119,7 +1119,7 @@ window.addEventListener("beforeinstallprompt", (e) => {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("{{ url_for('static', filename='sw.js') }}")
+      .register("{{ url_for('static', filename='service-worker.js') }}")
       .then(() => console.log("✅ Service Worker registered"))
       .catch(err => console.error("❌ Service Worker failed", err));
   });

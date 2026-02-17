@@ -1,4 +1,4 @@
-const CACHE_NAME = "ruchigo-11";
+const CACHE_NAME = "ruchigo-13";
 
 const STATIC_FILES = [
   "/static/css/style.css",
