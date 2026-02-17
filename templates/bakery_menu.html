@@ -623,12 +623,15 @@ if (floatingCart) {
             (sum, i) => sum + i.price * i.quantity,
             0
         );
+if (total < 60) {
+    e.preventDefault();
+    let remain = 60 - total;
+   showFlashMessage(`Add ₹${remain} more items to complete your order 😊`);
 
-        if (total < 100) {
-            e.preventDefault();
-            showFlashMessage("Please add items worth ₹100 or more to place an order!");
-            return;
-        }
+
+    return;
+}
+
 
         /* ✅ OK → allow navigation */
     });
@@ -748,20 +751,20 @@ function showFlashMessage(text) {
     const msg = document.createElement("div");
     msg.innerHTML = text;
 
-    msg.style.cssText = `
-        background:#f87171;
-        color:#fff;
-        padding:14px 22px;
-        border-radius:18px;
-        font-weight:700;
-        font-size:15px;
-        margin-top:10px;
-        box-shadow:0 10px 30px rgba(0,0,0,0.25);
-        opacity:0;
-        transform:scale(0.9);
-        transition:opacity 0.3s ease, transform 0.3s ease;
-        pointer-events:auto;
-    `;
+   msg.style.cssText = `
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color:#ffffff;
+    padding:14px 22px;
+    border-radius:20px;
+    font-weight:600;
+    font-size:15px;
+    margin-top:10px;
+    box-shadow:0 8px 25px rgba(0,0,0,0.15);
+    opacity:0;
+    transform:translateY(10px);
+    transition:opacity 0.3s ease, transform 0.3s ease;
+    pointer-events:auto;
+`;
 
     container.appendChild(msg);
 
@@ -776,7 +779,7 @@ function showFlashMessage(text) {
         msg.style.opacity = "0";
         msg.style.transform = "scale(0.9)";
         setTimeout(() => msg.remove(), 300);
-    }, 3500);
+    }, 4500);
 }
 
 
