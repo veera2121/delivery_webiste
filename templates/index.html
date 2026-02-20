@@ -1657,13 +1657,22 @@ body {
 }
 
 .restaurant-scroll {
-    display: flex;
-    gap: 6px;
+    display: grid;
+    grid-auto-flow: column;             /* Fill vertically first */
+    grid-template-rows: repeat(2, auto);/* 2 rows */
+    gap: 12px;
+
     overflow-x: auto;
-    padding-bottom: 6px;
-    scrollbar-width: thin;
+    overflow-y: hidden;
+
+    padding-bottom: 8px;
+
+    scroll-behavior: smooth;            /* Smooth scroll */
+    scroll-snap-type: x mandatory;      /* Snap like Netflix */
+    -webkit-overflow-scrolling: touch;  /* Smooth on mobile */
 }
 
+/* Hide scrollbar but keep scroll */
 .restaurant-scroll::-webkit-scrollbar {
     height: 6px;
 }
@@ -1672,6 +1681,12 @@ body {
     background: #ddd;
     border-radius: 10px;
 }
+
+/* Each card snap position */
+.mini-card-link {
+    scroll-snap-align: start;
+}
+
 /* ================= MINI RESTAURANT CARDS ================= */
 
 .mini-card-link {
@@ -3026,7 +3041,9 @@ body {
             </div>
 
         <div class="footer-links">
-                <h4>Company</h4>
+                <h4>Company</h4> 
+                <a href="/founder">Founder</a>
+
                 <a onclick="openModal('about')">About Us</a>
                 <a onclick="openModal('contact')">Contact</a>
                 <a onclick="openModal('careers')">Careers</a>
@@ -3372,7 +3389,7 @@ const modalData = {
   },
   contact: {
     title: "Contact Us",
-    content: "📞 +91 9618319849 Support: 24/7\n📧 Email: ruchigo@gamil.com"
+    content: "📞 +91 9618319849 Support: 24/7\n📧 Email: ruchigo@gmail.com"
   },
   careers: {
     title: "Careers",

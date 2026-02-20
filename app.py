@@ -286,7 +286,7 @@ def make_whatsapp_link(order):
 
     msg = (
         "*RucHiGo*\n\n"
-        f"Dear *{order.customer_name}*,\n\n"
+        f"Hello *{order.customer_name}*\n\n"
         f"Your order *#{order.order_id}* from *{rname}* is confirmed.\n"
         f"Total Amount: *Rs. {order.get_final_total()}*\n\n"
         f"*{rname}* is preparing your food.\n"
@@ -3941,6 +3941,9 @@ def update_tags(id):
 
     flash("Tags updated")
     return redirect(url_for("admin_dashboard"))
+@app.route("/founder")
+def founder():
+    return render_template("founder.html")
 
 
 # ------------------ DB INIT ------------------
