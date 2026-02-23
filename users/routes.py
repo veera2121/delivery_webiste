@@ -48,7 +48,8 @@ def login():
                 flash("User not found. Please sign up.")
                 return redirect(url_for("users.login"))
 
-        login_user(customer)
+        login_user(customer, remember=True)
+        session.permanent = True
         flash(f"Welcome back {customer.name}!")
         return redirect(url_for("profile"))
 

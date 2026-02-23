@@ -120,11 +120,21 @@ socketio = SocketIO(
     max_http_buffer_size=10_000_000
 )
 
+from werkzeug.middleware.proxy_fix import ProxyFix
 
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 # ================= BLUEPRINTS =================
 app.register_blueprint(users_bp, url_prefix="/users")
 
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+from datetime import timedelta
+
+app.config.update(
+    PERMANENT_SESSION_LIFETIME=timedelta(days=30),
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    REMEMBER_COOKIE_DURATION=timedelta(days=30),
+)
 # ------------------ UTILS ------------------
 def generate_otp():
     return str(secrets.randbelow(900000) + 100000)
@@ -2585,12 +2595,15 @@ def profile():
 
 
 # Logout
-@app.route("/logout")
-def logout():
-    session.clear()
-    flash("Logged out successfully")
-    return redirect(url_for("users.login"))  # <-- use users.login
+from flask_login import logout_user
 
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()          # ✅ Flask-Login logout
+    session.clear()        # optional (safe to keep)
+    flash("Logged out successfully")
+    return redirect(url_for("users.login"))
 @app.route("/test-otp")
 def test_otp():
     return render_template("test_otp.html")
