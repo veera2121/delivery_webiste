@@ -810,7 +810,7 @@ html {
 
     <div class="mobile-location-dropdown" id="mobileLocationDropdown">
         <select id="mobileLocationSelect" onchange="changeLocation('mobile')">
-            <option value="">Select Location</option>
+            <option value="">Select Restaurant Location</option>
             {% for loc in all_locations %}
               <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>
                 {{ loc }}
