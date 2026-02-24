@@ -175,7 +175,46 @@ button:hover { background: #0056b3; }
     font-weight:bold;
     display:inline-block;
 }
+.admin-dashboard {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); /* 6 buttons per row */
+    gap: 15px;
+    margin-top: 20px;
+}
 
+.admin-card {
+    padding: 14px;
+    text-align: center;
+    background: #32a8bd;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    color: #333;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    transition: 0.2s ease;
+}
+
+.admin-card:hover {
+    transform: translateY(-3px);
+    background: #f5f5f5;
+}
+
+.admin-card.green {
+    background: #28a745;
+    color: white;
+}
+
+.admin-card.red {
+    background: #dc3545;
+    color: white;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .admin-dashboard {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 </style>
 
 
@@ -185,44 +224,27 @@ button:hover { background: #0056b3; }
 <body>
 <div class="container">
 
-<h1>Heart of the RucHiGo</h1>
-
-<div class="top-links">
-    <a href="{{ url_for('add_restaurant') }}">Add Restaurant</a>
-    <a href="{{ url_for('add_restaurant_user') }}">Add Restaurant User</a>
-    <a href="{{ url_for('add_delivery_person') }}">Add Delivery Person</a> 
-    <a href="{{ url_for('admin_reports') }}" style="background:#28a745;">
-    📊 Reports
-</a>
-
-    <a href="{{ url_for('admin_logout') }}">Logout</a>
-    <a href="{{ url_for('update_menus') }}">Update Menus from Google Sheets</a>  
+<h1>❤️ Heart of the RucHiGo</h1>
 
 
+<div class="admin-dashboard">
 
-  <a href="{{ url_for('admin_feedback') }}" class="menu-card">
-    📝 Feedback / Issues
-  </a>
+    <a href="{{ url_for('add_restaurant') }}" class="admin-card">🍽 Add Restaurant</a>
+    <a href="{{ url_for('add_restaurant_user') }}" class="admin-card">👤 Add Restaurant User</a>
+    <a href="{{ url_for('add_delivery_person') }}" class="admin-card">🚚 Add Delivery Person</a>
+    <a href="{{ url_for('admin_reports') }}" class="admin-card green">📊 Reports</a>
 
-<a href="{{ url_for('admin_delivery_settings') }}" class="delivery-btn">
-    🚚 Delivery Charge Control
-</a>
+    <a href="{{ url_for('update_menus') }}" class="admin-card">🔄 Update Menus</a>
+    <a href="{{ url_for('admin_feedback') }}" class="admin-card">📝 Feedback / Issues</a>
+    <a href="{{ url_for('admin_delivery_settings') }}" class="admin-card">💰 Delivery Charge Control</a>
+    <a href="{{ url_for('admin_min_delivery') }}" class="admin-card">📦 Minimum Delivery</a>
 
- <a href="{{ url_for('admin_min_delivery') }}" class="btn">Set Minimum Delivery Amount</a>
-<li>
-  <a href="{{ url_for('manage_reward_badges') }}">
-    🏅 Reward Badges
-  </a>
-</li>
-<a href="{{ url_for('manage_categories') }}"
-   class="admin-btn">
-   ➕ Manage Categories
-</a>
-<a href="{{ url_for('super_delivery_boys_summary') }}">
-    Delivery Boys Summary
-</a>
+    <a href="{{ url_for('manage_reward_badges') }}" class="admin-card">🏅 Reward Badges</a>
+    <a href="{{ url_for('manage_categories') }}" class="admin-card">➕ Manage Categories</a>
+    <a href="{{ url_for('super_delivery_boys_summary') }}" class="admin-card">📋 Delivery Summary</a>
+    <a href="{{ url_for('admin_logout') }}" class="admin-card red">🚪 Logout</a>
+
 </div>
-
 <!-- ===== GLOBAL FILTER ===== -->
 <form class="global-filter" method="GET">
     <input type="text" name="query" placeholder="Search Order ID, Customer, or Restaurant" value="{{ query }}">

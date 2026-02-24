@@ -484,7 +484,7 @@ html {
     right: 0;
 
     /* Glass background */
-    background: rgba(255, 255, 255, 0.15); /* semi-transparent white */
+    background: rgba(31, 209, 200, 0.651); /* semi-transparent white */
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
 
@@ -496,7 +496,7 @@ html {
     min-width: 180px;
     transition: all 0.3s ease;
 
-    color: #000; /* optional, for text */
+    color: #c7069d; /* optional, for text */
 }
 
 
@@ -508,7 +508,7 @@ html {
     width: 100%;
     padding: 10px 14px;
     border-radius: 20px;
-    border: 1px solid #ccc;
+    border: 1px solid #0c3a80;
     font-size: 14px;
     outline: none;
 }
@@ -1216,7 +1216,36 @@ window.addEventListener("beforeunload", function () {
     navigator.sendBeacon("/abandon_cart");
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
+    const dropdown = document.getElementById("mobileLocationDropdown");
+    const toggleBtn = document.getElementById("locationToggle");
+    const select = document.getElementById("mobileLocationSelect");
+
+    // 🔐 Check if location was already selected before
+    const savedLocation = localStorage.getItem("selectedLocation");
+
+    if (!savedLocation) {
+        dropdown.style.display = "block";   // show first time only
+    } else {
+        dropdown.style.display = "none";    // never auto show again
+    }
+
+    // 👆 Manual toggle
+    toggleBtn.addEventListener("click", function () {
+        dropdown.style.display =
+            dropdown.style.display === "block" ? "none" : "block";
+    });
+
+    // ✅ When user selects location
+    select.addEventListener("change", function () {
+        localStorage.setItem("selectedLocation", select.value);
+        dropdown.style.display = "none";
+    });
+
+});
+</script>
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="flash-container">
