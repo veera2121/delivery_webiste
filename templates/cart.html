@@ -947,30 +947,6 @@ body {
     opacity: 0.6;
     cursor: not-allowed;
 }
-.floating-feedback-btn {
-    position: fixed;
-    right: 20px;          /* change to left:20px; if you want left side */
-    bottom: 80px;
-
-    background: #ff4d4d;
-    color: white;
-    padding: 8px 4px;
-
-    border-radius: 30px;
-    font-size: 14px;
-    font-weight: 600;
-
-    text-decoration: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-
-    z-index: 9999;
-    transition: 0.3s ease;
-}
-
-.floating-feedback-btn:hover {
-    background: #e60000;
-    transform: translateY(-3px);
-}
 
 </style>
 </head>
@@ -1793,9 +1769,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 </script>
-<a href="{{ url_for('feedback_form') }}" class="floating-feedback-btn">
-    📝 Report Problem
-</a>
+
 
 
 

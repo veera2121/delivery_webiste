@@ -496,7 +496,7 @@ def home():
             "Fast delivery, fresh food."
         )
         seo_keywords = "food delivery, bakery delivery, RuchiGo"
-
+    
     # ================= AJAX LOAD =================
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return render_template(
@@ -3957,8 +3957,65 @@ def update_tags(id):
 @app.route("/founder")
 def founder():
     return render_template("founder.html")
+from sqlalchemy import func, case
+from datetime import datetime
+from flask import request, render_template
 
+from sqlalchemy import func, case
 
+@app.route("/super/delivery_boys_summary", methods=["GET"])
+def super_delivery_boys_summary():
+
+    # 📅 Date filter
+    date_str = request.args.get("date")
+    if date_str:
+        selected_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    else:
+        selected_date = datetime.utcnow().date()
+
+    results = db.session.query(
+
+        DeliveryPerson.id,
+        DeliveryPerson.name.label("delivery_name"),
+
+        # 💵 COD total
+        func.sum(
+            case(
+                (Order.payment_type == "COD", Order.final_total),
+                else_=0
+            )
+        ).label("cod_total"),
+
+        # 💳 Online total
+        func.sum(
+            case(
+                (Order.payment_type == "Online", Order.final_total),
+                else_=0
+            )
+        ).label("online_total"),
+
+        # 🚚 Delivery charges total
+        func.coalesce(func.sum(Order.delivery_charge), 0).label("delivery_total"),
+
+        # 💰 Grand total
+        func.coalesce(func.sum(Order.final_total), 0).label("grand_total"),
+
+        # 📦 Order count
+        func.count(Order.id).label("order_count")
+
+    ).join(DeliveryPerson, Order.delivery_person_id == DeliveryPerson.id) \
+     .filter(
+        Order.status == "Delivered",
+        func.date(Order.delivered_time) == selected_date
+     ) \
+     .group_by(DeliveryPerson.id) \
+     .all()
+
+    return render_template(
+        "super_delivery_boys.html",
+        results=results,
+        date=selected_date
+    )
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------

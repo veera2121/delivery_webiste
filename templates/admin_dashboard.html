@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Super Admin Dashboard</title>
+<title>Heart of the RucHiGo</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <style>
 body {
@@ -73,6 +73,12 @@ th {
 .status-Pending { color: orange; font-weight: bold; }
 .status-Accepted { color: green; font-weight: bold; }
 .status-Delivered { color: blue; font-weight: bold; }
+.status-Preparing { color: rgb(255, 0, 191); font-weight: bold; }
+.status-Out-for-Delivery {
+    
+    color: #00bdad;
+}
+
 
 /* ---------- GLOBAL FILTER ---------- */
 form.global-filter { 
@@ -179,7 +185,7 @@ button:hover { background: #0056b3; }
 <body>
 <div class="container">
 
-<h1>Super Admin Dashboard</h1>
+<h1>Heart of the RucHiGo</h1>
 
 <div class="top-links">
     <a href="{{ url_for('add_restaurant') }}">Add Restaurant</a>
@@ -212,7 +218,9 @@ button:hover { background: #0056b3; }
    class="admin-btn">
    ➕ Manage Categories
 </a>
-
+<a href="{{ url_for('super_delivery_boys_summary') }}">
+    Delivery Boys Summary
+</a>
 </div>
 
 <!-- ===== GLOBAL FILTER ===== -->
