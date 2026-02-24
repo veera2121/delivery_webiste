@@ -2095,7 +2095,48 @@ body {
     pointer-events: none;
   }
 }
+/* Dots below slider */
+.slider-dots{
+  position: static;        /* move dots outside image */
+  margin-top: 12px;        /* space below banner */
+  width: 100%;
+  text-align: center;
+}
 
+/* Dot style */
+.dot{
+  height: 9px;
+  width: 9px;
+  margin: 0 5px;
+  background: #000;
+  border-radius: 50%;
+  display: inline-block;
+  opacity: 0.4;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Active dot */
+.dot.active{
+  opacity: 1;
+  transform: scale(1.4);
+  background: #a808589c;   /* highlight color */
+}
+.mobile-slider::after{
+  display:none;
+}
+/* Section spacing */
+.mobile-slider-section{
+  margin-top:20px;
+}
+
+/* Title above banner */
+.slider-main-title{
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+  margin-bottom:10px;
+}
 /* ONLY bakery View Menu button */
 /* FORCE bakery View Menu color */
 .bakery-card .view-btn {
@@ -2689,7 +2730,17 @@ body {
     from{opacity:0; transform:scale(0.7);}
     to{opacity:1; transform:scale(1);}
 }
+.mobile-banner{
+    width:100%;
+    display:none;
+}
 
+/* Show only on mobile screens */
+@media screen and (max-width:768px){
+    .mobile-banner{
+        display:block;
+    }
+}
 /* All Icon Circle */
 
 </style>
@@ -2917,20 +2968,22 @@ body {
         <small id="orderStatus">Tracking live activity</small>
     </div>
 </section>
-
-<div class="mobile-slider">
+<div class="mobile-slider"> 
+      <h2 class="slider-main-title">RucHiGo Special</h2>
   <div class="slider-track">
-    <img src="{{ url_for('static', filename='images/gold.png') }}" alt="">  
-    <img src="{{ url_for('static', filename='images/image1.jpg') }}" alt="">  
-    <img src="{{ url_for('static', filename='images/limited.jpg') }}" alt=""> 
-    <img src="{{ url_for('static', filename='images/image4.jpg') }}" alt="">
-    <img src="{{ url_for('static', filename='images/image2.jpg') }}" alt=""> 
-     <img src="{{ url_for('static', filename='images/image5.jpg') }}" alt=""> 
-    <img src="{{ url_for('static', filename='images/image3.jpg') }}" alt=""> 
-
+    <img src="{{ url_for('static', filename='images/haleem.webp') }}" class="active">
+    <img src="{{ url_for('static', filename='images/gold.png') }}">
+    <img src="{{ url_for('static', filename='images/image1.jpg') }}">
+    <img src="{{ url_for('static', filename='images/limited.jpg') }}">
+    <img src="{{ url_for('static', filename='images/image4.jpg') }}">
+    <img src="{{ url_for('static', filename='images/image2.jpg') }}">
+    <img src="{{ url_for('static', filename='images/image5.jpg') }}">
+    <img src="{{ url_for('static', filename='images/image3.jpg') }}">
   </div>
-</div>
 
+  <!-- Dots Auto Generated -->
+  <div class="slider-dots"></div>
+</div>
 
 
 
@@ -3512,29 +3565,56 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  if (window.innerWidth > 768) return;
+const track = document.querySelector('.slider-track');
+const slides = document.querySelectorAll('.slider-track img');
+const dotsContainer = document.querySelector('.slider-dots');
 
-  const track = document.querySelector(".slider-track");
-  const slides = track.querySelectorAll("img");
-  let index = 0;
+let index = 0;
+let startX = 0;
 
-  // 🔥 Set correct width
-  track.style.width = `${slides.length * 100}%`;
+// Create Dots Automatically
+slides.forEach((_, i) => {
+  const dot = document.createElement('span');
+  dot.classList.add('dot');
+  if(i === 0) dot.classList.add('active');
+  dot.addEventListener('click', () => updateSlider(i));
+  dotsContainer.appendChild(dot);
+});
 
-  slides.forEach(slide => {
-    slide.style.width = `${100 / slides.length}%`;
-  });
+const dots = document.querySelectorAll('.dot');
 
-  slides[index].classList.add("active");
+function updateSlider(i){
+  index = i;
+  track.style.transform = `translateX(-${index * 100}%)`;
 
-  setInterval(() => {
-    slides[index].classList.remove("active");
+  slides.forEach(slide => slide.classList.remove('active'));
+  dots.forEach(dot => dot.classList.remove('active'));
+
+  slides[index].classList.add('active');
+  dots[index].classList.add('active');
+}
+
+// Auto Slide
+setInterval(() => {
+  index = (index + 1) % slides.length;
+  updateSlider(index);
+}, 3500);
+
+// Swipe Support
+track.addEventListener('touchstart', e => {
+  startX = e.touches[0].clientX;
+});
+
+track.addEventListener('touchend', e => {
+  let endX = e.changedTouches[0].clientX;
+  let diff = startX - endX;
+
+  if(diff > 50){
     index = (index + 1) % slides.length;
-
-    track.style.transform = `translateX(-${index * (100 / slides.length)}%)`;
-    slides[index].classList.add("active");
-  }, 3500);
+  } else if(diff < -50){
+    index = (index - 1 + slides.length) % slides.length;
+  }
+  updateSlider(index);
 });
 </script>
 
