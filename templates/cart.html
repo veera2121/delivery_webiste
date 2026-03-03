@@ -947,7 +947,43 @@ body {
     opacity: 0.6;
     cursor: not-allowed;
 }
+/* Map Loader Overlay */
+.map-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 8px;
+}
 
+.gps-loader {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #28a745;
+    border-top: 4px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.map-loader p {
+    font-weight: 500;
+    color: #333;
+}
 </style>
 </head>
 <body> 
@@ -1019,11 +1055,17 @@ body {
     </div>
   {% endif %}
 {% endwith %}
-
 <!-- MAP -->
-<div id="map-box">
-    <!-- MAP STATUS OVERLAY -->
+<div id="map-box" style="position: relative;">
+
+    <!-- MAP STATUS MESSAGE -->
     <div id="location-status" class="location-status map-status"></div>
+
+    <!-- 🔵 LOCATION LOADER OVERLAY -->
+    <div id="map-loader" class="map-loader" style="display:none;">
+        <div class="gps-loader"></div>
+        <p>📍 Detecting your location...</p>
+    </div>
 
     <!-- Map -->
     <div id="map" style="height: 300px;"></div>
@@ -1031,6 +1073,7 @@ body {
     <p class="text-danger mt-2">
         Please select your delivery location
     </p>
+
 </div>
 
 
@@ -1575,6 +1618,7 @@ map.on("click", e => {
 });
 function getUserLocation() {
     const status = document.getElementById("location-status");
+    const loader = document.getElementById("map-loader");
 
     if (!navigator.geolocation) {
         status.style.display = "block";
@@ -1585,32 +1629,38 @@ function getUserLocation() {
 
     liveLocationClicked = true;
 
-    // ⏳ WAIT MESSAGE
-    status.style.display = "block";
-    status.className = "location-status wait";
-    status.innerHTML = "⏳ Please wait, detecting your location...";
+    // 🔵 SHOW MAP LOADER OVERLAY
+    loader.style.display = "flex";
+    status.style.display = "none";
 
     navigator.geolocation.getCurrentPosition(
         pos => {
+
+            // 🟢 HIDE LOADER ON SUCCESS
+            loader.style.display = "none";
+
             const { latitude, longitude } = pos.coords;
 
-            // Update map + marker
             marker.setLatLng([latitude, longitude]);
             map.setView([latitude, longitude], 16);
             updateLocationInputs(latitude, longitude);
 
-            // ✅ SUCCESS MESSAGE
+            status.style.display = "block";
             status.className = "location-status success";
             status.innerHTML = "✅ Location detected successfully";
 
-            // Optional: auto-hide after 2 sec
             setTimeout(() => {
                 status.style.display = "none";
             }, 2000);
         },
         err => {
+
+            // 🔴 HIDE LOADER ON ERROR
+            loader.style.display = "none";
+
+            status.style.display = "block";
             status.className = "location-status error";
-            status.innerHTML = "❌ Location permission denied Ple";
+            status.innerHTML = "❌ లొకేషన్ అనుమతి నిరాకరించబడింది. దయచేసి మ్యాప్‌లో మీ లొకేషన్‌ను మాన్యువల్‌గా ఎంచుకోండి.";
         },
         {
             enableHighAccuracy: true,
@@ -1618,7 +1668,25 @@ function getUserLocation() {
         }
     );
 }
+document.addEventListener("DOMContentLoaded", function () {
+    // Small delay ensures map loads properly
+    setTimeout(() => {
+        getUserLocation();
+    }, 800);
+});
+document.addEventListener("DOMContentLoaded", function () {
 
+    // Only detect once per session
+    if (!sessionStorage.getItem("locationDetected")) {
+
+        setTimeout(() => {
+            getUserLocation();
+            sessionStorage.setItem("locationDetected", "true");
+        }, 800);
+
+    }
+
+});
 /* ============================================================
    VALIDATION
 ============================================================ */
