@@ -4244,7 +4244,16 @@ def admin_delete_offer(offer_id):   # renamed function
     db.session.delete(offer)
     db.session.commit()
     flash("Offer deleted successfully!", "success")
-    return redirect("/admin/offers")
+    return redirect("/admin/offers") 
+@app.route("/debug-path")
+def debug_path():
+    import os
+    return f"""
+    Current Working Dir: {os.getcwd()} <br>
+    Static Folder: {app.static_folder} <br>
+    Static Exists: {os.path.exists(app.static_folder)}
+    """
+
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------
