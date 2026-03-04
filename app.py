@@ -30,7 +30,8 @@ from flask_login import LoginManager, current_user
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from push import VAPID_PUBLIC_KEY, register_subscription, send_push, subscriptions
 from functools import wraps
-
+import firebase_admin
+from firebase_admin import credentials
 
 
 # ================= LOCAL IMPORTS =================
@@ -40,7 +41,7 @@ from extensions import db
 from models import (
     db, Restaurant, RestaurantUser, MenuItem, Order,
     OrderItem, DeliveryPerson, FoodItem, OTP,
-    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,ShopSettings,RewardSetting,RewardBadge,Category
+    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,ShopSettings,RewardSetting,RewardBadge,Category, Offer
 )
 from reward_engine import add_coins, redeem_coins
 
@@ -59,9 +60,9 @@ app.config.update(
 
 if os.getenv("FLASK_ENV") == "production":
     app.config["SESSION_COOKIE_SECURE"] = True
-
+from extensions import csrf 
 # 🔐 INIT CSRF (AFTER config)
-csrf = CSRFProtect(app)
+csrf.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "users.login"
@@ -284,7 +285,10 @@ def format_phone(phone):
 
     return phone
 
-
+# Initialize Firebase ONLY ONCE
+if not firebase_admin._apps:
+    cred = credentials.Certificate("firebase_key.json")
+    firebase_admin.initialize_app(cred)
 def make_whatsapp_link(order):
 
     restaurant = Restaurant.query.get(order.restaurant_id)
@@ -4016,6 +4020,221 @@ def super_delivery_boys_summary():
         results=results,
         date=selected_date
     )
+
+from flask import send_from_directory
+
+@app.route('/firebase-messaging-sw.js')
+def sw():
+    return send_from_directory('.', 'firebase-messaging-sw.js') 
+
+
+from firebase_admin import messaging
+def send_push_notification(title, body, target_type="topic", target_value="all_users"):
+
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title=title,
+            body=body,
+        )
+    )
+
+    if target_type == "topic":
+        message.topic = target_value
+    elif target_type == "token":
+        message.token = target_value
+
+    try:
+        response = messaging.send(message)
+        print("FCM Response:", response)
+        return response
+    except Exception as e:
+        print("FCM ERROR:", e)
+        return None
+
+from flask import request, redirect, flash
+from flask import request, redirect, flash
+from firebase_admin import messaging
+from models import FCMToken
+
+
+@app.route("/admin/send-notification", methods=["POST"])
+def admin_send_notification():
+    title = request.form.get("title")
+    body = request.form.get("body")
+
+    print(f"Sending Notification -> Title: {title}, Body: {body}")
+
+    tokens = list(set([t.token for t in FCMToken.query.all()]))  # remove duplicates
+    print(f"Total UNIQUE tokens: {len(tokens)}")
+
+    if not tokens:
+        flash("No users to send notification.", "warning")
+        return redirect("/admin/dashboard")
+
+    try:
+        message = messaging.MulticastMessage(
+            data={   # ✅ DATA ONLY (better for PWA)
+                "title": title,
+                "body": body,
+                "url": "/"
+            },
+            tokens=tokens
+        )
+
+        response = messaging.send_each_for_multicast(message)
+
+        print(f"Success: {response.success_count}, Failure: {response.failure_count}")
+
+        # 🔥 Remove invalid tokens automatically
+        for idx, resp in enumerate(response.responses):
+            if not resp.success:
+                error = resp.exception
+                token = tokens[idx]
+
+                print(f"❌ Removing invalid token: {token} | Error: {error}")
+
+                FCMToken.query.filter_by(token=token).delete()
+        
+        db.session.commit()
+
+        flash(f"Notification sent to {response.success_count} users.", "success")
+
+    except Exception as e:
+        print("FCM ERROR:", e)
+        flash(f"Error sending notification: {e}", "danger")
+
+    return redirect("/admin/dashboard") 
+from firebase_admin import messaging
+from models import FCMToken
+
+
+def send_multicast_notification(title, body):
+
+    tokens = list(set([t.token for t in FCMToken.query.all()]))
+
+    print(f"Total UNIQUE tokens: {len(tokens)}")
+
+    if not tokens:
+        print("No tokens found!")
+        return
+    message = messaging.MulticastMessage(
+        notification=messaging.Notification(
+            title=title,
+            body=body
+        ),
+        data={
+            "url": "/"
+        },
+        tokens=tokens
+    )
+
+    response = messaging.send_each_for_multicast(message)
+
+    print(f"Success: {response.success_count}, Failure: {response.failure_count}")
+
+    for idx, resp in enumerate(response.responses):
+        if not resp.success:
+            token = tokens[idx]
+            print(f"❌ Removing invalid token: {token}")
+            FCMToken.query.filter_by(token=token).delete()
+
+    db.session.commit() 
+
+
+@app.route("/admin/offers")
+def admin_offers():
+    offers = Offer.query.order_by(Offer.id.desc()).all() 
+    return render_template("admin_offers.html", offers=offers)
+from firebase_admin import messaging
+
+def send_offer_notification(title, body, image=None, link="/"):
+
+    tokens = list(set([t.token for t in FCMToken.query.all()]))
+
+    if not tokens:
+        print("No FCM tokens found.")
+        return
+
+    # ✅ FORCE EVERYTHING TO STRING
+    data_payload = {
+        "url": str(link or "/"),
+        "offer_title": str(title or ""),
+        "offer_body": str(body or ""),
+        "image": str(image or "")
+    }
+
+    message = messaging.MulticastMessage(
+        notification=messaging.Notification(
+            title=str(title or ""),
+            body=str(body or ""),
+            image=str(image) if image else None
+        ),
+        data=data_payload,
+        tokens=tokens
+    )
+
+    response = messaging.send_each_for_multicast(message)
+
+    print("Success:", response.success_count)
+    print("Failure:", response.failure_count)
+@app.route("/admin/create-offer", methods=["POST"])
+def create_offer():
+    from datetime import datetime
+
+    title = request.form.get("title")
+    body = request.form.get("body")
+
+    # 🔥 FIX 1: Never allow None for discount
+    discount_str = request.form.get("discount")
+    discount = int(discount_str) if discount_str else 0
+
+    coupon = request.form.get("coupon") or None
+
+    expiry_str = request.form.get("expiry")
+    expiry = datetime.strptime(expiry_str, "%Y-%m-%dT%H:%M") if expiry_str else None
+
+    image = request.form.get("image") or None
+    link = request.form.get("link") or None
+
+    new_offer = Offer(
+        title=title,
+        body=body,
+        discount=discount,   # always integer
+        coupon=coupon,
+        expiry=expiry,
+        image=image,
+        link=link
+    )
+
+    db.session.add(new_offer)
+    db.session.commit()
+
+    # 🔥 Compose full notification message
+    full_message = f"{body}"
+
+    if discount > 0:
+        full_message += f"\n🎁 {discount}% OFF"
+
+    if coupon:
+        full_message += f"\n🧾 Code: {coupon}"
+
+    # 🔥 Send safe string-only data
+    send_offer_notification(
+        str(title),
+        str(full_message),
+        str(image or ""),
+        str(link or "/")
+    )
+
+    flash("Offer created and notification sent!")
+    return redirect("/admin/offers")
+@app.route("/admin/delete-offer/<int:offer_id>", methods=["POST"])
+def admin_delete_offer(offer_id):   # renamed function
+    offer = Offer.query.get_or_404(offer_id)
+    db.session.delete(offer)
+    db.session.commit()
+    flash("Offer deleted successfully!", "success")
+    return redirect("/admin/offers")
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------

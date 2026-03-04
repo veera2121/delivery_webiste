@@ -5,6 +5,8 @@ from models import Customer, db  # OTP removed from import
 import secrets
 from flask_login import login_user
 from flask_login import LoginManager, current_user
+from firebase_admin import messaging 
+from extensions import csrf
 
 users_bp = Blueprint("users", __name__, template_folder="../../templates")
 
@@ -54,8 +56,91 @@ def login():
         return redirect(url_for("profile"))
 
     return render_template("login.html")
+@users_bp.route("/save-token", methods=["POST"])
+@csrf.exempt
+def save_token():
+    from flask import request, jsonify
+    from datetime import datetime
+    from models import FCMToken, db
+    from flask_login import current_user
+
+    data = request.get_json()
+    token = data.get("token") if data else None
+
+    print("TOKEN RECEIVED:", token)
+
+    if not token:
+        return jsonify({"error": "No token received"}), 400
+
+    # 🔥 Remove same token duplicates first
+    FCMToken.query.filter_by(token=token).delete()
+
+    # 🔥 If user logged in, remove old tokens of that user
+    if current_user.is_authenticated:
+        FCMToken.query.filter_by(user_id=current_user.id).delete()
+
+    # Save fresh token
+    new_token = FCMToken(
+        user_id=current_user.id if current_user.is_authenticated else None,
+        token=token,
+        created_at=datetime.utcnow()
+    )
+
+    db.session.add(new_token)
+    db.session.commit()
+
+    print("✅ Token saved cleanly")
+
+    return jsonify({"status": "success"}), 200
+
+from firebase_admin import messaging
+from models import FCMToken
+import time
+from firebase_admin import messaging
+from firebase_admin.exceptions import FirebaseError
+from requests.exceptions import ConnectionError
 
 
+def send_push_notification_all(title, body):
+
+    tokens = list(set([t.token for t in FCMToken.query.all()]))
+
+    if not tokens:
+        print("No tokens to send to!")
+        return
+
+    message = messaging.MulticastMessage(
+        data={
+            "title": title,
+            "body": body,
+            "url": "/"
+        },
+        tokens=tokens
+    )
+
+    # 🔁 Retry 3 times
+    for attempt in range(3):
+        try:
+            response = messaging.send_each_for_multicast(message)
+            break
+
+        except (FirebaseError, ConnectionError) as e:
+            print(f"Attempt {attempt+1} failed:", e)
+            time.sleep(2)
+    else:
+        print("FCM completely failed after retries")
+        return
+
+    print("Success:", response.success_count)
+    print("Failure:", response.failure_count)
+
+    # Remove invalid tokens
+    for idx, resp in enumerate(response.responses):
+        if not resp.success:
+            token = tokens[idx]
+            FCMToken.query.filter_by(token=token).delete()
+
+    db.session.commit()
 # ============================================================
 # FUTURE OTP ROUTES (COMMENTED)
 # If you remove OTP completely, these can be deleted

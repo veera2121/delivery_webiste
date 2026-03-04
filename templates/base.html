@@ -1245,6 +1245,139 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 });
+</script>  
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then(reg => {
+      console.log("✅ Service Worker Registered:", reg);
+    })
+    .catch(err => {
+      console.log("❌ SW Error:", err);
+    });
+}
+</script>
+<script type="module">
+
+// ✅ Import Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging.js";
+
+// ✅ Your Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyClOOasdB7hnuKOdHDsK_j7yJE5kCxLs9g",
+  authDomain: "ruchigo-20f31.firebaseapp.com",
+  projectId: "ruchigo-20f31",
+  storageBucket: "ruchigo-20f31.firebasestorage.app",
+  messagingSenderId: "889647192427",
+  appId: "1:889647192427:web:e10aa7e57070818cc1142e"
+};
+
+// ✅ Initialize
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
+
+// ✅ Ask Permission
+window.startNotifications = async function(){
+
+  const popup = document.getElementById("notifyPopup");
+
+  popup.style.display = "none"; // Hide immediately
+
+  const permission = await Notification.requestPermission();
+
+  if(permission === "granted"){
+
+    const token = await getToken(messaging,{
+      vapidKey: "BMC5xIaZHDk5lxJWUoDp4yMhVdBeIWZgxGoLfncnaaEv0GsJyculyYWuWonJBglblPWQ6sFYl4TYjcjxylYGMqg"
+    });
+
+    await fetch("/users/save-token",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json"},
+      body: JSON.stringify({token:token})
+    });
+
+    // ✅ Save enable flag
+    localStorage.setItem("ruchigo_notify_enabled","yes");
+
+    // ✅ Remove 3-day timer
+    localStorage.removeItem("ruchigo_notify_closed");
+
+    showToast();
+  }
+}
+
+
+// ✅ When notification received in website
+onMessage(messaging,(payload)=>{
+  alert(payload.notification.title);
+});
+
+</script>  
+<script>
+function showToast(){
+  let t = document.createElement("div");
+  t.innerHTML = "🔔 Notifications Enabled!";
+
+  t.style.position = "fixed";
+  t.style.top = "50%";
+  t.style.left = "50%";
+  t.style.transform = "translate(-50%, -50%)";
+
+  t.style.background = "#4CAF50";
+  t.style.color = "white";
+  t.style.padding = "18px 28px";
+  t.style.borderRadius = "14px";
+  t.style.fontSize = "18px";
+  t.style.boxShadow = "0 8px 30px rgba(0,0,0,0.3)";
+  t.style.zIndex = "9999";
+
+  document.body.appendChild(t);
+
+  setTimeout(()=>t.remove(),3000);
+}
+</script>
+<script>
+window.addEventListener("load", function(){
+
+    const popup = document.getElementById("notifyPopup");
+
+    // 1️⃣ If already enabled before → NEVER show
+    if(localStorage.getItem("ruchigo_notify_enabled") === "yes"){
+        return;
+    }
+
+    // 2️⃣ If browser already allowed → save & don't show
+    if(Notification.permission === "granted"){
+        localStorage.setItem("ruchigo_notify_enabled","yes");
+        return;
+    }
+
+    // 3️⃣ If blocked → NEVER show
+    if(Notification.permission === "denied"){
+        return;
+    }
+
+    // 4️⃣ Check 3 days logic
+    const lastClosed = localStorage.getItem("ruchigo_notify_closed");
+
+    if(lastClosed){
+        const diff = Date.now() - parseInt(lastClosed);
+        const threeDays = 3 * 24 * 60 * 60 * 1000;
+
+        if(diff < threeDays){
+            return; // Not completed 3 days
+        }
+    }
+
+    // 5️⃣ Show popup after 3 seconds
+    setTimeout(()=>{
+        popup.style.display = "flex";
+    },3000);
+
+});
 </script>
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}

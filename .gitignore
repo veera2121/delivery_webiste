@@ -9,7 +9,7 @@ __pycache__/
 .env
 credentials.json
 config.py
-
+firebase_key.json
 # Flask instance
 instance/
 

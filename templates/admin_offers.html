@@ -1,0 +1,102 @@
+<style>
+    /* Form Styling */
+form input, form textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.btn-submit {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.btn-submit:hover {
+  background-color: #45a049;
+}
+
+/* Offer Card */
+.offer-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  background-color: #fff;
+}
+
+.offer-card h3 {
+  margin-top: 0;
+}
+
+.offer-img {
+  max-width: 200px;
+  margin: 10px 0;
+  border-radius: 8px;
+}
+
+/* Delete Button */
+.btn-delete {
+  background-color: #f44336;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.btn-delete:hover {
+  background-color: #d32f2f;
+}
+</style>
+<h2>🎁 Create New Offer</h2>
+
+<form method="POST" action="/admin/create-offer">
+  <input type="text" name="title" placeholder="Offer Title" required>
+  <textarea name="body" placeholder="Offer Description" required></textarea>
+  <input type="number" name="discount" placeholder="Discount %(Optional)">
+  <input type="text" name="coupon" placeholder="Coupon Code (Optional)">
+  <input type="datetime-local" name="expiry" required>
+  <input type="text" name="image" placeholder="Food Image URL (Optional)">
+  <input type="text" name="link" placeholder="Restaurant/Menu Link (Optional)">
+  <button type="submit" class="btn-submit">Create Offer + Send Notification</button>
+</form>
+
+<hr>
+
+<h2>📋 Existing Offers</h2>
+
+{% for offer in offers %}
+  <div class="offer-card">
+    <h3>{{ offer.title }}</h3>
+    <p>{{ offer.body }}</p>
+    <p>Discount: {{ offer.discount }}%</p>
+    {% if offer.coupon %}
+      <p>Coupon: {{ offer.coupon }}</p>
+    {% endif %}
+    {% if offer.expiry %}
+      <p>Expires: {{ offer.expiry }}</p>
+    {% endif %}
+    {% if offer.image %}
+      <img src="{{ offer.image }}" alt="Offer Image" class="offer-img">
+    {% endif %}
+    {% if offer.link %}
+      <p><a href="{{ offer.link }}" target="_blank">View Offer</a></p>
+    {% endif %}
+    
+    <!-- Delete Button -->
+   <form method="POST" action="{{ url_for('admin_delete_offer', offer_id=offer.id) }}" onsubmit="return confirm('Are you sure?');">
+  <button type="submit" class="btn-delete">Delete Offer</button>
+</form>
+  </div>
+{% endfor %}

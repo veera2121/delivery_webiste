@@ -683,3 +683,35 @@ class RewardBadge(db.Model):
     required_coins = db.Column(db.Integer, nullable=False)
     benefits = db.Column(db.Text)
     active = db.Column(db.Boolean, default=True)
+class FCMToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
+
+    token = db.Column(db.String(255), unique=True, nullable=False)
+
+    device = db.Column(db.String(50))   # android / ios / web
+    city = db.Column(db.String(100))
+    restaurant_id = db.Column(db.Integer)
+
+    last_active = db.Column(db.DateTime)
+    coins = db.Column(db.Integer, default=0)
+    badge = db.Column(db.String(50))    # bronze / silver / gold
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+
+
+class Offer(db.Model):
+    __tablename__ = "offer"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)           # required
+    body = db.Column(db.Text, nullable=False)                  # required
+    discount = db.Column(db.Integer, nullable=False, default=0)
+
+    coupon = db.Column(db.String(50), nullable=True)           # optional
+    expiry = db.Column(db.DateTime, nullable=True)             # optional
+    image = db.Column(db.String(500), nullable=True)           # optional
+    link = db.Column(db.String(500), nullable=True)            # optional

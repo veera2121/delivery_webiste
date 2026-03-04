@@ -243,8 +243,11 @@ button:hover { background: #0056b3; }
     <a href="{{ url_for('manage_categories') }}" class="admin-card">➕ Manage Categories</a>
     <a href="{{ url_for('super_delivery_boys_summary') }}" class="admin-card">📋 Delivery Summary</a>
     <a href="{{ url_for('admin_logout') }}" class="admin-card red">🚪 Logout</a>
+<a href="{{ url_for('admin_offers') }}" class="admin-card blue">
+    🎁 Manage Offers
+</a>
+</div> 
 
-</div>
 <!-- ===== GLOBAL FILTER ===== -->
 <form class="global-filter" method="GET">
     <input type="text" name="query" placeholder="Search Order ID, Customer, or Restaurant" value="{{ query }}">
