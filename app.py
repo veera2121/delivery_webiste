@@ -285,10 +285,21 @@ def format_phone(phone):
 
     return phone
 
+import os
+import json
+import firebase_admin
+from firebase_admin import credentials
+
 # Initialize Firebase ONLY ONCE
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_key.json")
-    firebase_admin.initialize_app(cred)
+    firebase_json = os.environ.get("FIREBASE_KEY")
+
+    if firebase_json:
+        cred = credentials.Certificate(json.loads(firebase_json))
+        firebase_admin.initialize_app(cred)
+        print("✅ Firebase initialized successfully")
+    else:
+        print("❌ FIREBASE_KEY not found in environment variables")
 def make_whatsapp_link(order):
 
     restaurant = Restaurant.query.get(order.restaurant_id)
