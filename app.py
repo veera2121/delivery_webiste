@@ -4035,9 +4035,8 @@ def super_delivery_boys_summary():
 from flask import send_from_directory
 
 @app.route('/firebase-messaging-sw.js')
-def sw():
-    return send_from_directory('.', 'firebase-messaging-sw.js') 
-
+def firebase_sw():
+    return send_from_directory('static', 'firebase-messaging-sw.js')
 
 from firebase_admin import messaging
 def send_push_notification(title, body, target_type="topic", target_value="all_users"):

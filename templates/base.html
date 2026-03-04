@@ -1249,7 +1249,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+  navigator.serviceWorker.register('/static/firebase-messaging-sw.js')
     .then(reg => {
       console.log("✅ Service Worker Registered:", reg);
     })
