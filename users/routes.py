@@ -95,10 +95,6 @@ def save_token():
 
 from firebase_admin import messaging
 from models import FCMToken
-import time
-from firebase_admin import messaging
-from firebase_admin.exceptions import FirebaseError
-from requests.exceptions import ConnectionError
 
 
 def send_push_notification_all(title, body):
@@ -110,7 +106,7 @@ def send_push_notification_all(title, body):
         return
 
     message = messaging.MulticastMessage(
-        data={
+        data={   # ✅ DATA ONLY
             "title": title,
             "body": body,
             "url": "/"
@@ -118,26 +114,16 @@ def send_push_notification_all(title, body):
         tokens=tokens
     )
 
-    # 🔁 Retry 3 times
-    for attempt in range(3):
-        try:
-            response = messaging.send_each_for_multicast(message)
-            break
-
-        except (FirebaseError, ConnectionError) as e:
-            print(f"Attempt {attempt+1} failed:", e)
-            time.sleep(2)
-    else:
-        print("FCM completely failed after retries")
-        return
+    response = messaging.send_each_for_multicast(message)
 
     print("Success:", response.success_count)
     print("Failure:", response.failure_count)
 
-    # Remove invalid tokens
+    # 🔥 Remove invalid tokens automatically
     for idx, resp in enumerate(response.responses):
         if not resp.success:
             token = tokens[idx]
+            print("❌ Removing invalid token:", token)
             FCMToken.query.filter_by(token=token).delete()
 
     db.session.commit()

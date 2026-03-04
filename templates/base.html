@@ -1312,7 +1312,22 @@ window.startNotifications = async function(){
 
 // ✅ When notification received in website
 onMessage(messaging,(payload)=>{
-  alert(payload.notification.title);
+  console.log("📩 Foreground message:", payload);
+
+  const title =
+      payload.notification?.title ||
+      payload.data?.title ||
+      "Ruchigo";
+
+  const body =
+      payload.notification?.body ||
+      payload.data?.body ||
+      "You have a new update.";
+
+  new Notification(title, {
+      body: body,
+      icon: "/static/icons/icon-192.png"
+  });
 });
 
 </script>  
