@@ -2617,7 +2617,7 @@ from flask_login import logout_user
 def logout():
     logout_user()          # ✅ Flask-Login logout
     session.clear()        # optional (safe to keep)
-    flash("Logged out successfully")
+    flash("Logged out successfully", "success")
     return redirect(url_for("users.login"))
 @app.route("/test-otp")
 def test_otp():
@@ -4245,14 +4245,6 @@ def admin_delete_offer(offer_id):   # renamed function
     db.session.commit()
     flash("Offer deleted successfully!", "success")
     return redirect("/admin/offers") 
-@app.route("/debug-path")
-def debug_path():
-    import os
-    return f"""
-    Current Working Dir: {os.getcwd()} <br>
-    Static Folder: {app.static_folder} <br>
-    Static Exists: {os.path.exists(app.static_folder)}
-    """
 
 # ------------------ DB INIT ------------------
 

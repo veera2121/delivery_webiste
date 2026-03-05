@@ -762,7 +762,44 @@ html {
     transform: translateY(0) scale(1);
   }
 }
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
 
+.toast {
+  padding: 12px 18px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: white;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  animation: slideIn 0.3s ease;
+}
+
+/* Success */
+.toast-success {
+  background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+/* Error */
+.toast-error {
+  background: linear-gradient(135deg, #ff4d4d, #ff6b6b);
+}
+
+/* Warning */
+.toast-warning {
+  background: linear-gradient(135deg, #ff9800, #ffc107);
+}
+.toast-info {
+  background: linear-gradient(135deg, #2196f3, #42a5f5);
+}
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
   </style> 
 
 </head>
@@ -785,17 +822,6 @@ html {
 
 </body>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <div class="flash-wrapper">
-      {% for category, message in messages %}
-        <div class="alert alert-{{ category }}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-{% endwith %}
 
 {% if request.endpoint == 'home' %}
 <!-- MOBILE LOCATION ICON --> 
@@ -1393,19 +1419,31 @@ window.addEventListener("load", function(){
     },3000);
 
 });
+</script> 
+
+<script>
+setTimeout(function(){
+  const toasts = document.querySelectorAll(".toast");
+  toasts.forEach(t => {
+    t.style.opacity = "0";
+    setTimeout(() => t.remove(), 500);
+  });
+}, 4000);
 </script>
+<!-- Flash Toast -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    <div class="flash-container">
+    <div id="toast-container">
       {% for category, message in messages %}
-        <div class="alert alert-{{ category }}">
-          {{ message }}
-        </div>
+        {% if message %}
+          <div class="toast toast-{{ category }}">
+            {{ message }}
+          </div>
+        {% endif %}
       {% endfor %}
     </div>
   {% endif %}
 {% endwith %}
-
 <!-- Empty Cart Modal -->
 <div id="emptyCartModal" class="cart-modal hidden">
     <div class="cart-modal-box">

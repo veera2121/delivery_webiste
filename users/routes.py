@@ -9,7 +9,6 @@ from firebase_admin import messaging
 from extensions import csrf
 
 users_bp = Blueprint("users", __name__, template_folder="../../templates")
-
 @users_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -19,40 +18,40 @@ def login():
 
         # Validate mobile
         if not mobile.isdigit() or len(mobile) != 10:
-            flash("Please enter a valid 10-digit mobile number")
+            flash("Please enter a valid 10-digit mobile number", "error")
             return redirect(url_for("users.login"))
 
         if not name:
-            flash("Please enter your name")
+            flash("Please enter your name", "error")
             return redirect(url_for("users.login"))
 
         # Normalize mobile with +91
         normalized_mobile = "+91" + mobile[-10:]
 
-        # Try to find customer: first check +91 version, then old 10-digit version
         customer = Customer.query.filter(
             (Customer.mobile == normalized_mobile) |
-            (Customer.mobile == mobile)  # for old users
+            (Customer.mobile == mobile)
         ).first()
 
         if is_new_user:
             if customer:
-                flash("User already exists. Please login.")
+                flash("User already exists. Please login.", "warning")
                 return redirect(url_for("users.login"))
 
-            # Save new user with +91
             customer = Customer(mobile=normalized_mobile, name=name)
             db.session.add(customer)
             db.session.commit()
-            flash(f"Welcome {customer.name}! Your account has been created.")
+            flash(f"Welcome {customer.name}! Your account has been created.", "success")
+
         else:
             if not customer:
-                flash("User not found. Please sign up.")
+                flash("User not found. Please sign up.", "error")
                 return redirect(url_for("users.login"))
 
         login_user(customer, remember=True)
         session.permanent = True
-        flash(f"Welcome back {customer.name}!")
+        flash(f"Welcome back {customer.name}!", "success")
+
         return redirect(url_for("profile"))
 
     return render_template("login.html")

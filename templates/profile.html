@@ -1,50 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 {% extends "base.html" %}
 {% block title %}My Profile{% endblock %}
 
-{% block content %}
+{% block content %} 
+<style>
+/* Global Fix */ 
+* {
+    box-sizing: border-box;
+}
 
-<style> 
-
+/* Background */
 .profile-wrapper {
-    min-height: 85vh;
+    min-height: 90vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 16px;
-    color: #ffffff;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
 }
 
+/* Glass Card */
 .profile-card {
     width: 100%;
-    max-width: 440px;
-    background: #abe9e6;
-    border-radius: 18px;
-    padding: 26px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    max-width: 420px;
+    padding: 30px;
+    border-radius: 22px;
+    backdrop-filter: blur(18px);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    color: #fff;
+    overflow: hidden;
 }
 
 /* Header */
 .profile-header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 25px;
 }
 
 .profile-avatar {
-    width: 90px;
-    height: 90px;
+    width: 95px;
+    height: 95px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #ff6b6b, #ff922b);
+    background: linear-gradient(135deg, #ff7a18, #ffb347);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #5df7e2;
-    font-size: 34px;
-    font-weight: 600;
-    margin: 0 auto 12px;
+    font-size: 38px;
+    font-weight: bold;
+    margin: 0 auto 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    color: #fff;
 }
 
 .profile-header h2 {
@@ -54,10 +60,10 @@
 
 .profile-header span {
     font-size: 14px;
-    color: #777;
+    opacity: 0.85;
 }
 
-/* Info rows */
+/* Info Section */
 .profile-info {
     margin-top: 20px;
 }
@@ -65,117 +71,229 @@
 .info-row {
     display: flex;
     justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px solid #eee;
-}
-
-.info-row label {
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
     font-size: 14px;
-    color: #666;
 }
 
-.info-row p {
-    font-size: 14px;
-    font-weight: 500;
-    color: #222;
-}
-
-/* Buttons */
+/* Buttons Section */
 .profile-actions {
-    margin-top: 24px;
+    margin-top: 28px;
 }
 
+/* Base Button */
 .profile-btn {
     display: block;
     width: 100%;
-    padding: 12px;
-    border-radius: 10px;
+    padding: 14px;
+    border-radius: 12px;
     text-align: center;
     text-decoration: none;
-    font-weight: 500;
-    margin-bottom: 10px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    transition: all 0.25s ease;
+    box-sizing: border-box;
 }
 
-.btn-primary {
-    background: #ff6b6b;
-    color: #fff;
+/* Track Orders - Premium Blue */
+.btn-track {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    color: #ffffff;
+    border: none;
 }
 
-.btn-primary:hover {
-    background: #ff5252;
+.btn-track:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
 }
 
-.btn-outline {
-    border: 1px solid #ddd;
-    color: #333;
+/* Logout - Soft Red */
+.btn-logout {
+    background: rgba(253, 2, 253, 0.192);
+    border: 1px solid #000000;
+    color: #4dffd8;
 }
 
-.btn-outline:hover {
-    background: #eda3f0;
+.btn-logout:hover {
+    background: #ff4df6;
+    color: #ffffff;
 }
 
-/* Mobile optimization */
-@media (max-width: 480px) {
+/* Mobile Optimization */
+@media(max-width:480px){
     .profile-card {
-        padding: 32px;
+        padding: 24px;
     }
+} 
+
+/* Modal background */
+.modal {
+  display: none; /* hidden by default */
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.35); /* semi-transparent */
+  backdrop-filter: blur(2px);
+  justify-content: center;
+  align-items: center;
+}
+
+/* Modal box */
+.modal-content {
+  background: #fff;
+  color: #333;
+  padding: 18px 24px;
+  border-radius: 10px;
+  max-width: 300px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+/* Actions */
+.modal-actions {
+  margin-top: 15px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn-cancel, .btn-confirm {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.btn-cancel {
+  background: #eee;
+  color: #333;
+}
+
+.btn-cancel:hover {
+  background: #ddd;
+}
+
+.btn-confirm {
+  background: #ff4d4d;
+  color: #fff;
+}
+
+.btn-confirm:hover {
+  background: #e03e3e;
 }
 </style>
+
 
 <div class="profile-wrapper">
 
 {% if not logged_in %}
-    <div class="profile-card">
-        <div class="profile-header">
-            <div class="profile-avatar">?</div>
-            <h2>You are not logged in</h2>
-            <span>Please login to continue</span>
-        </div>
 
-        <a href="{{ url_for('users.login') }}" class="profile-btn btn-primary">
-            Login
-        </a>
+<div class="profile-card">
+
+    <div class="profile-header">
+        <div class="profile-avatar">?</div>
+        <h2>You are not logged in</h2>
+        <span>Please login to continue</span>
     </div>
 
-{% else %}
-    <div class="profile-card">
-
-        <!-- HEADER -->
-        <div class="profile-header">
-            <div class="profile-avatar">
-                {{ customer.name[0] }}
-            </div>
-            <h2>{{ customer.name }}</h2>
-            <span>Customer Account</span>
-        </div>
-
-        <!-- INFO -->
-        <div class="profile-info">
-            <div class="info-row">
-                <label>Email</label>
-                <p>{{ customer.email }}</p>
-            </div>
-
-            <div class="info-row">
-                <label>Phone</label>
-                <p>{{ customer.mobile }}</p>
-            </div>
-        </div>
-
-        <!-- ACTIONS -->
-        <a href="{{ url_for('myorders') }}" class="profile-btn btn-outline">
-    Track My Orders
-</a>
-
-
-            <a href="{{ url_for('logout') }}" class="profile-btn btn-primary">
-                Logout
-            </a>
-        </div>
-
-    </div>
-{% endif %}
+    <a href="{{ url_for('users.login') }}" class="profile-btn btn-track">
+        Login
+    </a>
 
 </div>
 
+{% else %}
+
+<div class="profile-card">
+
+    <!-- HEADER -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            {{ customer.name[0] }}
+        </div>
+        <h2>{{ customer.name }}</h2>
+        <span>Customer Account</span>
+    </div>
+
+    <!-- INFO -->
+    <div class="profile-info">
+        <div class="info-row">
+            <span>Email</span>
+            <span>{{ customer.email }}</span>
+        </div>
+        <div class="info-row">
+            <span>Phone</span>
+            <span>{{ customer.mobile }}</span>
+        </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="profile-actions">
+
+        <a href="{{ url_for('myorders') }}" class="profile-btn btn-track">
+            📦 Track My Orders
+        </a>
+
+   
+
+        <div class="action-divider"></div>
+
+    <a href="{{ url_for('logout') }}" 
+   class="profile-btn btn-logout" 
+   id="logoutBtn">
+    🚪 Logout
+</a>
+    </div>
+
+</div>
+
+{% endif %}
+
+</div>
+<!-- Logout Confirmation Modal -->
+<div id="logoutModal" class="modal">
+  <div class="modal-content">
+    <p>Are you sure you want to logout?</p>
+    <div class="modal-actions">
+      <button id="cancelLogout" class="btn-cancel">Cancel</button>
+      <button id="confirmLogout" class="btn-confirm">Logout</button>
+    </div>
+  </div>
+</div>
+<script>
+const logoutBtn = document.querySelector(".btn-logout");
+const modal = document.getElementById("logoutModal");
+const cancelBtn = document.getElementById("cancelLogout");
+const confirmBtn = document.getElementById("confirmLogout");
+
+// Show modal when logout clicked
+logoutBtn.addEventListener("click", function(e){
+    e.preventDefault(); // stop default link
+    modal.style.display = "flex";
+});
+
+// Cancel button
+cancelBtn.addEventListener("click", function(){
+    modal.style.display = "none";
+});
+
+// Confirm logout
+confirmBtn.addEventListener("click", function(){
+    window.location.href = logoutBtn.href; // proceed to logout
+});
+
+// Close modal if user clicks outside the box
+window.addEventListener("click", function(e){
+    if(e.target == modal){
+        modal.style.display = "none";
+    }
+});
+</script>
 {% endblock %}
