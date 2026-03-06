@@ -2562,7 +2562,7 @@ body {
   display:flex;
   align-items:center;
   gap:6px;
-  padding:6px 12px;
+  padding:2px 12px;
   border-radius:999px;
   font-size:13px;
   font-weight:700;
@@ -3144,6 +3144,59 @@ padding:7px 5px;
 font-size:18px;
 }
 
+} 
+.update-banner{
+    width:100%;
+    background:linear-gradient(120deg,#ff4b2b,#ff416c,#ffb347);
+    background-size:300% 300%;
+    animation:gradientMove 8s ease infinite;
+    padding:25px 15px;
+    color:#fff;
+    text-align:center;
+    box-shadow:0 8px 25px rgba(0,0,0,0.3);
+}
+
+.update-content{
+    max-width:900px;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.update-content .icon{
+    font-size:40px;
+    animation:pulse 1.5s infinite;
+}
+
+.update-content h2{
+    margin:0;
+    font-size:24px;
+    letter-spacing:1px;
+}
+
+.update-content p{
+    margin:5px 0;
+    font-size:16px;
+}
+
+.thank{
+    font-weight:bold;
+    color:#fffde7;
+}
+
+@keyframes gradientMove{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+
+@keyframes pulse{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.2);}
+    100%{transform:scale(1);}
 }
 </style>
 
@@ -3297,7 +3350,31 @@ font-size:18px;
 
 </div>
 
-  </div>
+  </div> 
+
+<div class="update-banner">
+    <div class="update-content">
+        <span class="icon">🚧</span>
+        <div class="text">
+            <h2>Website Update in Progress</h2>
+            
+            <p>
+                We are upgrading our platform and temporarily not accepting orders for the next <b>2 days</b>.<br>
+                🍽️ Orders will resume from <b>09/03/2026</b>.
+            </p>
+
+            <p class="telugu">
+                ⚠️ మా వెబ్‌సైట్ ప్రస్తుతం అప్డేట్ జరుగుతోంది. వచ్చే <b>2 రోజులు</b> ఆర్డర్లు స్వీకరించబడవు.<br>
+                🍽️ ఆర్డర్లు మళ్లీ <b>09/03/2026</b> నుండి ప్రారంభమవుతాయి.
+            </p>
+
+            <p class="thank">
+                🙏 Thank you for your patience! <br>
+                
+            </p>
+        </div>
+    </div>
+</div>
 <div id="leaderboardBackdrop" class="leaderboard-backdrop">
 
 <div id="leaderboardPanel" class="leaderboard-panel">

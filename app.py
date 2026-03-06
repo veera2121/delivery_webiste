@@ -4254,58 +4254,51 @@ def admin_delete_offer(offer_id):   # renamed function
 from sqlalchemy import func
 
 from sqlalchemy import func
+from sqlalchemy import func
 
 @app.route("/top-customers")
 def top_customers():
 
-    # ---------------- DEBUG ORDERS ----------------
-    orders = Order.query.all()
-    print("TOTAL ORDERS:", len(orders))
-
-    for o in orders:
-        print("ORDER:", o.id, "| CUSTOMER:", o.customer_id, "| STATUS:", o.status)
-
-    # ---------------- COMPLETED ORDERS SUBQUERY ----------------
-    completed_orders_sub = db.session.query(
+    # -------- Delivered Orders Count --------
+    orders_sub = db.session.query(
         Order.customer_id,
-        func.count(Order.id).label("completed_orders")
+        func.count(Order.id).label("orders")
     ).filter(
-        Order.status.ilike("%delivered%"),   # safer check
+        Order.status == "Delivered",
         Order.customer_id != None
     ).group_by(
         Order.customer_id
     ).subquery()
 
-    # ---------------- COINS SUBQUERY ----------------
+
+    # -------- Coins Total --------
     coins_sub = db.session.query(
         CoinLedger.customer_id,
-        func.coalesce(func.sum(CoinLedger.coins), 0).label("total_coins")
+        func.sum(CoinLedger.coins).label("coins")
     ).group_by(
         CoinLedger.customer_id
     ).subquery()
 
-    # ---------------- MAIN QUERY ----------------
+
+    # -------- Main Query --------
     results = db.session.query(
         Customer.id,
         Customer.name,
-        func.coalesce(completed_orders_sub.c.completed_orders, 0).label("orders"),
-        func.coalesce(coins_sub.c.total_coins, 0).label("coins")
+        Customer.mobile,
+        func.coalesce(orders_sub.c.orders, 0).label("orders"),
+        func.coalesce(coins_sub.c.coins, 0).label("coins")
     ).outerjoin(
-        completed_orders_sub,
-        completed_orders_sub.c.customer_id == Customer.id
+        orders_sub, orders_sub.c.customer_id == Customer.id
     ).outerjoin(
-        coins_sub,
-        coins_sub.c.customer_id == Customer.id
+        coins_sub, coins_sub.c.customer_id == Customer.id
     ).order_by(
-        func.coalesce(completed_orders_sub.c.completed_orders, 0).desc()
+        func.coalesce(orders_sub.c.orders, 0).desc()
     ).limit(10).all()
 
-    # ---------------- BUILD LEADERBOARD ----------------
+
     leaderboard = []
 
     for r in results:
-
-        print("RESULT:", r.id, r.name, r.orders, r.coins)
 
         badge = RewardBadge.query.filter(
             RewardBadge.required_coins <= r.coins
@@ -4314,9 +4307,10 @@ def top_customers():
         ).first()
 
         leaderboard.append({
-            "name": r.name,
-            "orders": r.orders,
-            "coins": r.coins,
+            "name": r.name if r.name else "Customer",
+            "mobile": r.mobile,
+            "orders": int(r.orders),
+            "coins": int(r.coins),
             "badge": badge.name if badge else "No Badge"
         })
 
