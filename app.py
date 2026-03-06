@@ -41,7 +41,7 @@ from extensions import db
 from models import (
     db, Restaurant, RestaurantUser, MenuItem, Order,
     OrderItem, DeliveryPerson, FoodItem, OTP,
-    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,ShopSettings,RewardSetting,RewardBadge,Category, Offer
+    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,CoinLedger,ShopSettings,RewardSetting,RewardBadge,Category, Offer
 )
 from reward_engine import add_coins, redeem_coins
 
@@ -494,7 +494,9 @@ def home():
             limited_restaurants.append(r)
 
     restaurants = get_sorted_restaurants(restaurants)
-
+    print("===== HOMEPAGE ORDER =====")
+    for r in restaurants:
+        print(r.name, r.homepage_position, r.is_open)
 
     # ================= SEO =================
     if selected_location:
@@ -2615,10 +2617,17 @@ from flask_login import logout_user
 @app.route("/logout")
 @login_required
 def logout():
-    logout_user()          # ✅ Flask-Login logout
-    session.clear()        # optional (safe to keep)
+
+    logout_user()         # Flask-Login logout
+    session.clear()       # Clear all session data
+
+    response = redirect(url_for("users.login"))
+    response.delete_cookie(app.config['SESSION_COOKIE_NAME'])
+
     flash("Logged out successfully", "success")
-    return redirect(url_for("users.login"))
+
+    return response
+    return response
 @app.route("/test-otp")
 def test_otp():
     return render_template("test_otp.html")
@@ -4245,7 +4254,46 @@ def admin_delete_offer(offer_id):   # renamed function
     db.session.commit()
     flash("Offer deleted successfully!", "success")
     return redirect("/admin/offers") 
+from sqlalchemy import func
 
+@app.route("/top-customers")
+def top_customers():
+
+    results = db.session.query(
+        Customer.id,
+        Customer.name,
+        func.count(Order.id).label("completed_orders"),
+        func.coalesce(func.sum(CoinLedger.coins),0).label("total_coins")
+    ).outerjoin(
+        Order, Order.customer_id == Customer.id
+    ).outerjoin(
+        CoinLedger, CoinLedger.customer_id == Customer.id
+    ).filter(
+        Order.status == "Delivered"
+    ).group_by(
+        Customer.id
+    ).order_by(
+        func.count(Order.id).desc()
+    ).limit(10).all()
+
+    leaderboard = []
+
+    for r in results:
+
+        badge = RewardBadge.query.filter(
+            RewardBadge.required_coins <= r.total_coins
+        ).order_by(
+            RewardBadge.required_coins.desc()
+        ).first()
+
+        leaderboard.append({
+            "name": r.name,
+            "orders": r.completed_orders,
+            "coins": r.total_coins,
+            "badge": badge.name if badge else "No Badge"
+        })
+
+    return jsonify(leaderboard)
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------

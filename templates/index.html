@@ -2845,6 +2845,305 @@ body {
 }
 .notify-popup{
   display: none;   /* MUST be none */
+} 
+/* ===============================
+   TOP CUSTOMERS BUTTON
+================================*/
+
+.top-btn{
+margin-left:10px;
+padding:6px 12px;
+
+font-size:14px;
+font-weight:600;
+
+border:none;
+border-radius:30px;
+
+cursor:pointer;
+
+color:white;
+
+background:linear-gradient(135deg,#00b6bd,#00ffaa);
+
+box-shadow:
+0 4px 10px rgba(0,0,0,0.25),
+0 0 10px rgba(255,120,0,0.4);
+
+transition:all 0.3s ease;
+}
+
+/* Hover effect */
+
+.top-btn:hover{
+transform:translateY(-2px) scale(1.05);
+
+background:linear-gradient(135deg,#ffd700,#ff9a00);
+
+box-shadow:
+0 8px 20px rgba(0,0,0,0.35),
+0 0 20px rgba(255,200,0,0.7);
+}
+
+/* Click effect */
+
+.top-btn:active{
+transform:scale(0.96);
+box-shadow:0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* ===== BACKDROP ===== */
+
+/* ===============================
+   LEADERBOARD BACKDROP
+================================*/
+
+.leaderboard-backdrop{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.55);
+backdrop-filter:blur(6px);
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+opacity:0;
+pointer-events:none;
+
+transition:0.35s;
+
+z-index:9998;
+}
+
+.leaderboard-backdrop.show{
+opacity:1;
+pointer-events:auto;
+}
+
+
+/* ===============================
+   PANEL
+================================*/
+
+.leaderboard-panel{
+
+width:92%;
+max-width:560px;
+
+border-radius:18px;
+
+background:linear-gradient(135deg,#1e1e2f,#14141f);
+
+box-shadow:
+0 35px 70px rgba(0,0,0,0.6),
+0 0 25px rgba(255,120,0,0.25);
+
+transform:translateY(40px) scale(.95);
+transition:0.4s;
+
+overflow:hidden;
+}
+
+.leaderboard-backdrop.show .leaderboard-panel{
+transform:translateY(0) scale(1);
+}
+
+
+/* ===============================
+   HEADER
+================================*/
+
+.leaderboard-header{
+
+padding:16px 18px;
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+font-size:20px;
+font-weight:700;
+
+color:rgb(255, 255, 255);
+
+background:linear-gradient(135deg,#00cad8,#00ff88);
+}
+
+
+/* ===============================
+   CLOSE BUTTON
+================================*/
+
+.close-btn{
+cursor:pointer;
+font-size:22px;
+transition:0.3s;
+}
+
+.close-btn:hover{
+transform:rotate(90deg) scale(1.2);
+}
+
+
+/* ===============================
+   BODY
+================================*/
+
+.leaderboard-body{
+padding:12px;
+max-height:65vh;
+overflow-y:auto;
+}
+
+
+/* ===============================
+   TABLE
+================================*/
+
+.leaderboard-table{
+width:100%;
+border-collapse:separate;
+border-spacing:0 8px;
+color:white;
+table-layout:fixed;
+}
+
+
+/* ===============================
+   COLUMN WIDTH CONTROL
+================================*/
+
+.leaderboard-table th:nth-child(1),
+.leaderboard-table td:nth-child(1){
+width:12%;
+}
+
+.leaderboard-table th:nth-child(2),
+.leaderboard-table td:nth-child(2){
+width:40%;
+text-align:left;
+padding-left:12px;
+font-weight:600;
+
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+
+.leaderboard-table th:nth-child(3),
+.leaderboard-table td:nth-child(3){
+width:16%;
+}
+
+.leaderboard-table th:nth-child(4),
+.leaderboard-table td:nth-child(4){
+width:16%;
+}
+
+.leaderboard-table th:nth-child(5),
+.leaderboard-table td:nth-child(5){
+width:16%;
+}
+
+
+/* ===============================
+   HEAD
+================================*/
+
+.leaderboard-table th{
+font-size:11px;
+letter-spacing:0.5px;
+color:#aaa;
+padding-bottom:4px;
+}
+
+
+/* ===============================
+   ROW CELLS
+================================*/
+
+.leaderboard-table td{
+
+background:#1f1f2e;
+
+padding:8px 6px;
+text-align:center;
+
+border-radius:10px;
+
+transition:0.25s;
+
+box-shadow:0 4px 10px rgba(0,0,0,0.4);
+
+font-size:13px;
+}
+
+
+/* ===============================
+   ROW HOVER
+================================*/
+
+.leaderboard-table tr:hover td{
+transform:scale(1.02);
+background:#26263a;
+}
+
+
+/* ===============================
+   TOP 3 RANK STYLES
+================================*/
+
+.rank1 td{
+background:linear-gradient(135deg,#ffd700,#ffb400);
+color:#222;
+font-weight:700;
+}
+
+.rank2 td{
+background:linear-gradient(135deg,#cfcfcf,#9f9f9f);
+color:#222;
+}
+
+.rank3 td{
+background:linear-gradient(135deg,#ffb97a,#ff8c42);
+color:#222;
+}
+
+
+/* ===============================
+   SCROLLBAR
+================================*/
+
+.leaderboard-body::-webkit-scrollbar{
+width:5px;
+}
+
+.leaderboard-body::-webkit-scrollbar-thumb{
+background:#ff6a00;
+border-radius:10px;
+}
+
+
+/* ===============================
+   MOBILE RESPONSIVE
+================================*/
+
+@media (max-width:600px){
+
+.leaderboard-panel{
+width:95%;
+}
+
+.leaderboard-table td{
+font-size:12px;
+padding:7px 5px;
+}
+
+.leaderboard-header{
+font-size:18px;
+}
+
 }
 </style>
 
@@ -2992,12 +3291,42 @@ body {
   <div class="stat-item platinum">
     💎 <span>{{ platinum_count }}</span>
   </div>
-
+<button class="top-btn" onclick="openTopCustomers()">👑 Our VIP Family</button>
   </div>
 </div>
 
 </div>
 
+  </div>
+<div id="leaderboardBackdrop" class="leaderboard-backdrop">
+
+<div id="leaderboardPanel" class="leaderboard-panel">
+
+<div class="leaderboard-header">
+🏆 Top Customers
+<span class="close-btn" onclick="closeTopCustomers()">✕</span>
+</div>
+
+<div class="leaderboard-body">
+
+<table class="leaderboard-table">
+<thead>
+<tr>
+<th>Rank</th>
+<th>Name</th>
+<th>Orders</th>
+<th>Coins</th>
+<th>Badge</th>
+</tr>
+</thead>
+
+<tbody id="leaderboardTable"></tbody>
+
+</table>
+
+</div>
+</div>
+</div>
 
 
 {% if earned_coins > 0 %}
@@ -3755,62 +4084,6 @@ async function updateMomentum() {
 updateMomentum();
 setInterval(updateMomentum, 30000);
 </script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-
-    // 🔒 prevent replay without refresh
-    if (window.__coinAnimationPlayed) return;
-    window.__coinAnimationPlayed = true;
-
-    const popup = document.getElementById("rewardPopup");
-    const badge = document.getElementById("coinsBadge");
-    const countEl = document.getElementById("coinCount");
-
-    if (!popup || !badge || !countEl) return;
-
-    console.log("🪙 Coin animation running");
-
-    // hide popup after short delay
-    setTimeout(() => {
-        popup.style.transition = "opacity .4s ease";
-        popup.style.opacity = "0";
-
-        const rect = badge.getBoundingClientRect();
-
-        // flying coin
-        const coin = document.createElement("div");
-        coin.innerHTML = "🪙";
-        coin.style.cssText = `
-            position: fixed;
-            left: 50%;
-            top: 50%;
-            font-size: 52px;
-            z-index: 999999;
-            transform: translate(-50%, -50%);
-            transition: all 0.9s cubic-bezier(.4,0,.2,1);
-            pointer-events: none;
-        `;
-        document.body.appendChild(coin);
-
-        requestAnimationFrame(() => {
-            coin.style.left = rect.left + 10 + "px";
-            coin.style.top = rect.top + 10 + "px";
-            coin.style.transform = "scale(0.25)";
-            coin.style.opacity = "0";
-        });
-
-        // ✅ finalize
-        setTimeout(() => {
-            countEl.innerText =
-                parseInt(countEl.innerText) + {{ earned_coins|int }};
-            popup.remove();
-            coin.remove();
-        }, 950);
-
-    }, 900);
-});
-</script>
-
 
 
 </script>
@@ -4093,6 +4366,47 @@ function closePopup() {
 
     // Save current time
     localStorage.setItem("ruchigo_notify_closed", Date.now());
+}
+</script> 
+<script>
+    function openTopCustomers(){
+
+document.getElementById("leaderboardBackdrop").classList.add("show");
+
+fetch("/top-customers")
+.then(res=>res.json())
+.then(data=>{
+
+let table=document.getElementById("leaderboardTable");
+table.innerHTML="";
+
+data.forEach((user,index)=>{
+
+let rankClass="";
+let medal=index+1;
+
+if(index===0){ rankClass="rank1"; medal="👑"; }
+else if(index===1){ rankClass="rank2"; medal="🥈"; }
+else if(index===2){ rankClass="rank3"; medal="🥉"; }
+
+table.innerHTML+=`
+<tr class="${rankClass}">
+<td>${medal}</td>
+<td>${user.name}</td>
+<td>${user.orders}</td>
+<td>🪙 ${user.coins}</td>
+<td>${user.badge || "-"}</td>
+</tr>
+`;
+
+});
+
+});
+
+}
+
+function closeTopCustomers(){
+document.getElementById("leaderboardBackdrop").classList.remove("show");
 }
 </script>
 <div id="locationPopup" class="location-popup hidden">
