@@ -4253,40 +4253,70 @@ def admin_delete_offer(offer_id):   # renamed function
     return redirect("/admin/offers") 
 from sqlalchemy import func
 
+from sqlalchemy import func
+
 @app.route("/top-customers")
 def top_customers():
 
+    # ---------------- DEBUG ORDERS ----------------
+    orders = Order.query.all()
+    print("TOTAL ORDERS:", len(orders))
+
+    for o in orders:
+        print("ORDER:", o.id, "| CUSTOMER:", o.customer_id, "| STATUS:", o.status)
+
+    # ---------------- COMPLETED ORDERS SUBQUERY ----------------
+    completed_orders_sub = db.session.query(
+        Order.customer_id,
+        func.count(Order.id).label("completed_orders")
+    ).filter(
+        Order.status.ilike("%delivered%"),   # safer check
+        Order.customer_id != None
+    ).group_by(
+        Order.customer_id
+    ).subquery()
+
+    # ---------------- COINS SUBQUERY ----------------
+    coins_sub = db.session.query(
+        CoinLedger.customer_id,
+        func.coalesce(func.sum(CoinLedger.coins), 0).label("total_coins")
+    ).group_by(
+        CoinLedger.customer_id
+    ).subquery()
+
+    # ---------------- MAIN QUERY ----------------
     results = db.session.query(
         Customer.id,
         Customer.name,
-        func.count(Order.id).label("completed_orders"),
-        func.coalesce(func.sum(CoinLedger.coins),0).label("total_coins")
+        func.coalesce(completed_orders_sub.c.completed_orders, 0).label("orders"),
+        func.coalesce(coins_sub.c.total_coins, 0).label("coins")
     ).outerjoin(
-        Order, Order.customer_id == Customer.id
+        completed_orders_sub,
+        completed_orders_sub.c.customer_id == Customer.id
     ).outerjoin(
-        CoinLedger, CoinLedger.customer_id == Customer.id
-    ).filter(
-        Order.status == "Delivered"
-    ).group_by(
-        Customer.id
+        coins_sub,
+        coins_sub.c.customer_id == Customer.id
     ).order_by(
-        func.count(Order.id).desc()
+        func.coalesce(completed_orders_sub.c.completed_orders, 0).desc()
     ).limit(10).all()
 
+    # ---------------- BUILD LEADERBOARD ----------------
     leaderboard = []
 
     for r in results:
 
+        print("RESULT:", r.id, r.name, r.orders, r.coins)
+
         badge = RewardBadge.query.filter(
-            RewardBadge.required_coins <= r.total_coins
+            RewardBadge.required_coins <= r.coins
         ).order_by(
             RewardBadge.required_coins.desc()
         ).first()
 
         leaderboard.append({
             "name": r.name,
-            "orders": r.completed_orders,
-            "coins": r.total_coins,
+            "orders": r.orders,
+            "coins": r.coins,
             "badge": badge.name if badge else "No Badge"
         })
 
