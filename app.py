@@ -494,9 +494,6 @@ def home():
             limited_restaurants.append(r)
 
     restaurants = get_sorted_restaurants(restaurants)
-    print("===== HOMEPAGE ORDER =====")
-    for r in restaurants:
-        print(r.name, r.homepage_position, r.is_open)
 
     # ================= SEO =================
     if selected_location:
