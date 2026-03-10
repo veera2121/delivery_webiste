@@ -163,36 +163,50 @@ import math
 import requests
 import math
 
+import requests
+import math
+
 def calculate_distance_km(lat1, lng1, lat2, lng2):
+
+    print("DISTANCE INPUT:", lat1, lng1, lat2, lng2)
+
     if None in (lat1, lng1, lat2, lng2):
         return 0
 
     lat1, lng1, lat2, lng2 = map(float, (lat1, lng1, lat2, lng2))
 
-    url = (
-        f"https://router.project-osrm.org/route/v1/driving/"
-        f"{lng1},{lat1};{lng2},{lat2}?overview=false"
-    )
+    url = f"https://router.project-osrm.org/route/v1/driving/{lng1},{lat1};{lng2},{lat2}?overview=false"
 
     try:
         r = requests.get(url, timeout=5)
-        if r.status_code != 200:
-            return 0
+        data = r.json()
 
-        meters = r.json()["routes"][0]["distance"]
+        if "routes" not in data or len(data["routes"]) == 0:
+            print("OSRM failed, using haversine fallback")
+
+            km = haversine(lat1, lng1, lat2, lng2)
+            km = km * 1.35   # road distance approximation
+            km = math.ceil(km * 2) / 2
+
+            return km
+
+        meters = data["routes"][0]["distance"]
+
         km = meters / 1000
-
-        # ✅ Small buffer for real-world variance (industry standard)
         km = km * 1.07
-
-        # ✅ Round UP to nearest 0.5 km
         km = math.ceil(km * 2) / 2
 
         return km
 
-    except Exception:
-        return 0
+    except Exception as e:
+        print("DISTANCE ERROR:", e)
+        print("Using haversine fallback")
 
+        km = haversine(lat1, lng1, lat2, lng2)
+        km = km * 1.35   # road distance approximation
+        km = math.ceil(km * 2) / 2
+
+        return km
 # ------------------ ADMIN CONFIG ------------------
 
 # Admin credentials
