@@ -1322,14 +1322,20 @@ function changeQty(i, delta) {
     localStorage.setItem("carts", JSON.stringify(carts));
     renderCart();
 }
-
 /* ============================================================
    DELIVERY FROM BACKEND (ONLY SOURCE)
 ============================================================ */
 async function fetchDistanceDelivery(itemsTotal) {
     const lat = document.getElementById("customer_lat").value;
     const lng = document.getElementById("customer_lng").value;
+
     if (!lat || !lng) return;
+
+    // ✅ Show waiting message
+    document.getElementById("delivery-msg").innerText =
+        "⏳ Please wait... calculating delivery charges";
+
+    document.getElementById("delivery-charge").innerText = "...";
 
     try {
         const res = await fetch("/calculate_delivery", {
@@ -1353,11 +1359,12 @@ async function fetchDistanceDelivery(itemsTotal) {
         document.getElementById("delivery-msg").innerText =
             `📍 ${data.distance_km} km · Delivery ₹${currentDeliveryCharge}`;
 
-        // ✅ THIS WAS MISSING
         updateTotals();
 
     } catch (e) {
         console.error("Delivery fetch failed", e);
+
+       
     }
 }
 
