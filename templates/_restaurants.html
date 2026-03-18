@@ -104,7 +104,11 @@ data-category-ids="{{ r.categories | map(attribute='id') | join(',') }}">
 
 
 <div class="image-wrap">
-
+   <!-- ⏳ TIMER HERE -->
+    <div class="timer"
+         data-opening="{{ r.opening_time.strftime('%H:%M:%S') if r.opening_time else '' }}"
+         data-closing="{{ r.closing_time.strftime('%H:%M:%S') if r.closing_time else '' }}">
+    </div>
     {% if is_new_restaurant(r) %}
         <span class="corner-badge new-badge">NEW</span>
     {% endif %}
@@ -136,7 +140,7 @@ data-category-ids="{{ r.categories | map(attribute='id') | join(',') }}">
 <div class="content">
 
     <div class="restaurant-name">{{ r.name }}</div>
-
+ 
     {% if is_bakery %}
         <div class="bakery-tags">
             {% if r.is_veg %}

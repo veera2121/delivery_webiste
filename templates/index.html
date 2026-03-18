@@ -623,7 +623,7 @@ body {
 /* IMAGE */
 .card img {
     width: 100%;
-    height: 180px;
+    height: 220px;
     object-fit: cover;
 }
 
@@ -631,11 +631,12 @@ body {
    CARD CONTENT
 ========================= */
 .content {
-    padding: 16px;
+    padding: 12px;
 }
 
 /* RESTAURANT NAME */
-.restaurant-name {
+.restaurant-name { 
+     margin-top: -5px; /* adjust like -3px, -8px as needed */
     font-size: 21px;
     font-weight: 800;
     margin-bottom: 6px;
@@ -1819,9 +1820,9 @@ body {
 
 /* Restaurant Name */
 .restaurant-name {
-    font-size: 16px;
+   
     font-weight: 700;
-    margin-top: 40px;
+    
     line-height: 1.2;
 }
 
@@ -2703,7 +2704,7 @@ body {
 .tag-container{
     position:absolute;
     top:10px;
-    right:10px;
+    left:10px;
     z-index:10;
 }
 
@@ -3144,59 +3145,88 @@ padding:7px 5px;
 font-size:18px;
 }
 
+}  
+.mobile-banner {
+    display: none;
+    padding: 10px;
+}
+
+/* show only on mobile */
+@media (max-width: 768px) {
+    .mobile-banner {
+        display: block;
+    }
+
+    .mobile-banner img {
+        width: 100%;
+        height: auto;
+
+        /* 🔥 beautiful edges */
+        border-radius: 20px;
+
+        /* 🔥 soft shadow */
+        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+
+        /* 🔥 smooth look */
+        object-fit: cover;
+    }
 } 
-.update-banner{
-    width:100%;
-    background:linear-gradient(120deg,#ff4b2b,#ff416c,#ffb347);
-    background-size:300% 300%;
-    animation:gradientMove 8s ease infinite;
-    padding:25px 15px;
-    color:#fff;
-    text-align:center;
-    box-shadow:0 8px 25px rgba(0,0,0,0.3);
+.mobile-banner img {
+    border-radius: 20px;
+    padding: 3px;
+    background: linear-gradient(90deg, #ff9800, #e91e63);
+} 
+/* ================= TIMER STYLE ================= */
+/* make parent relative */
+.image-wrap {
+    position: relative;
 }
 
-.update-content{
-    max-width:900px;
-    margin:auto;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:15px;
-    flex-wrap:wrap;
+/* TIMER ON IMAGE */
+.timer {
+    position: absolute;
+    top: 12px;
+    right: 8px;
+
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+
+    border-radius: 20px;
+    backdrop-filter: blur(6px);
+
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+
+    z-index: 3;
 }
 
-.update-content .icon{
-    font-size:40px;
-    animation:pulse 1.5s infinite;
+/* Opening */
+.timer.opening {
+    background: rgba(3, 119, 8, 0.911);
 }
 
-.update-content h2{
-    margin:0;
-    font-size:24px;
-    letter-spacing:1px;
+/* Closing */
+.timer.closing {
+    background: rgba(255, 34, 34, 0.9);
 }
 
-.update-content p{
-    margin:5px 0;
-    font-size:16px;
+/* Closed */
+.timer.closed {
+    background: rgba(100, 100, 100, 0.8);
 }
 
-.thank{
-    font-weight:bold;
-    color:#fffde7;
+/* Urgent */
+.timer.urgent {
+    background: rgba(244, 67, 54, 0.95);
+    animation: pulse 1s infinite;
 }
 
-@keyframes gradientMove{
-    0%{background-position:0% 50%;}
-    50%{background-position:100% 50%;}
-    100%{background-position:0% 50%;}
-}
-
-@keyframes pulse{
-    0%{transform:scale(1);}
-    50%{transform:scale(1.2);}
-    100%{transform:scale(1);}
+/* Pulse */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 </style>
 
@@ -3250,6 +3280,7 @@ font-size:18px;
     </div>
   </div>
 </header>
+
 
 
 <!-- Search Bar (Hidden by default) -->
@@ -3454,7 +3485,11 @@ font-size:18px;
         <span id="orderCount">0</span> orders so far
         <small id="orderStatus">Tracking live activity</small>
     </div>
-</section>
+</section> 
+
+<div class="mobile-banner">
+    <img src="{{ url_for('static', filename='images/ugadi.png') }}" alt="Ugadi Banner">
+</div>
 <div class="mobile-slider"> 
       <h2 class="slider-main-title">RucHiGo Special</h2>
   <div class="slider-track">
@@ -3600,7 +3635,7 @@ font-size:18px;
 
 
     <div class="footer-bottom">
-        <p>© 2025 RucHiGo. All rights reserved.</p>
+        <p>© 2025 RuchiGo — Empowering Local Commerce.</p>
     </div>
 </footer>
 
@@ -3921,37 +3956,127 @@ window.addEventListener("scroll", () => {
     header.classList.toggle("scrolled", window.scrollY > 20);
 });
 </script>
-
 <script>
 const modalData = {
   about: {
-    title: "About Us",
-    content: "We deliver fresh, hygienic food from trusted local restaurants directly to your doorstep."
+    title: "About Our Company",
+    content: `🍽️ Welcome to RuchiGo
+
+RuchiGo is a fast-growing food delivery platform connecting customers with trusted local restaurants.
+
+🚀 Our mission is simple:
+Deliver fresh, hygienic, and delicious food to your doorstep quickly and safely.
+
+💡 What makes us special:
+• Carefully selected restaurant partners
+• Fast and reliable delivery network
+• Real-time order tracking
+• Customer-first support
+
+We are committed to making food ordering simple, fast, and enjoyable for everyone.`
   },
+
   contact: {
     title: "Contact Us",
-    content: "📞 +91 9618319849 Support: 24/7\n📧 Email: ruchigo@gmail.com"
+    content: `📞 Customer Support
++91 9618319849 (Available 24/7)
+
+📧 Email Support
+ruchigo@gmail.com
+
+📍 Office Address
+Andhra Pradesh, India
+
+Our support team is always ready to assist you with orders, payments, or delivery issues.`
   },
+
   careers: {
-    title: "Careers",
-    content: "Join our growing delivery network and build your career with us."
+    title: "Careers at RuchiGo",
+    content: `🚀 Join Our Team
+
+We are always looking for passionate people to grow with us.
+
+Opportunities:
+• Delivery Partners
+• Customer Support Executives
+• Restaurant Partnership Managers
+• Operations Team
+
+Benefits:
+• Flexible working hours
+• Competitive earnings
+• Growth opportunities
+
+Interested? Contact us at ruchigo@gmail.com`
   },
+
   partner: {
-    title: "Partner With Us",
-    content: "List your restaurant and reach thousands of customers instantly."
+    title: "Partner With RuchiGo",
+    content: `🍴 Grow Your Restaurant Business
+
+Join hundreds of restaurants already serving customers through RuchiGo.
+
+Benefits:
+• Increase your online visibility
+• Reach thousands of new customers
+• Easy order management
+• Fast weekly payments
+
+Become a partner today and grow your restaurant business with us.
+
+📞 Call: +91 7207002650`
   },
+
   help: {
     title: "Help Center",
-    content: "Order issues, payment help, delivery support +91 9618319849 we’ve got you covered."
+    content: `🛠 Customer Help & Support
+
+Need help with your order?
+
+We can assist you with:
+• Order tracking
+• Delivery delays
+• Payment issues
+• Refund requests
+• Restaurant complaints
+
+📞 Call Support: +91 7207002650
+📧 Email: ruchigo@gmail.com
+
+Our team is available 24/7 to help you.`
   },
+
   privacy: {
     title: "Privacy Policy",
-    content: "Your data is safe. We never sell personal information."
+    content: `🔒 Your Privacy Matters
+
+We respect and protect your personal information.
+
+We collect limited data only to:
+• Process orders
+• Improve delivery service
+• Provide customer support
+
+We DO NOT sell or share your personal data with third parties.
+
+Your trust is important to us.`
   },
-  terms: {
-    title: "Terms & Conditions",
-    content: "By using this app, you agree to our service and delivery policies."
-  }
+
+ terms: {
+  title: "Terms & Conditions",
+  content: `📜 Terms of Service
+
+By using RuchiGo, you agree to the following terms:
+
+• Orders can be cancelled only within 5 minutes after confirmation.
+• Once the restaurant starts preparing your food, cancellation is not allowed.
+• Orders are considered confirmed only after you receive confirmation from our system.
+• Delivery time may vary depending on restaurant preparation time, traffic, or weather conditions.
+• Restaurants are responsible for food quality and preparation.
+• Refunds, if applicable, will follow our refund and cancellation policy.
+
+Please review these terms carefully before placing your order.`
+ }
 };
 // JS: Enable mouse wheel horizontal scroll for restaurant rows
 const rows = document.querySelectorAll('.restaurant-row');
@@ -4463,6 +4588,72 @@ table.innerHTML+=`
 function closeTopCustomers(){
 document.getElementById("leaderboardBackdrop").classList.remove("show");
 }
+</script> 
+<script>
+function updateTimers() {
+    const timers = document.querySelectorAll(".timer");
+    const now = new Date();
+
+    timers.forEach(timer => {
+        const openTime = timer.dataset.opening;
+        const closeTime = timer.dataset.closing;
+
+        if (!openTime || !closeTime) return;
+
+        const today = now.toISOString().split("T")[0];
+
+        const openDate = new Date(today + "T" + openTime);
+        const closeDate = new Date(today + "T" + closeTime);
+
+        const oneHour = 60 * 60 * 1000;
+        const thirtyMin = 30 * 60 * 1000;
+
+        let diff, text;
+
+        // reset
+        timer.className = "timer";
+        timer.innerHTML = "";
+
+        // ⏳ OPENING → only within 1 hour
+        if (now < openDate && (openDate - now) <= oneHour) {
+            diff = openDate - now;
+            text = "⏳ Opens in ";
+            timer.classList.add("opening");
+        }
+
+        // 🌙 CLOSING → only within 30 minutes
+        else if (now < closeDate && (closeDate - now) <= thirtyMin) {
+            diff = closeDate - now;
+            text = "🌙 Closes in ";
+            timer.classList.add("closing", "urgent"); // always urgent
+        }
+
+        // ❌ AFTER CLOSING
+        else if (now > closeDate) {
+            timer.innerHTML = "❌ Closed";
+            timer.classList.add("closed");
+            timer.style.display = "inline-block";
+            return;
+        }
+
+        // ❌ OTHERWISE HIDE
+        else {
+            timer.style.display = "none";
+            return;
+        }
+
+        // ⏱ convert time
+        const mins = Math.floor(diff / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+
+        timer.style.display = "inline-block";
+        timer.innerHTML = text + mins + "m " + secs + "s";
+    });
+}
+
+// run every second
+setInterval(updateTimers, 1000);
+updateTimers();
 </script>
 <div id="locationPopup" class="location-popup hidden">
   <div class="popup-card">
@@ -4497,5 +4688,5 @@ document.getElementById("leaderboardBackdrop").classList.remove("show");
     <p id="modalContent"></p>
   </div>
 </div>
-
+<div class="flowers"></div>
 {% endblock %}
