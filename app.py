@@ -163,8 +163,7 @@ import math
 import requests
 import math
 
-import requests
-import math
+
 
 def calculate_distance_km(lat1, lng1, lat2, lng2):
 
@@ -178,16 +177,15 @@ def calculate_distance_km(lat1, lng1, lat2, lng2):
     url = f"https://router.project-osrm.org/route/v1/driving/{lng1},{lat1};{lng2},{lat2}?overview=false"
 
     try:
-        r = requests.get(url, timeout=5)
+        r = requests.get(url, timeout=3)
         data = r.json()
 
         if "routes" not in data or len(data["routes"]) == 0:
             print("OSRM failed, using haversine fallback")
 
             km = haversine(lat1, lng1, lat2, lng2)
-            km = km * 1.35   # road distance approximation
+            km = km * 1.35
             km = math.ceil(km * 2) / 2
-
             return km
 
         meters = data["routes"][0]["distance"]
@@ -203,7 +201,7 @@ def calculate_distance_km(lat1, lng1, lat2, lng2):
         print("Using haversine fallback")
 
         km = haversine(lat1, lng1, lat2, lng2)
-        km = km * 1.35   # road distance approximation
+        km = km * 1.35
         km = math.ceil(km * 2) / 2
 
         return km
@@ -1159,7 +1157,7 @@ def admin_dashboard():
             pass  # ignore invalid date input
 
     q = q.order_by(Order.created_at.desc())
-    pagination = q.paginate(page=page, per_page=10)
+    pagination = q.paginate(page=page, per_page=100)
     orders = pagination.items
 
     # ---------------- DELIVERY PERSONS & RESTAURANTS ----------------
@@ -4328,7 +4326,8 @@ def top_customers():
             "badge": badge.name if badge else "No Badge"
         })
 
-    return jsonify(leaderboard)
+    return jsonify(leaderboard) 
+
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------
