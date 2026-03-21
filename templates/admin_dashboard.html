@@ -437,44 +437,44 @@ button:hover { background: #0056b3; }
 
 
 <!-- Quick fix: update only tbody (no backend changes) -->
-<script>
-let existingOrderIds = new Set();
+<SCRIPT>
+    let lastOrderCount = {{ orders|length }};
 const notifySound = new Audio("{{ url_for('static', filename='notify.mp3') }}");
-
-// 🔥 store existing order IDs initially
-document.querySelectorAll("#ordersTable tbody tr").forEach(row => {
-    const id = row.children[0].innerText.trim();
-    existingOrderIds.add(id);
-});
 
 async function quickRefresh() {
     try {
-        const res = await fetch(window.location.href, { cache: "no-store" });
+        const res = await fetch(window.location.href, {cache: "no-store"});
         const text = await res.text();
         const tmp = document.createElement("div");
         tmp.innerHTML = text;
 
-        const newRows = tmp.querySelectorAll("#ordersTable tbody tr");
-        const tbody = document.querySelector("#ordersTable tbody");
+        const newTables = tmp.querySelectorAll("#ordersTable tbody");
+        const currentTables = document.querySelectorAll("#ordersTable tbody");
 
-        newRows.forEach(row => {
-            const orderId = row.children[0].innerText.trim();
+        newTables.forEach((newTbody, index) => {
 
-            // ✅ only add NEW orders
-            if (!existingOrderIds.has(orderId)) {
+            const currentTbody = currentTables[index];
+            if (!currentTbody) return;
 
-                const newRow = row.cloneNode(true);
-                tbody.prepend(newRow);
+            const newRows = newTbody.querySelectorAll("tr").length;
 
-                existingOrderIds.add(orderId);
-
-                // 🔔 sound
+            if (newRows > lastOrderCount) {
                 notifySound.play().catch(()=>{});
-
-                // ✨ highlight
-                newRow.classList.add("new-order");
-                setTimeout(() => newRow.classList.remove("new-order"), 4000);
             }
+
+            currentTbody.innerHTML = newTbody.innerHTML;
+
+            if (newRows > lastOrderCount && lastOrderCount !== 0) {
+                const countNew = newRows - lastOrderCount;
+                const trs = currentTbody.querySelectorAll("tr");
+
+                for (let i = 0; i < Math.min(countNew, trs.length); i++) {
+                    trs[i].classList.add("new-order");
+                    setTimeout(() => trs[i].classList.remove("new-order"), 4000);
+                }
+            }
+
+            lastOrderCount = newRows;
         });
 
     } catch (err) {
@@ -482,9 +482,8 @@ async function quickRefresh() {
     }
 }
 
-// ⏱ run every 10 sec
 setInterval(quickRefresh, 10000);
-</script>
+</SCRIPT>
 
 </body>
 </html>
