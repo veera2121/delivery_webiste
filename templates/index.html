@@ -3227,6 +3227,33 @@ font-size:18px;
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
+} 
+.emergency-banner {
+  width: 100%;
+  background: linear-gradient(90deg, #ff3b3b, #ff7a00);
+  color: #fff;
+  text-align: center;
+  padding: 10px 35px;
+  font-size: 14px;
+  position: relative;
+  animation: slideDown 0.4s ease;
+}
+
+.emergency-banner p {
+  margin: 4px 0;
+}
+
+.close-btn {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
 
@@ -3486,7 +3513,27 @@ font-size:18px;
         <small id="orderStatus">Tracking live activity</small>
     </div>
 </section> 
+<!-- 🚨 Emergency Banner -->
+<div id="emergencyBanner" class="emergency-banner">
+  <span class="close-btn" onclick="closeBanner()">✖</span>
 
+  <p>
+    🚨 High Order Alert: Due to high demand, all delivery partners are busy.
+    Orders may be delayed. Please understand. Thank you for your support.
+    Orders will resume from 8:00 PM.
+  </p>
+
+  <p>
+    🚨 అధిక ఆర్డర్ అలర్ట్: ప్రస్తుతం అధిక ఆర్డర్లు ఉండటం వల్ల అన్ని డెలివరీ భాగస్వాములు బిజీగా ఉన్నారు.
+    డెలివరీ ఆలస్యం కావచ్చు. దయచేసి సహనం చూపించండి.
+    మీ సహకారానికి ధన్యవాదాలు. ఆర్డర్లు రాత్రి 8:00 నుండి మళ్లీ ప్రారంభమవుతాయి.
+  </p>
+</div>
+
+<!-- 🎉 Your Ugadi Banner -->
+<div class="mobile-banner">
+    <img src="{{ url_for('static', filename='images/ugadi.png') }}" alt="Ugadi Banner">
+</div>
 <div class="mobile-banner">
     <img src="{{ url_for('static', filename='images/ugadi.png') }}" alt="Ugadi Banner">
 </div>
