@@ -3426,6 +3426,73 @@ font-size:18px;
     inset: 0;
     z-index: 1;
     pointer-events: none;
+} 
+.alert-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.alert-box {
+    width: 90%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 18px;
+    padding: 24px 20px;
+    text-align: center;
+
+    animation: popupZoom 0.4s ease;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+@keyframes popupZoom {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.alert-icon {
+    font-size: 42px;
+    margin-bottom: 10px;
+    animation: shake 1s infinite;
+}
+
+@keyframes shake {
+    0%,100% { transform: rotate(0); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+}
+
+.alert-box h2 {
+    margin: 10px 0;
+    font-size: 22px;
+    color: #ff3d3d;
+}
+
+.alert-box p {
+    font-size: 14px;
+    color: #444;
+    margin: 8px 0;
+}
+
+.alert-box .telugu {
+    font-size: 13px;
+    color: #666;
+}
+
+.alert-box button {
+    margin-top: 15px;
+    padding: 10px 16px;
+    border: none;
+    background: linear-gradient(135deg, #ff4b2b, #ff7a18);
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
 }
 </style>
 
@@ -3698,19 +3765,27 @@ font-size:18px;
     </div>
 </div>
 <!-- 🚨 Emergency Banner -->
-<!-- <div id="emergencyBanner" class="emergency-banner">
-  <span class="close-btn" onclick="closeBanner()">✖</span>
+<div id="orderAlert" class="alert-overlay">
+    <div class="alert-box">
 
-  <p>
-    🚨 Notice: Orders will be accepted today only after 6:00 PM. 
-    We apologize for the inconvenience and appreciate your understanding.
-  </p>
+        <div class="alert-icon">🚫</div>
 
-  <p>
-    🚨 గమనిక: ఈరోజు ఆర్డర్లు సాయంత్రం 6:00 గంటల తర్వాత మాత్రమే స్వీకరించబడతాయి. 
-    అసౌకర్యానికి క్షమించండి. మీ సహకారానికి ధన్యవాదాలు.
-  </p>
-</div>-->
+        <h2>Orders Closed Today</h2>
+
+        <p>
+            We are not accepting orders <strong>today only</strong>.<br>
+            From <strong>10-04-2026</strong>, orders will be available as usual.
+        </p>
+
+        <p class="telugu">
+            ఈరోజు మాత్రమే ఆర్డర్లు స్వీకరించబడవు.<br>
+            <strong>10-04-2026</strong> నుండి  ఆర్డర్లు అందుబాటులో ఉంటాయి.
+        </p>
+
+        <button onclick="closeAlert()">OK, Got it</button>
+
+    </div>
+</div>
 <!-- 🎉 Your Ugadi Banner -->
 
 
@@ -4916,6 +4991,11 @@ drawConfetti();
 
 
 
+</script>
+<script>
+function closeAlert() {
+    document.getElementById("orderAlert").style.display = "none";
+}
 </script>
 <div id="locationPopup" class="location-popup hidden">
   <div class="popup-card">
