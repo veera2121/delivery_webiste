@@ -16,7 +16,7 @@ body {
 }
 
 .container { 
-    max-width: 1200px; 
+    max-width: 1600px; 
     margin: auto; 
     overflow-x: hidden; /* Extra safety */
 }
@@ -214,7 +214,195 @@ button:hover { background: #0056b3; }
     .admin-dashboard {
         grid-template-columns: repeat(2, 1fr);
     }
+} 
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    background: #fff;
 }
+
+.stats-table th {
+    background: linear-gradient(90deg, #ff6a00, #ff3d3d);
+    color: #fff;
+    padding: 12px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stats-table td {
+    padding: 14px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.stats-table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.stats-table tr:hover {
+    background: #fff3eb;
+    transition: 0.2s ease;
+} 
+/* ===== TABLE CONTAINER ===== */
+#ordersTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* ===== HEADER ===== */
+#ordersTable thead {
+    background: linear-gradient(90deg, #ff6a00, #ff3d3d);
+    color: #fff;
+}
+
+#ordersTable th {
+    padding: 12px 10px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+/* ===== BODY ===== */
+#ordersTable td {
+    padding: 12px 10px;
+    font-size: 16px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Zebra rows */
+#ordersTable tbody tr:nth-child(even) {
+    background: #fafafa;
+}
+
+/* Hover effect */
+#ordersTable tbody tr:hover {
+    background: #fff3eb;
+    transition: 0.2s ease;
+}
+
+/* ===== ITEMS LIST (FIXED ISSUE) ===== */
+.order-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.order-items li {
+    white-space: nowrap;          /* ✅ prevents breaking */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+    font-size: 12px;
+    margin-bottom: 4px;
+    background: #f6f6f6;
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+
+/* Hover to show full name */
+.order-items li:hover {
+    white-space: normal;
+    background: #ffece4;
+}
+
+/* ===== STATUS COLORS ===== */
+.status-Pending {
+    color: #ff9800;
+    font-weight: 600;
+}
+
+.status-Preparing {
+    color: #2196f3;
+    font-weight: 600;
+}
+
+.status-Assigned {
+    color: #673ab7;
+    font-weight: 600;
+}
+
+.status-Delivered {
+    color: #2e7d32;
+    font-weight: 700;
+}
+
+.status-Cancelled {
+    color: #d32f2f;
+    font-weight: 700;
+}
+
+/* ===== WHATSAPP BUTTON ===== */
+.wa-btn {
+    display: inline-block;
+    padding: 6px 10px;
+    background: #25D366;
+    color: #fff;
+    font-size: 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.wa-btn:hover {
+    background: #1ebe5d;
+}
+
+/* ===== COUPON STYLE ===== */
+.coupon-used {
+    background: #ffe0b2;
+    color: #e65100;
+    padding: 3px 6px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* ===== SELECT DROPDOWN ===== */
+select {
+    padding: 5px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 12px;
+}
+
+/* ===== ASSIGN BUTTON ===== */
+button {
+    margin-top: 5px;
+    padding: 5px 8px;
+    border: none;
+    background: #ff6a00;
+    color: #fff;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #e85d00;
+}
+
+/* ===== MOBILE SCROLL FIX ===== */
+#ordersTable {
+    display: block;
+    overflow-x: auto;
+} 
+
 </style>
 
 
@@ -246,7 +434,10 @@ button:hover { background: #0056b3; }
     <a href="{{ url_for('admin_offers') }}" class="admin-card blue">
     🎁 Manage Offers
 </a>
-
+<a href="/admin/otps" class="admin-card">🔐 View OTPs</a> 
+<a href="{{ url_for('admin_employees') }}" class="admin-card">
+    👨‍💼 Manage Employees
+</a>
 </div> 
 
 <!-- ===== GLOBAL FILTER ===== -->
@@ -262,26 +453,33 @@ button:hover { background: #0056b3; }
     <button type="submit">Apply</button>
     <a href="{{ url_for('admin_dashboard') }}"><button type="button">Reset</button></a>
 </form>
+<h2>Today Performance</h2>
 
-<!-- ===== PLATFORM STATISTICS ===== -->
-<h2>Platform Overview</h2>
-<table>
+<table class="stats-table">
 <tr>
     <th>Total Restaurants</th>
-    <th>Total Orders Today</th>
-    <th>Total Revenue Today</th>
-    <th>Pending Orders</th>
-    <th>Active Deliveries</th>
+    <th>Total Orders</th>
+    <th>Delivered</th>
+    <th>Cancelled</th>
+    <th>Active</th>
+    <th>Pending</th>
+    <th>Revenue</th>
+    <th>Delivery Charges</th>
+    <th>Items Sold</th>
 </tr>
+
 <tr>
     <td>{{ restaurants|length }}</td>
-    <td>{{ stats.total_orders_today }}</td>
-    <td>₹{{ stats.total_revenue_today }}</td>
-    <td>{{ stats.pending }}</td>
-    <td>{{ stats.assigned }}</td>
+    <td>{{ stats.today_orders }}</td>
+    <td>{{ stats.today_delivered }}</td>
+    <td>{{ stats.today_cancelled }}</td>
+    <td>{{ stats.today_active }}</td>
+    <td>{{ stats.today_pending }}</td>
+    <td>₹{{ stats.today_revenue }}</td>
+    <td>₹{{ stats.today_delivery_charges }}</td>
+    <td>{{ stats.today_items }}</td>
 </tr>
 </table>
-
 <!-- ===== RESTAURANT PERFORMANCE ===== -->
 <h2>Restaurant Performance</h2>
 <table>

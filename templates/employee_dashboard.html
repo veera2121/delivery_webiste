@@ -1,0 +1,852 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employee Dashboard- RucHiGo</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+    /* ===== GLOBAL ===== */
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #0f172a;
+    color: #ffffff;
+    margin: 0;
+    padding: 20px;
+}
+
+/* ===== HEADINGS ===== */
+h2, h3 {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+h2 {
+    font-size: 24px;
+}
+
+h3 {
+    margin-top: 30px;
+    color: #94a3b8;
+}
+
+/* ===== STATS SECTION ===== */
+.stats-wrapper {
+    background: linear-gradient(145deg, #1e293b, #020617);
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    margin-bottom: 25px;
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.stats-table th {
+    padding: 12px;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.stats-table td {
+    padding: 12px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* COLORS */
+.green { color: #22c55e; }
+.red { color: #ef4444; }
+.blue { color: #3b82f6; }
+.orange { color: #f59e0b; }
+
+/* ===== TOP BAR ===== */
+.emp-top-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.emp-top-bar input,
+.emp-top-bar select {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: none;
+    background: #1e293b;
+    color: #fff;
+    outline: none;
+    box-shadow: inset 0 0 0 1px #334155;
+}
+
+.emp-top-bar input:focus,
+.emp-top-bar select:focus {
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.live-count {
+    margin-left: auto;
+    font-weight: 600;
+}
+
+/* ===== TABLE ===== */
+.emp-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #020617;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+}
+
+.emp-table th {
+    background: #1e293b;
+    padding: 14px;
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+.emp-table td {
+    padding: 14px;
+    border-bottom: 1px solid #1e293b;
+    font-size: 14px;
+}
+
+.emp-table tr:hover {
+    background: rgba(59,130,246,0.08);
+    transition: 0.3s;
+}
+
+/* NEW ORDER HIGHLIGHT */
+.new-order {
+    animation: glow 1s infinite alternate;
+}
+
+@keyframes glow {
+    from { background: rgba(34,197,94,0.1); }
+    to { background: rgba(34,197,94,0.25); }
+}
+
+/* ===== STATUS COLORS ===== */
+.status-Pending { color: #f59e0b; }
+.status-Accepted { color: #3b82f6; }
+.status-Preparing { color: #6366f1; }
+.status-Ready { color: #22c55e; }
+.status-Delivered { color: #10b981; }
+.status-Cancelled { color: #ef4444; }
+
+/* ===== ITEMS LIST ===== */
+.items {
+    padding-left: 18px;
+}
+
+.items li {
+    margin-bottom: 4px;
+}
+
+/* ===== ADDRESS ===== */
+.address {
+    max-width: 200px;
+    font-size: 13px;
+    color: #cbd5f5;
+}
+
+/* ===== DELIVERY STATUS ===== */
+.online {
+    color: #22c55e;
+    font-size: 12px;
+}
+
+.offline {
+    color: #ef4444;
+    font-size: 12px;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.sticky-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sticky-actions select {
+    padding: 6px;
+    border-radius: 8px;
+    background: #1e293b;
+    color: #fff;
+    border: none;
+}
+
+.sticky-actions button {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.sticky-actions button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(59,130,246,0.4);
+}
+
+.sticky-actions button:disabled {
+    background: gray;
+    cursor: not-allowed;
+}
+
+/* ===== WHATSAPP BUTTON ===== */
+.wa-btn {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 5px 8px;
+    border-radius: 8px;
+    background: #25d366;
+    color: white;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+/* ===== POPUP ===== */
+#newOrderBadge {
+    font-weight: bold;
+    backdrop-filter: blur(10px);
+    background: rgba(0,0,0,0.7);
+}
+
+/* ===== SCROLL ===== */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-thumb {
+    background: #3b82f6;
+    border-radius: 10px;
+} 
+.emp-top-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 15px;
+}
+
+.logout-btn {
+    background: #ff4d4d;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.logout-btn:hover {
+    background: #e60000;
+} 
+.emp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.emp-header h2 {
+    font-weight: 700;
+    color: #01ece1;
+}
+</style>  
+<style>
+.session-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0,0,0,0.6);
+
+    display: none;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 9999;
+}
+
+.popup-box {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    width: 280px;
+
+    animation: popupFade 0.3s ease;
+}
+
+.popup-box h3 {
+    margin-bottom: 10px;
+}
+
+.popup-box button {
+    margin-top: 15px;
+    padding: 10px 18px;
+    border: none;
+    background: #ff4d4d;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+@keyframes popupFade {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+} 
+
+.payment-badge {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.payment-badge.COD {
+    background: #ffe0b2;
+    color: #e65100;
+}
+
+.payment-badge.Online {
+    background: #c8e6c9;
+    color: #1b5e20;
+}
+
+.payment-badge.NotCollected {
+    background: #eee;
+    color: #555;
+} 
+
+</style>
+<div class="emp-header">
+    <h2>👨‍💼 Welcome, {{ employee.name }}</h2>
+</div>
+<div class="emp-top-actions">
+    <a href="{{ url_for('employee_logout') }}" class="logout-btn">
+        🚪 Logout
+    </a>
+</div>
+<h2>👨‍💼 Employee Orders Panel</h2> 
+
+<h2>📊 Today Performance</h2>
+
+<div class="stats-wrapper">
+
+<table class="stats-table">
+<thead>
+<tr>
+    <th>🍽 Restaurants</th>
+    <th>📦 Orders</th>
+    <th>✅ Delivered</th>
+    <th>❌ Cancelled</th>
+    <th>🔥 Active</th>
+    <th>⏳ Pending</th>
+    <th>💰 Revenue</th>
+    <th>🚚 Delivery ₹</th>
+    <th>🍛 Items Sold</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+    <td data-label="Restaurants">{{ restaurants|length }}</td>
+    <td data-label="Orders">{{ stats.today_orders }}</td>
+    <td data-label="Delivered" class="green">{{ stats.today_delivered }}</td>
+    <td data-label="Cancelled" class="red">{{ stats.today_cancelled }}</td>
+    <td data-label="Active" class="blue">{{ stats.today_active }}</td>
+    <td data-label="Pending" class="orange">{{ stats.today_pending }}</td>
+    <td data-label="Revenue">₹{{ stats.today_revenue }}</td>
+    <td data-label="Delivery">₹{{ stats.today_delivery_charges }}</td>
+    <td data-label="Items">{{ stats.today_items }}</td>
+</tr>
+</tbody>
+
+</table>
+
+</div>
+<div class="emp-top-bar">
+    <input type="text" id="searchInput" placeholder="🔍 Search Order / Name / Phone">
+
+    <select id="statusFilter">
+        <option value="">All Status</option>
+        <option>Pending</option>
+        <option>Preparing</option>
+        <option>Out for Delivery</option>
+        <option>Delivered</option>
+        <option>Cancelled</option>
+    </select>
+
+    <span class="live-count">
+        📦 Total Orders: <strong id="orderCount">{{ orders|length }}</strong>
+    </span>
+</div> 
+
+{% for category in ['Today','Yesterday','Older'] %}
+
+<h3>📅 {{ category }} Orders</h3>
+
+{% set filtered_orders = orders | selectattr("day_category", "equalto", category) | list %}
+
+{% if filtered_orders %}
+
+<table class="emp-table">
+
+<thead>
+<tr>
+    <th>ID</th>
+    <th>Restaurant</th>
+    <th>Customer</th>
+    <th>Address</th>
+    <th>Items</th>
+    <th>Delivery ₹</th>
+    <th>Total ₹</th> 
+    <th>Placed Time</th>
+    <th>Status</th> 
+    <th>Delivery Boy</th>
+    <th>Actions</th> 
+    <th>Cancel Reason</th>
+</tr>
+</thead>
+
+<tbody>
+{% for order in filtered_orders %}
+<tr data-order-id="{{ order.id }}"
+    data-status="{{ order.status }}"
+    class="{% if order.status == 'Pending' %}new-order{% endif %}">
+
+<td>#{{ order.order_id }}</td>
+
+<td>{{ order.restaurant.name }}</td>
+
+<td>
+    {{ order.customer_name }} <br>
+    {{ order.phone }}
+    <br>
+    <a href="https://wa.me/{{ order.phone }}" target="_blank" class="wa-btn">💬</a>
+</td>
+
+<td class="address">
+    {{ order.house_no }}, {{ order.landmark }},
+    {{ order.city }}, {{ order.state }} - {{ order.pincode }}
+</td>
+
+<td>
+    <ul class="items">
+        {% for item in order.items %}
+        <li>
+            {{ item.item_name }} × {{ item.quantity }} 
+            - ₹{{ item.price }}
+        </li>
+        {% endfor %}
+    </ul>
+</td>
+
+<td>₹{{ order.delivery_charge or 0 }}</td>
+
+<td><strong>₹{{ order.final_total }}</strong></td>
+<td>
+    {{ (order.created_at + timedelta(hours=5, minutes=30)).strftime('%d-%m-%Y %I:%M %p') }}
+</td>
+<td class="status-cell status-{{ order.status }}">
+
+    <!-- MAIN STATUS -->
+    {{ order.status }}
+
+    <!-- 🔒 LOCK -->
+    {% if order.status in ['Delivered','Cancelled'] %}
+        <br>
+        <span style="color:gray;font-size:12px;">🔒 Locked</span>
+    {% endif %}
+
+    <!-- 💰 PAYMENT TYPE BELOW -->
+    <br>
+    {% if order.payment_type == 'COD' %}
+        <span class="payment-badge COD">💰 COD</span>
+    {% elif order.payment_type == 'Online' %}
+        <span class="payment-badge Online">💳 Online</span>
+    {% else %}
+        <span class="payment-badge NotCollected">⚠ Not Paid</span>
+    {% endif %}
+
+    <!-- ❌ CANCEL REASON (ONLY IF CANCELLED) -->
+    {% if order.status == 'Cancelled' and order.cancel_reason %}
+        <br>
+        <span style="color:red;font-size:12px;">
+            ❌ {{ order.cancel_reason }}
+        </span>
+    {% endif %}
+
+</td>
+<!-- ✅ DELIVERY PERSON -->
+<td class="dp-cell">
+    {% if order.delivery_person %}
+        {{ order.delivery_person.name }} <br>
+        <span class="{% if order.delivery_person.is_online %}online{% else %}offline{% endif %}">
+            ● {{ "Online" if order.delivery_person.is_online else "Offline" }}
+        </span>
+    {% else %}
+        <span style="color:red;">Not Assigned</span>
+    {% endif %}
+</td>
+
+<!-- ✅ ACTIONS -->
+<td class="sticky-actions">
+
+<!-- STATUS -->
+<select class="status-select"
+        data-order-id="{{ order.id }}"
+        {% if order.status in ['Delivered','Cancelled'] %}disabled{% endif %}>
+
+    <option {% if order.status=='Pending' %}selected{% endif %}>Pending</option>
+    <option {% if order.status=='Accepted' %}selected{% endif %}>Accepted</option>
+    <option {% if order.status=='Preparing' %}selected{% endif %}>Preparing</option>
+    <option {% if order.status=='Ready' %}selected{% endif %}>Ready</option>
+    <option {% if order.status=='Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
+    <option {% if order.status=='Cancelled' %}selected{% endif %}>Cancelled</option>
+
+    <option disabled {% if order.status=='Delivered' %}selected{% endif %}>Delivered</option>
+</select>
+
+<button class="update-btn"
+        data-order-id="{{ order.id }}"
+        {% if order.status in ['Delivered','Cancelled'] %}disabled{% endif %}>
+    ✔
+</button>
+
+<br><br>
+
+<!-- ASSIGN -->
+<select class="assign-select"
+        data-order-id="{{ order.id }}"
+        {% if order.status in ['Delivered','Cancelled'] %}disabled{% endif %}>
+
+    <option value="">Select Delivery</option>
+
+    {% for dp in delivery_persons %}
+    <option value="{{ dp.id }}"
+        {% if order.delivery_person_id == dp.id %}selected{% endif %}>
+        {{ dp.name }}
+    </option>
+    {% endfor %}
+</select>
+
+<button class="assign-btn"
+        data-order-id="{{ order.id }}"
+        {% if order.status in ['Delivered','Cancelled'] %}disabled{% endif %}>
+    Assign
+</button>
+
+<!-- ✅ CANCEL REASON -->
+<td data-label="Cancel Reason">
+    {{ order.cancel_reason or '-' }}
+</td>
+</td>
+
+</tr>
+{% endfor %}
+</tbody>
+
+</table>
+{% else %}
+<p>No {{ category.lower() }} orders.</p>
+{% endif %}
+
+{% endfor %}
+<div id="newOrderBadge" style="
+position: fixed;
+top: 20px;
+right: 20px;
+background: #111;
+color: #fff;
+padding: 12px 18px;
+border-radius: 10px;
+display: none;
+z-index: 9999;
+box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+">
+🔔 New Order
+</div> 
+
+
+<div id="sessionPopup" class="session-popup">
+    <div class="popup-box">
+        <h3>⚠️ Session Expired</h3>
+        <p>Admin logged you out</p>
+        <button onclick="goLogin()">Login Again</button>
+    </div>
+</div>
+<script>
+// ================= FILTER =================
+function applyFilters() {
+    const searchValue = document.getElementById("searchInput").value.toLowerCase();
+    const statusValue = document.getElementById("statusFilter").value;
+
+    let rows = document.querySelectorAll(".emp-table tbody tr");
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        let text = row.innerText.toLowerCase();
+        let rowStatus = row.querySelector("td:nth-child(8)").innerText;
+
+        let show = true;
+
+        if (searchValue && !text.includes(searchValue)) show = false;
+        if (statusValue && rowStatus !== statusValue) show = false;
+
+        row.style.display = show ? "" : "none";
+
+        if (show) visibleCount++;
+    });
+
+    document.getElementById("orderCount").innerText = visibleCount;
+}
+
+// Events
+document.getElementById("searchInput").addEventListener("keyup", applyFilters);
+document.getElementById("statusFilter").addEventListener("change", applyFilters);
+
+
+// ================= LIVE ORDERS =================
+let lastOrderId = "{{ orders[0].order_id if orders else '' }}";
+const notifySound = new Audio("/static/sounds/neworder.mp3");
+
+// 🔔 popup
+function showPopup(msg) {
+    const badge = document.getElementById("newOrderBadge");
+
+    if (!badge) return;
+
+    badge.innerHTML = msg;
+    badge.style.display = "block";
+
+    setTimeout(() => {
+        badge.style.display = "none";
+    }, 4000);
+}
+
+
+// ================= AUTO REFRESH (SMART) =================
+setInterval(() => {
+    fetch(window.location.href)
+        .then(res => res.text())
+        .then(html => {
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+
+            // ✅ Update ALL order tables
+            const newTables = doc.querySelectorAll(".emp-table tbody");
+            const currentTables = document.querySelectorAll(".emp-table tbody");
+
+            newTables.forEach((newT, i) => {
+                if (currentTables[i]) {
+                    currentTables[i].innerHTML = newT.innerHTML;
+                }
+            });
+
+            // ✅ Detect NEW ORDER
+            const firstRow = doc.querySelector(".emp-table tbody tr");
+            if (!firstRow) return;
+
+            const newOrderId = firstRow.querySelector("td")?.innerText.replace("#","").trim();
+
+            if (newOrderId && newOrderId !== lastOrderId) {
+                notifySound.play();
+                showPopup("🔔 New Order Received!");
+                lastOrderId = newOrderId;
+            }
+
+            // ✅ Re-apply filters after update
+            applyFilters();
+
+        })
+        .catch(err => console.log(err));
+
+}, 10000); // every 8 sec
+</script>
+ <script>
+document.querySelectorAll(".update-btn").forEach(btn => {
+    btn.addEventListener("click", function () {
+        const row = btn.closest("tr");
+        const orderId = row.dataset.orderId;
+        const status = row.querySelector(".status-select").value;
+
+        fetch(`/employee/update-status/${orderId}`, {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: `status=${status}`
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                row.querySelector(".status-" + data.status)?.classList.add("updated");
+                row.querySelector("td:nth-child(8)").innerText = data.status;
+            }
+        });
+    });
+});
+</script> 
+
+<script>
+
+// ================= GLOBAL CLICK HANDLER =================
+document.addEventListener("click", function(e) {
+
+    // ================= STATUS UPDATE =================
+    if (e.target.classList.contains("update-btn")) {
+
+        const btn = e.target;
+        const row = btn.closest("tr");
+        const orderId = row.dataset.orderId;
+
+        const select = row.querySelector(".status-select");
+        const status = select.value;
+
+        fetch(`/employee/update-status/${orderId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: `status=${encodeURIComponent(status)}`
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            if (!data.success) {
+                alert(data.error || "Error updating");
+                return;
+            }
+
+            const statusCell = row.querySelector(".status-cell");
+            statusCell.innerHTML = data.new_status;
+
+            // 🔒 LOCK
+            if (data.new_status === "Delivered" || data.new_status === "Cancelled") {
+                select.disabled = true;
+                btn.disabled = true;
+
+                statusCell.innerHTML += "<br><span style='color:gray;font-size:12px;'>🔒 Locked</span>";
+            }
+
+        });
+    }
+
+    // ================= ASSIGN DELIVERY =================
+    if (e.target.classList.contains("assign-btn")) {
+
+        const btn = e.target;
+        const row = btn.closest("tr");
+        const orderId = row.dataset.orderId;
+
+        const select = row.querySelector(".assign-select");
+        const dpId = select.value;
+
+        if (!dpId) {
+            alert("Select delivery person");
+            return;
+        }
+
+        fetch(`/employee/assign-delivery/${orderId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: `delivery_person_id=${encodeURIComponent(dpId)}`
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            if (!data.success) {
+                alert(data.error || "Error assigning");
+                return;
+            }
+
+            // ✅ UPDATE DELIVERY UI
+            const dpCell = row.querySelector(".dp-cell");
+            dpCell.innerHTML = `
+                ${data.delivery_person_name} <br>
+                <span class="online">● Assigned</span>
+            `;
+
+            // ✅ UPDATE STATUS UI
+            const statusCell = row.querySelector(".status-cell");
+            statusCell.innerHTML = data.new_status;
+
+            const statusSelect = row.querySelector(".status-select");
+            statusSelect.value = data.new_status;
+
+        });
+    }
+
+});
+
+
+// ================= FILTER =================
+function applyFilters() {
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    const status = document.getElementById("statusFilter").value.toLowerCase();
+
+    let count = 0;
+
+    document.querySelectorAll("tbody tr").forEach(row => {
+
+        const text = row.innerText.toLowerCase();
+        const rowStatus = (row.dataset.status || "").toLowerCase();
+
+        let show = true;
+
+        if (search && !text.includes(search)) show = false;
+        if (status && rowStatus !== status) show = false;
+
+        row.style.display = show ? "" : "none";
+
+        if (show) count++;
+    });
+
+    document.getElementById("orderCount").innerText = count;
+}
+
+document.getElementById("searchInput")?.addEventListener("keyup", applyFilters);
+document.getElementById("statusFilter")?.addEventListener("change", applyFilters);
+
+</script> 
+
+
+
+
+
+<script>
+function showSessionPopup() {
+    document.getElementById("sessionPopup").style.display = "flex";
+}
+
+function goLogin() {
+    window.location.href = "/employee/login";
+}
+
+// 🔁 Check session every 5 sec
+setInterval(() => {
+    fetch("/employee/check-session")
+        .then(res => res.json())
+        .then(data => {
+            if (!data.active) {
+                showSessionPopup();
+            }
+        })
+        .catch(err => console.error(err));
+}, 5000);
+</script>
+</body>
+</html>

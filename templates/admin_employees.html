@@ -1,0 +1,247 @@
+
+<style>
+    /* 🌌 Page Background */
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #fff;
+}
+
+/* 🧑‍💼 Heading */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* 💎 Glass Form */
+.emp-form {
+    max-width: 700px;
+    margin: auto;
+    padding: 25px;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+/* ✏️ Inputs */
+.emp-form input,
+.emp-form select {
+    flex: 1 1 30%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    background: rgba(255,255,255,0.15);
+    color: #000000;
+    transition: 0.3s;
+}
+
+/* Focus Glow */
+.emp-form input:focus,
+.emp-form select:focus {
+    background: rgba(255,255,255,0.25);
+    box-shadow: 0 0 8px #00f2ff;
+}
+
+/* ➕ Button */
+.emp-form button {
+    flex: 1 1 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(45deg, #00f2ff, #0072ff);
+    color: #333333;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* Hover Effect */
+.emp-form button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 15px #00f2ff;
+}
+
+/* 📊 Table Container */
+.emp-table {
+    width: 100%;
+    margin-top: 30px;
+    border-collapse: collapse;
+    border-radius: 15px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+}
+
+/* 🧾 Table Head */
+.emp-table thead {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.emp-table th {
+    padding: 12px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* 📄 Table Body */
+.emp-table td {
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* 🧊 Row Hover */
+.emp-table tbody tr {
+    transition: 0.3s;
+}
+
+.emp-table tbody tr:hover {
+    background: rgba(255,255,255,0.1);
+    transform: scale(1.01);
+}
+
+/* 🔘 Buttons */
+.btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    margin: 2px;
+    display: inline-block;
+    transition: 0.3s;
+}
+
+/* 🚫 Logout Button */
+.logout {
+    background: linear-gradient(45deg, #ff7e5f, #ff3f34);
+    color: #fff;
+}
+
+.logout:hover {
+    box-shadow: 0 0 10px #ff3f34;
+    transform: scale(1.05);
+}
+
+/* ❌ Delete Button */
+.delete {
+    background: linear-gradient(45deg, #ff416c, #ff0000);
+    color: #fff;
+}
+
+.delete:hover {
+    box-shadow: 0 0 10px #ff0000;
+    transform: scale(1.05);
+}
+
+/* 🟢 Status Colors */
+span {
+    font-weight: bold;
+}
+
+/* Divider */
+hr {
+    margin: 30px 0;
+    border: 1px solid rgba(255,255,255,0.1);
+} 
+.back-btn {
+            display: inline-block;
+            margin-bottom: 15px;
+            padding: 8px 14px;
+            background: #333;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+</style>
+
+<h2>👨‍💼 Manage Employees</h2>
+<div>
+    <a href="/admin/dashboard" class="back-btn">← Back</a>
+
+<!-- ✅ ADD EMPLOYEE FORM -->
+<form method="POST" class="emp-form">
+    <input type="text" name="name" placeholder="Employee Name" required>
+    <input type="text" name="phone" placeholder="Phone Number" required>
+
+    <select name="role">
+        <option value="staff">Staff</option>
+        <option value="manager">Manager</option>
+        <option value="support">Support</option>
+        <option value="ops">Operations</option>
+    </select>
+
+    <button type="submit">➕ Add Employee</button>
+</form>
+</div>
+<hr>
+
+<!-- ✅ EMPLOYEE TABLE -->
+<table class="emp-table">
+<thead>
+<tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Phone</th>
+    <th>Role</th>
+    <th>Status</th>
+    <th>Login</th>
+    <th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+{% for emp in employees %}
+<tr>
+
+<td>#{{ emp.id }}</td>
+<td>{{ emp.name }}</td>
+<td>{{ emp.phone }}</td>
+<td>{{ emp.role }}</td>
+
+<td>
+    {% if emp.is_active %}
+        <span style="color:green;">Active</span>
+    {% else %}
+        <span style="color:red;">Inactive</span>
+    {% endif %}
+</td>
+
+<td>
+    {% if emp.is_logged_in %}
+        <span style="color:green;">Online</span>
+    {% else %}
+        <span style="color:gray;">Offline</span>
+    {% endif %}
+</td>
+
+<td>
+
+    <!-- 🔒 FORCE LOGOUT -->
+    <a href="{{ url_for('logout_employee', id=emp.id) }}" class="btn logout">
+        🚫 Logout
+    </a>
+
+    <!-- ❌ DELETE -->
+    <a href="{{ url_for('delete_employee', id=emp.id) }}" class="btn delete"
+       onclick="return confirm('Delete employee?')">
+        ❌ Delete
+    </a>
+
+</td>
+
+</tr>
+{% endfor %}
+</tbody>
+
+</table>

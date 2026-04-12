@@ -73,7 +73,8 @@ class Restaurant(db.Model):
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
     delivery_radius_km = db.Column(db.Float, default=5)
-
+    # ================= HOMEPAGE ORDER =================
+    homepage_position = db.Column(db.Integer, default=999)
     # ================= 🔥 LIMITED DROP =================
     is_limited_drop = db.Column(db.Boolean, default=False)
     limited_item_name = db.Column(db.String(100))
@@ -715,3 +716,89 @@ class Offer(db.Model):
     expiry = db.Column(db.DateTime, nullable=True)             # optional
     image = db.Column(db.String(500), nullable=True)           # optional
     link = db.Column(db.String(500), nullable=True)            # optional
+
+class Location(db.Model):
+    __tablename__ = "location"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # relationship (optional but good)
+    rankings = db.relationship(
+        "RestaurantHomepageRanking",
+        backref="location",
+        lazy=True
+    ) 
+class RestaurantHomepageRanking(db.Model):
+    __tablename__ = "restaurant_homepage_ranking"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    restaurant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant.id"),
+        nullable=False
+    )
+
+    location_id = db.Column(
+        db.Integer,
+        db.ForeignKey("location.id"),
+        nullable=False
+    )
+
+    position = db.Column(db.Integer, default=999)
+
+    # relationships
+    restaurant = db.relationship("Restaurant", backref="homepage_rankings")
+
+    __table_args__ = (
+        db.UniqueConstraint('restaurant_id', 'location_id', name='unique_restaurant_location'),
+    )
+
+
+class Employee(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    name = db.Column(db.String(100))
+    phone = db.Column(db.String(15), unique=True, index=True)
+
+    role = db.Column(db.String(50), default="staff")  
+    # admin, manager, support, ops
+
+    is_active = db.Column(db.Boolean, default=True)
+    is_logged_in = db.Column(db.Boolean, default=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class EmployeeOTP(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    employee_id = db.Column(db.Integer, db.ForeignKey("employee.id"))
+
+    otp = db.Column(db.String(6))
+    expires_at = db.Column(db.DateTime)
+
+    is_used = db.Column(db.Boolean, default=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow) 
+
+class EmployeeMeta(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey("employee.id"))
+    data = db.Column(db.JSON) 
+
+class EmployeeSession(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    employee_id = db.Column(db.Integer)
+
+    login_time = db.Column(db.DateTime)
+    logout_time = db.Column(db.DateTime)
+
+    is_active = db.Column(db.Boolean, default=True)
+
+    ip_address = db.Column(db.String(50))
+

@@ -61,7 +61,12 @@ tr:hover { background: #fff3e0; }
     {% if results %}
         {% for row in results %}
 <tr>
-  <td data-label="Delivery Boy">{{ row.delivery_name }}</td>
+<td data-label="Delivery Boy">
+  <a href="{{ url_for('admin_delivery_history', delivery_id=row.delivery_person_id, date=date) }}"
+     style="color:#ff5722; font-weight:600; text-decoration:none;">
+     {{ row.delivery_name }}
+  </a>
+</td>
   <td data-label="COD Amount">₹{{ row.cod_total or 0 }}</td>
   <td data-label="Online Amount">₹{{ row.online_total or 0 }}</td>
   <td data-label="Delivery Charges">₹{{ row.delivery_total or 0 }}</td>

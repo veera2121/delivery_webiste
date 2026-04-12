@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee OTPs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background: #f4f6f8;
+            padding: 20px;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 15px;
+            padding: 8px 14px;
+            background: #333;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        th {
+            background: linear-gradient(90deg, #111, #333);
+            color: #fff;
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 12px;
+            text-align: center;
+            font-size: 14px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* 🔥 BIG OTP */
+        .otp-code {
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            color: #ff5722;
+            background: #fff3eb;
+            padding: 6px 10px;
+            border-radius: 8px;
+        }
+
+        .active { color: green; font-weight: bold; }
+        .used { color: red; font-weight: bold; }
+        .expired { color: gray; font-weight: bold; }
+
+        /* Mobile */
+        @media(max-width: 768px){
+            table, thead, tbody, tr, td {
+                display: block;
+                width: 100%;
+            }
+
+            thead { display: none; }
+
+            tr {
+                margin-bottom: 12px;
+                background: #fff;
+                border-radius: 10px;
+                padding: 10px;
+            }
+
+            td {
+                text-align: left;
+                padding: 8px;
+            }
+
+            td:before {
+                font-weight: bold;
+                display: block;
+            }
+
+            td:nth-child(1):before { content: "Employee"; }
+            td:nth-child(2):before { content: "Phone"; }
+            td:nth-child(3):before { content: "OTP"; }
+            td:nth-child(4):before { content: "Created"; }
+            td:nth-child(5):before { content: "Expires"; }
+            td:nth-child(6):before { content: "Status"; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="/admin/dashboard" class="back-btn">← Back</a>
+
+<h2>🔐 Employee OTP Logs</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Employee</th>
+            <th>Phone</th>
+            <th>OTP</th>
+            <th>Created</th>
+            <th>Expires</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for otp, emp in otps %}
+        <tr>
+            <td>{{ emp.name }}</td>
+            <td>{{ emp.phone }}</td>
+
+            <td class="otp-code">{{ otp.otp }}</td>
+
+            <td>{{ otp.created_at.strftime('%H:%M:%S') }}</td>
+            <td>{{ otp.expires_at.strftime('%H:%M:%S') }}</td>
+
+<td>
+    {% if otp.is_used == True %}
+        <span class="used">Used</span>
+
+    {% elif otp.is_used == False and otp.expires_at < now %}
+        <span class="expired">Expired</span>
+
+    {% else %}
+        <span class="active">Active</span>
+    {% endif %}
+</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<!-- 🔥 AUTO REFRESH -->
+<script>
+setInterval(() => {
+    location.reload();
+}, 8000);
+</script>
+
+</body>
+</html>

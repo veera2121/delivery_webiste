@@ -104,7 +104,10 @@ ul li{ font-size:13px; }
 <body>
 <div class="container">
 
-<h1>Delivery History - {{ session.delivery_person_name }}</h1>
+<h1>
+Delivery History - 
+{{ delivery_name if delivery_name else session.delivery_person_name }}
+</h1>
 <a href="{{ url_for('delivery_dashboard') }}" class="btn">⬅ Back to Dashboard</a>
 
 <!-- FILTER BAR -->

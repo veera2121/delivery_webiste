@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Homepage Restaurant Ranking</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f5f5f5;
+padding:30px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+h2{
+margin-bottom:20px;
+}
+
+.location-box{
+margin-bottom:20px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #eee;
+text-align:left;
+}
+
+th{
+background:#fafafa;
+}
+
+input[type="number"]{
+width:70px;
+padding:6px;
+border:1px solid #ddd;
+border-radius:5px;
+}
+
+.save-btn{
+background:#ff5a5f;
+color:white;
+border:none;
+padding:6px 12px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.save-btn:hover{
+background:#e84c50;
+}
+
+.restaurant-name{
+font-weight:600;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>🍽️ Homepage Restaurant Ranking</h2>
+
+
+<!-- LOCATION SELECT -->
+
+<form method="GET" class="location-box">
+
+<label>Select Location:</label>
+
+<select name="location" onchange="this.form.submit()">
+
+<option value="">-- Select Location --</option>
+
+{% for loc in locations %}
+
+<option value="{{loc.id}}"
+{% if loc.id == selected_location %}selected{% endif %}
+>
+
+{{loc.name}}
+
+</option>
+
+{% endfor %}
+
+</select>
+
+</form>
+
+
+
+{% if selected_location %}
+
+<!-- RESTAURANT TABLE -->
+
+<table>
+
+<tr>
+<th>Restaurant</th>
+<th>Position</th>
+<th>Save</th>
+</tr>
+
+{% for r in restaurants %}
+
+<tr>
+
+<td class="restaurant-name">
+{{r.name}}
+</td>
+
+<td>
+
+<form method="POST" action="/admin/update-homepage-position">
+
+<input type="hidden" name="restaurant_id" value="{{r.id}}">
+<input type="hidden" name="location_id" value="{{selected_location}}">
+
+<input
+type="number"
+name="position"
+value="{% if r.homepage_rankings %}{{ r.homepage_rankings[0].position }}{% else %}999{% endif %}"
+min="1"
+>
+
+</td>
+
+<td>
+
+<button class="save-btn">
+Save
+</button>
+
+</form>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% else %}
+
+<p>Please select a location to manage restaurant ranking.</p>
+
+{% endif %}
+
+</div>
+
+</body>
+</html>

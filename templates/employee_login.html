@@ -1,0 +1,274 @@
+<style>
+    /* 🌌 Background */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 💎 Main Card */
+.login-container {
+    width: 350px;
+    padding: 40px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    text-align: center;
+    color: #fff;
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* ✨ Heading */
+.login-container h2 {
+    margin-bottom: 25px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* 📱 Input Fields */
+.login-container input {
+    width: 100%;
+    padding: 12px;
+    margin: 12px 0;
+    border: none;
+    outline: none;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 15px;
+    transition: 0.3s;
+}
+
+/* Input Focus Glow */
+.login-container input:focus {
+    background: rgba(255,255,255,0.25);
+    box-shadow: 0 0 10px #00f2ff;
+}
+
+/* 🔘 Buttons */
+.login-container button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(45deg, #00f2ff, #0072ff);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* Hover Effect */
+.login-container button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px #00f2ff;
+}
+
+/* 🟢 Message */
+#msg {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+/* 🔴 Timer */
+#timer {
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+/* 🎬 Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
+<div class="login-container">
+    <h2>👨‍💼 Employee Login</h2>
+
+    <div id="phoneBox">
+        <input type="text" id="phone" placeholder="Enter Mobile Number" required>
+        <button id="sendBtn" onclick="sendOTP()">Send OTP</button>
+    </div>
+
+    <p id="msg"></p>
+
+    <div id="otpBox" style="display:none;">
+        <input type="text" id="otp" placeholder="Enter OTP" required> 
+        <p id="timer"></p>
+        <button onclick="verifyOTP()">Login</button>
+    </div>
+</div>
+
+<script>
+
+let countdownInterval;
+
+// ================= SEND OTP =================
+function sendOTP() {
+    const phone = document.getElementById("phone").value;
+    const btn = document.getElementById("sendBtn");
+
+    if (!phone) {
+        showMsg("Enter phone number", "red");
+        return;
+    }
+
+    // 🔒 Disable button while request
+    btn.disabled = true;
+    btn.innerText = "Sending...";
+
+    fetch("/employee/send-otp", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `phone=${encodeURIComponent(phone)}`
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        // 🔓 Enable button again
+        btn.disabled = false;
+        btn.innerText = "Send OTP";
+
+        // ❌ ERROR CASE
+        if (!data.success) {
+            showMsg(data.error, "red");
+
+            // ⏳ If retry time → restart timer + show OTP box
+            if (data.retry_in) {
+                document.getElementById("otpBox").style.display = "block";
+                startTimer(data.retry_in);
+
+                // 🔒 Disable resend until timer ends
+                disableSendButton(data.retry_in);
+            }
+
+            return;
+        }
+
+        // ✅ SUCCESS
+        showMsg("✅ OTP sent successfully", "green");
+
+        document.getElementById("otpBox").style.display = "block";
+
+        // ⏳ Start fresh timer
+        startTimer(data.expires_in || 300);
+
+        // 🔒 Disable resend button
+        disableSendButton(data.expires_in || 300);
+    });
+}
+
+
+// ================= VERIFY OTP =================
+function verifyOTP() {
+    const phone = document.getElementById("phone").value;
+    const otp = document.getElementById("otp").value;
+
+    if (!otp) {
+        showMsg("Enter OTP", "red");
+        return;
+    }
+
+    fetch("/employee/verify-otp", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `phone=${encodeURIComponent(phone)}&otp=${encodeURIComponent(otp)}`
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (!data.success) {
+            showMsg(data.error, "red");
+            return;
+        }
+
+        // ✅ LOGIN SUCCESS
+        window.location.href = data.redirect;
+    });
+}
+
+
+// ================= TIMER =================
+function startTimer(seconds) {
+
+    clearInterval(countdownInterval);
+
+    const timerEl = document.getElementById("timer");
+
+    countdownInterval = setInterval(() => {
+
+        let min = Math.floor(seconds / 60);
+        let sec = seconds % 60;
+
+        timerEl.innerText = `⏳ OTP expires in ${min}:${sec < 10 ? '0'+sec : sec}`;
+
+        if (seconds <= 0) {
+            clearInterval(countdownInterval);
+
+            timerEl.innerText = "❌ OTP Expired";
+
+            // 🔓 Enable resend button again
+            enableSendButton();
+        }
+
+        seconds--;
+
+    }, 1000);
+}
+
+
+// ================= DISABLE SEND BUTTON =================
+function disableSendButton(seconds) {
+    const btn = document.getElementById("sendBtn");
+
+    btn.disabled = true;
+
+    let s = seconds;
+
+    const interval = setInterval(() => {
+        btn.innerText = `Resend in ${s}s`;
+
+        if (s <= 0) {
+            clearInterval(interval);
+            enableSendButton();
+        }
+
+        s--;
+    }, 1000);
+}
+
+
+// ================= ENABLE BUTTON =================
+function enableSendButton() {
+    const btn = document.getElementById("sendBtn");
+    btn.disabled = false;
+    btn.innerText = "Send OTP";
+}
+
+
+// ================= MESSAGE HELPER =================
+function showMsg(text, color) {
+    const msg = document.getElementById("msg");
+    msg.innerText = text;
+    msg.style.color = color;
+}
+
+</script>

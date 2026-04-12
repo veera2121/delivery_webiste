@@ -425,7 +425,31 @@ form button:hover {
     font-weight: 600;
     margin: 14px 0;
 }
+.pay-section{
+margin-top:12px;
+}
 
+.pay-btn{
+background:linear-gradient(45deg,#22c55e,#16a34a);
+color:white;
+border:none;
+padding:12px 22px;
+font-size:15px;
+border-radius:8px;
+cursor:pointer;
+font-weight:600;
+box-shadow:0 4px 10px rgba(0,0,0,0.15);
+}
+
+.pay-btn:hover{
+transform:scale(1.05);
+}
+
+.delivery-otp{
+font-size:18px;
+font-weight:800;
+color:#ff5722;
+}
 </style>
 
 
@@ -568,7 +592,11 @@ form button:hover {
       <span style="font-size:18px;font-weight:800;color:#ff5722;">
         {{ order.otp }}
       </span>
-    {% endif %}
+    {% endif %} 
+      <!-- PAY ONLINE BUTTON -->
+  {% if order.status != "Delivered" %}
+
+  {% endif %}
   </div>
 {% else %}
   <div class="info-box pending-box">
@@ -702,7 +730,19 @@ socket.on("order_status_update", function (data) {
 </script>
 
 
+<script>
+function payUPI(orderId){
 
+fetch(`/generate_upi/${orderId}`)
+.then(res => res.json())
+.then(data => {
+
+window.location.href = data.upi_link;
+
+});
+
+}
+</script>
 {% endblock %}
 
 

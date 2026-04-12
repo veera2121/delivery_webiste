@@ -41,7 +41,7 @@ from extensions import db
 from models import (
     db, Restaurant, RestaurantUser, MenuItem, Order,
     OrderItem, DeliveryPerson, FoodItem, OTP,
-    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,CoinLedger,ShopSettings,RewardSetting,RewardBadge,Category, Offer
+    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,CoinLedger,ShopSettings,RewardSetting,RewardBadge,Category, Offer ,Employee, EmployeeOTP, EmployeeSession
 )
 from reward_engine import add_coins, redeem_coins
 
@@ -328,7 +328,7 @@ def make_whatsapp_link(order):
         f"Total Amount: *Rs. {order.get_final_total()}*\n\n"
         f"*{rname}* is preparing your food.\n"
         "Our delivery partner will deliver it shortly.\n\n"
-        "For support call: *9618319849*\n"
+        "For support call: *7207002650*\n"
         "Track orders on *RucHiGo Website*\n\n"
         "Thank you for choosing *RucHiGo*."
     )
@@ -1169,38 +1169,84 @@ def admin_dashboard():
     yesterday = today - timedelta(days=1)
     week_start = today - timedelta(days=today.weekday())
 
+    from sqlalchemy import func
+
+    today_orders_query = Order.query.filter(
+        db.func.date(Order.created_at) == today
+    )
+
+    # ✅ Delivered orders (used for revenue + items)
+    today_delivered_orders = today_orders_query.filter(
+        Order.status == "Delivered"
+    ).all()
+
     stats = {
         "total_orders": Order.query.count(),
+
         "pending": Order.query.filter_by(status="Pending").count(),
         "preparing": Order.query.filter_by(status="Preparing").count(),
+
         "assigned": Order.query.filter(
             Order.delivery_person_id.isnot(None),
             Order.status != "Delivered",
             Order.status != "Cancelled"
         ).count(),
+
         "delivered": Order.query.filter_by(status="Delivered").count(),
         "cancelled": Order.query.filter_by(status="Cancelled").count(),
 
-        # Today's delivered orders & revenue
-        "total_orders_today": Order.query.filter(
-            db.func.date(Order.created_at) == today,
-            Order.status == "Delivered"
+        # ================= TODAY PERFORMANCE =================
+        "today_orders": today_orders_query.count(),
+
+        "today_delivered": len(today_delivered_orders),
+
+        "today_cancelled": today_orders_query.filter(
+            Order.status == "Cancelled"
         ).count(),
-        "total_revenue_today": sum(
-            o.get_final_total() for o in Order.query.filter(
-                db.func.date(Order.created_at) == today,
+
+        "today_pending": today_orders_query.filter(
+            Order.status == "Pending"
+        ).count(),
+
+        # 🔥 ACTIVE = Preparing + Assigned + Out for Delivery
+        "today_active": today_orders_query.filter(
+            Order.status.in_(["Preparing", "Assigned", "Out for Delivery"])
+        ).count(),
+
+        # 💰 Revenue (only delivered)
+        "today_revenue": sum(
+            o.get_final_total() for o in today_delivered_orders
+        ),
+
+        # 🚚 Delivery charges
+        "today_delivery_charges": sum(
+            o.delivery_fee for o in today_delivered_orders if o.delivery_fee
+        ),
+
+        # 📦 Items sold
+        "today_items": sum(
+            item.quantity
+            for o in today_delivered_orders
+            for item in o.items
+        ) if today_delivered_orders else 0,
+
+        # ================= WEEK =================
+        "week_orders": Order.query.filter(
+            Order.created_at >= week_start
+        ).count(),
+
+        "weekly_revenue": sum(
+            o.get_final_total()
+            for o in Order.query.filter(
+                Order.created_at >= week_start,
                 Order.status == "Delivered"
             ).all()
         ),
 
-        # Weekly statistics
-        "week_orders": Order.query.filter(Order.created_at >= week_start).count(),
-        "total_revenue": sum(o.get_final_total() for o in Order.query.filter_by(status="Delivered").all()),
-        "weekly_revenue": sum(
-            o.get_final_total() for o in Order.query.filter(
-                Order.created_at >= week_start,
-                Order.status == "Delivered"
-            ).all()
+        # ================= TOTAL =================
+        "total_revenue": sum(
+            o.get_final_total()
+            for o in Order.query.filter_by(status="Delivered").all()
         )
     }
 
@@ -4008,7 +4054,7 @@ def super_delivery_boys_summary():
 
     results = db.session.query(
 
-        DeliveryPerson.id,
+        DeliveryPerson.id.label("delivery_person_id"),  # ✅ FIX
         DeliveryPerson.name.label("delivery_name"),
 
         # 💵 COD total
@@ -4326,8 +4372,455 @@ def top_customers():
             "badge": badge.name if badge else "No Badge"
         })
 
-    return jsonify(leaderboard) 
+    return jsonify(leaderboard)  
 
+
+from datetime import datetime, timedelta
+from sqlalchemy import func
+
+@app.route("/employee/dashboard")
+def employee_dashboard():
+    if not session.get("employee_id"):
+        return redirect(url_for("employee_login"))
+
+    emp = Employee.query.get(session.get("employee_id"))
+
+    # 🔒 Force logout check
+    if not emp or not emp.is_logged_in:
+        session.clear()
+        return redirect(url_for("employee_login"))
+
+    today = datetime.utcnow().date()
+    yesterday = today - timedelta(days=1)
+
+    # ✅ FETCH ALL ORDERS (optimized)
+    orders = (
+        Order.query
+        .options(
+            db.joinedload(Order.restaurant),
+            db.joinedload(Order.items),
+            db.joinedload(Order.delivery_person)
+        )
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+
+    # ================= DAY CLASSIFICATION =================
+    for o in orders:
+        if o.created_at.date() == today:
+            o.day_category = "Today"
+        elif o.created_at.date() == yesterday:
+            o.day_category = "Yesterday"
+        else:
+            o.day_category = "Older"
+
+    # ================= STATS =================
+    # ================= STATS =================
+    today_orders = [o for o in orders if o.created_at.date() == today]
+
+    delivered_orders = [o for o in today_orders if o.status == "Delivered"]
+
+    stats = {
+        "today_orders": len(today_orders),
+
+        "today_delivered": len(delivered_orders),
+
+        "today_cancelled": len([o for o in today_orders if o.status == "Cancelled"]),
+
+        "today_pending": len([o for o in today_orders if o.status == "Pending"]),
+
+        "today_active": len([o for o in today_orders if o.status in ["Preparing", "Out for Delivery"]]),
+
+        # ✅ ONLY delivered revenue
+        "today_revenue": sum(o.final_total or 0 for o in delivered_orders),
+
+        # ✅ ONLY delivered delivery charges (FIXED)
+        "today_delivery_charges": sum(o.delivery_charge or 0 for o in delivered_orders),
+
+        # ✅ ONLY delivered items (OPTIONAL BUT BETTER)
+        "today_items": sum(
+            sum(item.quantity for item in o.items)
+            for o in delivered_orders
+        )
+    }
+
+    # ================= TOTAL RESTAURANTS =================
+    restaurants = Restaurant.query.all()
+
+    # ================= DELIVERY PERSONS =================
+    delivery_persons = DeliveryPerson.query.order_by(DeliveryPerson.name).all()
+
+    return render_template(
+        "employee_dashboard.html",
+        orders=orders,
+        delivery_persons=delivery_persons,
+        stats=stats,
+        restaurants=restaurants,
+        employee=emp,   # ✅ ADD THIS LINE 
+        timedelta=timedelta 
+
+    )
+import random
+from datetime import datetime
+import random
+from datetime import datetime, timedelta
+
+from flask import jsonify
+@app.route("/employee/send-otp", methods=["POST"])
+def employee_send_otp():
+    phone = request.form.get("phone")
+
+    emp = Employee.query.filter_by(phone=phone).first()
+
+    if not emp:
+        return jsonify({"success": False, "error": "Employee not found"})
+
+    now = datetime.utcnow()
+
+    # 🔍 Check existing active OTP
+    existing_otp = (
+        EmployeeOTP.query
+        .filter_by(employee_id=emp.id, is_used=False)
+        .order_by(EmployeeOTP.created_at.desc())
+        .first()
+    )
+
+    # 🚫 If OTP still valid → block resend
+    if existing_otp and existing_otp.expires_at > now:
+        remaining_seconds = int((existing_otp.expires_at - now).total_seconds())
+
+        return jsonify({
+            "success": False,
+            "error": f"OTP already sent. Try again in {remaining_seconds} sec",
+            "retry_in": remaining_seconds
+        })
+
+    # ✅ Generate new OTP
+    otp = str(random.randint(100000, 999999))
+    print("🔥 OTP:", otp)
+
+    new_otp = EmployeeOTP(
+        employee_id=emp.id,
+        otp=otp,
+        expires_at=now + timedelta(minutes=5),
+        is_used=False
+    )
+
+    db.session.add(new_otp)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "OTP sent",
+        "expires_in": 300
+    })
+@app.route("/employee/login")
+def employee_login():
+    return render_template("employee_login.html") 
+
+
+
+@app.route("/employee/logout")
+def employee_logout():
+    emp = Employee.query.get(session.get("employee_id"))
+
+    if emp:
+        emp.is_logged_in = False
+
+    session.clear()
+    return redirect("/employee/login") 
+
+@app.route("/admin/otps")
+def admin_otps():
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+    from datetime import datetime
+
+    otps = (
+        db.session.query(EmployeeOTP, Employee)
+        .join(Employee, EmployeeOTP.employee_id == Employee.id)
+        .order_by(EmployeeOTP.created_at.desc())
+        .limit(50)
+        .all()
+    )
+
+    return render_template("admin_otps.html", otps=otps, now=datetime.utcnow())
+from flask import jsonify
+
+@app.route("/employee/update-status/<int:order_id>", methods=["POST"])
+def employee_update_status(order_id):
+    if not session.get("employee_id"):
+        return jsonify({"success": False, "error": "Not logged in"}), 401
+
+    order = Order.query.get_or_404(order_id)
+
+    # 🚫 LOCK FINAL STATUS
+    if order.status in ["Delivered", "Cancelled"]:
+        return jsonify({"success": False, "error": "Order locked"})
+
+    new_status = request.form.get("status")
+
+    if not new_status:
+        return jsonify({"success": False, "error": "No status provided"})
+
+    order.status = new_status
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "new_status": order.status
+    })
+
+@app.route("/employee/assign-delivery/<int:order_id>", methods=["POST"])
+def employee_assign_delivery(order_id):
+    if not session.get("employee_id"):
+        return jsonify({"success": False, "error": "Not logged in"}), 401
+
+    order = Order.query.get_or_404(order_id)
+
+    # 🚫 LOCK FINAL STATUS
+    if order.status in ["Delivered", "Cancelled"]:
+        return jsonify({"success": False, "error": "Order locked"})
+
+    dp_id = request.form.get("delivery_person_id")
+
+    if not dp_id:
+        return jsonify({"success": False, "error": "No delivery person selected"})
+
+    dp = DeliveryPerson.query.get(dp_id)
+
+    if not dp:
+        return jsonify({"success": False, "error": "Invalid delivery person"})
+
+    # ✅ ASSIGN DELIVERY
+    order.delivery_person_id = dp.id
+
+    # 🔥 AUTO STATUS CHANGE
+    order.status = "Out for Delivery"
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "delivery_person_name": dp.name,
+        "new_status": order.status
+    }) 
+
+
+@app.route("/employee/verify-otp", methods=["POST"])
+def employee_verify_otp():
+    phone = request.form.get("phone")
+    otp_input = request.form.get("otp")
+
+    emp = Employee.query.filter_by(phone=phone).first()
+
+    if not emp:
+        return jsonify({"success": False, "error": "Invalid user"})
+
+    now = datetime.utcnow()
+
+    # ✅ GET LATEST OTP (IMPORTANT)
+    latest_otp = (
+        EmployeeOTP.query
+        .filter_by(employee_id=emp.id, is_used=False)
+        .order_by(EmployeeOTP.created_at.desc())
+        .first()
+    )
+
+    if not latest_otp:
+        return jsonify({"success": False, "error": "No OTP found"})
+
+    # ❌ EXPIRED
+    if latest_otp.expires_at < now:
+        return jsonify({"success": False, "error": "OTP expired"})
+
+    # ❌ WRONG OTP
+    if latest_otp.otp != otp_input:
+        return jsonify({"success": False, "error": "Invalid OTP"})
+
+    # ✅ SUCCESS → MARK USED
+    latest_otp.is_used = True
+
+    emp.is_logged_in = True
+    session["employee_id"] = emp.id
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "redirect": "/employee/dashboard"
+    })
+@app.route("/employee/orders-json")
+def employee_orders_json():
+    orders = (
+        Order.query
+        .order_by(Order.created_at.desc())
+        .limit(20)
+        .all()
+    )
+
+    data = []
+    for o in orders:
+        data.append({
+            "id": o.id,
+            "order_id": o.order_id,
+            "customer": o.customer_name,
+            "phone": o.phone,
+            "status": o.status,
+            "total": o.final_total,
+            "created_at": o.created_at.strftime("%H:%M"),
+        })
+
+    return {"orders": data} 
+
+
+
+@app.route("/admin/employees", methods=["GET", "POST"])
+def admin_employees():
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        phone = request.form.get("phone")
+        role = request.form.get("role")
+
+        # ❌ Prevent duplicate
+        existing = Employee.query.filter_by(phone=phone).first()
+        if existing:
+            flash("Employee already exists", "error")
+            return redirect(url_for("admin_employees"))
+
+        emp = Employee(
+            name=name,
+            phone=phone,
+            role=role,
+            is_active=True
+        )
+
+        db.session.add(emp)
+        db.session.commit()
+
+        flash("✅ Employee added successfully", "success")
+        return redirect(url_for("admin_employees"))
+
+    # GET → show all employees
+    employees = Employee.query.order_by(Employee.id.desc()).all()
+
+    return render_template("admin_employees.html", employees=employees)
+
+
+@app.route("/admin/delete-employee/<int:id>")
+def delete_employee(id):
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+    emp = Employee.query.get_or_404(id)
+
+    db.session.delete(emp)
+    db.session.commit()
+
+    flash("❌ Employee deleted", "info")
+    return redirect(url_for("admin_employees")) 
+
+
+@app.route("/admin/logout-employee/<int:id>")
+def logout_employee(id):
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+    emp = Employee.query.get_or_404(id)
+
+    emp.is_logged_in = False
+    db.session.commit()
+
+    flash("🚫 Employee logged out", "warning")
+    return redirect(url_for("admin_employees")) 
+
+
+@app.route("/employee/check-session")
+def employee_check_session():
+    if not session.get("employee_id"):
+        return {"active": False}
+
+    emp = Employee.query.get(session.get("employee_id"))
+
+    if not emp or not emp.is_logged_in:
+        return {"active": False}
+
+    return {"active": True} 
+
+@app.route("/admin/delivery-history/<int:delivery_id>")
+def admin_delivery_history(delivery_id):
+
+    today = datetime.utcnow().date()
+    yesterday = today - timedelta(days=1)
+
+    # ✅ SAME FILTER AS DELIVERY (IMPORTANT)
+    history = Order.query.filter(
+        Order.delivery_person_id == delivery_id,
+        Order.status.in_(["Delivered", "Customer Not Available"])
+    ).order_by(Order.updated_at.desc()).all()
+
+    # ✅ CLASSIFY DAYS (same as yours)
+    for o in history:
+        if o.created_at.date() == today:
+            o.day_category = "Today"
+        elif o.created_at.date() == yesterday:
+            o.day_category = "Yesterday"
+        else:
+            o.day_category = "Older"
+
+    # ✅ TOTALS (same logic)
+    totals = {}
+    for day in ["Today", "Yesterday", "Older"]:
+        day_orders = [
+            o for o in history
+            if o.day_category == day and o.status == "Delivered"
+        ]
+
+        cod_amount = sum(
+            o.get_final_total() for o in day_orders if o.payment_type == "COD"
+        )
+
+        online_amount = sum(
+            o.get_final_total() for o in day_orders if o.payment_type == "Online"
+        )
+
+        delivery_charge_total = sum(
+            o.delivery_charge or 0 for o in day_orders
+        )
+
+        totals[day] = {
+            "count": len(day_orders),
+            "cod_amount": cod_amount,
+            "online_amount": online_amount,
+            "delivery_charge": delivery_charge_total,
+            "grand_total": cod_amount + online_amount + delivery_charge_total
+        }
+
+    # ✅ ALL TOTAL
+    all_totals = {
+        "count": sum(totals[d]["count"] for d in totals),
+        "cod_amount": sum(totals[d]["cod_amount"] for d in totals),
+        "online_amount": sum(totals[d]["online_amount"] for d in totals),
+        "delivery_charge": sum(totals[d]["delivery_charge"] for d in totals),
+    }
+
+    all_totals["grand_total"] = (
+        all_totals["cod_amount"]
+        + all_totals["online_amount"]
+        + all_totals["delivery_charge"]
+    )
+
+    return render_template(
+        "delivery_history.html",
+        history=history,
+        totals=totals,
+        all_totals=all_totals,
+        delivery_id=delivery_id   # ✅ IMPORTANT
+    )
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------
