@@ -1220,7 +1220,7 @@ def admin_dashboard():
 
         # 🚚 Delivery charges
         "today_delivery_charges": sum(
-            o.delivery_charges for o in today_delivered_orders if o.delivery_charges
+            o.delivery_charge for o in today_delivered_orders if o.delivery_charge
         ),
 
         # 📦 Items sold
