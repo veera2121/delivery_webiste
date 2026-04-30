@@ -3493,6 +3493,119 @@ font-size:18px;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
+} 
+
+.home-switch {
+    display: flex;
+    gap: 10px;
+    padding: 12px;
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.switch-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    background: #eee;
+    cursor: pointer;
+}
+
+.switch-btn.active {
+    background: #ff5200;
+    color: #fff;
+} 
+
+/* 🔥 SWITCH CONTAINER */
+.home-switch {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    display: flex;
+    gap: 10px;
+
+    padding: 10px;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+}
+
+/* BUTTON BASE */
+.switch-btn {
+    flex: 1;
+    padding: 10px;
+
+    border-radius: 12px;
+    border: none;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    background: #f1f5f9;
+    color: #333;
+
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+/* ACTIVE STATE */
+.switch-btn.active {
+    background: #ff5200;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(255,82,0,0.3);
+}
+
+/* HOVER */
+.switch-btn:hover {
+    transform: translateY(-1px);
+} 
+
+
+.grocery-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 10px;
+}
+
+.grocery-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    transition: 0.2s;
+}
+
+.grocery-card:hover {
+    transform: scale(1.03);
+}
+
+.grocery-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.grocery-info {
+    padding: 8px;
+}
+
+.grocery-info h3 {
+    font-size: 14px;
+    margin: 0;
+}
+
+.shop-btn {
+    display: block;
+    background: green;
+    color: white;
+    text-align: center;
+    padding: 6px;
+    text-decoration: none;
 }
 </style>
 
@@ -3764,30 +3877,42 @@ font-size:18px;
         </div>
     </div>
 </div>
-<!-- 🚨 Emergency Banner 
+<!-- 🚨 Emergency Banner--> 
 <div id="orderAlert" class="alert-overlay">
     <div class="alert-box">
 
         <div class="alert-icon">🚫</div>
 
-        <h2>Orders Closed Today</h2>
+        <h2>Orders Closed Today and tomorrow </h2>
 
-        <p>
-            We are not accepting orders <strong>today only</strong>.<br>
-            From <strong>10-04-2026</strong>, orders will be available as usual.
-        </p>
+<p>
+    We are not accepting orders <strong>today and tomorrow</strong>.<br>
+    Orders will be available again from <strong>02-05-2026</strong>.
+</p>
 
-        <p class="telugu">
-            ఈరోజు మాత్రమే ఆర్డర్లు స్వీకరించబడవు.<br>
-            <strong>10-04-2026</strong> నుండి  ఆర్డర్లు అందుబాటులో ఉంటాయి.
-        </p>
-
+<p class="telugu">
+    ఈరోజు మరియు రేపు ఆర్డర్లు స్వీకరించబడవు.<br>
+    <strong>02-05-2026</strong> నుండి ఆర్డర్లు మళ్లీ అందుబాటులో ఉంటాయి.
+</p>
         <button onclick="closeAlert()">OK, Got it</button>
 
     </div>
-</div>-->
-<!-- 🎉 Your Ugadi Banner -->
+</div>
+<!-- 🎉 Your Ugadi Banner --> 
 
+<!-- 🔥 FOOD / GROCERY SWITCH -->
+<!--<div class="home-switch">
+    <button id="foodTab" class="switch-btn active">
+        🍽️ Food
+    </button>
+
+    <button id="groceryTab" class="switch-btn">
+        🛒 Grocery
+    </button>
+</div> -->
+<div id="foodUI">
+
+<div class="container restaurant-preview">
 
 <div class="mobile-slider"> 
       <h2 class="slider-main-title">RucHiGo Special</h2>
@@ -3868,6 +3993,32 @@ font-size:18px;
 <!-- 🔥 TRENDING SECTION (STATIC ON LOCATION CHANGE) -->
  <section id="trending">
 <div id="trending-wrapper">
+</div> 
+</div> 
+</div> 
+<div id="groceryUI" style="display:none;">
+
+    <div class="grocery-hero">
+        <h2>🛒 Grocery in Minutes</h2>
+        <p>Fresh items delivered fast ⚡</p>
+    </div>
+
+    <div class="grocery-categories">
+        <div>🥛 Milk</div>
+        <div>🍎 Fruits</div>
+        <div>🥦 Vegetables</div>
+        <div>🍪 Snacks</div>
+        <div>🧴 Essentials</div>
+    </div>
+
+    <!-- ✅ ONLY ONE CONTAINER -->
+    <div class="grocery-container">
+        {% for g in grocery_shops %}
+            {% include 'grocery_card.html' %}
+        {% endfor %}
+    </div>
+
+</div>
 </div>
 </section>
 <div class="feedback-card">
@@ -4996,6 +5147,78 @@ drawConfetti();
 function closeAlert() {
     document.getElementById("orderAlert").style.display = "none";
 }
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const foodTab = document.getElementById("foodTab");
+    const groceryTab = document.getElementById("groceryTab");
+    const foodUI = document.getElementById("foodUI");
+    const groceryUI = document.getElementById("groceryUI");
+
+    console.log("Elements:", foodTab, groceryTab, foodUI, groceryUI);
+
+    if (!foodTab || !groceryTab || !foodUI || !groceryUI) {
+        console.error("❌ UI elements missing!");
+        return;
+    }
+
+    // ✅ FINAL GROCERY FUNCTION
+    function loadGrocery() {
+        fetch("/get-stores?type=grocery")
+        .then(res => res.json())
+        .then(data => {
+
+            console.log("FULL DATA:", data);
+
+            const grid = document.getElementById("groceryGrid");
+
+            if (!grid) {
+                console.error("❌ groceryGrid NOT FOUND");
+                return;
+            }
+
+            grid.innerHTML = ""; // clear
+
+            data.forEach(store => {
+
+                console.log("STORE:", store);
+
+                const div = document.createElement("div");
+
+                div.style.border = "1px solid #ccc";
+                div.style.margin = "10px";
+                div.style.padding = "10px";
+
+                div.innerHTML = `
+                    <h3>${store.name}</h3>
+                    <p>${store.category}</p>
+                `;
+
+                grid.appendChild(div);
+            });
+
+        })
+        .catch(err => console.error("ERROR:", err));
+    }
+
+    // 🍔 FOOD TAB
+    foodTab.onclick = function () {
+        foodUI.style.display = "block";
+        groceryUI.style.display = "none";
+    };
+
+    // 🛒 GROCERY TAB
+    groceryTab.onclick = function () {
+        console.log("🛒 CLICK WORKING");
+
+        foodUI.style.display = "none";
+        groceryUI.style.display = "block";
+
+        loadGrocery(); // ✅ FINAL CALL
+    };
+
+});
 </script>
 <div id="locationPopup" class="location-popup hidden">
   <div class="popup-card">
