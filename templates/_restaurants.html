@@ -1,3 +1,4 @@
+
 {% if restaurants|length > 0 %}
 <div class="container restaurant-preview">
     <h3>🍽️ Restaurants on RucHiGo</h3>
@@ -28,11 +29,19 @@
 
                 <div class="mini-name two-line">{{ r.name }}</div>
 
-                {% if r.is_veg %}
-                    <span class="mini-badge veg">Veg</span>
-                {% else %}
-                    <span class="mini-badge nonveg">Non-Veg</span>
-                {% endif %}
+<!-- OPEN / CLOSED -->
+{% if r.is_open %}
+    <span class="mini-badge open">Open</span>
+{% else %}
+    <span class="mini-badge closed">Closed</span>
+{% endif %}
+
+<!-- VEG / NON-VEG -->
+{% if r.is_veg %}
+    <span class="mini-badge veg">Veg</span>
+{% else %}
+    <span class="mini-badge nonveg">Non-Veg</span>
+{% endif %}
             </div>
 
         </a>
@@ -122,6 +131,7 @@ data-category-ids="{{ r.categories | map(attribute='id') | join(',') }}">
     >
 
     <!-- TAGS -->
+     
     <div class="tag-container">
 
         {% if r.is_best_seller %}
@@ -176,13 +186,36 @@ data-category-ids="{{ r.categories | map(attribute='id') | join(',') }}">
         <div class="delivery-charge">🚚 Delivery ₹{{ r.delivery_charge }}</div>
     {% endif %}
 
-    {% if is_suspended or not is_open or not can_accept or not r.deliverable %}
-        <span class="view-btn disabled-btn">Unavailable</span>
-    {% else %}
-        <a href="/menu/{{ r.id }}" class="view-btn">
-            {{ 'View Cakes' if is_bakery else 'View Menu' }}
-        </a>
-    {% endif %}
+{% if is_suspended %}
+    <span class="view-btn disabled-btn">🚫 Temporarily Closed</span>
+
+{% elif is_coming_soon %}
+    <span class="view-btn disabled-btn">
+        ⏳ Starts {{ r.start_date.strftime("%d %b") if r.start_date else "Soon" }}
+    </span>
+
+{% elif not r.deliverable %}
+    <span class="view-btn disabled-btn">📍 Not Delivering</span>
+
+{% elif not r.opening_time or not r.closing_time %}
+    <span class="view-btn disabled-btn">❌ Timing Not Set</span>
+
+{% elif now < r.opening_time %}
+    <span class="view-btn disabled-btn">
+        ⏳ Opens at {{ r.opening_time.strftime("%I:%M %p") }}
+    </span>
+
+{% elif now > r.closing_time %}
+    <span class="view-btn disabled-btn">🌙 Closed</span>
+
+{% elif not can_accept %}
+    <span class="view-btn disabled-btn">🚫 Not Accepting Orders</span>
+
+{% else %}
+    <a href="/menu/{{ r.id }}" class="view-btn">
+        {{ 'View Cakes' if is_bakery else 'View Menu' }}
+    </a>
+{% endif %}
 
 </div>
 </div>
