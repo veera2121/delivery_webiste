@@ -588,219 +588,15 @@ box-shadow: 0 5px 20px rgba(0,0,0,0.3);
     </div>
 </div>
 <script>
-// ================= FILTER =================
-function applyFilters() {
-    const searchValue = document.getElementById("searchInput").value.toLowerCase();
-    const statusValue = document.getElementById("statusFilter").value;
-
-    let rows = document.querySelectorAll(".emp-table tbody tr");
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-        let text = row.innerText.toLowerCase();
-        let rowStatus = row.querySelector("td:nth-child(8)").innerText;
-
-        let show = true;
-
-        if (searchValue && !text.includes(searchValue)) show = false;
-        if (statusValue && rowStatus !== statusValue) show = false;
-
-        row.style.display = show ? "" : "none";
-
-        if (show) visibleCount++;
-    });
-
-    document.getElementById("orderCount").innerText = visibleCount;
-}
-
-// Events
-document.getElementById("searchInput").addEventListener("keyup", applyFilters);
-document.getElementById("statusFilter").addEventListener("change", applyFilters);
-
-
-// ================= LIVE ORDERS =================
-let lastOrderId = "{{ orders[0].order_id if orders else '' }}";
-const notifySound = new Audio("/static/sounds/neworder.mp3");
-
-// 🔔 popup
-function showPopup(msg) {
-    const badge = document.getElementById("newOrderBadge");
-
-    if (!badge) return;
-
-    badge.innerHTML = msg;
-    badge.style.display = "block";
-
-    setTimeout(() => {
-        badge.style.display = "none";
-    }, 4000);
-}
-
-
-// ================= AUTO REFRESH (SMART) =================
-setInterval(() => {
-    fetch(window.location.href)
-        .then(res => res.text())
-        .then(html => {
-
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, "text/html");
-
-            // ✅ Update ALL order tables
-            const newTables = doc.querySelectorAll(".emp-table tbody");
-            const currentTables = document.querySelectorAll(".emp-table tbody");
-
-            newTables.forEach((newT, i) => {
-                if (currentTables[i]) {
-                    currentTables[i].innerHTML = newT.innerHTML;
-                }
-            });
-
-            // ✅ Detect NEW ORDER
-            const firstRow = doc.querySelector(".emp-table tbody tr");
-            if (!firstRow) return;
-
-            const newOrderId = firstRow.querySelector("td")?.innerText.replace("#","").trim();
-
-            if (newOrderId && newOrderId !== lastOrderId) {
-                notifySound.play();
-                showPopup("🔔 New Order Received!");
-                lastOrderId = newOrderId;
-            }
-
-            // ✅ Re-apply filters after update
-            applyFilters();
-
-        })
-        .catch(err => console.log(err));
-
-}, 10000); // every 8 sec
-</script>
- <script>
-document.querySelectorAll(".update-btn").forEach(btn => {
-    btn.addEventListener("click", function () {
-        const row = btn.closest("tr");
-        const orderId = row.dataset.orderId;
-        const status = row.querySelector(".status-select").value;
-
-        fetch(`/employee/update-status/${orderId}`, {
-            method: "POST",
-            headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            body: `status=${status}`
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                row.querySelector(".status-" + data.status)?.classList.add("updated");
-                row.querySelector("td:nth-child(8)").innerText = data.status;
-            }
-        });
-    });
-});
-</script> 
-
-<script>
-
-// ================= GLOBAL CLICK HANDLER =================
-document.addEventListener("click", function(e) {
-
-    // ================= STATUS UPDATE =================
-    if (e.target.classList.contains("update-btn")) {
-
-        const btn = e.target;
-        const row = btn.closest("tr");
-        const orderId = row.dataset.orderId;
-
-        const select = row.querySelector(".status-select");
-        const status = select.value;
-
-        fetch(`/employee/update-status/${orderId}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: `status=${encodeURIComponent(status)}`
-        })
-        .then(res => res.json())
-        .then(data => {
-
-            if (!data.success) {
-                alert(data.error || "Error updating");
-                return;
-            }
-
-            const statusCell = row.querySelector(".status-cell");
-            statusCell.innerHTML = data.new_status;
-
-            // 🔒 LOCK
-            if (data.new_status === "Delivered" || data.new_status === "Cancelled") {
-                select.disabled = true;
-                btn.disabled = true;
-
-                statusCell.innerHTML += "<br><span style='color:gray;font-size:12px;'>🔒 Locked</span>";
-            }
-
-        });
-    }
-
-    // ================= ASSIGN DELIVERY =================
-    if (e.target.classList.contains("assign-btn")) {
-
-        const btn = e.target;
-        const row = btn.closest("tr");
-        const orderId = row.dataset.orderId;
-
-        const select = row.querySelector(".assign-select");
-        const dpId = select.value;
-
-        if (!dpId) {
-            alert("Select delivery person");
-            return;
-        }
-
-        fetch(`/employee/assign-delivery/${orderId}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: `delivery_person_id=${encodeURIComponent(dpId)}`
-        })
-        .then(res => res.json())
-        .then(data => {
-
-            if (!data.success) {
-                alert(data.error || "Error assigning");
-                return;
-            }
-
-            // ✅ UPDATE DELIVERY UI
-            const dpCell = row.querySelector(".dp-cell");
-            dpCell.innerHTML = `
-                ${data.delivery_person_name} <br>
-                <span class="online">● Assigned</span>
-            `;
-
-            // ✅ UPDATE STATUS UI
-            const statusCell = row.querySelector(".status-cell");
-            statusCell.innerHTML = data.new_status;
-
-            const statusSelect = row.querySelector(".status-select");
-            statusSelect.value = data.new_status;
-
-        });
-    }
-
-});
-
 
 // ================= FILTER =================
 function applyFilters() {
-    const search = document.getElementById("searchInput").value.toLowerCase();
-    const status = document.getElementById("statusFilter").value.toLowerCase();
+    const search = document.getElementById("searchInput")?.value.toLowerCase() || "";
+    const status = document.getElementById("statusFilter")?.value.toLowerCase() || "";
 
     let count = 0;
 
-    document.querySelectorAll("tbody tr").forEach(row => {
+    document.querySelectorAll(".emp-table tbody tr").forEach(row => {
 
         const text = row.innerText.toLowerCase();
         const rowStatus = (row.dataset.status || "").toLowerCase();
@@ -815,19 +611,154 @@ function applyFilters() {
         if (show) count++;
     });
 
-    document.getElementById("orderCount").innerText = count;
+    const countEl = document.getElementById("orderCount");
+    if (countEl) countEl.innerText = count;
 }
 
+// Events
 document.getElementById("searchInput")?.addEventListener("keyup", applyFilters);
 document.getElementById("statusFilter")?.addEventListener("change", applyFilters);
 
-</script> 
+
+// ================= LIVE ORDER SYSTEM =================
+let lastOrderId = "{{ orders[0].order_id if orders else '' }}";
+const notifySound = new Audio("/static/sounds/neworder.mp3");
+
+// 🔔 Popup
+function showPopup(msg) {
+    const badge = document.getElementById("newOrderBadge");
+    if (!badge) return;
+
+    badge.innerHTML = msg;
+    badge.style.display = "block";
+
+    setTimeout(() => {
+        badge.style.display = "none";
+    }, 4000);
+}
 
 
+// ================= AUTO REFRESH (OPTIMIZED) =================
+setInterval(() => {
+
+    fetch(window.location.href)
+        .then(res => res.text())
+        .then(html => {
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+
+            const newBody = doc.querySelector(".emp-table tbody");
+            const currentBody = document.querySelector(".emp-table tbody");
+
+            if (!newBody || !currentBody) return;
+
+            // ✅ Detect NEW ORDER before replace
+            const firstRow = newBody.querySelector("tr");
+            const newOrderId = firstRow?.querySelector("td")?.innerText.replace("#","").trim();
+
+            if (newOrderId && newOrderId !== lastOrderId) {
+                notifySound.play();
+                showPopup("🔔 New Order Received!");
+                lastOrderId = newOrderId;
+            }
+
+            // ✅ Update table
+            currentBody.innerHTML = newBody.innerHTML;
+
+            // ✅ Re-apply filters
+            applyFilters();
+
+        })
+        .catch(err => console.log(err));
+
+}, 10000); // 10 sec
 
 
+// ================= GLOBAL CLICK HANDLER =================
+document.addEventListener("click", function(e) {
 
-<script>
+    const row = e.target.closest("tr");
+    if (!row) return;
+
+    const orderId = row.dataset.orderId;
+
+    // ================= STATUS UPDATE =================
+    if (e.target.classList.contains("update-btn")) {
+
+        const select = row.querySelector(".status-select");
+        const status = select.value;
+
+        fetch(`/employee/update-status/${orderId}`, {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: `status=${encodeURIComponent(status)}`
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            if (!data.success) {
+                alert(data.error || "Error updating");
+                return;
+            }
+
+            const statusCell = row.querySelector(".status-cell");
+            statusCell.innerHTML = data.new_status;
+
+            // 🔒 LOCK FINAL STATES
+            if (data.new_status === "Delivered" || data.new_status === "Cancelled") {
+                select.disabled = true;
+                e.target.disabled = true;
+
+                statusCell.innerHTML += "<br><span style='color:gray;font-size:12px;'>🔒 Locked</span>";
+            }
+        });
+    }
+
+    // ================= ASSIGN DELIVERY =================
+    if (e.target.classList.contains("assign-btn")) {
+
+        const select = row.querySelector(".assign-select");
+        const dpId = select.value;
+
+        if (!dpId) {
+            alert("Select delivery person");
+            return;
+        }
+
+        fetch(`/employee/assign-delivery/${orderId}`, {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: `delivery_person_id=${encodeURIComponent(dpId)}`
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            if (!data.success) {
+                alert(data.error || "Error assigning");
+                return;
+            }
+
+            // ✅ Update Delivery UI
+            const dpCell = row.querySelector(".dp-cell");
+            dpCell.innerHTML = `
+                ${data.delivery_person_name} <br>
+                <span class="online">● Assigned</span>
+            `;
+
+            // ✅ Update Status UI
+            const statusCell = row.querySelector(".status-cell");
+            statusCell.innerHTML = data.new_status;
+
+            const statusSelect = row.querySelector(".status-select");
+            statusSelect.value = data.new_status;
+        });
+    }
+
+});
+
+
+// ================= SESSION CHECK =================
 function showSessionPopup() {
     document.getElementById("sessionPopup").style.display = "flex";
 }
@@ -841,12 +772,11 @@ setInterval(() => {
     fetch("/employee/check-session")
         .then(res => res.json())
         .then(data => {
-            if (!data.active) {
-                showSessionPopup();
-            }
+            if (!data.active) showSessionPopup();
         })
         .catch(err => console.error(err));
 }, 5000);
+
 </script>
 </body>
 </html>
