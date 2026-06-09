@@ -3301,132 +3301,82 @@ font-size:18px;
     margin-top: 25px;
   }
 } 
-.celebration-banner {
+/* Background wrapper */
+.celebration-mini {
     position: relative;
-    margin-top: 16px;
-    padding: 18px 20px;
-    border-radius: 22px;
+    width: 100%;
+    height: 110px; /* 🔥 compact height */
+    border-radius: 16px;
     overflow: hidden;
 
-    /* 🌈 Premium gradient */
-    background: linear-gradient(135deg, #029ca1, #3d6aff, #42ffc0);
-    background-size: 200% 200%;
-    animation: gradientFlow 6s ease infinite;
-
-    /* 💎 Glass effect */
-    backdrop-filter: blur(12px);
-
-    /* 🔥 Soft glow shadow */
-    box-shadow:
-        0 10px 30px rgba(255, 90, 40, 0.25),
-        inset 0 1px 0 rgba(255,255,255,0.25);
-
-    color: #fff;
-
-    /* Entry animation */
-    opacity: 0;
-    transform: translateY(25px) scale(0.96);
-    animation: bannerReveal 0.8s cubic-bezier(.2,.8,.2,1) forwards;
-}
-
-/* 🌈 Gradient movement */
-@keyframes gradientFlow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-@keyframes bannerReveal {
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-/* ✨ Light reflection overlay */
-.celebration-banner::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        120deg,
-        rgba(255,255,255,0.25) 0%,
-        rgba(255,255,255,0.05) 40%,
-        transparent 60%
-    );
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-/* 💎 Moving shine */
-.celebration-banner::after {
-    content: "";
-    position: absolute;
-    top: -50%;
-    left: -30%;
-    width: 60%;
-    height: 200%;
-    background: linear-gradient(
-        120deg,
-        transparent,
-        rgba(255,255,255,0.35),
-        transparent
-    );
-    transform: rotate(25deg);
-    animation: shineMove 4s infinite;
-}
-
-@keyframes shineMove {
-    0% { left: -40%; }
-    100% { left: 120%; }
-}
-
-/* CONTENT */
-.banner-inner {
-    position: relative;
-    z-index: 2;
+    background: linear-gradient(135deg, #ff512f, #dd2476);
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: center;
+
+    color: white;
 }
 
-/* 🎉 Icon with glow */
-.celebration-icon {
-    font-size: 32px;
-    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2));
-    animation: floatIcon 2s ease-in-out infinite;
+/* overlay depth */
+.mini-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, transparent, rgba(0,0,0,0.4));
 }
 
-@keyframes floatIcon {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
+/* content layout */
+.mini-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 2;
 }
 
-/* TEXT */
-.banner-text strong {
-    font-size: 19px;
-    font-weight: 800;
-    letter-spacing: 0.3px;
+/* emoji */
+.mini-emoji {
+    font-size: 34px;
+    animation: miniBounce 2s infinite;
 }
 
-.banner-text small {
-    margin-top: 4px;
+/* text */
+.mini-text h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.mini-text p {
+    margin: 2px 0 0;
     font-size: 13px;
     opacity: 0.9;
 }
 
-/* ✨ Glow on number */
-#bannerCount {
-    text-shadow: 0 0 12px rgba(255,255,255,0.6);
+/* subtle animation */
+@keyframes miniBounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
 }
 
-/* CONFETTI LAYER */
-#bannerConfetti {
+/* particle effect (light) */
+.celebration-mini::before {
+    content: "";
     position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-} 
+    width: 200%;
+    height: 200%;
+
+    background-image: radial-gradient(white 1px, transparent 1px);
+    background-size: 18px 18px;
+
+    opacity: 0.12;
+    animation: moveMini 15s linear infinite;
+}
+
+@keyframes moveMini {
+    from { transform: translateY(0); }
+    to { transform: translateY(-120px); }
+}
 .alert-overlay {
     position: fixed;
     inset: 0;
@@ -3563,7 +3513,9 @@ font-size:18px;
 .switch-btn:hover {
     transform: translateY(-1px);
 } 
-
+.switch-btn {
+    transition: all 0.25s ease;
+}
 
 .grocery-grid {
     display: grid;
@@ -3606,6 +3558,51 @@ font-size:18px;
     text-align: center;
     padding: 6px;
     text-decoration: none;
+}
+
+.menu-skeleton {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    background: #fff;
+    z-index: 9999;
+
+    display: none;
+    padding: 15px;
+}
+
+/* shimmer animation */
+.skeleton-header,
+.skeleton-card {
+    background: linear-gradient(
+        90deg,
+        #eee 25%,
+        #ddd 37%,
+        #eee 63%
+    );
+    background-size: 400% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 10px;
+}
+
+/* sizes */
+.skeleton-header {
+    height: 150px;
+    margin-bottom: 20px;
+}
+
+.skeleton-card {
+    height: 80px;
+    margin-bottom: 12px;
+}
+
+/* animation */
+@keyframes shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
 }
 </style>
 
@@ -3866,19 +3863,20 @@ font-size:18px;
         <small id="orderStatus">Tracking live activity</small>
     </div>
 </section>  
-<div id="celebrationBanner" class="celebration-banner">
-    <canvas id="bannerConfetti"></canvas>
+<div class="celebration-mini">
+    <div class="mini-overlay"></div>
 
-    <div class="banner-inner">
-        <span class="celebration-icon">🎉</span>
-        <div class="banner-text">
-            <strong><span id="bannerCount">1000+</span> Orders Received</strong>
-            <small>Thanks for being part of the Ruchigo Family ❤️</small>
+    <div class="mini-content">
+        <span class="mini-emoji">🎉</span>
+
+        <div class="mini-text">
+            <h3>2000+ Orders Received</h3>
+            <p>Thank you for trusting <strong>Ruchigo ❤️</strong></p>
         </div>
     </div>
 </div>
 <!-- 🚨 Emergency Banner--> 
-<div id="orderAlert" class="alert-overlay">
+<!--<div id="orderAlert" class="alert-overlay">
     <div class="alert-box">
 
         <div class="alert-icon">🚫</div>
@@ -3897,11 +3895,11 @@ font-size:18px;
         <button onclick="closeAlert()">OK, Got it</button>
 
     </div>
-</div>
+</div> --> 
 <!-- 🎉 Your Ugadi Banner --> 
 
-<!-- 🔥 FOOD / GROCERY SWITCH -->
-<!--<div class="home-switch">
+<!-- 🔥 FOOD / GROCERY SWITCH 
+<div class="home-switch">
     <button id="foodTab" class="switch-btn active">
         🍽️ Food
     </button>
@@ -3909,7 +3907,7 @@ font-size:18px;
     <button id="groceryTab" class="switch-btn">
         🛒 Grocery
     </button>
-</div> -->
+</div>-->
 <div id="foodUI">
 
 <div class="container restaurant-preview">
@@ -3917,7 +3915,7 @@ font-size:18px;
 <div class="mobile-slider"> 
       <h2 class="slider-main-title">RucHiGo Special</h2>
   <div class="slider-track">
-    <img src="{{ url_for('static', filename='images/haleem.webp') }}" class="active">
+    
     <img src="{{ url_for('static', filename='images/gold.png') }}">
     <img src="{{ url_for('static', filename='images/image1.jpg') }}">
     <img src="{{ url_for('static', filename='images/limited.jpg') }}">
@@ -5147,6 +5145,13 @@ drawConfetti();
 function closeAlert() {
     document.getElementById("orderAlert").style.display = "none";
 }
+</script> 
+<script>
+const FLASK_LOCATION = {{ selected_location | tojson | safe }};
+
+if (FLASK_LOCATION) {
+    localStorage.setItem("selected_location", FLASK_LOCATION);
+}
 </script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -5156,20 +5161,30 @@ document.addEventListener("DOMContentLoaded", function () {
     const foodUI = document.getElementById("foodUI");
     const groceryUI = document.getElementById("groceryUI");
 
-    console.log("Elements:", foodTab, groceryTab, foodUI, groceryUI);
-
     if (!foodTab || !groceryTab || !foodUI || !groceryUI) {
         console.error("❌ UI elements missing!");
         return;
     }
 
-    // ✅ FINAL GROCERY FUNCTION
+    /* ================= LOAD GROCERY ================= */
     function loadGrocery() {
-        fetch("/get-stores?type=grocery")
+
+        const location = localStorage.getItem("selected_location");
+
+        if (!location) {
+            console.warn("⚠️ No location selected in localStorage");
+            return;
+        }
+
+        const url = `/get-stores?type=grocery&location=${encodeURIComponent(location)}`;
+
+        console.log("Fetching:", url);
+
+        fetch(url)
         .then(res => res.json())
         .then(data => {
 
-            console.log("FULL DATA:", data);
+            console.log("Grocery Data:", data);
 
             const grid = document.getElementById("groceryGrid");
 
@@ -5178,21 +5193,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            grid.innerHTML = ""; // clear
+            grid.innerHTML = "";
+
+            if (!data || data.length === 0) {
+                grid.innerHTML = "<p>No grocery stores found</p>";
+                return;
+            }
 
             data.forEach(store => {
 
-                console.log("STORE:", store);
-
                 const div = document.createElement("div");
-
-                div.style.border = "1px solid #ccc";
-                div.style.margin = "10px";
-                div.style.padding = "10px";
+                div.className = "grocery-item";
 
                 div.innerHTML = `
                     <h3>${store.name}</h3>
-                    <p>${store.category}</p>
+                    <p>${store.location}</p>
                 `;
 
                 grid.appendChild(div);
@@ -5202,24 +5217,41 @@ document.addEventListener("DOMContentLoaded", function () {
         .catch(err => console.error("ERROR:", err));
     }
 
-    // 🍔 FOOD TAB
+    /* ================= FOOD TAB ================= */
     foodTab.onclick = function () {
+
+        foodTab.classList.add("active");
+        groceryTab.classList.remove("active");
+
         foodUI.style.display = "block";
         groceryUI.style.display = "none";
     };
 
-    // 🛒 GROCERY TAB
+    /* ================= GROCERY TAB ================= */
     groceryTab.onclick = function () {
-        console.log("🛒 CLICK WORKING");
+
+        groceryTab.classList.add("active");
+        foodTab.classList.remove("active");
 
         foodUI.style.display = "none";
         groceryUI.style.display = "block";
 
-        loadGrocery(); // ✅ FINAL CALL
+        loadGrocery();
     };
 
+    /* ================= AUTO LOAD GROCERY ================= */
+    setTimeout(() => {
+        const location = localStorage.getItem("selected_location");
+
+        if (location) {
+            loadGrocery();
+        }
+    }, 100);
+
 });
-</script>
+</script> 
+
+
 <div id="locationPopup" class="location-popup hidden">
   <div class="popup-card">
     <span class="popup-arrow"></span>
