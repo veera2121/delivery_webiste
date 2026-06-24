@@ -726,20 +726,38 @@ def get_coordinates(address):
     return None, None
 from datetime import datetime
 import pytz
+import re
+import pytz
+from pytz import UTC
+
+def normalize_phone(phone):
+    if not phone:
+        return None
+
+    phone = re.sub(r'\D', '', phone)  # remove non-digits
+
+    # Handle Indian numbers
+    if phone.startswith("91") and len(phone) > 10:
+        phone = phone[-10:]
+    elif phone.startswith("0") and len(phone) == 11:
+        phone = phone[1:]
+
+    return phone[-10:]
+
 
 @app.route("/myorders", methods=["GET", "POST"])
 def myorders():
     phone = None
     restaurant_id = None
 
-    ACTIVE = ["Pending","Placed", "Accepted", "Preparing","Ready","Out for Delivery","Started",]
-    HISTORY = ["Delivered", "Cancelled","Customer Not Available"]
+    ACTIVE = ["Pending", "Placed", "Accepted", "Preparing", "Ready", "Out for Delivery", "Started"]
+    HISTORY = ["Delivered", "Cancelled", "Customer Not Available"]
 
     if request.method == "POST":
-        phone = request.form.get("phone")
+        phone = normalize_phone(request.form.get("phone"))
         session["order_phone"] = phone
     else:
-        phone = session.get("order_phone")
+        phone = normalize_phone(session.get("order_phone"))
 
     active_orders = []
     history_orders = []
@@ -755,21 +773,18 @@ def myorders():
             Order.status.in_(HISTORY)
         ).order_by(Order.created_at.desc()).all()
 
-        # ===== CONVERT ORDER TIMES TO IST =====
+        # ===== Convert time to IST =====
         ist = pytz.timezone('Asia/Kolkata')
+
         for order in active_orders + history_orders:
             if order.created_at:
-                # Make sure it's timezone-aware UTC
                 if order.created_at.tzinfo is None:
-                    from pytz import UTC
                     order.created_at = UTC.localize(order.created_at)
-                
-                # Convert to IST
+
                 order.created_at_ist = order.created_at.astimezone(ist)
-                # Formatted string
                 order.created_at_str = order.created_at_ist.strftime('%d-%m-%Y %I:%M %p')
 
-        # Determine restaurant_id
+        # Restaurant ID
         if active_orders:
             restaurant_id = active_orders[0].restaurant.id
         elif history_orders:
@@ -779,7 +794,8 @@ def myorders():
         "myorders.html",
         active_orders=active_orders,
         history_orders=history_orders,
-        restaurant_id=restaurant_id
+        restaurant_id=restaurant_id,
+        phone=phone 
     )
 
 from sqlalchemy import func
@@ -1281,7 +1297,6 @@ def admin_dashboard():
 
 # ---------------- ASSIGN DELIVERY PERSON ----------------
 from flask_socketio import emit
-
 @app.route("/restaurant/update_status/<int:order_id>", methods=["POST"])
 def update_status(order_id):
     if not session.get("restaurant_logged_in"):
@@ -1294,25 +1309,24 @@ def update_status(order_id):
         flash("Order not found!", "danger")
         return redirect(url_for("restaurant_dashboard"))
 
-    # ✅ Update DB
+    # update DB
     order.status = new_status
     db.session.commit()
 
-    # 🔥 SEND LIVE UPDATE TO CUSTOMER TRACK PAGE
+    # 🔥 REAL-TIME EMIT (FIXED)
     socketio.emit(
         "order_status_update",
         {
-            "order_id": order.order_id,   # public order id
+            "order_id": order.id,   # ✅ FIXED (DB ID ONLY)
             "status": order.status
         },
-        room=f"order_{order.order_id}"
+        room=f"order_{order.id}"   # ✅ FIXED
     )
 
-    print("📤 Emitted status update:", order.order_id, order.status)
+    print("📤 Emitted:", order.id, order.status)
 
     flash("Order status updated!", "success")
     return redirect(url_for("restaurant_dashboard"))
-
 
 @app.route("/admin/logout")
 def admin_logout():
@@ -1981,7 +1995,16 @@ def restaurant_assign_delivery(order_id):
         },
         room=f"delivery_{dp.id}"
     )
-
+    socketio.emit(
+        "delivery_assigned",
+        {
+            "order_id": order.id,
+            "delivery_person_name": dp.name,
+            "delivery_person_phone": dp.phone,
+            "status": order.status
+        },
+        room=f"order_{order.id}"
+    )
     flash(f"Delivery boy {dp.name} assigned to Order {order.order_id}", "success")
     return redirect(url_for("restaurant_dashboard"))
 
@@ -4444,6 +4467,9 @@ def employee_dashboard():
         timedelta=timedelta 
 
     )
+
+
+
 import random
 from datetime import datetime
 import random
@@ -4531,7 +4557,6 @@ def admin_otps():
 
     return render_template("admin_otps.html", otps=otps, now=datetime.utcnow())
 from flask import jsonify
-
 @app.route("/employee/update-status/<int:order_id>", methods=["POST"])
 def employee_update_status(order_id):
     if not session.get("employee_id"):
@@ -4548,14 +4573,26 @@ def employee_update_status(order_id):
     if not new_status:
         return jsonify({"success": False, "error": "No status provided"})
 
+    # ✅ Update status
     order.status = new_status
     db.session.commit()
+
+    # 🔥 Real-time update to customer
+    socketio.emit(
+        "order_status_update",
+        {
+            "order_id": order.id,
+            "status": order.status
+        },
+        room=f"order_{order.id}"
+    )
+    
+    print(f"📤 Employee emitted: order_{order.id} -> {order.status}")
 
     return jsonify({
         "success": True,
         "new_status": order.status
     })
-
 @app.route("/employee/assign-delivery/<int:order_id>", methods=["POST"])
 def employee_assign_delivery(order_id):
     if not session.get("employee_id"):
@@ -4584,7 +4621,16 @@ def employee_assign_delivery(order_id):
     order.status = "Out for Delivery"
 
     db.session.commit()
-
+    socketio.emit(
+        "delivery_assigned",
+        {
+            "order_id": order.id,
+            "delivery_person_name": dp.name,
+            "delivery_person_phone": dp.phone,
+            "status": order.status
+        },
+        room=f"order_{order.id}"
+    )
     return jsonify({
         "success": True,
         "delivery_person_name": dp.name,
@@ -4804,7 +4850,22 @@ def admin_delivery_history(delivery_id):
         totals=totals,
         all_totals=all_totals,
         delivery_id=delivery_id   # ✅ IMPORTANT
-    )
+    ) 
+
+from flask_socketio import join_room
+
+@socketio.on("join_order_room")
+def join_order(data):
+    order_id = data.get("order_id")
+
+    if not order_id:
+        print("❌ No order_id received")
+        return
+
+    room = f"order_{order_id}"
+    join_room(room)
+
+    print("🟢 Joined room:", room)
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------

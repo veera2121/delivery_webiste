@@ -475,9 +475,14 @@ color:#ff5722;
         to get <strong>live order status updates</strong>.
     </p>
 </div>
-
 <form method="POST">
-  <input type="text" name="phone" placeholder="Enter phone number">
+  <input 
+      type="text" 
+      name="phone" 
+      placeholder="Enter phone number"
+      value="{{ phone or '' }}"
+      required
+  >
   
   <button type="submit">Track Order</button>
 </form>
@@ -705,31 +710,52 @@ color:#ff5722;
 
 
 </script>
-
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
 <script>
 const socket = io();
-const orderDbId = "{{ orders[0].id if orders else '' }}";
 
-console.log("🟢 Tracking DB order:", orderDbId);
+// 🔥 ADD DEBUG LISTENER HERE
+socket.onAny((event, data) => {
+    console.log("🔥 EVENT:", event, data);
+});
 
-// join correct room
-socket.emit("join_order", { order_id: orderDbId });
+// join rooms
+socket.on("connect", function () {
+    console.log("🟢 Socket Connected");
 
+    {% for order in active_orders %}
+        socket.emit("join_order_room", {
+            order_id: "{{ order.id }}"
+        });
+    {% endfor %}
+});
 socket.on("order_status_update", function (data) {
-    console.log("📥 Live update received:", data);
+    console.log("📥 UPDATE:", data);
 
-    if (data.order_db_id == orderDbId) {
-        const el = document.getElementById("orderStatus-" + orderDbId);
-        if (el) {
-            el.innerText = data.status;
-            el.className = "status-badge status-" + data.status.replaceAll(" ", "-");
-        }
+    const el = document.getElementById("orderStatus-" + data.order_id);
+
+    if (el) {
+
+        // Change text
+        el.innerText = data.status;
+
+        // Change CSS class
+        el.className =
+            "status-badge status-" +
+            data.status.replaceAll(" ", "-");
     }
 });
 </script>
+<script>
+socket.on("delivery_assigned", function(data) {
 
+    console.log("🚴 Delivery assigned:", data);
 
+    location.reload();
+
+});
+</script>
 <script>
 function payUPI(orderId){
 
