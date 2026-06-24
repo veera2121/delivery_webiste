@@ -345,61 +345,69 @@ from flask import request, render_template, session
 from reward_engine import update_customer_badge
 from flask_login import current_user
 from sqlalchemy import or_
+# ===== ADD THESE CACHES AT TOP OF app.py (outside any function) =====
+import time as time_module
+
+_badge_cache = {"data": None, "time": 0}
+_location_cache = {"data": None, "time": 0}
+
+def get_badge_counts():
+    now = time_module.time()
+    if _badge_cache["data"] and now - _badge_cache["time"] < 300:
+        return _badge_cache["data"]
+    data = {
+        "silver": Customer.query.join(RewardBadge).filter(RewardBadge.name == "Silver").count(),
+        "gold": Customer.query.join(RewardBadge).filter(RewardBadge.name == "Gold").count(),
+        "platinum": Customer.query.join(RewardBadge).filter(RewardBadge.name == "Platinum").count(),
+    }
+    _badge_cache["data"] = data
+    _badge_cache["time"] = now
+    return data
+
+def get_all_locations():
+    now = time_module.time()
+    if _location_cache["data"] and now - _location_cache["time"] < 300:
+        return _location_cache["data"]
+    locs = [loc[0] for loc in db.session.query(Restaurant.location).distinct() if loc[0]]
+    _location_cache["data"] = locs
+    _location_cache["time"] = now
+    return locs
+
+
+# ===== FIXED HOME ROUTE =====
 @app.route("/")
 def home():
     ist = pytz.timezone("Asia/Kolkata")
     now = datetime.now(ist).time()
-
     selected_location = request.args.get("location", "").strip()
-   
 
-    restaurants = (
-        Restaurant.query
-        .options(joinedload(Restaurant.categories))
-        .all()
-    )
-    categories = Category.query.all()
+    # ================= BADGE COUNTS (CACHED 5 mins) =================
+    badge_counts = get_badge_counts()
+    silver_count = badge_counts["silver"]
+    gold_count = badge_counts["gold"]
+    platinum_count = badge_counts["platinum"]
+
+    # ================= CUSTOMER DATA =================
     coins = 0
     earned_coins = 0
     customer = None
-    badge = "No Badge" 
+    badge = "No Badge"
     next_badge = None
     coins_to_next_badge = 0
     progress_percent = 0
-    # ===== BADGE COUNTS (GLOBAL STATS) =====
-    silver_count = Customer.query.join(RewardBadge)\
-        .filter(RewardBadge.name == "Silver").count()
 
-    gold_count = Customer.query.join(RewardBadge)\
-        .filter(RewardBadge.name == "Gold").count()
-
-    platinum_count = Customer.query.join(RewardBadge)\
-        .filter(RewardBadge.name == "Platinum").count()
-
-    # ================= CUSTOMER COINS =================
     if current_user.is_authenticated:
         customer = current_user
-
         coins = customer.coins or 0
-
-        # 🔁 ALWAYS RECALCULATE BADGE
-        update_customer_badge(customer)
-        db.session.commit()
-
         badge = customer.badge.name if customer.badge else "No Badge"
 
         # ⭐ ONE-TIME COINS FOR UI ANIMATION
-        earned_coins = 0
         if customer.last_reward_coins and customer.last_reward_coins > 0:
             earned_coins = customer.last_reward_coins
             customer.last_reward_coins = 0
             db.session.commit()
 
-        # ===== BADGE PROGRESS SYSTEM =====
-        next_badge = None
-        coins_to_next_badge = 0
-        progress_percent = 0
-
+        # ===== BADGE PROGRESS =====
         badges = RewardBadge.query.filter_by(active=True)\
             .order_by(RewardBadge.required_coins.asc()).all()
 
@@ -411,26 +419,15 @@ def home():
         if next_badge:
             current_min = customer.badge.required_coins if customer.badge else 0
             span = next_badge.required_coins - current_min
-
             if span > 0:
-                progress_percent = int(
-                    ((customer.coins - current_min) / span) * 100
-                )
-
+                progress_percent = int(((customer.coins - current_min) / span) * 100)
             progress_percent = max(0, min(progress_percent, 100))
-            coins_to_next_badge = max(
-                0,
-                next_badge.required_coins - customer.coins
-            )
+            coins_to_next_badge = max(0, next_badge.required_coins - customer.coins)
         else:
             progress_percent = 100
             coins_to_next_badge = 0
 
-
-    print("TOTAL COINS:", coins)
-    print("EARNED COINS (ANIMATION):", earned_coins)
-
-    # ================= FETCH RESTAURANTS =================
+    # ================= FETCH RESTAURANTS (ONE QUERY) =================
     if selected_location:
         restaurants = Restaurant.query.filter(
             Restaurant.location == selected_location,
@@ -441,12 +438,10 @@ def home():
             Restaurant.category_type.in_(["restaurant", "bakery"])
         ).all()
 
-    # ================= LOCATION DROPDOWN =================
-    all_locations = [
-        loc[0]
-        for loc in db.session.query(Restaurant.location).distinct()
-        if loc[0]
-    ]
+    categories = Category.query.all()
+
+    # ================= LOCATION DROPDOWN (CACHED) =================
+    all_locations = get_all_locations()
 
     # ================= TRENDING ITEMS =================
     if selected_location:
@@ -476,7 +471,6 @@ def home():
         r.deliverable = True
         r.distance = None
 
-        # 🚚 DELIVERY CHECK
         if (
             user_location_set
             and r.latitude is not None
@@ -492,7 +486,6 @@ def home():
             r.distance = round(dist, 1)
             r.deliverable = dist <= r.delivery_radius_km
 
-        # 🕒 OPEN / CLOSE (OVERNIGHT SAFE)
         if r.opening_time and r.closing_time:
             if r.opening_time < r.closing_time:
                 r.is_open = r.opening_time <= now <= r.closing_time
@@ -501,7 +494,6 @@ def home():
         else:
             r.is_open = True
 
-        # 🔥 LIMITED DROP
         if r.is_limited_drop and r.can_accept_orders:
             limited_restaurants.append(r)
 
@@ -510,20 +502,14 @@ def home():
     # ================= SEO =================
     if selected_location:
         seo_title = f"Online Food Delivery in {selected_location} | RuchiGo"
-        seo_description = (
-            f"Order food online from nearby restaurants and bakeries in "
-            f"{selected_location}. Fast local delivery."
-        )
+        seo_description = f"Order food online from nearby restaurants and bakeries in {selected_location}. Fast local delivery."
         seo_keywords = f"{selected_location} food delivery, bakery, RuchiGo"
     else:
         seo_title = "Online Food Delivery | RuchiGo"
-        seo_description = (
-            "Order food online from trusted local restaurants and bakeries. "
-            "Fast delivery, fresh food."
-        )
+        seo_description = "Order food online from trusted local restaurants and bakeries. Fast delivery, fresh food."
         seo_keywords = "food delivery, bakery delivery, RuchiGo"
-    
-    # ================= AJAX LOAD =================
+
+    # ================= AJAX =================
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return render_template(
             "_restaurants.html",
@@ -547,8 +533,8 @@ def home():
         seo_keywords=seo_keywords,
         coins=coins,
         customer=customer,
-        badge=badge,  
-        earned_coins=earned_coins, # ⭐ REQUIRED FOR ANIMATION
+        badge=badge,
+        earned_coins=earned_coins,
         next_badge=next_badge,
         coins_to_next_badge=coins_to_next_badge,
         silver_count=silver_count,
@@ -556,9 +542,7 @@ def home():
         platinum_count=platinum_count,
         progress_percent=progress_percent,
         categories=categories
-
     )
-
 
 
 
