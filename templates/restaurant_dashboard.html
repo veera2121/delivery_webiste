@@ -240,7 +240,44 @@ td[data-label="Feedback"] {
 .reports { background-color: #673ab7; }            /* purple */
 .logout { background-color: #f44336; }             /* red */
 .view-delivery-persons { background-color: #009688; } /* teal */
+.item-line{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:5px;
+    margin-bottom:6px;
+}
 
+.food-name{
+    font-weight:600;
+    color:#111827;
+}
+
+.tag{
+    font-size:10px;
+    padding:2px 8px;
+    border-radius:999px;
+    font-weight:600;
+}
+
+.category-tag{
+    background:#eef2ff;
+    color:#4338ca;
+}
+
+.weight-tag{
+    background:#ecfdf5;
+    color:#047857;
+}
+
+.qty-tag{
+    background:#fff7ed;
+    color:#c2410c;
+} 
+.price-tag{
+    background:#fef3c7;
+    color:#92400e;
+}
 </style>
 
 <div class="dashboard-container">
@@ -373,13 +410,46 @@ td[data-label="Feedback"] {
 </tr>
 </thead>
 <tbody>
+
 {% for order in filtered_orders %}
 <tr data-status="{{ order.status }}" data-order-id="{{ order.order_id }}">
 
 <td data-label="Order ID">{{ order.order_id }}</td>
 <td data-label="Customer">{{ order.customer_name }}<br>{{ order.phone }}</td>
 <td data-label="Items">
-{% for item in order.items %}• {{ item.item_name }}<br>{% endfor %}
+
+{% for item in order.items %}
+
+<div class="item-line">
+
+    <span class="food-name">
+        🍽️ {{ item.item_name }}
+    </span>
+
+    {% if item.category %}
+        <span class="tag category-tag">
+            {{ item.category }}
+        </span>
+    {% endif %}
+
+    {% if item.weight %}
+        <span class="tag weight-tag">
+            {{ item.weight }}
+        </span>
+    {% endif %}
+
+    <span class="tag qty-tag">
+        ×{{ item.quantity }}
+    </span>
+
+    <span class="tag price-tag">
+        ₹{{ item.price }}
+    </span>
+
+</div>
+
+{% endfor %}
+
 </td>
 <td data-label="Qty×Price">
 {% for item in order.items %}{{ item.quantity }} × ₹{{ item.price }}<br>{% endfor %}

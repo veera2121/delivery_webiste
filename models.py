@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import relationship
 from sqlalchemy import CheckConstraint
 from flask_login import UserMixin
-
+from sqlalchemy import Enum   # 👈 ADD THIS AT TOP
 from extensions import db   # ✅ ONLY ONE db, coming from extensions.py
 restaurant_categories = db.Table(
     "restaurant_categories",
@@ -30,13 +30,10 @@ class Restaurant(db.Model):
     is_best_seller = db.Column(db.Boolean, nullable=False, server_default="0")
     is_fast_delivery = db.Column(db.Boolean, nullable=False, server_default="0")
     # ================= CATEGORY =================
-    category_type = db.Column(
-        db.String(20),
-        nullable=False,
-        default="restaurant"
-    )
+    
 
-    # ================= CARD DETAILS =================
+    category_type = db.Column(db.String(20), nullable=False)
+        # ================= CARD DETAILS =================
     is_veg = db.Column(db.Boolean, default=True)
     rating = db.Column(db.Float, default=4.0)
     price_level = db.Column(db.String(10), default="₹₹")
@@ -98,13 +95,6 @@ class Restaurant(db.Model):
 
 
 
-    # ================= CONSTRAINT =================
-    __table_args__ = (
-        CheckConstraint(
-            "category_type IN ('restaurant', 'bakery')",
-            name="category_type_check"
-        ),
-    )
 
     # ================= ACTIVE OFFER =================
     @property
@@ -291,6 +281,101 @@ class Order(db.Model):
 
     # ---------------- PAYMENT & ORDER TYPE ----------------
     payment_type = db.Column(db.String(20), nullable=True)  # COD / Online
+    # ---------------- PAYMENT & ORDER TYPE ----------------
+
+ 
+
+    payment_status = db.Column(
+        db.String(20),
+        default="Pending"
+    )  # Pending / Paid / Failed / Refunded
+
+    payment_source = db.Column(
+        db.String(30),
+        nullable=True
+    )  # Checkout / DeliveryQR / COD
+
+    payment_method_used = db.Column(
+        db.String(50),
+        nullable=True
+    )  # UPI / Card / NetBanking / Wallet / COD
+
+    payment_id = db.Column(
+        db.String(100),
+        nullable=True
+    )  # Razorpay payment ID
+
+    payment_order_id = db.Column(
+        db.String(100),
+        nullable=True
+    )  # Razorpay order ID
+
+    payment_signature = db.Column(
+        db.String(300),
+        nullable=True
+    )  # Razorpay signature verification
+
+    payment_time = db.Column(
+        db.DateTime,
+        nullable=True
+    )  # Payment completed time
+
+    refund_status = db.Column(
+        db.String(20),
+        nullable=True
+    )  # None / Processing / Refunded
+
+    refund_amount = db.Column(
+        db.Float,
+        default=0.0
+    )  # Refunded amount
+
+    refund_time = db.Column(
+        db.DateTime,
+        nullable=True
+    )  # Refund processed time
+
+    refund_reason = db.Column(
+        db.String(300),
+        nullable=True
+    )  # Reason for refund
+
+    transaction_reference = db.Column(
+        db.String(100),
+        nullable=True
+    )  # UTR number or transaction ID
+
+    payment_verified = db.Column(
+        db.Boolean,
+        default=False
+    )  # Payment verified or not
+    payment_link_id = db.Column(
+    db.String(100),
+    nullable=True
+    )
+
+    payment_link_url = db.Column(
+        db.String(500),
+        nullable=True
+    ) 
+    payment_qr_url = db.Column(
+    db.String(500),
+    nullable=True
+    )
+    payment_qr_id = db.Column(
+    db.String(100),
+    nullable=True
+    )
+
+    payment_qr_image_url = db.Column(
+        db.String(500),
+        nullable=True
+    )
+
+    payment_qr_status = db.Column(
+        db.String(30),
+        default="active"
+    )
     order_type = db.Column(db.String(50))                   # Delivery / Pickup
     # ---------------- REWARD SYSTEM ----------------
     coins_given = db.Column(db.Boolean, default=False, nullable=False)
@@ -361,10 +446,28 @@ class Order(db.Model):
 # ----------------- Order Item -----------------
 class OrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
+
     item_name = db.Column(db.String(200))
     quantity = db.Column(db.Integer)
     price = db.Column(db.Float)
+
+    # Future-proof fields
+    weight = db.Column(db.String(50), nullable=True)
+    category = db.Column(db.String(100), nullable=True)
+
+    mrp = db.Column(db.Float, nullable=True)
+    discount = db.Column(db.Float, default=0)
+
+    unit = db.Column(db.String(50), nullable=True)
+
+    item_image = db.Column(db.String(500), nullable=True)
+
+    item_type = db.Column(db.String(50), nullable=True)
+    # grocery / restaurant / bakery
+
+    food_item_id = db.Column(db.Integer, nullable=True)
 
     def item_total(self):
         return round((self.price or 0) * (self.quantity or 0), 2)

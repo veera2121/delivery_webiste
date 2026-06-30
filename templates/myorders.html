@@ -757,16 +757,16 @@ socket.on("delivery_assigned", function(data) {
 });
 </script>
 <script>
-function payUPI(orderId){
-
-fetch(`/generate_upi/${orderId}`)
-.then(res => res.json())
-.then(data => {
-
-window.location.href = data.upi_link;
-
-});
-
+function payUPI(orderId) {
+    fetch(`/generate_upi/${orderId}`)
+        .then(response => response.json())
+        .then(data => {
+            window.location.href = data.upi_link;
+        })
+        .catch(error => {
+            console.error("UPI Error:", error);
+            alert("Unable to open UPI payment.");
+        });
 }
 </script>
 {% endblock %}

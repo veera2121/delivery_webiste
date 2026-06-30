@@ -180,27 +180,12 @@ select:focus {
     background: linear-gradient(135deg, #4caf50, #66bb6a);
 }
 
-/* =====================
-   TOAST
-===================== */
-.toast {
+#toast-container{
     position: fixed;
-    bottom: 30px;
-    right: 20px;
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
-    color: #fff;
-    padding: 14px 20px;
-    border-radius: 14px;
-    font-weight: 700;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: 0.3s;
-    z-index: 9999;
-}
-
-.toast.show {
-    opacity: 1;
-    transform: translateY(0);
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99999;
 }
 
 /* =====================
@@ -397,41 +382,7 @@ select:focus {
   background: #f44336;
   color: #fff;
 }
-/* TOAST / FLASH CARD */
-.toast {
-  position: fixed;
-  bottom: 70px; /* above bottom nav */
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: #323232;
-  color: #fff;
-  padding: 12px 18px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 99999;
-  transition: all 0.3s ease;
-}
 
-/* Success */
-.toast.success {
-  background: #2e7d32;
-}
-
-/* Error */
-.toast.error {
-  background: #d32f2f;
-}
-
-/* Visible */
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-<style>
 .qr-modal {
   display: none;
   position: fixed;
@@ -457,6 +408,74 @@ select:focus {
   cursor: pointer;
   font-size: 22px;
 }
+
+/* QR Payment Modal */
+
+#qrModal .modal-dialog{
+    max-width: 360px;
+    margin: 30px auto;
+}
+
+#qrModal .modal-content{
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+#qrModal .modal-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #f8f9fa;
+}
+
+#qrModal .modal-title{
+    font-size: 20px;
+    font-weight: 600;
+}
+
+#qrModal .modal-body{
+    text-align: center;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 75vh;
+}
+
+#qrImage{
+    width: 260px;
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+}
+
+#qrAmount{
+    font-weight: bold;
+    color: #28a745;
+}
+
+#qrOrder{
+    margin-top: 10px;
+    font-size: 14px;
+    color: #666;
+}
+
+#qrModal .modal-footer{
+    display: flex;
+    justify-content: center;
+    padding: 15px;
+}
+
+#qrModal .btn-close{
+    cursor: pointer;
+}
+
+body.modal-open{
+    overflow: auto !important;
+}
+
+
 </style>
 
 </style>
@@ -571,105 +590,166 @@ select:focus {
         <a href="tel:{{ order.phone }}" class="call-btn">Call</a>
       </td>
 
-      <td data-label="Status">
-        {{ order.status }}
-        {% if order.status == 'Delivered' and order.delivered_time %}
-          <br>
-          <small style="color:green">
-            {{ order.delivered_time.strftime('%d-%m-%Y %I:%M %p') }}<br>
-            Payment: {{ order.payment_type }}
-          </small>
+     <td data-label="Status">
+
+    {{ order.status }}
+
+    <br>
+
+    {% if order.payment_status == "Paid" %}
+        <span style="color:green;font-weight:bold;">
+            ✅ Paid Online
+        </span>
+
+    {% elif order.payment_type == "COD" %}
+        <span style="color:red;font-weight:bold;">
+            💵 Collect Cash
+        </span>
+
+    {% else %}
+        <span style="color:orange;font-weight:bold;">
+            ⏳ Payment Pending
+        </span>
+    {% endif %}
+
+    {% if order.status == 'Delivered' and order.delivered_time %}
+        <br>
+        <small style="color:green">
+            {{ order.delivered_time.strftime('%d-%m-%Y %I:%M %p') }}
+        </small>
+    {% endif %}
+<td data-label="Action">
+
+    <!-- START BUTTON -->
+
+    <div id="start-btn-{{ order.id }}"
+
+         {% if order.status == "Started" %}
+         style="display:none;"
+         {% endif %}>
+
+        {% if order.status == "Out for Delivery" %}
+
+        <button class="deliver-btn"
+                onclick="startDelivery({{ order.id }})">
+
+            🚀 Start Delivery
+
+        </button>
+
         {% endif %}
 
-    <td data-label="Action">
+    </div>
 
-{% if order.status == "Out for Delivery" %}
 
-  <!-- Start Delivery Button -->
-  <button class="deliver-btn"
-          id="start-btn-{{ order.id }}"
-          onclick="startDelivery({{ order.id }})">
-    🚀 Start Delivery
-  </button>
+    <!-- STARTED SECTION -->
 
-  <!-- OTP + Payment + Customer Not Available (hidden initially) -->
-  <div class="delivery-actions" id="actions-{{ order.id }}" style="display:none; margin-top:8px;">
+    <div id="actions-{{ order.id }}"
 
-    <form class="deliver-form"
-          method="POST"
-          action="{{ url_for('delivery_dashboard') }}">
-      <input type="hidden" name="order_id" value="{{ order.id }}">
-      <input type="text" name="otp" class="otp-input" placeholder="Enter OTP" required>
-      <select name="payment_type" required>
-        <option value="">Payment Type</option>
-        <option value="COD">COD</option>
-        <option value="Online">Online</option>
-      </select>
-      <button type="submit" class="deliver-btn">✔ Confirm Delivery</button>
-    </form>
-<!-- Generate QR Button -->
-<button type="button"
-        class="deliver-btn"
-        style="background:#4CAF50; margin-top:6px;"
-        onclick="openQR({{ order.id }})">
-   💳 Generate QR
+         {% if order.status != "Started" %}
+         style="display:none;"
+         {% endif %}>
+
+        <span style="color:blue;font-weight:bold;">
+
+            🚚 Delivery Started
+
+        </span>
+
+        <br><br>
+
+        {% if order.payment_status == "Paid" %}
+
+            <div class="badge bg-success">
+
+                ✅ Payment Received
+
+            </div>
+
+        {% else %}
+
+            <a href="{{ url_for(
+                    'delivery_payment_link',
+                    order_id=order.id
+                ) }}"
+
+               class="btn btn-success">
+
+                💳 Send Payment Link
+
+            </a> 
+<button class="btn btn-success"
+        onclick="showPaymentQR({{ order.id }})">
+    💳 Generate QR
 </button>
 
+        {% endif %}
 
-    <!-- Customer Not Available Button -->
-    <button type="button"
-            class="deliver-btn"
-            style="background:#f44336; margin-top:6px;"
-            onclick="markNotDelivered({{ order.id }})">
-      Customer Not Available
-    </button>
+        <br><br>
 
-  </div>
+        <form method="POST"
+              action="{{ url_for('delivery_dashboard') }}">
 
-{% elif order.status == "Started" %}
+            <input type="hidden"
+                   name="order_id"
+                   value="{{ order.id }}">
 
-  <span style="color:blue;font-weight:bold">🚚 Delivery Started</span>
+            <input type="text"
+                   name="otp"
+                   placeholder="Enter OTP"
+                   required>
 
-  <!-- Show OTP + Customer Not Available (already visible for started orders) -->
-  <div class="delivery-actions" id="actions-{{ order.id }}" style="display:block; margin-top:8px;">
+            <button type="submit"
+                    class="deliver-btn">
 
-    <form class="deliver-form"
-          method="POST"
-          action="{{ url_for('delivery_dashboard') }}">
-      <input type="hidden" name="order_id" value="{{ order.id }}">
-      <input type="text" name="otp" class="otp-input" placeholder="Enter OTP" required>
-      <select name="payment_type" required>
-        <option value="">Payment Type</option>
-        <option value="COD">COD</option>
-        <option value="Online">Online</option>
-      </select>
-      <button type="submit" class="deliver-btn">✔ Confirm Delivery</button>
-    </form>
+                ✔ Confirm Delivery
 
-    <button type="button"
-            class="deliver-btn"
-            style="background:#f44336; margin-top:6px;"
-            onclick="markNotDelivered({{ order.id }})">
-      Customer Not Available
-    </button>
+            </button>
 
-  </div>
+        </form>
 
-{% elif order.status == "Delivered" %}
+        <br>
 
-  <span style="color:green;font-weight:bold">✔ Delivered</span>
+        <button type="button"
+                class="deliver-btn"
+                style="background:#f44336"
+                onclick="markNotDelivered({{ order.id }})">
 
-{% elif order.status == "Cancelled" %}
+            Customer Not Available
 
-  <span style="color:red;font-weight:bold">❌ Cancelled</span>
+        </button>
 
-{% else %}
+    </div>
 
-  <span style="color:gray;font-style:italic;">{{ order.status }}</span>
 
-{% endif %}
+    <!-- DELIVERED -->
+
+    {% if order.status == "Delivered" %}
+
+        <span style="color:green;font-weight:bold">
+
+            ✔ Delivered
+
+        </span>
+
+    {% endif %}
+
+
+    <!-- CANCELLED -->
+
+    {% if order.status == "Cancelled" %}
+
+        <span style="color:red;font-weight:bold">
+
+            ❌ Cancelled
+
+        </span>
+
+    {% endif %}
+
 
 </td>
+
 
 
       
@@ -827,16 +907,6 @@ function markNotDelivered(orderId) {
   };
 }
 
-function showToast(message, type = "success") {
-  const toast = document.getElementById("toast");
-  toast.textContent = message;
-  toast.className = `toast ${type} show`;
-
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 2500); // auto hide
-}
-
 
 // ===== INITIALIZE MAP =====
 {% if orders|length > 0 %}
@@ -893,31 +963,115 @@ socket.on("new_order_assigned", (data) => {
   }, 2000);
 });
 </script>
-<script>
-function openQR(orderId) {
-    document.getElementById("qrImage").src = "/generate_qr/" + orderId;
-    document.getElementById("qrModal").style.display = "block";
-}
-
-function closeQR() {
-    document.getElementById("qrModal").style.display = "none";
-}
-</script>
 
 <script>
 const VAPID_PUBLIC_KEY = "{{ VAPID_PUBLIC_KEY }}";
 </script>
 <script src="{{ url_for('static', filename='js/push-subscribe.js') }}"></script>
 <!-- QR Modal -->
-<div id="qrModal" class="qr-modal">
-  <div class="qr-content">
-    <span class="close-btn" onclick="closeQR()">&times;</span>
-    <h3>Scan to Pay</h3>
-    <img id="qrImage" src="" width="250">
-  </div>
-</div>
 
 
+<script>
+function toggleDetails(orderId) {
+    const box = document.getElementById(`details-${orderId}`);
+
+    if (box.style.display === "none") {
+        box.style.display = "block";
+    } else {
+        box.style.display = "none";
+    }
+}
+window.addEventListener("load", function() {
+
+    {% for order in orders %}
+
+    if(localStorage.getItem("qr_open_{{ order.id }}") === "true") {
+
+        document.getElementById(
+            "details-{{ order.id }}"
+        ).style.display = "block";
+
+        document.getElementById(
+            "qr-box-{{ order.id }}"
+        ).style.display = "block";
+    }
+
+    {% endfor %}
+
+});
+</script> 
+
+<script>
+window.addEventListener("load", function() {
+
+    {% for order in orders %}
+
+        if(localStorage.getItem("qr_open_{{ order.id }}") === "true") {
+            document.getElementById(
+                "qr-box-{{ order.id }}"
+            ).style.display = "block";
+        }
+
+    {% endfor %}
+
+});
+</script>
+<script>
+window.toggleQR = function(orderId) {
+    const qr = document.getElementById("qr-box-" + orderId);
+
+    if (!qr) {
+        console.log("QR box not found:", orderId);
+        return;
+    }
+
+    if (qr.style.display === "none" || qr.style.display === "") {
+        qr.style.display = "block";
+        localStorage.setItem("qr_open_" + orderId, "true");
+    } else {
+        qr.style.display = "none";
+        localStorage.removeItem("qr_open_" + orderId);
+    }
+}
+</script> 
+<script>
+
+
+async function showPaymentQR(orderId){
+
+    const response = await fetch(
+        `/delivery_generate_qr/${orderId}`
+    );
+
+    const data = await response.json();
+
+    if(data.success){
+
+        document.getElementById(
+            "qrImage"
+        ).src = data.image;
+
+        document.getElementById(
+            "qrAmount"
+        ).innerText = data.amount;
+
+        document.getElementById(
+            "qrOrder"
+        ).innerHTML =
+            `<b>Order:</b> ${data.order}`;
+
+        const modal = new bootstrap.Modal(
+            document.getElementById(
+                "qrModal"
+            )
+        );
+
+        modal.show();
+    }
+}
+</script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Customer Not Available Modal -->
 <div id="notDeliveredModal" class="modal">
   <div class="modal-content">
@@ -929,7 +1083,65 @@ const VAPID_PUBLIC_KEY = "{{ VAPID_PUBLIC_KEY }}";
     </div>
   </div>
 </div>
-<!-- Toast Notification -->
+<div class="modal fade"
+     id="qrModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+                    💳 Scan & Pay
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body text-center">
+
+                <img id="qrImage"
+                     src=""
+                     style="
+                        width:280px;
+                        max-width:100%;
+                     ">
+
+                <h4 class="mt-3">
+                    ₹<span id="qrAmount"></span>
+                </h4>
+
+                <div id="qrOrder"></div>
+
+                <br>
+
+                <small>
+                    Scan with GPay, PhonePe,
+                    Paytm or any UPI app.
+                </small>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Close
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 <div id="toast" class="toast"></div>
 
 {% endblock %}

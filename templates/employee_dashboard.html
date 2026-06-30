@@ -328,7 +328,52 @@ h3 {
     background: #eee;
     color: #555;
 } 
+.item-line{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:5px;
+    margin-bottom:5px;
+}
 
+.food-name{
+    font-size:13px;
+    font-weight:600;
+    color:#111827;
+}
+
+.tag{
+    font-size:10px;
+    font-weight:600;
+    padding:2px 7px;
+    border-radius:999px;
+}
+
+.category-tag{
+    background:#eef2ff;
+    color:#4338ca;
+}
+
+.weight-tag{
+    background:#ecfdf5;
+    color:#047857;
+}
+
+.qty-tag{
+    background:#fff7ed;
+    color:#c2410c;
+}
+
+.more-items{
+    margin-top:4px;
+    font-size:11px;
+    color:#6b7280;
+    font-weight:600;
+} 
+.price-tag{
+    background:#fef3c7;
+    color:#92400e;
+}
 </style>
 <div class="emp-header">
     <h2>👨‍💼 Welcome, {{ employee.name }}</h2>
@@ -443,14 +488,45 @@ h3 {
 </td>
 
 <td>
-    <ul class="items">
-        {% for item in order.items %}
-        <li>
-            {{ item.item_name }} × {{ item.quantity }} 
-            - ₹{{ item.price }}
-        </li>
-        {% endfor %}
-    </ul>
+
+{% for item in order.items[:3] %}
+
+<div class="item-line">
+
+    <span class="food-name">
+        🍽️ {{ item.item_name }}
+    </span>
+
+    {% if item.category %}
+        <span class="tag category-tag">
+            {{ item.category }}
+        </span>
+    {% endif %}
+
+    {% if item.weight %}
+        <span class="tag weight-tag">
+            {{ item.weight }}
+        </span>
+    {% endif %}
+
+    <span class="tag qty-tag">
+        ×{{ item.quantity }}
+    </span>
+
+    <span class="tag price-tag">
+        ₹{{ item.price }}
+    </span>
+
+</div>
+
+{% endfor %}
+
+{% if order.items|length > 3 %}
+<div class="more-items">
+    +{{ order.items|length - 3 }} more items
+</div>
+{% endif %}
+
 </td>
 
 <td>₹{{ order.delivery_charge or 0 }}</td>
@@ -464,24 +540,57 @@ h3 {
     <!-- MAIN STATUS -->
     {{ order.status }}
 
-    <!-- 🔒 LOCK -->
+    <!-- LOCK -->
     {% if order.status in ['Delivered','Cancelled'] %}
         <br>
-        <span style="color:gray;font-size:12px;">🔒 Locked</span>
+        <span style="color:gray;font-size:12px;">
+            🔒 Locked
+        </span>
     {% endif %}
 
-    <!-- 💰 PAYMENT TYPE BELOW -->
     <br>
-    {% if order.payment_type == 'COD' %}
-        <span class="payment-badge COD">💰 COD</span>
-    {% elif order.payment_type == 'Online' %}
-        <span class="payment-badge Online">💳 Online</span>
+
+    <!-- PAYMENT STATUS -->
+
+    {% if order.payment_source == "Checkout" %}
+        <span class="payment-badge Online">
+            💳 Paid During Checkout
+        </span>
+
+    {% elif order.payment_source == "DeliveryLink" %}
+        <span class="payment-badge Online">
+            🚚💳 Paid At Delivery
+        </span>
+
+    {% elif order.payment_type == "COD"
+            and order.payment_status != "Paid" %}
+        <span class="payment-badge COD">
+            💵 Cash On Delivery
+        </span>
+
+    {% elif order.payment_type == "COD"
+            and order.payment_status == "Paid" %}
+        <span class="payment-badge Online">
+            💳 Paid Online After COD
+        </span>
+
     {% else %}
-        <span class="payment-badge NotCollected">⚠ Not Paid</span>
+        <span class="payment-badge NotCollected">
+            ⚠ Payment Pending
+        </span>
     {% endif %}
 
-    <!-- ❌ CANCEL REASON (ONLY IF CANCELLED) -->
-    {% if order.status == 'Cancelled' and order.cancel_reason %}
+    <!-- PAYMENT TIME -->
+    {% if order.payment_time %}
+        <br>
+        <span style="font-size:12px;color:#666;">
+            🕒 {{ order.payment_time.strftime('%d-%m-%Y %I:%M %p') }}
+        </span>
+    {% endif %}
+
+    <!-- CANCEL REASON -->
+    {% if order.status == 'Cancelled'
+          and order.cancel_reason %}
         <br>
         <span style="color:red;font-size:12px;">
             ❌ {{ order.cancel_reason }}

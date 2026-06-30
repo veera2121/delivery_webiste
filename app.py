@@ -16,7 +16,10 @@ from flask import (
     Flask, render_template, send_from_directory,
     request, redirect, url_for, session, jsonify, flash
 )
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 # ================= EXTENSIONS =================
 from flask_socketio import SocketIO, emit, join_room
 from flask_wtf import CSRFProtect
@@ -136,6 +139,19 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     REMEMBER_COOKIE_DURATION=timedelta(days=30),
 )
+import razorpay
+
+
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
+if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
+    raise Exception("Razorpay keys not found in environment variables")
+
+razorpay_client = razorpay.Client(auth=(
+    RAZORPAY_KEY_ID,
+    RAZORPAY_KEY_SECRET
+))
 # ------------------ UTILS ------------------
 def generate_otp():
     return str(secrets.randbelow(900000) + 100000)
@@ -321,18 +337,28 @@ def make_whatsapp_link(order):
     if not phone:
         return "#invalid-number"
 
+    otp = order.otp or "----"
+
     msg = (
         "*RucHiGo*\n\n"
-        f"Hello *{order.customer_name}*\n\n"
-        f"Your order *#{order.order_id}* from *{rname}* is confirmed.\n"
-        f"Total Amount: *Rs. {order.get_final_total()}*\n\n"
-        f"*{rname}* is preparing your food.\n"
-        "Our delivery partner will deliver it shortly.\n\n"
-        "For support call: *7207002650*\n"
-        "Track orders on *RucHiGo Website*\n\n"
-        "Thank you for choosing *RucHiGo*."
-    )
 
+        f"Hi *{order.customer_name}* 👋\n\n"
+
+        f"✅ Your order *#{order.order_id}* from *{rname}* has been *Accepted*.\n"
+        f"💰 Amount: *₹{order.get_final_total()}*\n\n"
+
+        f"🔐 Delivery OTP: ✨*{order.otp}*✨\n"
+        "Please keep this OTP safe.\n"
+        "Share it with the delivery partner only after receiving your order.\n\n"
+
+        f"🍽️ *{rname}* is preparing your food.\n"
+        "🚴 A delivery partner will be assigned shortly.\n\n"
+
+        "📞 Support: 7207002650\n"
+        "🌐 Track your order on *RucHiGo Website/App*\n\n"
+
+        "Thank you for choosing *RucHiGo* 💙"
+    )
     encoded = urllib.parse.quote_plus(msg)
     return f"https://wa.me/{phone}?text={encoded}"
 
@@ -750,8 +776,21 @@ def myorders():
     phone = None
     restaurant_id = None
 
-    ACTIVE = ["Pending", "Placed", "Accepted", "Preparing", "Ready", "Out for Delivery", "Started"]
-    HISTORY = ["Delivered", "Cancelled", "Customer Not Available"]
+    ACTIVE = [
+        "Pending",
+        "Placed",
+        "Accepted",
+        "Preparing",
+        "Ready",
+        "Out for Delivery",
+        "Started"
+    ]
+
+    HISTORY = [
+        "Delivered",
+        "Cancelled",
+        "Customer Not Available"
+    ]
 
     if request.method == "POST":
         phone = normalize_phone(request.form.get("phone"))
@@ -764,17 +803,23 @@ def myorders():
 
     if phone:
         active_orders = Order.query.filter(
-            Order.phone == phone,
+            func.right(
+                func.regexp_replace(Order.phone, r'[^0-9]', '', 'g'),
+                10
+            ) == phone,
             Order.status.in_(ACTIVE)
         ).order_by(Order.created_at.desc()).all()
 
         history_orders = Order.query.filter(
-            Order.phone == phone,
+            func.right(
+                func.regexp_replace(Order.phone, r'[^0-9]', '', 'g'),
+                10
+            ) == phone,
             Order.status.in_(HISTORY)
         ).order_by(Order.created_at.desc()).all()
 
         # ===== Convert time to IST =====
-        ist = pytz.timezone('Asia/Kolkata')
+        ist = pytz.timezone("Asia/Kolkata")
 
         for order in active_orders + history_orders:
             if order.created_at:
@@ -782,7 +827,7 @@ def myorders():
                     order.created_at = UTC.localize(order.created_at)
 
                 order.created_at_ist = order.created_at.astimezone(ist)
-                order.created_at_str = order.created_at_ist.strftime('%d-%m-%Y %I:%M %p')
+                order.created_at_str = order.created_at_ist.strftime("%d-%m-%Y %I:%M %p")
 
         # Restaurant ID
         if active_orders:
@@ -795,7 +840,7 @@ def myorders():
         active_orders=active_orders,
         history_orders=history_orders,
         restaurant_id=restaurant_id,
-        phone=phone 
+        phone=phone
     )
 
 from sqlalchemy import func
@@ -966,7 +1011,7 @@ def place_order():
     delivery_note = request.form.get("delivery_note")
     restaurant_id = int(request.form.get("restaurant_id"))
     device_fingerprint = request.form.get("device_fingerprint")
-
+    order_type = request.form.get("order_type")
     # ================= LOCATION =================
     customer_lat = safe_float(request.form.get("customer_lat") or request.form.get("lat"))
     customer_lng = safe_float(request.form.get("customer_lng") or request.form.get("lng"))
@@ -977,7 +1022,7 @@ def place_order():
     prices = request.form.getlist("price[]")
 
     if not item_names:
-        flash("Cart is empty", "danger")
+        flash("Cart is empty", "error")
         return redirect("/")
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
@@ -992,7 +1037,7 @@ def place_order():
 
     # ================= LOCATION VALIDATION =================
     if not customer_lat or not customer_lng:
-        flash("Please select delivery location", "danger")
+        flash("Please select delivery location", "error")
         return redirect(request.referrer)
 
     # ================= DISTANCE =================
@@ -1033,7 +1078,11 @@ def place_order():
         address_type=address_type,
         delivery_note=delivery_note,
         payment_type=payment_type,
+        payment_status="Pending" if payment_type == "Online" else "Pending",
+        payment_verified=False,
+        payment_source="Checkout" if payment_type == "Online" else "COD",
         device_fingerprint=device_fingerprint,
+        order_type=order_type,
         items_total=items_total,
         delivery_charge=delivery_charge,
         final_total=final_total,
@@ -1048,7 +1097,8 @@ def place_order():
     
     db.session.add(new_order)
     db.session.commit()   # ✅ IMPORTANT: new_order.id created here
-    
+    print("PAYMENT RECEIVED:", payment_type)
+    print(request.form.to_dict(flat=False))
     # ================= COINS REDEMPTION =================
     coins_to_redeem = int(request.form.get("redeem_coins") or 0)
 
@@ -1084,9 +1134,25 @@ def place_order():
     db.session.commit()
 
     # ================= FINAL =================
-    flash(f"Order placed successfully! Order ID: {new_order.order_id}", "success")
-    return redirect(url_for("order_placed", order_id=new_order.order_id))
+    if payment_type == "Online":
+        return redirect(
+            url_for(
+                "payment_page",
+                order_id=new_order.id
+            )
+        )
 
+    flash(
+        f"Order placed successfully! Order ID: {new_order.order_id}",
+        "success"
+    )
+
+    return redirect(
+        url_for(
+            "order_placed",
+            order_id=new_order.order_id
+        )
+    )
 
 @app.route("/order-placed/<order_id>")
 def order_placed(order_id):
@@ -1111,7 +1177,7 @@ def admin_login():
             session["admin_logged_in"] = True
             return redirect(url_for("admin_dashboard"))
 
-        flash("Invalid login", "danger")
+        flash("Invalid login", "warnig")
 
     return render_template("admin_login.html")
 
@@ -1306,7 +1372,7 @@ def update_status(order_id):
     order = Order.query.get(order_id)
 
     if not order:
-        flash("Order not found!", "danger")
+        flash("Order not found!", "error")
         return redirect(url_for("restaurant_dashboard"))
 
     # update DB
@@ -1337,7 +1403,7 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get("admin_logged_in"):
-            flash("You must be logged in as admin to access this page", "danger")
+            flash("You must be logged in as admin to access this page", "error")
             return redirect(url_for("admin_login"))
         return f(*args, **kwargs)
     return decorated_function
@@ -1353,7 +1419,7 @@ def restaurant_login():
             session["restaurant_id"] = user.restaurant_id
             session["restaurant_name"] = user.username
             return redirect(url_for("restaurant_dashboard"))
-        flash("Invalid login!", "danger")
+        flash("Invalid login!", "error")
     return render_template("restaurant_login.html")
 
 
@@ -1562,10 +1628,11 @@ def delivery_login():
             return redirect(url_for("delivery_dashboard"))
 
         else:
-            flash("Invalid login!", "danger")
+            flash("Invalid login!", "error")
             return render_template("delivery_login.html")
 
     return render_template("delivery_login.html")
+
 @app.route("/delivery/dashboard", methods=["GET", "POST"])
 def delivery_dashboard():
 
@@ -1582,17 +1649,17 @@ def delivery_dashboard():
     if request.method == "POST":
         order_id = request.form.get("order_id")
         entered_otp = request.form.get("otp")
-        entered_payment_type = request.form.get("payment_type")
+       
 
         order = Order.query.get(order_id)
 
         if not order or order.delivery_person_id != dp_id:
-            flash("Invalid order", "danger")
+            flash("Invalid order", "error")
             return redirect(url_for("delivery_dashboard"))
 
         # ✅ Allow OTP ONLY if delivery already started
         if order.status != "Started":
-            flash("Delivery not started yet", "danger")
+            flash("Delivery not started yet", "error")
             return redirect(url_for("delivery_dashboard"))
         print("=== DEBUG COINS ===")
         print("Order ID:", order.id)
@@ -1600,12 +1667,27 @@ def delivery_dashboard():
         print("Items Total:", order.items_total)
         setting = RewardSetting.query.first()
         print("RewardSetting:", setting.earn_per_rupees if setting else "None")
-
         # ✅ OTP CHECK
+
         if order.otp == entered_otp:
+
+            
+            # Prevent delivery if online payment not completed
+            if (
+                order.payment_type == "Online"
+                and order.payment_status != "Paid"
+            ):
+                flash(
+                    "Customer has not completed online payment yet.",
+                    "error"
+                )
+                return redirect(
+                    url_for("delivery_dashboard")
+                )
+
+            # Mark order delivered
             order.status = "Delivered"
             order.delivered_time = datetime.utcnow()
-            order.payment_type = entered_payment_type
 
             coins_earned = add_coins(
                 order.customer_id,
@@ -1615,18 +1697,21 @@ def delivery_dashboard():
 
             db.session.commit()
 
-
-            # ✅ SAFE SESSION STORE
+            # Save earned coins in session
             session["earned_coins"] = coins_earned
-
 
             flash(
                 f"Order {order.order_id} delivered successfully",
                 "success"
             )
+        
 
         else:
-            flash("❌ Invalid OTP. Try again.", "danger")
+            flash(
+            "❌ Invalid OTP. Try again.",
+            "error"
+            )
+
 
         return redirect(url_for("delivery_dashboard"))
 
@@ -1680,7 +1765,7 @@ def add_restaurant_user():
         restaurant_id = request.form.get("restaurant_id")
 
         if not username or not password or not restaurant_id:
-            flash("All fields are required!", "danger")
+            flash("All fields are required!", "error")
             return redirect(url_for("add_restaurant_user"))
 
         if RestaurantUser.query.filter_by(username=username).first():
@@ -4006,25 +4091,36 @@ import io
 import base64
 from flask import send_file
 
+import qrcode
+import io
+from flask import send_file
+from urllib.parse import quote
+
 @app.route('/generate_qr/<int:order_id>')
 def generate_qr(order_id):
-    order = Order.query.get(order_id)
+    order = Order.query.get_or_404(order_id)
 
-    upi_id = "96738250@ybl"
-    name = "RucHiGo"
-    amount = order.final_total
+    upi_id = "9618319849@ptyes"
+    name = quote("RucHiGo")
+    amount = f"{float(order.final_total):.2f}"
+    note = quote(f"Order {order.id}")
 
-    note = f"Order #{order.id}"
-
-    upi_link = f"upi://pay?pa={upi_id}&pn={name}&am={amount}&tn={note}&cu=INR"
+    upi_link = (
+        f"upi://pay?"
+        f"pa={upi_id}"
+        f"&pn={name}"
+        f"&am={amount}"
+        f"&cu=INR"
+        f"&tn={note}"
+    )
 
     qr = qrcode.make(upi_link)
 
     img_io = io.BytesIO()
-    qr.save(img_io, 'PNG')
+    qr.save(img_io, "PNG")
     img_io.seek(0)
 
-    return send_file(img_io, mimetype='image/png')
+    return send_file(img_io, mimetype="image/png")
 @app.route("/admin/update-tags/<int:id>", methods=["POST"])
 def update_tags(id):
 
@@ -4866,6 +4962,508 @@ def join_order(data):
     join_room(room)
 
     print("🟢 Joined room:", room)
+@app.route("/payment/<int:order_id>")
+def payment_page(order_id):
+
+    order = Order.query.get_or_404(order_id)
+
+    if order.payment_status == "Paid":
+        return redirect(
+            url_for(
+                "order_placed",
+                order_id=order.order_id
+            )
+        )
+
+    return render_template(
+        "payment.html",
+        order=order,
+        razorpay_key=RAZORPAY_KEY_ID
+    )
+
+@app.route("/create_payment/<int:order_id>")
+def create_payment(order_id):
+
+    order = Order.query.get_or_404(order_id)
+
+    if order.payment_status == "Paid":
+        return jsonify({
+            "success": False,
+            "message": "Order already paid"
+        })
+
+    payment = razorpay_client.order.create({
+        "amount": int(order.final_total * 100),
+        "currency": "INR",
+        "receipt": f"order_{order.id}"
+    })
+
+    order.payment_order_id = payment["id"]
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "key": RAZORPAY_KEY_ID,
+        "amount": payment["amount"],
+        "order_id": payment["id"],
+        "name": order.customer_name,
+        "email": order.email or "",
+        "contact": order.phone
+    })   
+
+from datetime import datetime
+from flask import request, jsonify, url_for
+
+@app.route("/verify_payment", methods=["POST"])
+def verify_payment():
+
+    data = request.get_json()
+
+    order = Order.query.get_or_404(
+        data["order_id"]
+    )
+
+    try:
+        # Verify Razorpay signature
+        razorpay_client.utility.verify_payment_signature({
+            "razorpay_order_id": data["razorpay_order_id"],
+            "razorpay_payment_id": data["razorpay_payment_id"],
+            "razorpay_signature": data["razorpay_signature"]
+        })
+
+        # Payment successful
+        order.payment_status = "Paid"
+        order.payment_type = "Online"
+        order.payment_verified = True
+
+        order.payment_id = data["razorpay_payment_id"]
+        order.payment_order_id = data["razorpay_order_id"]
+        order.payment_signature = data["razorpay_signature"]
+
+        order.payment_time = datetime.utcnow()
+
+        # Optional fields
+        order.payment_method_used = "UPI"
+        order.payment_source = "Checkout"
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "redirect_url": url_for(
+                "order_placed",
+                order_id=order.order_id
+            )
+        })
+
+    except Exception as e:
+        print("Payment verification error:", e)
+
+        order.payment_status = "Failed"
+        db.session.commit()
+
+        return jsonify({
+            "success": False,
+            "message": "Payment verification failed"
+        }), 400
+@app.route(
+    "/payment_failed/<int:order_id>",
+    methods=["POST"]
+)
+def payment_failed(order_id):
+
+    order = Order.query.get_or_404(
+        order_id
+    )
+
+    if order.payment_status != "Paid":
+        order.payment_status = "Failed"
+        db.session.commit()
+
+    return jsonify({
+        "success": True
+    }) 
+
+from flask import redirect
+import urllib.parse
+
+@app.route("/delivery_payment_link/<int:order_id>")
+def delivery_payment_link(order_id):
+
+    order = Order.query.get_or_404(order_id)
+
+    payment_link = razorpay_client.payment_link.create({
+
+        "amount": int(order.final_total * 100),
+
+        "currency": "INR",
+
+        "description": f"Payment for {order.order_id}",
+
+        "customer": {
+            "name": order.customer_name,
+            "email": order.email or "",
+            "contact": order.phone
+        },
+
+        "notify": {
+            "sms": False,
+            "email": False
+        }
+
+    })
+
+    order.payment_link_id = payment_link["id"]
+    order.payment_link_url = payment_link["short_url"]
+
+    db.session.commit()
+
+    message = f"""
+Hello {order.customer_name},
+
+Please complete payment for your order.
+
+Order ID: {order.order_id}
+
+Amount: ₹{order.final_total}
+
+Payment Link:
+{payment_link['short_url']}
+
+Thank you for choosing RucHiGo.
+"""
+
+    whatsapp_url = (
+        f"https://wa.me/91{order.phone}"
+        f"?text={urllib.parse.quote(message)}"
+    )
+
+    return redirect(whatsapp_url)
+
+@app.route("/delivery_payment_qr/<int:order_id>")
+def delivery_payment_qr(order_id):
+
+    order = Order.query.get_or_404(order_id)
+
+    # Create payment link only if it doesn't exist
+    if not order.payment_link_url:
+
+        payment_link = razorpay_client.payment_link.create({
+
+            "amount": int(order.final_total * 100),
+
+            "currency": "INR",
+
+            "description": f"Payment for {order.order_id}",
+
+            "customer": {
+                "name": order.customer_name,
+                "email": order.email or "",
+                "contact": order.phone
+            },
+
+            "notify": {
+                "sms": False,
+                "email": False
+            }
+
+        })
+
+        order.payment_link_id = payment_link["id"]
+        order.payment_link_url = payment_link["short_url"]
+
+        db.session.commit()
+
+    # Generate QR from payment link
+    qr = qrcode.make(order.payment_link_url)
+
+    buffer = io.BytesIO()
+    qr.save(buffer, format="PNG")
+
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+    return render_template(
+        "payment_qr.html",
+        order=order,
+        qr_base64=qr_base64
+    )
+import hmac
+import hashlib
+import json
+from flask import request, jsonify
+
+
+
+@app.route("/razorpay_webhook", methods=["POST"])
+def razorpay_webhook():
+
+    webhook_signature = request.headers.get(
+        "X-Razorpay-Signature"
+    )
+
+    body = request.data
+
+    generated_signature = hmac.new(
+        bytes(RAZORPAY_WEBHOOK_SECRET, "utf-8"),
+        body,
+        hashlib.sha256
+    ).hexdigest()
+
+    if generated_signature != webhook_signature:
+        return jsonify({
+            "success": False,
+            "message": "Invalid signature"
+        }), 400
+
+    payload = json.loads(body)
+
+    event = payload.get("event")
+
+    print("Webhook Event:", event)
+
+    # Only process successful payment link payments
+    if event == "payment_link.paid":
+
+        payment_entity = payload["payload"][
+            "payment_link"
+        ]["entity"]
+
+        payment_link_id = payment_entity["id"]
+
+        order = Order.query.filter_by(
+            payment_link_id=payment_link_id
+        ).first()
+
+        if order:
+
+            order.payment_status = "Paid"
+            order.payment_verified = True
+            order.payment_type = "Online"
+            order.payment_source = "DeliveryLink"
+
+            order.payment_time = datetime.utcnow()
+
+            # Store Razorpay Payment Link ID
+            order.payment_order_id = payment_link_id
+
+            try:
+                payment_data = payload["payload"][
+                    "payment"
+                ]["entity"]
+
+                order.payment_id = payment_data.get("id")
+
+                order.payment_method_used = (
+                    payment_data.get("method", "")
+                    .upper()
+                )
+
+                order.transaction_reference = (
+                    payment_data.get(
+                        "acquirer_data",
+                        {}
+                    ).get(
+                        "upi_transaction_id"
+                    )
+                )
+
+            except Exception as e:
+                print(
+                    "Could not fetch payment details:",
+                    e
+                )
+
+            db.session.commit()
+
+            print(
+                f"Payment received for {order.order_id}"
+            )
+
+        else:
+            print(
+                "Order not found for payment link:",
+                payment_link_id
+            )
+    # ---------------- QR PAYMENT ----------------
+
+    elif event == "qr_code.credited":
+
+        qr_entity = payload["payload"]["qr_code"]["entity"]
+
+        qr_id = qr_entity["id"]
+
+        order = Order.query.filter_by(
+            payment_qr_id=qr_id
+        ).first()
+
+        if order:
+
+            order.payment_status = "Paid"
+            order.payment_verified = True
+            order.payment_type = "Online"
+            order.payment_source = "DeliveryQR"
+
+            order.payment_time = datetime.utcnow()
+
+            try:
+
+                payment_data = payload["payload"]["payment"]["entity"]
+
+                order.payment_id = payment_data.get("id")
+
+                order.payment_method_used = (
+                    payment_data.get("method", "").upper()
+                )
+
+                order.transaction_reference = (
+                    payment_data.get(
+                        "acquirer_data", {}
+                    ).get("upi_transaction_id")
+                )
+
+            except Exception as e:
+
+                print("QR Payment Details Error:", e)
+
+            db.session.commit()
+
+            print(
+                f"QR Payment received for {order.order_id}"
+            )
+
+        else:
+
+            print(
+                "Order not found for QR:",
+                qr_id
+            )
+    return jsonify({
+        "success": True
+    })
+
+
+from datetime import datetime
+
+@app.route("/admin/payment-status")
+def payment_status():
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+    from_date = request.args.get("from")
+    to_date = request.args.get("to")
+
+    query = Order.query
+
+    if from_date and to_date:
+
+        start = datetime.strptime(from_date,"%Y-%m-%d").date()
+        end = datetime.strptime(to_date,"%Y-%m-%d").date()
+
+        query = query.filter(
+            db.func.date(Order.created_at).between(start,end)
+        )
+
+    orders = query.order_by(
+        Order.created_at.desc()
+    ).all()
+
+    # -----------------------------
+    # Dashboard Counts
+    # -----------------------------
+
+    total_orders = len(orders)
+
+    paid_count = sum(
+        1 for o in orders
+        if o.payment_status == "Paid"
+    )
+
+    pending_count = sum(
+        1 for o in orders
+        if o.payment_status == "Pending"
+    )
+
+    failed_count = sum(
+        1 for o in orders
+        if o.payment_status == "Failed"
+    )
+
+    # -----------------------------
+    # Revenue
+    # -----------------------------
+
+    total_revenue = sum(
+        o.final_total or 0
+        for o in orders
+        if o.payment_status == "Paid"
+    )
+
+    # -----------------------------
+    # Refund
+    # -----------------------------
+
+    refund_total = sum(
+        o.refund_amount or 0
+        for o in orders
+    )
+
+    return render_template(
+        "payment_status.html",
+
+        orders=orders,
+
+        total_orders=total_orders,
+
+        paid_count=paid_count,
+        pending_count=pending_count,
+        failed_count=failed_count,
+
+        total_revenue=total_revenue,
+        refund_total=refund_total,
+
+        from_date=from_date,
+        to_date=to_date
+    )
+
+from flask import jsonify
+
+@app.route("/delivery_generate_qr/<int:order_id>")
+def delivery_generate_qr(order_id):
+
+    order = Order.query.get_or_404(order_id)
+
+    if not order.payment_qr_image_url:
+
+        qr = razorpay_client.qrcode.create({
+
+            "type": "upi_qr",
+
+            "usage": "single_use",
+
+            "fixed_amount": True,
+
+            "payment_amount": int(order.final_total * 100),
+
+            "name": f"Order {order.order_id}",
+
+            "description": f"Payment for {order.order_id}"
+
+        })
+
+        order.payment_qr_id = qr["id"]
+        order.payment_qr_image_url = qr["image_url"]
+        order.payment_qr_status = qr["status"]
+
+        db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "image": order.payment_qr_image_url,
+        "amount": order.final_total,
+        "order": order.order_id
+    })
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------

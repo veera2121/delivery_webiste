@@ -7,19 +7,63 @@
 <title>Your Cart</title> 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <style>
-    :root {
-  --text: #1f2937;
-  --muted: #6b7280;
-  --success: #16a34a;
-  --border: rgba(0,0,0,0.12);
-}
+:root{
 
-body {
-  background: #f3f4f6;
-}
+--text:#1f2937;
 
+--muted:#6b7280;
+
+--success:#16a34a;
+
+--border:rgba(0,0,0,.12);
+
+}
+body{
+
+background:
+
+radial-gradient(
+circle at top right,
+rgba(37,99,235,.05),
+transparent 25%
+),
+
+radial-gradient(
+circle at top left,
+rgba(34,197,94,.04),
+transparent 25%
+),
+
+#eef2f7 !important;
+
+}
+body::before{
+
+content:"";
+
+position:fixed;
+
+top:0;
+left:0;
+
+width:100%;
+height:100%;
+
+background:
+radial-gradient(
+circle,
+rgba(255,107,0,.03) 1px,
+transparent 1px
+);
+
+background-size:30px 30px;
+
+pointer-events:none;
+
+z-index:-1;
+
+}
 :root {
   --primary: #ff3b30;
   --primary-dark: #e12a20;
@@ -52,516 +96,1230 @@ body {
   background: var(--bg);
   color: var(--text);
 }
-.page {
-  max-width: 420px;
-  margin: auto;
-  padding: 14px;
-}
-.cart-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-
-  padding: 14px 18px;
-  background:
-    linear-gradient(#ffffff, #ffffff) padding-box,
-    linear-gradient(135deg, #16a34a, #22c55e) border-box;
-  border-bottom: 2px solid transparent;
-
-  box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.12),
-    0 3px 10px rgba(22,163,74,0.2);
-
-  transition: box-shadow 0.2s ease;
-}
-
-/* subtle shadow on scroll feel */
-.cart-header:hover {
-  box-shadow:
-    0 12px 28px rgba(0,0,0,0.16),
-    0 6px 18px rgba(22,163,74,0.25);
-}
-
-/* Restaurant name */
-.cart-restaurant-name {
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: 0.3px;
-
-  background: linear-gradient(135deg, #047857, #16a34a);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-
-  text-shadow: 0 1px 4px rgba(4,120,87,0.25);
+.page{
+    max-width:430px;
+    margin:auto;
+    padding:18px;
 }
 
 
-.cart-subtitle {
-  font-size: 13px;
-  color: var(--muted);
+/* HEADER */
+.cart-header{
+
+background:
+linear-gradient(
+135deg,
+#2563eb,
+#3b82f6
+);
+
+box-shadow:
+0 12px 30px rgba(37,99,235,.22);
+
 }
-.cart-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: 16px;
+.cart-header::before{
+
+content:"RucHiGo";
+
+position:absolute;
+
+right:23px;
+
+top:30px;
+
+font-size:18px;
+
+font-weight:900;
+
+letter-spacing:2px;
+
+color:rgba(255,255,255,.30);
+
+pointer-events:none;
+
 }
-.cart-item {
-  background: var(--card);
-  border-radius: var(--radius-lg);
-  padding: 14px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: var(--shadow-sm);
-  border-left: 4px solid var(--primary);
+.cart-restaurant-name{
+
+color:white;
+
+-webkit-text-fill-color:white;
+
+background:none;
+
+text-shadow:none;
+
 }
 
-.cart-item strong {
-  font-size: 15px;
+.cart-subtitle{
+
+color:rgba(255,255,255,.85);
+
 }
 
-.cart-item span {
-  font-size: 13px;
-  color: var(--muted);
-}
-.qty-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #f3f4f6;
-  padding: 6px 10px;
-  border-radius: var(--radius-md);
+
+
+
+/* ITEMS */
+
+.cart-list{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:16px;
+
+    margin-top:18px;
+
 }
 
-.qty-controls button {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: none;
-  background: var(--primary);
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
+
+.cart-item{
+
+    background:#fff;
+
+    border-radius:22px;
+
+    padding:16px 18px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    border:1px solid #edf2f7;
+
+    box-shadow:
+
+        0 6px 18px rgba(0,0,0,.05);
+
+    position:relative;
+
+    overflow:hidden;
+
+    transition:.25s;
+
 }
 
-.qty-controls button:active {
-  transform: scale(.92);
+
+.cart-item:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+
+        0 12px 28px rgba(0,0,0,.08);
+
 }
 
-.qty {
-  font-weight: 600;
-  min-width: 18px;
-  text-align: center;
-}
-.info-box {
-  margin-top: 14px;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: var(--shadow-sm);
+
+.cart-item::before{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+
+    top:0;
+
+    bottom:0;
+
+    width:5px;
+
+    background:
+
+    linear-gradient(
+
+        180deg,
+
+        #002fff,
+
+        #2343d1
+
+    );
+
 }
 
-#coupon-box {
-  background: #ecfeff;
-  color: #0369a1;
-  border-left: 4px solid var(--info);
+
+.cart-item strong{
+
+    font-size:16px;
+
+    font-weight:700;
+
+    color:#111827;
+
 }
 
-#delivery-msg { 
-  background: #fff7ed;
-  border-radius: 15px;
-  color: #9a3412;
-  border-left: 4px solid var(--warning); 
-  margin-top: 20px;  /* ← Add gap from top */
-  padding: 10px;      /* optional: add some inner spacing */
+
+.cart-item span{
+
+    font-size:13px;
+
+    color:#6b7280;
+
 }
 
-/* Animation */
-@keyframes priceFlow {
-  0% { background-position: 0% center; }
-  100% { background-position: 200% center; }
+
+
+/* QTY */
+
+.qty-controls{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    padding:6px;
+
+    border-radius:999px;
+
+    background:#f8fafc;
+
+    border:1px solid #e5e7eb;
+
 }
 
-#coupon-box {
-  cursor: pointer;
-  transition: .2s ease;
+
+.qty-controls button{
+
+    width:32px;
+
+    height:32px;
+
+    border:none;
+
+    border-radius:50%;
+
+    cursor:pointer;
+
+    background:
+
+    linear-gradient(
+
+        135deg,
+
+        #1900ff,
+
+        #3330cc
+
+    );
+
+    color:white;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    transition:.2s;
+
 }
 
-#coupon-box.disabled {
-  opacity: .6;
-  pointer-events: none;
+
+.qty-controls button:hover{
+
+    transform:scale(1.08);
+
 }
 
-#coupon-box.applied {
-  background: #ecfdf5;
-  color: #065f46;
-  border-left: 4px solid var(--success);
-}
-.address-card {
-  background: var(--card);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  margin-top: 20px;
-  box-shadow: var(--shadow-sm);
+
+.qty-controls button:active{
+
+    transform:scale(.92);
+
 }
 
-.address-card h3 {
-  font-size: 14px;
-  color: var(--muted);
-  margin-bottom: 10px;
+
+.qty{
+
+    min-width:22px;
+
+    text-align:center;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    color:#111827;
+
 }
+
+
+
+/* INFO CARDS */
+
+.info-box{
+
+    margin-top:16px;
+
+    padding:16px;
+
+    border-radius:18px;
+
+    border:1px solid #edf2f7;
+
+    background:#fff;
+
+    box-shadow:
+
+        0 6px 18px rgba(0,0,0,.04);
+
+}
+
+
+
+/* COUPON */
+
+#coupon-box{
+
+    cursor:pointer;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #ecfeff,
+
+            #f0fdfa
+
+        );
+
+    color:#0f766e;
+
+    border:1px solid #99f6e4;
+
+    font-weight:700;
+
+}
+
+
+#coupon-box:hover{
+
+    transform:translateY(-2px);
+
+}
+
+
+#coupon-box.applied{
+
+    background:
+
+    linear-gradient(
+
+        135deg,
+
+        #ecfdf5,
+
+        #f0fdf4
+
+    );
+
+    color:#166534;
+
+}
+
+
+#coupon-box.disabled{
+
+    opacity:.6;
+
+    pointer-events:none;
+
+}
+
+
+
+/* DELIVERY */
+
+#delivery-msg{
+
+    margin-top:18px;
+
+    padding:16px;
+
+    border-radius:18px;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #fff7ed,
+
+            #ffedd5
+
+        );
+
+    border:1px solid #fed7aa;
+
+    color:#9a3412;
+
+    font-weight:600;
+
+}
+
+
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+.cart-header{
+
+padding:16px;
+
+border-radius:18px;
+
+}
+
+.cart-restaurant-name{
+
+font-size:21px;
+
+}
+
+.cart-item{
+
+padding:14px;
+
+}
+
+.qty-controls button{
+
+width:30px;
+
+height:30px;
+
+}
+
+}
+/* ================= ADDRESS CARDS ================= */
+
+.address-card{
+
+    background:#525050;
+
+    border-radius:24px;
+
+    padding:22px;
+
+    margin-top:22px;
+
+    border:1px solid #edf2f7;
+
+    box-shadow:
+
+        0 8px 24px rgba(0,0,0,.05);
+
+}
+
+
+.address-card h3{
+
+    font-size:17px;
+
+    font-weight:700;
+
+    color:#111827;
+
+    margin-bottom:18px;
+
+}
+
 
 .address-card input,
 .address-card select,
-.address-card textarea {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-}
-.checkout-bar {
-  position: sticky;
-  bottom: 0; 
-  border-radius:15px;
-  background: #ffffff;
-  padding: 14px;
-  box-shadow: 0 -10px 25px rgba(0,0,0,.12);
-}
+.address-card textarea{
 
-.checkout-bar button {
-  width: 100%;
-  padding: 16px;
-  border-radius: var(--radius-lg);
-  border: none;
-  font-size: 16px;
-  font-weight: 700;
-  color: #fff;
-  background: linear-gradient(135deg, #ff3b30, #ff6b6b);
-  cursor: pointer;
+    width:100%;
+
+    padding:14px 16px;
+
+    border-radius:16px;
+
+    border:1px solid #e5e7eb;
+
+    background:#070707;
+
+    margin-bottom:12px;
+
+    font-size:14px;
+
+    transition:.2s;
+
 }
 
-.checkout-bar button:active {
-  transform: scale(.98);
-}
-.empty-cart {
-  text-align: center;
-  margin-top: 80px;
-  color: var(--muted);
-}
-/* ================== OFFER SECTION ================== */
-#offer-section {
-  margin-top: 16px;
-  padding: 14px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #fff7ed, #ffedd5);
-  border-left: 4px solid #f97316;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-}
 
-/* Offer available text */
-.highlight-msg {
-  font-size: 14px;
-  font-weight: 600;
-  color: #9a3412;
-  margin-bottom: 10px;
+.address-card input:focus,
+.address-card select:focus,
+.address-card textarea:focus{
+
+    outline:none;
+
+    border-color:#3b82f6;
+
+    background:#fff;
+
+    box-shadow:
+
+        0 0 0 4px rgba(59,130,246,.08);
+
 }
 
-/* Offer not available / already used */
-.muted-msg {
-  font-size: 13px;
-  color: #6b7280;
-  text-align: center;
-  padding: 10px;
-  background: #f3f4f6;
-  border-radius: 12px;
+
+.address-card textarea{
+
+    min-height:90px;
+
+    resize:none;
+
 }
 
-/* ================== APPLY BUTTON ================== */
-.apply-offer-btn {
-  width: 100%;
-  padding: 12px;
-  border-radius: 14px;
-  border: none;
-  background: linear-gradient(135deg, #f97316, #fb923c);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 6px 14px rgba(249,115,22,0.35);
+
+/* ================= OFFER SECTION ================= */
+
+#offer-section{
+
+    margin-top:18px;
+
+    padding:18px;
+
+    border-radius:22px;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #fff7ed,
+
+            #ffedd5
+
+        );
+
+    border:1px solid #fed7aa;
+
+    box-shadow:
+
+        0 8px 20px rgba(249,115,22,.08);
+
 }
 
-.apply-offer-btn:hover {
-  box-shadow: 0 10px 22px rgba(249,115,22,0.45);
+
+.highlight-msg{
+
+    font-size:14px;
+
+    font-weight:700;
+
+    color:#9a3412;
+
+    margin-bottom:14px;
+
 }
 
-.apply-offer-btn:active {
-  transform: scale(0.97);
-}
 
-/* ================== OFFER MESSAGE ================== */
-#offer-msg {
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  animation: fadeInOffer 0.25s ease-in-out;
-}
+.muted-msg{
 
-/* Success */
-#offer-msg.success {
-  background: #ecfdf5;
-  color: #065f46;
-  border-left: 4px solid #10b981;
-}
+    padding:14px;
 
-/* Warning */
-#offer-msg.warning {
-  background: #fef2f2;
-  color: #991b1b;
-  border-left: 4px solid #ef4444;
-}
+    border-radius:14px;
 
-/* Info */
-#offer-msg.info {
-  background: #eff6ff;
-  color: #1e3a8a;
-  border-left: 4px solid #3b82f6;
-}
+    background:#f8fafc;
 
-/* ================== ANIMATION ================== */
-@keyframes fadeInOffer {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+    color:#64748b;
 
-/* ================== MOBILE ================== */
-@media (max-width: 480px) {
-  .highlight-msg {
-    font-size: 13px;
-  }
+    text-align:center;
 
-  .apply-offer-btn {
-    font-size: 14px;
-    padding: 10px;
-  }
-}
-/* Buttons on map */
-.map-btn {
-    position: absolute;
-    top: 10px;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 5px;
-    color: #fff;
-    cursor: pointer;
-    font-weight: 600;
-    z-index: 1000;
-}
+    font-size:14px;
 
-/* Full screen button on top right */
-.full-btn {
-    right: 10px;
-    background-color: #1e90ff;
-}
-/* ===============================
-   LOCATION BUTTON – FINAL CSS
-   Popup on arrival (mobile + desktop)
-   No hover popup issues
-================================ */
-/* ===============================
-   LOCATION BUTTON – ZOOM EFFECT
-   Desktop + Mobile safe
-================================ */
-
-/* Base button */
-.location-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 20px;
-    padding: 15px 26px;
-    font-size: 16px;
-    font-weight: 700;
-    color: #fff;
-
-    background: linear-gradient(135deg, #ff00f2, #a0026b);
-    border: none;
-    border-radius: 999px;
-    cursor: pointer;
-
-    box-shadow: 0 8px 20px rgba(255, 0, 242, 0.35);
-
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
-
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
-
-/* 🖥 Desktop: mouse hover zoom */
-@media (hover: hover) and (pointer: fine) {
-    .location-btn:hover {
-        transform: scale(1.08);
-        box-shadow: 0 18px 42px rgba(255, 0, 242, 0.75);
-    }
-}
-
-/* 📱 Mobile + Touch devices: press zoom */
-@media (hover: none) and (pointer: coarse) {
-    .location-btn:active {
-        transform: scale(1.08);
-        box-shadow: 0 18px 42px rgba(255, 0, 242, 0.75);
-    }
-}
-
-/* Mobile layout */
-@media (max-width: 480px) {
-    .location-btn {
-        width: 100%;
-        justify-content: center;
-        font-size: 15px;
-        padding: 14px;
-    }
-}
-
-/* Success / selected */
-.location-btn.selected {
-    background: linear-gradient(135deg, #00e676, #00c853);
-    box-shadow: 0 14px 35px rgba(0, 230, 118, 0.7);
 }
 
 
 
+/* APPLY BUTTON */
 
-/* ===============================
-   DESKTOP HOVER (NO POPUP FEEL)
-================================ */
+.apply-offer-btn{
 
-@media (hover: hover) and (pointer: fine) {
-    .location-btn:hover {
-        background: linear-gradient(135deg, #ff1cf4, #b30078);
-        box-shadow: 0 12px 28px rgba(255, 0, 242, 0.55);
-    }
+    width:100%;
+
+    padding:14px;
+
+    border:none;
+
+    border-radius:16px;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #ff6b00,
+
+            #ff8f00
+
+        );
+
+    color:white;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    box-shadow:
+
+        0 10px 24px rgba(255,107,0,.25);
+
 }
 
-/* ===============================
-   MOBILE TAP FEEDBACK
-================================ */
 
-@media (hover: none) and (pointer: coarse) {
-    .location-btn:active {
-        background: linear-gradient(135deg, #e600d4, #8a015c);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-    }
-}
+.apply-offer-btn:hover{
 
-/* ===============================
-   SUCCESS / LOCATION SELECTED
-================================ */
+    transform:translateY(-2px);
 
-.location-btn.selected {
-    background: linear-gradient(135deg, #00e676, #00c853);
-    box-shadow: 0 14px 35px rgba(0, 230, 118, 0.7);
-}
-
-/* Optional: stronger desktop hover after success */
-@media (hover: hover) and (pointer: fine) {
-    .location-btn.selected:hover {
-        box-shadow: 0 18px 42px rgba(0, 230, 118, 0.85);
-    }
 }
 
 
-.payment-info {
-    margin: 18px 0 12px;
-    padding: 12px 16px;
-    background: #f0fff4;
-    border: 1px solid #b7ebc6;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    color: #2e7d32;
-    text-align: center;
+.apply-offer-btn:active{
+
+    transform:scale(.97);
+
 }
 
-/* Mobile */
-@media (max-width: 480px) {
-    .payment-info {
-        font-size: 14px;
-    }
-}
-#map-box {
-  border: 2px solid transparent;
+
+
+/* OFFER MESSAGE */
+
+#offer-msg{
+
+    margin-top:14px;
+
+    padding:14px;
+
+    border-radius:14px;
+
+    font-size:14px;
+
+    animation:fadeInOffer .25s ease;
+
 }
 
-#map-box.error {
-  border-color: #dc3545;
-  padding: 10px;
-  border-radius: 8px;
-}
-/* ================= CONVERSION BOOST (SAFE CLASSES) ================= */
 
-.conv-urgency {
-  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-  color: #065f46;
-  border-left: 4px solid #10b981;
-  padding: 12px 14px;
-  border-radius: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  margin-top: 10px;
-  box-shadow: 0 4px 12px rgba(16,185,129,.15);
+#offer-msg.success{
+
+    background:#ecfdf5;
+
+    color:#065f46;
+
 }
 
-.conv-mini-total {
-  background: #eff6ff;
-  color: #1e40af;
-  padding: 12px 14px;
-  border-radius: 14px;
-  font-size: 15px;
-  font-weight: 700;
-  margin-top: 14px;
+
+#offer-msg.warning{
+
+    background:#fef2f2;
+
+    color:#991b1b;
+
 }
 
-.conv-social {
-  background: #f9fafb;
-  color: #374151;
-  padding: 12px 14px;
-  border-radius: 14px;
-  font-size: 14px;
-  margin-top: 14px;
-  box-shadow: 0 4px 10px rgba(0,0,0,.06);
+
+#offer-msg.info{
+
+    background:#eff6ff;
+
+    color:#1d4ed8;
+
 }
 
-.conv-helper {
-  text-align: center;
-  font-size: 14px;
-  font-weight: 600;
-  margin: 10px 0;
-  color: #374151;
+
+
+/* ================= CHECKOUT BAR ================= */
+
+.checkout-bar{
+
+    position:sticky;
+
+    bottom:16px;
+
+    padding:18px;
+
+    margin-top:25px;
+
+    background:#fff;
+
+    border-radius:24px;
+
+    border:1px solid #edf2f7;
+
+    box-shadow:
+
+        0 12px 30px rgba(0,0,0,.08);
+
 }
 
-.conv-cta {
-  animation: convPulse 2s infinite;
+
+.checkout-bar button{
+
+    width:100%;
+
+    padding:18px;
+
+    border:none;
+
+    border-radius:18px;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #ff6b00,
+
+            #ff8f00
+
+        );
+
+    color:white;
+
+    font-size:17px;
+
+    font-weight:800;
+
+    cursor:pointer;
+
+    transition:.25s;
+
 }
 
-@keyframes convPulse {
-  0% { box-shadow: 0 0 0 0 rgba(255,59,48,.6); }
-  70% { box-shadow: 0 0 0 14px rgba(255,59,48,0); }
-  100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); }
+
+.checkout-bar button:hover{
+
+    transform:translateY(-2px);
+
 }
+
+
+.checkout-bar button:active{
+
+    transform:scale(.98);
+
+}
+
+
+
+/* EMPTY CART */
+
+.empty-cart{
+
+    text-align:center;
+
+    padding:70px 20px;
+
+    color:#64748b;
+
+}
+
+
+.empty-cart h3{
+
+    font-size:22px;
+
+    margin-bottom:10px;
+
+}
+
+
+.empty-cart p{
+
+    font-size:14px;
+
+}
+
+
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+.address-card{
+
+padding:18px;
+
+border-radius:20px;
+
+}
+
+.address-card h3{
+
+font-size:16px;
+
+}
+
+.checkout-bar{
+
+border-radius:20px;
+
+padding:14px;
+
+}
+
+.checkout-bar button{
+
+padding:16px;
+
+font-size:16px;
+
+}
+
+}
+/* ================= MAP ================= */
+
+#map-box{
+
+    margin-top:18px;
+
+    padding:16px;
+
+    border-radius:24px;
+
+    background:#81cbd8;
+
+    border:1px solid #a0ecec;
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,.05);
+
+    overflow:hidden;
+
+}
+
+#map{
+
+    border-radius:18px;
+
+}
+
+#map-box.error{
+
+    border:2px solid #ef4444;
+
+}
+
+
+/* ================= MAP BUTTONS ================= */
+
+.map-btn{
+
+    position:absolute;
+
+    top:12px;
+
+    padding:8px 14px;
+
+    border:none;
+
+    border-radius:12px;
+
+    color:#fff;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    z-index:1000;
+
+    box-shadow:
+
+        0 6px 16px rgba(0,0,0,.12);
+
+}
+
+.full-btn{
+
+    right:12px;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #2563eb,
+
+            #3b82f6
+
+        );
+
+}
+
+
+/* ================= LOCATION BUTTON ================= */
+
+.location-btn{
+
+    width:100%;
+
+    padding:16px;
+
+    border:none;
+
+    border-radius:18px;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+    font-weight:700;
+
+    color:white;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #2563eb,
+
+            #3b82f6
+
+        );
+
+    box-shadow:
+
+        0 10px 25px rgba(37,99,235,.25);
+
+    transition:.25s;
+
+}
+
+
+.location-btn:hover{
+
+    transform:translateY(-2px);
+
+}
+
+
+.location-btn:active{
+
+    transform:scale(.98);
+
+}
+
+
+.location-btn.selected{
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #10b981,
+
+            #22c55e
+
+        );
+
+    box-shadow:
+
+        0 10px 25px rgba(16,185,129,.28);
+
+}
+
+
+
+/* ================= PAYMENT INFO ================= */
+
+.payment-info{
+
+    margin-top:18px;
+
+    padding:16px;
+
+    border-radius:18px;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #ecfdf5,
+
+            #f0fdf4
+
+        );
+
+    border:1px solid #bbf7d0;
+
+    color:#166534;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    text-align:center;
+
+}
+
+
+
+/* ================= URGENCY ================= */
+
+.conv-urgency{
+
+    padding:16px;
+
+    margin-top:16px;
+
+    border-radius:20px;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #ecfdf5,
+
+            #dcfce7
+
+        );
+
+    border:1px solid #86efac;
+
+    color:#166534;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    box-shadow:
+
+        0 8px 20px rgba(16,185,129,.08);
+
+}
+
+
+.conv-urgency b{
+
+    color:#15803d;
+
+}
+
+
+/* ================= ORDER TOTAL ================= */
+
+.conv-mini-total{
+
+    margin-top:16px;
+
+    padding:16px;
+
+    border-radius:20px;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #eff6ff,
+
+            #dbeafe
+
+        );
+
+    border:1px solid #bfdbfe;
+
+    color:#1d4ed8;
+
+    font-size:15px;
+
+    font-weight:700;
+
+}
+
+
+
+/* ================= SOCIAL PROOF ================= */
+
+.conv-social{
+
+    margin-top:16px;
+
+    padding:18px;
+
+    border-radius:20px;
+
+    background:#fff;
+
+    border:1px solid #edf2f7;
+
+    box-shadow:
+
+        0 8px 20px rgba(0,0,0,.04);
+
+}
+
+
+.conv-helper{
+
+    text-align:center;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    color:#475569;
+
+}
+
+
+
+/* ================= CTA ================= */
+
+.conv-cta{
+
+    width:100%;
+
+    padding:18px;
+
+    border:none;
+
+    border-radius:20px;
+
+    cursor:pointer;
+
+    font-size:17px;
+
+    font-weight:800;
+
+    color:white;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            #001aff,
+
+            #3542b6
+
+        );
+
+    box-shadow:
+
+        0 10px 28px rgba(255,107,0,.25);
+
+    transition:.25s;
+
+}
+
+
+.conv-cta:hover{
+
+    transform:translateY(-2px);
+
+}
+
+
+.conv-cta:active{
+
+    transform:scale(.98);
+
+}
+
+
+
+@keyframes convPulse{
+
+0%{
+
+box-shadow:
+
+0 0 0 0 rgba(255,107,0,.30);
+
+}
+
+70%{
+
+box-shadow:
+
+0 0 0 14px rgba(255,107,0,0);
+
+}
+
+100%{
+
+box-shadow:
+
+0 0 0 0 rgba(255,107,0,0);
+
+}
+
+}
+
+
+.conv-cta{
+
+animation:convPulse 2.5s infinite;
+
+}
+
+
+
+/* ================= MOBILE ================= */
+
+@media(max-width:600px){
+
+.location-btn{
+
+font-size:15px;
+
+padding:14px;
+
+}
+
+.payment-info{
+
+font-size:13px;
+
+}
+
+.conv-urgency{
+
+font-size:13px;
+
+}
+
+.conv-mini-total{
+
+font-size:14px;
+
+}
+
+}
+
 /* ================= CONVERSION CTA BUTTON ================= */
 
 .conv-cta {
@@ -632,51 +1390,74 @@ body {
 }
 /* ===== MAIN FORM LOOK ===== */
 
-
-/* ===== CARD WRAPPER EFFECT ===== */
 .address-card {
-  background-color: #171717;
-  border-radius: 22px;
-  padding: 1.4em;
-  transition: all 0.3s;
-  box-shadow: inset 2px 5px 10px rgb(5, 5, 5);
+  background: linear-gradient(145deg, #181818, #101010);
+  border-radius: 24px;
+  padding: 24px;
+  margin-top: 22px;
+  border: 1px solid rgba(0,255,117,0.12);
+  transition: all 0.35s ease;
+  box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      0 10px 30px rgba(0,0,0,0.45);
 }
 
 .address-card:hover {
-  transform: scale(0.98);
-  box-shadow: 0 0 30px 1px rgba(0, 255, 117, 0.3);
+  transform: translateY(-4px);
+  box-shadow:
+      0 0 30px rgba(0,255,117,0.22),
+      0 15px 40px rgba(0,0,0,0.5);
 }
 
-/* ===== HEADINGS ===== */
+/* Heading */
 .address-card h3 {
   text-align: center;
-  margin-bottom: 1em;
-  color: rgb(0, 255, 200);
-  font-size: 1.1em;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 22px;
+  letter-spacing: 0.5px;
 }
 
-/* ===== INPUT FIELD STYLE (Uiverse Field) ===== */
+/* Inputs */
 .address-card input,
 .address-card select,
 .address-card textarea {
   width: 100%;
-  background: none;
-  border: none;
-  outline: none;
-  color: rgb(0, 255, 200);
-  padding: 0.65em;
-  border-radius: 25px;
-  background-color: #171717;
-  box-shadow: inset 2px 5px 10px rgb(5, 5, 5);
-  margin-bottom: 12px;
-  font-size: 0.95em;
+  padding: 15px 18px;
+  margin-bottom: 15px;
+  border-radius: 16px;
+  border: 1px solid #2d2d2d;
+  background: #222222;
+  color: #f8fafc;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.address-card input::placeholder,
+.address-card textarea::placeholder {
+  color: #9ca3af;
+}
+
+.address-card input:focus,
+.address-card select:focus,
+.address-card textarea:focus {
+  border-color: #00ff75;
+  background: #292929;
+  box-shadow:
+      0 0 0 4px rgba(0,255,117,0.12),
+      0 0 20px rgba(0,255,117,0.18);
+}
+
+.address-card select option {
+  background: #222222;
+  color: #ffffff;
 }
 
 .address-card textarea {
-  resize: none;
-  min-height: 80px;
+  min-height: 100px;
+  resize: vertical;
 }
-
 /* ===== PAYMENT INFO ===== */
 .payment-info {
   text-align: center;
@@ -690,7 +1471,7 @@ body {
 /* ===== HELPER TEXT ===== */
 .conv-helper {
   text-align: center;
-  color: rgb(0, 255, 200);
+  color: rgb(4, 26, 97);
   font-size: 0.95em;
 }
 
@@ -700,289 +1481,1320 @@ body {
   padding: 0.8em;
   border-radius: 20px;
   background-color: #171717;
-  color: rgb(0, 255, 200);
-  box-shadow: inset 2px 5px 10px rgb(5, 5, 5);
+  color: rgba(21, 0, 112, 0.74);
+  box-shadow: inset 2px 5px 10px rgb(255, 255, 255);
+}
+/*=========================
+CONFIRM ORDER BUTTON
+==========================*/
+
+.conv-cta{
+
+width:100%;
+
+padding:18px;
+
+margin-top:22px;
+
+border:none;
+
+border-radius:20px;
+
+cursor:pointer;
+
+font-size:17px;
+
+font-weight:800;
+
+color:white;
+
+background:
+
+linear-gradient(
+135deg,
+#02c42c,
+hwb(118 25% 6%)
+);
+
+box-shadow:
+0 12px 28px rgba(255,107,0,.25);
+
+transition:.25s;
+
 }
 
-/* ===== CONFIRM BUTTON (Uiverse Button2) ===== */
-.conv-cta {
-  margin-top: 1.5em;
-  padding: 0.7em 2.3em;
-  border-radius: 5px;
-  border: none;
-  outline: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: .4s ease-in-out;
-  background-image: linear-gradient(163deg, #00ff75 0%, #3700ff 100%);
-  color: rgb(0, 0, 0);
+
+.conv-cta:hover{
+
+transform:translateY(-2px);
+
+box-shadow:
+0 18px 35px rgba(255,107,0,.35);
+
 }
 
-.conv-cta:hover {
-  background-image: linear-gradient(163deg, #00642f 0%, #13034b 100%);
-  color: rgb(0, 255, 200);
-}
-.total-box {
-  position: relative;
-  margin-top: 22px;
-  padding: 22px;
-  border-radius: 20px;
 
-  /* visible gradient border */
-  background:
-    linear-gradient(#ffffff, #ffffff) padding-box,
-    linear-gradient(135deg, #16a34a, #22c55e) border-box;
-  border: 2px solid transparent;
+.conv-cta:active{
 
-  box-shadow:
-    0 16px 35px rgba(0, 0, 0, 0.12),
-    0 6px 15px rgba(22, 163, 74, 0.15);
+transform:scale(.98);
 
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* hover lift */
-.total-box:hover {
-  transform: translateY(-4px);
-  box-shadow:
-    0 26px 50px rgba(0, 0, 0, 0.18),
-    0 10px 30px rgba(22, 163, 74, 0.25);
+
+.conv-cta.disabled{
+
+opacity:.6;
+
+cursor:not-allowed;
+
+background:#d1d5db;
+
+box-shadow:none;
+
 }
 
-/* ===== ROWS ===== */
-.total-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  font-size: 15px;
-  color: var(--text);
+
+
+/*=========================
+TOTAL BOX
+==========================*/
+
+.total-box{
+
+margin-top:22px;
+
+padding:22px;
+
+background:#fff;
+
+border-radius:24px;
+
+border:1px solid #edf2f7;
+
+box-shadow:
+
+0 10px 25px rgba(0,0,0,.05);
+
 }
 
-/* separator */
-.total-row:not(.final) {
-  border-bottom: 1px dashed rgba(0,0,0,0.12);
+
+.total-row{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+padding:14px 0;
+
+font-size:15px;
+
 }
 
-/* labels */
-.total-row span:first-child {
-  color: var(--muted);
-  font-weight: 500;
+
+.total-row:not(.final){
+
+border-bottom:1px dashed #e5e7eb;
+
 }
 
-/* values */
-.total-row span:last-child {
-  font-weight: 700;
-  color: #111827;
+
+.total-row span:first-child{
+
+font-weight:500;
+
+color:#64748b;
+
 }
 
-/* ===== FINAL TOTAL ===== */
-.total-row.final {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 2px solid rgba(22,163,74,0.4);
-  font-size: 20px;
-  font-weight: 900;
+
+.total-row span:last-child{
+
+font-weight:700;
+
+color:#111827;
+
 }
 
-/* FINAL PRICE — CLEAR & BOLD */
-.total-row.final strong {
-  color: var(--success);
-  font-size: 22px;
-  letter-spacing: 0.4px;
-  text-shadow: 0 3px 10px rgba(22,163,74,0.35);
-}
-.save-address {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffffff;
-  cursor: pointer;
+
+
+/* FINAL TOTAL */
+
+.total-row.final{
+
+padding-top:18px;
+
+margin-top:8px;
+
+border-top:2px solid #ffedd5;
+
+font-size:19px;
+
+font-weight:800;
+
 }
 
-/* hide default checkbox */
-.save-address input[type="checkbox"] {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  border: 2px solid #9ca3af;
-  display: grid;
-  place-content: center;
-  transition: all 0.2s ease;
-  background: white;
+
+.total-row.final span{
+
+color:#111827;
+
 }
 
-/* check icon */
-.save-address input[type="checkbox"]::before {
-  content: "✓";
-  font-size: 14px;
-  color: white;
-  transform: scale(0);
-  transition: transform 0.15s ease;
+
+.total-row.final strong{
+
+font-size:24px;
+
+font-weight:900;
+
+color:#ff6b00;
+
 }
 
-/* checked state */
-.save-address input[type="checkbox"]:checked {
-  background: linear-gradient(135deg, #16a34a, #22c55e);
-  border-color: #16a34a;
+
+
+/*=========================
+SAVE ADDRESS
+==========================*/
+
+.save-address{
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+padding:14px;
+
+margin-top:18px;
+
+background:#fff;
+
+border-radius:18px;
+
+border:1px solid #edf2f7;
+
+font-size:14px;
+
+font-weight:600;
+
+color:#334155;
+
+cursor:pointer;
+
 }
 
-.save-address input[type="checkbox"]:checked::before {
-  transform: scale(1);
+
+.save-address input{
+
+appearance:none;
+
+width:24px;
+
+height:24px;
+
+border-radius:8px;
+
+border:2px solid #d1d5db;
+
+background:white;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+transition:.2s;
+
 }
 
-/* hover effect */
-.save-address:hover input[type="checkbox"] {
-  border-color: #16a34a;
+
+.save-address input:checked{
+
+background:
+
+linear-gradient(
+135deg,
+#16a34a,
+#22c55e
+);
+
+border-color:#16a34a;
+
 }
 
-/* focus accessibility */
-.save-address input[type="checkbox"]:focus-visible {
-  outline: 3px solid rgba(22,163,74,0.35);
-  outline-offset: 2px;
-}
-.location-status {
-    margin-top: 10px;
-    font-weight: 600;
-    background-color: #111827;
-    font-size: 14px;
-    color: #ff9800;
-    display: none;
+
+.save-address input:checked::after{
+
+content:"✓";
+
+color:white;
+
+font-size:13px;
+
+font-weight:bold;
+
 }
 
-.location-status.success {
-    color: #00c853;
+
+.save-address:hover{
+
+border-color:#16a34a;
+
 }
 
-.location-status.error {
-    color: #d32f2f;
-}
-#map-box {
-    position: relative;
+
+
+/*=========================
+LOCATION STATUS
+==========================*/
+
+.location-status{
+
+padding:14px;
+
+margin-top:14px;
+
+border-radius:16px;
+
+font-size:14px;
+
+font-weight:600;
+
+display:none;
+
 }
 
-.map-status {
+
+.location-status.success{
+
+display:block;
+
+background:
+
+linear-gradient(
+135deg,
+#ecfdf5,
+#dcfce7
+);
+
+border:1px solid #86efac;
+
+color:#15803d;
+
+}
+
+
+.location-status.error{
+
+display:block;
+
+background:
+
+linear-gradient(
+135deg,
+#fef2f2,
+#fee2e2
+);
+
+border:1px solid #fca5a5;
+
+color:#dc2626;
+
+}
+
+
+
+/*=========================
+CTA PULSE
+==========================*/
+
+@keyframes pulse{
+
+0%{
+
+box-shadow:
+0 0 0 0 rgba(255,107,0,.35);
+
+}
+
+70%{
+
+box-shadow:
+0 0 0 14px rgba(255,107,0,0);
+
+}
+
+100%{
+
+box-shadow:
+0 0 0 0 rgba(255,107,0,0);
+
+}
+
+}
+
+
+.conv-cta{
+
+animation:pulse 2.5s infinite;
+
+}
+
+
+
+/*=========================
+MOBILE
+==========================*/
+
+@media(max-width:600px){
+
+.total-box{
+
+padding:18px;
+
+border-radius:20px;
+
+}
+
+.total-row{
+
+font-size:14px;
+
+}
+
+.total-row.final strong{
+
+font-size:22px;
+
+}
+
+.conv-cta{
+
+padding:16px;
+
+font-size:16px;
+
+}
+
+.save-address{
+
+padding:12px;
+
+font-size:13px;
+
+}
+
+}
+/* ===========================
+MAP CONTAINER
+=========================== */
+
+#map-box{
+
+position:relative;
+
+margin-top:18px;
+
+padding:14px;
+
+background:#fff;
+
+border-radius:24px;
+
+border:1px solid #edf2f7;
+
+box-shadow:
+
+0 10px 25px rgba(0,0,0,.05);
+
+overflow:hidden;
+
+}
+
+
+
+/* ===========================
+MAP STATUS
+=========================== */
+
+.map-status{
+
+position:absolute;
+
+top:14px;
+
+left:50%;
+
+transform:translateX(-50%);
+
+z-index:1000;
+
+padding:10px 16px;
+
+border-radius:999px;
+
+font-size:13px;
+
+font-weight:700;
+
+display:none;
+
+backdrop-filter:blur(12px);
+
+box-shadow:
+
+0 8px 20px rgba(0,0,0,.12);
+
+pointer-events:none;
+
+animation:slideDown .3s ease;
+
+}
+
+
+.map-status.wait{
+
+background:
+
+rgba(255,183,77,.92);
+
+color:#7c2d12;
+
+}
+
+
+.map-status.success{
+
+background:
+
+rgba(16,185,129,.92);
+
+color:white;
+
+}
+
+
+.map-status.error{
+
+background:
+
+rgba(239,68,68,.92);
+
+color:white;
+
+}
+
+
+.map-status.hide{
+
+opacity:0;
+
+transform:
+
+translateX(-50%)
+
+translateY(-10px);
+
+transition:.25s;
+
+}
+
+
+@keyframes slideDown{
+
+from{
+
+opacity:0;
+
+transform:
+
+translateX(-50%)
+
+translateY(-10px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:
+
+translateX(-50%)
+
+translateY(0);
+
+}
+
+}
+
+
+
+/* ===========================
+LOCATION BUTTON WRAPPER
+=========================== */
+
+.location-wrapper{
+
+position:relative;
+
+display:block;
+
+}
+
+
+
+/* ===========================
+HELP BUBBLE
+=========================== */
+
+.location-hint{
+
+position:absolute;
+
+left:50%;
+
+bottom:105%;
+
+transform:translateX(-50%);
+
+padding:10px 14px;
+
+border-radius:14px;
+
+background:#111827;
+
+color:white;
+
+font-size:13px;
+
+font-weight:600;
+
+white-space:nowrap;
+
+box-shadow:
+
+0 12px 30px rgba(0,0,0,.18);
+
+animation:floatHint 1.8s infinite;
+
+z-index:20;
+
+}
+
+
+.location-hint::after{
+
+content:"";
+
+position:absolute;
+
+top:100%;
+
+left:50%;
+
+transform:translateX(-50%);
+
+border:8px solid transparent;
+
+border-top-color:#111827;
+
+}
+
+
+
+@keyframes floatHint{
+
+0%,100%{
+
+transform:
+
+translateX(-50%)
+
+translateY(0);
+
+}
+
+50%{
+
+transform:
+
+translateX(-50%)
+
+translateY(-5px);
+
+}
+
+}
+
+
+
+/* ===========================
+LOADER
+=========================== */
+
+.map-loader{
+
+position:absolute;
+
+top:0;
+
+left:0;
+
+width:100%;
+
+height:300px;
+
+background:
+
+rgba(255,255,255,.92);
+
+backdrop-filter:blur(6px);
+
+display:flex;
+
+flex-direction:column;
+
+justify-content:center;
+
+align-items:center;
+
+z-index:1000;
+
+border-radius:20px;
+
+}
+
+
+.gps-loader{
+
+width:52px;
+
+height:52px;
+
+border-radius:50%;
+
+border:4px solid #22c55e;
+
+border-top-color:transparent;
+
+animation:spin .8s linear infinite;
+
+margin-bottom:14px;
+
+}
+
+
+.map-loader p{
+
+font-size:14px;
+
+font-weight:600;
+
+color:#475569;
+
+}
+
+
+
+@keyframes spin{
+
+100%{
+
+transform:rotate(360deg);
+
+}
+
+}
+
+
+
+/* ===========================
+DISABLED BUTTON
+=========================== */
+
+.conv-cta.disabled{
+
+opacity:.55;
+
+cursor:not-allowed;
+
+background:#cbd5e1;
+
+box-shadow:none;
+
+animation:none;
+
+}
+
+#center-marker {
     position: absolute;
-    top: 12px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
+    transform: translate(-50%, -100%);
+    font-size: 42px;
+    z-index: 999;
+    pointer-events: none;
+    transition: transform 0.2s ease;
+}
+/* paymnet section css  */
+.payment-section{
 
-    background: rgba(0, 0, 0, 0.75);
-    color: #fff;
+    margin-top:35px;
 
-    padding: 8px 14px;
-    border-radius: 999px;
+    padding:25px;
 
-    font-size: 13px;
-    font-weight: 600;
-    display: none;
+    background:#fff;
 
-    pointer-events: none; /* map still clickable */
-}
+    border-radius:24px;
 
-/* Status colors */
-.map-status.wait {
-    background: rgba(255, 152, 0, 0.9);
-}
+    border:1px solid #e5e7eb;
 
-.map-status.success {
-    background: rgba(0, 200, 83, 0.9);
-}
+    box-shadow:
+    0 8px 25px rgba(0,0,0,.06);
 
-.map-status.error {
-    background: rgba(211, 47, 47, 0.9);
-}
-.map-status {
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-.map-status.hide {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-6px);
-}
-.location-wrapper {
-    position: relative;
-    display: inline-block;
-}
+    position:relative;
 
-.location-hint {
-    position: absolute;
-    bottom: 90%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #111;
-    color: #fff;
-    font-size: 13px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    white-space: nowrap;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-    animation: bounce 1.6s infinite;
-    z-index: 20;
 }
+.payment-section::before{
 
-/* Arrow */
-.location-hint::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 7px solid transparent;
-    border-top-color: #111;
-}
+content:"NEW";
 
-/* Bounce animation */
-@keyframes bounce {
-    0%, 100% { transform: translate(-50%, 0); }
-    50% { transform: translate(-50%, -6px); }
-}
-.conv-cta.disabled {
-    background: #444;
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-/* Map Loader Overlay */
-.map-loader {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 300px;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(4px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    border-radius: 8px;
-}
+position:absolute;
 
-.gps-loader {
-    width: 50px;
-    height: 50px;
-    border: 4px solid #28a745;
-    border-top: 4px solid transparent;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 10px;
+top:15px;
+
+left:10px;
+
+padding:5px 12px;
+
+background:#16a34a;
+
+color:white;
+
+font-size:11px;
+
+font-weight:700;
+
+border-radius:30px;
+
+}
+.payment-section h3{
+   color:#222;
+}
+.payment-title{
+
+font-size:24px;
+
+font-weight:800;
+
+color:#ca06c0;
+
+margin-bottom:24px;
+
+}
+.payment-card:last-child{
+
+border-color:#dbeafe;
+
+background:
+
+linear-gradient(
+135deg,
+#f8fbff,
+#ffffff
+);
+
+}
+.payment-card{
+
+    display:block;
+    position:relative;
+
+    background:#fff;
+
+    border:2px solid #edf2f7;
+
+    border-radius:24px;
+
+    padding:20px;
+
+    margin-bottom:18px;
+
+    cursor:pointer;
+
+    overflow:hidden;
+
+    transition:.3s ease;
+
 }
 
-@keyframes spin {
-    100% {
-        transform: rotate(360deg);
-    }
+.payment-card:hover{
+
+    transform:translateY(-4px);
+
+    border-color:#dbe3ef;
+
+    box-shadow:
+
+    0 15px 40px rgba(0,0,0,.08);
+
 }
 
-.map-loader p {
-    font-weight: 500;
-    color: #333;
+.payment-card input{
+    display:none;
+}
+
+.payment-card:has(input:checked){
+
+border-color:#3399cc;
+
+background:
+
+linear-gradient(
+135deg,
+#f0f9ff,
+#ffffff
+);
+
+box-shadow:
+
+0 10px 30px rgba(51,153,204,.15);
+
+}
+
+
+.payment-card:has(input:checked)::before{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+
+    top:0;
+
+    bottom:0;
+
+    width:5px;
+
+    border-radius:8px;
+
+    background:
+
+    linear-gradient(
+        180deg,
+        #3399cc,
+        #2563eb
+    );
+
+}
+
+
+.payment-content{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:16px;
+
+}
+
+
+.payment-icon{
+
+    width:60px;
+
+    height:60px;
+
+    border-radius:18px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:28px;
+
+    flex-shrink:0;
+
+}
+
+
+.cod-icon{
+
+    background:
+
+    linear-gradient(
+        135deg,
+        #fff7ed,
+        #ffedd5
+    );
+
+}
+
+
+.online-icon{
+
+    background:
+
+    linear-gradient(
+        135deg,
+        #e0f2fe,
+        #eff6ff
+    );
+
+}
+
+
+.payment-details{
+
+    flex:1;
+
+}
+
+
+.payment-name{
+
+    font-size:18px;
+
+    font-weight:800;
+
+    color:#0f172a;
+
+}
+
+
+.payment-desc{
+
+    margin-top:5px;
+
+    font-size:14px;
+
+    color:#64748b;
+
+}
+
+
+.payment-method-icons{
+
+    margin-top:10px;
+
+    display:inline-block;
+
+    padding:7px 12px;
+
+    border-radius:50px;
+
+    background:#f8fafc;
+
+    border:1px solid #e2e8f0;
+
+    font-size:12px;
+
+    color:#64748b;
+
+}
+
+
+.payment-right{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:flex-end;
+
+    gap:10px;
+
+}
+
+
+.recommended{
+
+    background:
+
+    linear-gradient(
+        135deg,
+        #22c55e,
+        #16a34a
+    );
+
+    color:white;
+
+    padding:6px 12px;
+
+    border-radius:999px;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    text-transform:uppercase;
+
+    letter-spacing:.5px;
+
+    box-shadow:
+
+    0 5px 18px rgba(34,197,94,.3);
+
+}
+
+
+.payment-check{
+
+    width:24px;
+
+    height:24px;
+
+    border-radius:50%;
+
+    border:2px solid #cbd5e1;
+
+    transition:.25s ease;
+
+    background:#fff;
+
+}
+
+
+.payment-card:has(input:checked) .payment-check{
+
+    background:#3399cc;
+
+    border-color:#3399cc;
+
+    box-shadow:
+
+    0 0 0 5px rgba(51,153,204,.15);
+
+}
+
+
+.payment-card:has(input:checked) .payment-check::after{
+
+    content:"✓";
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    height:100%;
+
+    color:white;
+
+    font-size:13px;
+
+    font-weight:bold;
+
+}
+
+
+/* online payment glow */
+
+.payment-card:last-child{
+
+    border-color:#dbeafe;
+
+}
+
+
+.payment-card:last-child:hover{
+
+    box-shadow:
+
+    0 12px 35px rgba(37,99,235,.12);
+
+}
+
+
+/* mobile */
+
+@media(max-width:600px){
+
+.payment-card{
+
+padding:16px;
+
+}
+
+.payment-content{
+
+align-items:flex-start;
+
+gap:12px;
+
+}
+
+.payment-icon{
+
+width:52px;
+
+height:52px;
+
+font-size:24px;
+
+}
+
+.payment-name{
+
+font-size:16px;
+
+}
+
+.payment-desc{
+
+font-size:13px;
+
+}
+
+.payment-method-icons{
+
+font-size:11px;
+
+padding:6px 10px;
+
+}
+
+.recommended{
+
+font-size:10px;
+
+padding:5px 10px;
+
+}
+
+}
+.payment-notice{
+
+margin:22px 0;
+
+padding:16px 18px;
+
+border-radius:16px;
+
+background:
+
+linear-gradient(
+135deg,
+#eff6ff,
+#f8fbff
+);
+
+border:1px solid #bfdbfe;
+
+color:#1e40af;
+
+font-size:14px;
+
+font-weight:600;
+
+line-height:1.6;
+
+box-shadow:
+0 6px 18px rgba(59,130,246,.08);
+
+}
+
+.payment-notice strong{
+
+color:#2563eb;
+
+font-weight:700;
+
+}
+
+.order-value-card{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+padding:18px 22px;
+
+margin:24px 0;
+
+background:
+linear-gradient(
+135deg,
+#eff6ff,
+#f8fbff
+);
+
+border:1px solid #dbeafe;
+
+border-radius:18px;
+
+box-shadow:
+0 8px 24px rgba(37,99,235,.08);
+
+}
+
+
+.order-value-label{
+
+font-size:14px;
+
+font-weight:700;
+
+color:#1e40af;
+
+display:flex;
+
+align-items:center;
+
+gap:8px;
+
+}
+
+
+.order-value-price{
+
+font-size:24px;
+
+font-weight:900;
+
+color:#2563eb;
+
+letter-spacing:.3px;
+
+}
+
+
+.order-value-price span{
+
+font-size:24px;
+
+font-weight:900;
+
+}
+
+
+@media(max-width:600px){
+
+.order-value-card{
+
+padding:16px 18px;
+
+}
+
+.order-value-price{
+
+font-size:22px;
+
+}
+
 }
 </style>
 </head>
@@ -1057,7 +2869,9 @@ body {
 {% endwith %}
 <!-- MAP -->
 <div id="map-box" style="position: relative;">
-
+ <div id="center-marker">
+    📍
+</div>
     <!-- MAP STATUS MESSAGE -->
     <div id="location-status" class="location-status map-status"></div>
 
@@ -1190,16 +3004,111 @@ body {
   <span>Save this address for future orders</span>
 </label>
 
-                  <!-- Payment Info Message -->
-        <div class="payment-info">
-            💳 Pay by <strong>Cash on Delivery</strong> or 
-            <strong>Online Payment at Delivery Time</strong>
+
+
+<div class="order-value-card">
+
+    <div class="order-value-label">
+        🧾 Order Value
+    </div>
+
+    <div class="order-value-price">
+        ₹<span id="mini-total">0</span>
+    </div>
+
+</div>
+<div class="payment-notice">
+
+⚡ Now Available:
+<strong>Pay Online Instantly</strong>,
+<strong>Cash on Delivery</strong>,
+or choose
+<strong>Online Payment at Delivery Time</strong>
+
+</div>
+<div class="payment-section">
+
+    <h3 class="payment-title">
+        💳 Choose Payment Method
+    </h3>
+
+   
+
+    <!-- Online Payment -->
+    <label class="payment-card">
+
+        <input type="radio"
+               name="payment_type"
+               value="Online"checked>
+
+        <div class="payment-content">
+
+            <div class="payment-icon online-icon">
+                🔒
+            </div>
+
+            <div class="payment-details">
+
+                <div class="payment-name">
+                    Pay Online
+                </div>
+
+                <div class="payment-desc">
+                    UPI, Cards, Wallets and Net Banking
+                </div>
+
+                <div class="payment-method-icons">
+                    🟣 UPI &nbsp; 💳 Cards &nbsp; 🏦 Bank
+                </div>
+
+            </div>
+
+            <div class="payment-right">
+
+                <span class="recommended">
+                    Recommended
+                </span>
+
+                <div class="payment-check"></div>
+
+            </div>
+
         </div>
 
-<div class="conv-mini-total">
-🧾 Order value: ₹<span id="mini-total">0</span>
-</div>
+    </label> 
 
+
+ <!-- Cash on Delivery -->
+    <label class="payment-card">
+
+        <input type="radio"
+               name="payment_type"
+               value="COD">
+            
+
+        <div class="payment-content">
+
+            <div class="payment-icon cod-icon">
+                💵
+            </div>
+
+            <div class="payment-details">
+                <div class="payment-name">
+                    Cash on Delivery
+                </div>
+
+                <div class="payment-desc">
+                    Pay after receiving your order
+                </div>
+            </div>
+
+            <div class="payment-check"></div>
+
+        </div>
+
+    </label>
+
+</div>
 {% if not restaurant.can_accept_orders %}
 <button type="button" class="conv-cta disabled" disabled
         title="Orders are not accepted at this time">
@@ -1264,7 +3173,19 @@ if (!carts[RESTAURANT_ID]) {
     carts[RESTAURANT_ID] = { restaurantName: RESTAURANT_NAME, items: [] };
 }
 let cart = carts[RESTAURANT_ID];
-document.getElementById("restaurant-name").innerText = cart.restaurantName;
+/* AUTO FIX OLD CART DATA */
+if (cart && !cart.restaurantName) {
+    cart.restaurantName = RESTAURANT_NAME;
+    carts[RESTAURANT_ID] = cart;
+    localStorage.setItem("carts", JSON.stringify(carts));
+}
+const nameEl = document.getElementById("restaurant-name");
+
+if (cart && cart.restaurantName) {
+    nameEl.innerText = cart.restaurantName;
+} else {
+    nameEl.innerText = "Your Cart 🛒";
+}
 
 /* ============================================================
    OFFER DATA (FROM BACKEND)
@@ -1293,17 +3214,33 @@ function renderCart() {
     }
 
     cart.items.forEach((item, i) => {
+
+        // ✅ SHOW NAME + WEIGHT (only if exists)
+        const displayName = item.weight
+            ? `${item.name} (${item.weight})`
+            : item.name;
+
         cartDiv.innerHTML += `
         <div class="cart-item">
-            <div><strong>${item.name}</strong> <span>₹${item.price}</span></div>
+
+            <div class="cart-info">
+                <strong>${displayName}</strong>
+                <span>₹${item.price}</span>
+            </div>
+
             <div class="qty-controls">
                 <button type="button" onclick="changeQty(${i}, -1)">−</button>
                 <span>${item.quantity}</span>
                 <button type="button" onclick="changeQty(${i}, 1)">+</button>
             </div>
+
+            <!-- ✅ IMPORTANT: send weight also to backend -->
             <input type="hidden" name="item_name[]" value="${item.name}">
+            <input type="hidden" name="weight[]" value="${item.weight || ''}">
+            <input type="hidden" name="category[]" value="${item.category || ''}">
             <input type="hidden" name="quantity[]" value="${item.quantity}">
             <input type="hidden" name="price[]" value="${item.price}">
+
         </div>`;
     });
 
@@ -1321,7 +3258,9 @@ function changeQty(i, delta) {
     carts[RESTAURANT_ID] = cart;
     localStorage.setItem("carts", JSON.stringify(carts));
     renderCart();
-}
+    
+} 
+
 /* ============================================================
    DELIVERY FROM BACKEND (ONLY SOURCE)
 ============================================================ */
@@ -1383,33 +3322,74 @@ function updateLocationInputs(lat, lng) {
 
 let formSubmitting = false;
 
-document.querySelector("form").addEventListener("submit", function (e) {
-  if (formSubmitting) {
-    e.preventDefault(); // 🚫 block second submit
-    return false;
+document.querySelector("form").addEventListener(
+  "submit",
+  function (e) {
+
+    if (formSubmitting) {
+      e.preventDefault();
+      return false;
+    }
+
+    formSubmitting = true;
+
+    console.log(
+      "FORM SUBMIT LAT:",
+      document.getElementById("latitude").value
+    );
+
+    console.log(
+      "FORM SUBMIT LNG:",
+      document.getElementById("longitude").value
+    );
+
+    const paymentType =
+      document.querySelector(
+        'input[name="payment_type"]:checked'
+      )?.value;
+
+    const btn =
+      this.querySelector(".conv-cta");
+
+    if (btn) {
+
+      if (paymentType === "Online") {
+
+        btn.innerHTML =
+          "💳 Redirecting to Payment...";
+
+        btn.style.opacity = "0.8";
+
+      } else {
+
+        btn.disabled = true;
+
+        btn.innerHTML =
+          "⏳ Placing Order...";
+
+        btn.style.opacity = "0.6";
+      }
+    }
   }
+);
 
-  formSubmitting = true;
+window.addEventListener(
+  "pageshow",
+  function () {
 
-  console.log(
-    "FORM SUBMIT LAT:",
-    document.getElementById("latitude").value
-  );
-  console.log(
-    "FORM SUBMIT LNG:",
-    document.getElementById("longitude").value
-  );
+    formSubmitting = false;
 
-  // 🔒 Lock button
-  const btn = this.querySelector(".conv-cta");
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = "⏳ Placing Order...";
-    btn.style.opacity = "0.6";
+    const btn =
+      document.querySelector(".conv-cta");
+
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML =
+        "🍔 Confirm Order";
+      btn.style.opacity = "1";
+    }
   }
-});
-
-
+);
 
 /* ============================================================
    TOTALS
@@ -1600,79 +3580,213 @@ async function applyRestaurantOffer() {
 /* ============================================================
    MAP + LOCATION
 ============================================================ */
-var map = L.map('map').setView([16.4113, 81.8043], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-var marker = L.marker([16.4113, 81.8043], { draggable: true }).addTo(map);
+// Create map
+var map = L.map('map').setView([16.4113, 81.8043], 13);
+
+// OpenStreetMap layer
+L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+).addTo(map);
+
+
+// ============================================================
+// UPDATE LOCATION
+// ============================================================
 
 function updateLocationInputs(lat, lng) {
+
+    // Save hidden inputs
     document.getElementById("customer_lat").value = lat;
     document.getElementById("customer_lng").value = lng;
+
+    // Save in localStorage
+    localStorage.setItem("user_lat", lat);
+    localStorage.setItem("user_lng", lng);
+
     locationSelected = true;
 
-    const itemsTotal = cart.items.reduce((s, i) => s + i.price * i.quantity, 0);
+    // Show success message
+    const status = document.getElementById("location-status");
+
+    status.style.display = "block";
+    status.className = "location-status success";
+    status.innerHTML =
+        "✅ Delivery location selected successfully";
+
+    // Auto hide
+    setTimeout(() => {
+        status.style.display = "none";
+    }, 2000);
+
+    // Fetch delivery charge
+    const itemsTotal = cart.items.reduce(
+        (s, i) => s + i.price * i.quantity,
+        0
+    );
+
     fetchDistanceDelivery(itemsTotal);
 }
 
-marker.on("dragend", () => {
-    const p = marker.getLatLng();
-    updateLocationInputs(p.lat, p.lng);
+
+// ============================================================
+// WHEN USER MOVES MAP
+// ============================================================
+
+map.on("moveend", function () {
+
+    const center = map.getCenter();
+
+    const lat = center.lat;
+    const lng = center.lng;
+
+    updateLocationInputs(lat, lng);
+
 });
 
-map.on("click", e => {
-    marker.setLatLng(e.latlng);
-    updateLocationInputs(e.latlng.lat, e.latlng.lng);
+
+// ============================================================
+// PIN ANIMATION
+// ============================================================
+
+map.on("movestart", function () {
+
+    const pin = document.getElementById("center-marker");
+
+    if (pin) {
+        pin.style.transform =
+            "translate(-50%, -120%)";
+    }
+
 });
+
+map.on("moveend", function () {
+
+    const pin = document.getElementById("center-marker");
+
+    if (pin) {
+        pin.style.transform =
+            "translate(-50%, -100%)";
+    }
+
+});
+
+
+// ============================================================
+// LOAD SAVED LOCATION
+// ============================================================
+
+const savedLat = localStorage.getItem("user_lat");
+const savedLng = localStorage.getItem("user_lng");
+
+if (savedLat && savedLng) {
+
+    map.setView(
+        [parseFloat(savedLat), parseFloat(savedLng)],
+        16
+    );
+
+    updateLocationInputs(
+        parseFloat(savedLat),
+        parseFloat(savedLng)
+    );
+}
+
+
+// ============================================================
+// GET LIVE LOCATION
+// ============================================================
+
 function getUserLocation() {
-    const status = document.getElementById("location-status");
-    const loader = document.getElementById("map-loader");
+
+    const status =
+        document.getElementById("location-status");
+
+    const loader =
+        document.getElementById("map-loader");
 
     if (!navigator.geolocation) {
+
         status.style.display = "block";
-        status.className = "location-status error";
-        status.innerHTML = "❌ Geolocation not supported";
+
+        status.className =
+            "location-status error";
+
+        status.innerHTML =
+            "❌ Geolocation not supported";
+
         return;
     }
 
     liveLocationClicked = true;
 
-    // 🔵 SHOW MAP LOADER OVERLAY
+    // Show loader
     loader.style.display = "flex";
+
     status.style.display = "none";
 
     navigator.geolocation.getCurrentPosition(
+
         pos => {
 
-            // 🟢 HIDE LOADER ON SUCCESS
+            // Hide loader
             loader.style.display = "none";
 
-            const { latitude, longitude } = pos.coords;
+            const latitude =
+                pos.coords.latitude;
 
-            marker.setLatLng([latitude, longitude]);
-            map.setView([latitude, longitude], 16);
-            updateLocationInputs(latitude, longitude);
+            const longitude =
+                pos.coords.longitude;
 
+            // Move map to user location
+            map.setView(
+                [latitude, longitude],
+                16
+            );
+
+            updateLocationInputs(
+                latitude,
+                longitude
+            );
+
+            // Success message
             status.style.display = "block";
-            status.className = "location-status success";
-            status.innerHTML = "✅ Location detected successfully";
+
+            status.className =
+                "location-status success";
+
+            status.innerHTML =
+                "✅ Location detected successfully";
 
             setTimeout(() => {
+
                 status.style.display = "none";
+
             }, 2000);
+
         },
+
         err => {
 
-            // 🔴 HIDE LOADER ON ERROR
+            // Hide loader
             loader.style.display = "none";
 
+            // Error message
             status.style.display = "block";
-            status.className = "location-status error";
-            status.innerHTML = "❌ లొకేషన్ అనుమతి నిరాకరించబడింది. దయచేసి మ్యాప్‌లో మీ లొకేషన్‌ను మాన్యువల్‌గా ఎంచుకోండి.";
+
+            status.className =
+                "location-status error";
+
+            status.innerHTML =
+                "❌ Location permission denied. Please move the map and select your delivery location manually.";
+
         },
+
         {
             enableHighAccuracy: true,
             timeout: 10000
         }
+
     );
 }
 document.addEventListener("DOMContentLoaded", function () {
@@ -1842,12 +3956,115 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 600);
     }, SHOW_TIME);
   });
-});
+}); 
+
+
+
 </script>
+<script>
+
+function getPaymentType() {
+
+    return document.querySelector(
+        'input[name="payment_type"]:checked'
+    )?.value;
+
+}
 
 
+function lockOrderBtn(btn) {
+
+    const payment = getPaymentType();
+
+    console.log(
+        "LOCK BUTTON:",
+        payment
+    );
+
+    if (payment === "Online") {
+
+        btn.innerHTML =
+            "💳 Redirecting to Payment...";
+
+    }
+    else {
+
+        btn.innerHTML =
+            "🍽️ Placing Order...";
+
+    }
+
+}
 
 
+document.querySelectorAll(
+    'input[name="payment_type"]'
+).forEach(input => {
+
+    input.addEventListener(
+        "change",
+        function () {
+
+            console.log(
+                "Selected:",
+                this.value
+            );
+
+        }
+    );
+
+});
+
+
+window.addEventListener(
+    "pageshow",
+    function () {
+
+        const btn =
+            document.querySelector(
+                ".conv-cta"
+            );
+
+        if (btn) {
+
+            btn.innerHTML =
+                "🍔 Confirm Order";
+
+            btn.disabled = false;
+
+            btn.style.opacity = "1";
+
+        }
+
+        console.log(
+            "PAGE SHOW:",
+            getPaymentType()
+        );
+
+    }
+);
+
+</script> 
+
+<script>
+
+window.onload = function(){
+
+document.querySelectorAll(
+'input[name="payment_type"]'
+).forEach((i,index)=>{
+
+console.log(
+index,
+i.value,
+i.checked
+);
+
+});
+
+};
+
+</script>
 {% endblock %}
 
 
