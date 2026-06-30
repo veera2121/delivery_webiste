@@ -4963,7 +4963,7 @@ def join_order(data):
     join_room(room)
 
     print("🟢 Joined room:", room) 
-    
+
 @app.route("/payment/<int:order_id>")
 def payment_page(order_id):
 
@@ -5430,42 +5430,57 @@ def payment_status():
     )
 
 from flask import jsonify
-
 @app.route("/delivery_generate_qr/<int:order_id>")
 def delivery_generate_qr(order_id):
+    print("QR ROUTE HIT:", order_id)
+    try:
 
-    order = Order.query.get_or_404(order_id)
+        order = Order.query.get_or_404(order_id)
 
-    if not order.payment_qr_image_url:
+        if not order.payment_qr_image_url:
 
-        qr = razorpay_client.qrcode.create({
+            qr = razorpay_client.qrcode.create({
 
-            "type": "upi_qr",
+                "type": "upi_qr",
 
-            "usage": "single_use",
+                "usage": "single_use",
 
-            "fixed_amount": True,
+                "fixed_amount": True,
 
-            "payment_amount": int(order.final_total * 100),
+                "payment_amount": int(order.final_total * 100),
 
-            "name": f"Order {order.order_id}",
+                "name": f"Order {order.order_id}",
 
-            "description": f"Payment for {order.order_id}"
+                "description": f"Payment for {order.order_id}"
 
+            })
+
+            print("QR CREATED SUCCESSFULLY")
+            print(qr)
+
+            order.payment_qr_id = qr.get("id")
+            order.payment_qr_image_url = qr.get("image_url")
+            order.payment_qr_status = qr.get("status")
+
+            db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "image": order.payment_qr_image_url,
+            "amount": order.final_total,
+            "order": order.order_id
         })
 
-        order.payment_qr_id = qr["id"]
-        order.payment_qr_image_url = qr["image_url"]
-        order.payment_qr_status = qr["status"]
+    except Exception as e:
 
-        db.session.commit()
+        print("========== QR ERROR ==========")
+        print(str(e))
+        print("==============================")
 
-    return jsonify({
-        "success": True,
-        "image": order.payment_qr_image_url,
-        "amount": order.final_total,
-        "order": order.order_id
-    })
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN ------------------
