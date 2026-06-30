@@ -328,6 +328,7 @@ if not firebase_admin._apps:
         print("✅ Firebase initialized successfully")
     else:
         print("❌ FIREBASE_KEY not found in environment variables")
+
 def make_whatsapp_link(order):
 
     restaurant = Restaurant.query.get(order.restaurant_id)
@@ -4961,7 +4962,8 @@ def join_order(data):
     room = f"order_{order_id}"
     join_room(room)
 
-    print("🟢 Joined room:", room)
+    print("🟢 Joined room:", room) 
+    
 @app.route("/payment/<int:order_id>")
 def payment_page(order_id):
 
