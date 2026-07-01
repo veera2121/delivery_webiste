@@ -2771,6 +2771,110 @@ font-size:22px;
 }
 
 }
+
+.payment-card.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+/* Disabled payment option */
+
+.payment-card.disabled {
+
+    position: relative;
+
+    opacity: 0.75;
+
+    cursor: not-allowed;
+
+    filter: grayscale(20%);
+
+    background: linear-gradient(
+        135deg,
+        #f8fafc,
+        #f1f5f9
+    );
+
+    border: 2px dashed #cbd5e1;
+
+    pointer-events: none;
+
+}
+
+.payment-card.disabled::after {
+
+    content: "Temporarily Unavailable";
+
+    position: absolute;
+
+    top: 15px;
+
+    right: 15px;
+
+    padding: 6px 12px;
+
+    border-radius: 999px;
+
+    background: linear-gradient(
+        135deg,
+        #f59e0b,
+        #d97706
+    );
+
+    color: white;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    letter-spacing: .5px;
+
+    text-transform: uppercase;
+
+    box-shadow:
+        0 5px 15px rgba(245,158,11,.25);
+
+}
+
+.payment-card.disabled .payment-icon {
+
+    background: linear-gradient(
+        135deg,
+        #e5e7eb,
+        #f3f4f6
+    );
+
+}
+
+.payment-card.disabled .payment-name {
+
+    color: #64748b;
+
+}
+
+.payment-card.disabled .payment-desc {
+
+    color: #94a3b8;
+
+}
+
+.payment-card.disabled .payment-method-icons {
+
+    background: #f8fafc;
+
+    color: #94a3b8;
+
+    border: 1px solid #e2e8f0;
+
+}
+
+.payment-card.disabled .payment-check {
+
+    background: #f1f5f9;
+
+    border-color: #cbd5e1;
+
+}
 </style>
 </head>
 <body> 
@@ -3007,58 +3111,51 @@ or choose
         💳 Choose Payment Method
     </h3>
 
-   
+   <label class="payment-card disabled">
 
-    <!-- Online Payment -->
-    <label class="payment-card">
+    <input
+        type="radio"
+        name="payment_type"
+        value="Online"
+        disabled
+    >
 
-        <input type="radio"
-               name="payment_type"
-               value="Online"checked>
+    <div class="payment-content">
 
-        <div class="payment-content">
+        <div class="payment-icon online-icon">
+            🔒
+        </div>
 
-            <div class="payment-icon online-icon">
-                🔒
+        <div class="payment-details">
+
+            <div class="payment-name">
+                Pay Online
             </div>
 
-            <div class="payment-details">
-
-                <div class="payment-name">
-                    Pay Online
-                </div>
-
-                <div class="payment-desc">
-                    UPI, Cards, Wallets and Net Banking
-                </div>
-
-                <div class="payment-method-icons">
-                    🟣 UPI &nbsp; 💳 Cards &nbsp; 🏦 Bank
-                </div>
-
+            <div class="payment-desc">
+                Available soon. You can pay securely at delivery using UPI, QR or Payment Link.
             </div>
 
-            <div class="payment-right">
-
-                <span class="recommended">
-                    Recommended
-                </span>
-
-                <div class="payment-check"></div>
-
+            <div class="payment-method-icons">
+                🟣 UPI &nbsp; 💳 Cards &nbsp; 🏦 Bank
             </div>
 
         </div>
 
-    </label> 
+        <div class="payment-right">
+            <div class="payment-check"></div>
+        </div>
 
+    </div>
+
+</label>
 
  <!-- Cash on Delivery -->
     <label class="payment-card">
 
         <input type="radio"
                name="payment_type"
-               value="COD">
+               value="COD"  checked>
             
 
         <div class="payment-content">
