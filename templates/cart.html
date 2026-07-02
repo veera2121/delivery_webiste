@@ -2242,38 +2242,54 @@ animation:none;
     pointer-events: none;
     transition: transform 0.2s ease;
 }
-/* paymnet section css  */
+/* paymnet section css  */ 
+/* ================= PAYMENT SECTION ================= */
+
 .payment-section{
 
     margin-top:35px;
 
-    padding:25px;
+    padding:30px;
 
-    background:#fff;
+    border-radius:30px;
 
-    border-radius:24px;
+    background:
+    linear-gradient(
+        180deg,
+        #ffffff,
+        #fafcff
+    );
 
-    border:1px solid #e5e7eb;
+    border:1px solid rgba(59,130,246,.12);
 
     box-shadow:
-    0 8px 25px rgba(0,0,0,.06);
+    0 12px 40px rgba(0,0,0,.05);
 
     position:relative;
 
+    overflow:hidden;
+
 }
+
+
 .payment-section::before{
 
 content:"NEW";
 
 position:absolute;
 
-top:15px;
+top:2px;
 
-left:10px;
+left:14px;
 
-padding:5px 12px;
+padding:6px 14px;
 
-background:#16a34a;
+background:
+linear-gradient(
+135deg,
+#22c55e,
+#16a34a
+);
 
 color:white;
 
@@ -2283,410 +2299,472 @@ font-weight:700;
 
 border-radius:30px;
 
+box-shadow:
+0 5px 15px rgba(34,197,94,.25);
+
 }
-.payment-section h3{
-   color:#222;
+
+
+.payment-section::after{
+
+content:"";
+
+position:absolute;
+
+top:-120px;
+
+right:-120px;
+
+width:220px;
+
+height:220px;
+
+border-radius:50%;
+
+background:
+
+radial-gradient(
+
+rgba(59,130,246,.08),
+
+transparent 70%
+
+);
+
 }
+
+
 .payment-title{
 
-font-size:24px;
+font-size:26px;
 
 font-weight:800;
 
-color:#ca06c0;
+color:#111827;
 
-margin-bottom:24px;
+margin-bottom:25px;
 
+display:flex;
 
+align-items:center;
 
-
+gap:12px;
 
 }
+
+
+.payment-title::before{
+
+content:"💳";
+
+font-size:26px;
+
+}
+
+
+.payment-section h3{
+
+color:#111827;
+
+font-weight:800;
+
+}
+
+
+
+/* ================= CARD ================= */
+
 .payment-card{
 
-    display:block;
-    position:relative;
+display:block;
 
-    background:#fff;
+position:relative;
 
-    border:2px solid #edf2f7;
+padding:22px;
 
-    border-radius:24px;
+border-radius:24px;
 
-    padding:20px;
+background:#fff;
 
-    margin-bottom:18px;
+border:1px solid #edf2f7;
 
-    cursor:pointer;
+margin-bottom:18px;
 
-    overflow:hidden;
+overflow:hidden;
 
-    transition:.3s ease;
+cursor:pointer;
+
+transition:.35s ease;
+
+box-shadow:
+0 4px 15px rgba(0,0,0,.03);
+
+animation:
+fadeUp .35s ease;
 
 }
+
 
 .payment-card:hover{
 
-    transform:translateY(-4px);
+transform:translateY(-4px);
 
-    border-color:#dbe3ef;
+border-color:#dbeafe;
 
-    box-shadow:
-
-    0 15px 40px rgba(0,0,0,.08);
+box-shadow:
+0 15px 35px rgba(0,0,0,.07);
 
 }
+
 
 .payment-card input{
-    display:none;
+
+display:none;
+
 }
+
+
+.payment-card.active,
 
 .payment-card:has(input:checked){
 
-border-color:#3399cc;
+border:2px solid #2563eb;
 
 background:
 
 linear-gradient(
+
 135deg,
-#f0f9ff,
+
+#f8fbff,
+
 #ffffff
+
 );
 
 box-shadow:
 
-0 10px 30px rgba(51,153,204,.15);
+0 10px 30px rgba(37,99,235,.12);
 
 }
 
+
+.payment-card.active::before,
 
 .payment-card:has(input:checked)::before{
 
-    content:"";
+content:"";
 
-    position:absolute;
+position:absolute;
 
-    left:0;
+top:0;
 
-    top:0;
+left:0;
 
-    bottom:0;
+bottom:0;
 
-    width:5px;
+width:5px;
 
-    border-radius:8px;
+border-radius:20px;
 
-    background:
+background:
 
-    linear-gradient(
-        180deg,
-        #3399cc,
-        #2563eb
-    );
+linear-gradient(
+
+180deg,
+
+#2563eb,
+
+#06b6d4
+
+);
 
 }
 
+
+/* ================= CONTENT ================= */
 
 .payment-content{
 
-    display:flex;
+display:flex;
 
-    align-items:center;
+align-items:center;
 
-    gap:16px;
-
-}
-
-
-.payment-icon{
-
-    width:60px;
-
-    height:60px;
-
-    border-radius:18px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    font-size:28px;
-
-    flex-shrink:0;
-
-}
-
-
-.cod-icon{
-
-    background:
-
-    linear-gradient(
-        135deg,
-        #fff7ed,
-        #ffedd5
-    );
-
-}
-
-
-.online-icon{
-
-    background:
-
-    linear-gradient(
-        135deg,
-        #e0f2fe,
-        #eff6ff
-    );
+gap:18px;
 
 }
 
 
 .payment-details{
 
-    flex:1;
+flex:1;
 
 }
 
 
 .payment-name{
 
-    font-size:18px;
+font-size:18px;
 
-    font-weight:800;
+font-weight:800;
 
-    color:#0f172a;
+color:#0f172a;
 
 }
 
 
 .payment-desc{
 
-    margin-top:5px;
+margin-top:5px;
 
-    font-size:14px;
+font-size:14px;
 
-    color:#64748b;
+color:#64748b;
+
+line-height:1.5;
 
 }
 
 
 .payment-method-icons{
 
-    margin-top:10px;
+margin-top:12px;
 
-    display:inline-block;
+display:inline-flex;
 
-    padding:7px 12px;
+gap:10px;
 
-    border-radius:50px;
+padding:8px 14px;
 
-    background:#f8fafc;
+border-radius:50px;
 
-    border:1px solid #e2e8f0;
+background:#f8fafc;
 
-    font-size:12px;
+border:1px solid #e2e8f0;
 
-    color:#64748b;
+font-size:12px;
+
+font-weight:600;
+
+color:#64748b;
 
 }
 
 
+
+/* ================= ICONS ================= */
+
+.payment-icon{
+
+width:65px;
+
+height:65px;
+
+border-radius:20px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+font-size:30px;
+
+flex-shrink:0;
+
+transition:.3s;
+
+}
+
+
+.online-icon{
+
+background:
+
+linear-gradient(
+
+135deg,
+
+#dbeafe,
+
+#eff6ff
+
+);
+
+}
+
+
+.cod-icon{
+
+background:
+
+linear-gradient(
+
+135deg,
+
+#fff7ed,
+
+#ffedd5
+
+);
+
+}
+
+
+
+/* ================= RIGHT ================= */
+
 .payment-right{
 
-    display:flex;
+display:flex;
 
-    flex-direction:column;
+flex-direction:column;
 
-    align-items:flex-end;
+align-items:flex-end;
 
-    gap:10px;
+gap:12px;
 
 }
 
 
 .recommended{
 
-    background:
+padding:7px 14px;
 
-    linear-gradient(
-        135deg,
-        #22c55e,
-        #16a34a
-    );
+border-radius:999px;
 
-    color:white;
+background:
 
-    padding:6px 12px;
+linear-gradient(
 
-    border-radius:999px;
+135deg,
 
-    font-size:11px;
+#22c55e,
 
-    font-weight:700;
+#16a34a
 
-    text-transform:uppercase;
+);
 
-    letter-spacing:.5px;
+font-size:11px;
 
-    box-shadow:
+font-weight:700;
 
-    0 5px 18px rgba(34,197,94,.3);
+text-transform:uppercase;
+
+letter-spacing:1px;
+
+color:white;
+
+box-shadow:
+0 6px 18px rgba(34,197,94,.25);
 
 }
 
 
 .payment-check{
 
-    width:24px;
+width:28px;
 
-    height:24px;
+height:28px;
 
-    border-radius:50%;
+border-radius:50%;
 
-    border:2px solid #cbd5e1;
+border:2px solid #cbd5e1;
 
-    transition:.25s ease;
+background:white;
 
-    background:#fff;
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+transition:.3s;
 
 }
 
+
+.payment-card.active .payment-check,
 
 .payment-card:has(input:checked) .payment-check{
 
-    background:#3399cc;
+background:#2563eb;
 
-    border-color:#3399cc;
+border-color:#2563eb;
 
-    box-shadow:
+box-shadow:
 
-    0 0 0 5px rgba(51,153,204,.15);
+0 0 0 6px rgba(37,99,235,.12);
 
 }
 
+
+.payment-card.active .payment-check::after,
 
 .payment-card:has(input:checked) .payment-check::after{
 
-    content:"✓";
+content:"✓";
 
-    display:flex;
+color:white;
 
-    align-items:center;
+font-size:14px;
 
-    justify-content:center;
-
-    height:100%;
-
-    color:white;
-
-    font-size:13px;
-
-    font-weight:bold;
+font-weight:700;
 
 }
 
 
-/* online payment glow */
 
-/* mobile */
+/* ================= NOTICE ================= */
 
-@media(max-width:600px){
-
-.payment-card{
-
-padding:16px;
-
-}
-
-.payment-content{
-
-align-items:flex-start;
-
-gap:12px;
-
-}
-
-.payment-icon{
-
-width:52px;
-
-height:52px;
-
-font-size:24px;
-
-}
-
-.payment-name{
-
-font-size:16px;
-
-}
-
-.payment-desc{
-
-font-size:13px;
-
-}
-
-.payment-method-icons{
-
-font-size:11px;
-
-padding:6px 10px;
-
-}
-
-.recommended{
-
-font-size:10px;
-
-padding:5px 10px;
-
-}
-
-}
 .payment-notice{
 
-margin:22px 0;
+margin:24px 0;
 
-padding:16px 18px;
+padding:18px 20px;
 
-border-radius:16px;
+border-radius:18px;
 
 background:
 
 linear-gradient(
+
 135deg,
+
 #eff6ff,
+
 #f8fbff
+
 );
 
 border:1px solid #bfdbfe;
 
-color:#1e40af;
+color:#1d4ed8;
 
 font-size:14px;
 
 font-weight:600;
 
-line-height:1.6;
+line-height:1.7;
 
 box-shadow:
-0 6px 18px rgba(59,130,246,.08);
+
+0 8px 24px rgba(59,130,246,.08);
 
 }
+
 
 .payment-notice strong{
 
-color:#2563eb;
-
 font-weight:700;
 
+color:#2563eb;
+
 }
+
+
+
+/* ================= ORDER VALUE ================= */
 
 .order-value-card{
 
@@ -2701,17 +2779,23 @@ padding:18px 22px;
 margin:24px 0;
 
 background:
+
 linear-gradient(
+
 135deg,
+
 #eff6ff,
+
 #f8fbff
+
 );
 
 border:1px solid #dbeafe;
 
-border-radius:18px;
+border-radius:20px;
 
 box-shadow:
+
 0 8px 24px rgba(37,99,235,.08);
 
 }
@@ -2719,24 +2803,24 @@ box-shadow:
 
 .order-value-label{
 
-font-size:14px;
-
-font-weight:700;
-
-color:#1e40af;
-
 display:flex;
 
 align-items:center;
 
 gap:8px;
 
+font-size:14px;
+
+font-weight:700;
+
+color:#1e40af;
+
 }
 
 
 .order-value-price{
 
-font-size:24px;
+font-size:26px;
 
 font-weight:900;
 
@@ -2747,22 +2831,113 @@ letter-spacing:.3px;
 }
 
 
-.order-value-price span{
+/* ================= ANIMATION ================= */
 
-font-size:24px;
+@keyframes fadeUp{
 
-font-weight:900;
+from{
+
+opacity:0;
+
+transform:translateY(10px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:none;
+
+}
 
 }
 
 
+
+/* ================= MOBILE ================= */
+
 @media(max-width:600px){
+
+.payment-section{
+
+padding:22px;
+
+}
+
+
+.payment-title{
+
+font-size:22px;
+
+}
+
+
+.payment-card{
+
+padding:18px;
+
+}
+
+
+.payment-content{
+
+gap:12px;
+
+align-items:flex-start;
+
+}
+
+
+.payment-icon{
+
+width:55px;
+
+height:55px;
+
+font-size:26px;
+
+}
+
+
+.payment-name{
+
+font-size:16px;
+
+}
+
+
+.payment-desc{
+
+font-size:13px;
+
+}
+
+
+.payment-method-icons{
+
+font-size:11px;
+
+padding:6px 10px;
+
+}
+
+
+.recommended{
+
+font-size:10px;
+
+padding:5px 10px;
+
+}
+
 
 .order-value-card{
 
 padding:16px 18px;
 
 }
+
 
 .order-value-price{
 
@@ -2771,108 +2946,51 @@ font-size:22px;
 }
 
 }
+.payment-check{
 
-.payment-card.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-/* Disabled payment option */
+width:32px;
 
-.payment-card.disabled {
+height:32px;
 
-    position: relative;
+border-radius:50%;
 
-    opacity: 0.75;
+background:#e2e8f0;
 
-    cursor: not-allowed;
+display:flex;
 
-    filter: grayscale(20%);
+align-items:center;
 
-    background: linear-gradient(
-        135deg,
-        #f8fafc,
-        #f1f5f9
-    );
+justify-content:center;
 
-    border: 2px dashed #cbd5e1;
+font-size:15px;
 
-    pointer-events: none;
+font-weight:700;
 
-}
+color:white;
 
-.payment-card.disabled::after {
+opacity:0;
 
-    content: "Temporarily Unavailable";
+transition:.3s;
 
-    position: absolute;
-
-    top: 15px;
-
-    right: 15px;
-
-    padding: 6px 12px;
-
-    border-radius: 999px;
-
-    background: linear-gradient(
-        135deg,
-        #f59e0b,
-        #d97706
-    );
-
-    color: white;
-
-    font-size: 11px;
-
-    font-weight: 700;
-
-    letter-spacing: .5px;
-
-    text-transform: uppercase;
-
-    box-shadow:
-        0 5px 15px rgba(245,158,11,.25);
+margin-left:auto;
 
 }
 
-.payment-card.disabled .payment-icon {
+.payment-card.active .payment-check{
 
-    background: linear-gradient(
-        135deg,
-        #e5e7eb,
-        #f3f4f6
-    );
+opacity:1;
 
-}
+background:
 
-.payment-card.disabled .payment-name {
+linear-gradient(
+135deg,
+#22c55e,
+#16a34a
+);
 
-    color: #64748b;
+box-shadow:
 
-}
-
-.payment-card.disabled .payment-desc {
-
-    color: #94a3b8;
-
-}
-
-.payment-card.disabled .payment-method-icons {
-
-    background: #f8fafc;
-
-    color: #94a3b8;
-
-    border: 1px solid #e2e8f0;
-
-}
-
-.payment-card.disabled .payment-check {
-
-    background: #f1f5f9;
-
-    border-color: #cbd5e1;
+0 0 0 6px rgba(34,197,94,.12);
 
 }
 </style>
@@ -3107,78 +3225,111 @@ or choose
 </div>
 <div class="payment-section">
 
+    <!-- Selected payment value -->
+    <input type="hidden"
+           name="payment_type"
+           id="payment_type"
+           value="COD">
+
+
     <h3 class="payment-title">
-        💳 Choose Payment Method
+
+        Choose Payment Method
+
     </h3>
 
-   <label class="payment-card disabled">
 
-    <input
-        type="radio"
-        name="payment_type"
-        value="Online"
-        disabled
-    >
+    <!-- ONLINE PAYMENT -->
 
-    <div class="payment-content">
+    <div class="payment-card"
+         id="onlineCard"
+         onclick="selectPayment('Online')">
 
-        <div class="payment-icon online-icon">
-            🔒
-        </div>
+        <div class="payment-content">
 
-        <div class="payment-details">
+            <div class="payment-icon online-icon">
 
-            <div class="payment-name">
-                Pay Online
+                🔒
+
             </div>
 
-            <div class="payment-desc">
-                Available soon. You can pay securely at delivery using UPI, QR or Payment Link.
+            <div class="payment-details">
+
+                <div class="payment-name">
+
+                    Pay Online
+
+                </div>
+
+                <div class="payment-desc">
+
+                    UPI, Cards, Wallets and Net Banking
+
+                </div>
+
+                <div class="payment-method-icons">
+
+                    🟣 UPI &nbsp;
+
+                    💳 Cards &nbsp;
+
+                    🏦 Bank
+
+                </div>
+
             </div>
 
-            <div class="payment-method-icons">
-                🟣 UPI &nbsp; 💳 Cards &nbsp; 🏦 Bank
+            <div class="payment-check">
+
+                ✓
+
             </div>
 
-        </div>
-
-        <div class="payment-right">
-            <div class="payment-check"></div>
         </div>
 
     </div>
 
-</label>
 
- <!-- Cash on Delivery -->
-    <label class="payment-card">
 
-        <input type="radio"
-               name="payment_type"
-               value="COD"  checked>
-            
+    <!-- CASH ON DELIVERY -->
+
+    <div class="payment-card active"
+         id="codCard"
+         onclick="selectPayment('COD')">
 
         <div class="payment-content">
 
             <div class="payment-icon cod-icon">
+
                 💵
+
             </div>
 
             <div class="payment-details">
+
                 <div class="payment-name">
+
                     Cash on Delivery
+
                 </div>
 
                 <div class="payment-desc">
+
                     Pay after receiving your order
+
                 </div>
+
             </div>
 
-            <div class="payment-check"></div>
+            <div class="payment-check">
+
+                ✓
+
+            </div>
 
         </div>
 
-    </label>
+    </div>
 
 </div>
 {% if not restaurant.can_accept_orders %}
@@ -3391,7 +3542,6 @@ function updateLocationInputs(lat, lng) {
 
     fetchDistanceDelivery(itemsTotal);
 }
-
 let formSubmitting = false;
 
 document.querySelector("form").addEventListener(
@@ -3416,9 +3566,14 @@ document.querySelector("form").addEventListener(
     );
 
     const paymentType =
-      document.querySelector(
-        'input[name="payment_type"]:checked'
-      )?.value;
+      document.getElementById(
+        "payment_type"
+      ).value;
+
+    console.log(
+      "PAYMENT:",
+      paymentType
+    );
 
     const btn =
       this.querySelector(".conv-cta");
@@ -3440,8 +3595,10 @@ document.querySelector("form").addEventListener(
           "⏳ Placing Order...";
 
         btn.style.opacity = "0.6";
+
       }
     }
+
   }
 );
 
@@ -3455,14 +3612,18 @@ window.addEventListener(
       document.querySelector(".conv-cta");
 
     if (btn) {
+
       btn.disabled = false;
+
       btn.innerHTML =
         "🍔 Confirm Order";
+
       btn.style.opacity = "1";
+
     }
+
   }
 );
-
 /* ============================================================
    TOTALS
 ============================================================ */
@@ -4001,142 +4162,56 @@ function placeOrderSuccess() {
 
 
 </script>
-
-<script>
-function handleLocationClick() {
-    document.getElementById("locationHint").style.display = "none";
-    getUserLocation(); // your existing function
-}
-</script>
-
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const flashes = document.querySelectorAll(".flash-message");
-
-  flashes.forEach(flash => {
-    // ⏱️ SHOW TIME (change this)
-    const SHOW_TIME = 8000; // 6 seconds
-
-    setTimeout(() => {
-      flash.style.opacity = "0";
-      flash.style.transform = "translateY(-6px)";
-
-      setTimeout(() => {
-        flash.remove();
-      }, 600);
-    }, SHOW_TIME);
-  });
-}); 
-
-
-
-</script>
 <script>
 
-function getPaymentType() {
+function selectPayment(type){
 
-    return document.querySelector(
-        'input[name="payment_type"]:checked'
-    )?.value;
+    document.getElementById(
+        "payment_type"
+    ).value = type;
 
-}
-
-
-function lockOrderBtn(btn) {
-
-    const payment = getPaymentType();
-
-    console.log(
-        "LOCK BUTTON:",
-        payment
+    document.getElementById(
+        "onlineCard"
+    ).classList.remove(
+        "active"
     );
 
-    if (payment === "Online") {
-
-        btn.innerHTML =
-            "💳 Redirecting to Payment...";
-
-    }
-    else {
-
-        btn.innerHTML =
-            "🍽️ Placing Order...";
-
-    }
-
-}
-
-
-document.querySelectorAll(
-    'input[name="payment_type"]'
-).forEach(input => {
-
-    input.addEventListener(
-        "change",
-        function () {
-
-            console.log(
-                "Selected:",
-                this.value
-            );
-
-        }
+    document.getElementById(
+        "codCard"
+    ).classList.remove(
+        "active"
     );
 
-});
+    if(type === "Online"){
 
-
-window.addEventListener(
-    "pageshow",
-    function () {
-
-        const btn =
-            document.querySelector(
-                ".conv-cta"
-            );
-
-        if (btn) {
-
-            btn.innerHTML =
-                "🍔 Confirm Order";
-
-            btn.disabled = false;
-
-            btn.style.opacity = "1";
-
-        }
-
-        console.log(
-            "PAGE SHOW:",
-            getPaymentType()
+        document.getElementById(
+            "onlineCard"
+        ).classList.add(
+            "active"
         );
 
     }
-);
+    else{
 
-</script> 
+        document.getElementById(
+            "codCard"
+        ).classList.add(
+            "active"
+        );
 
-<script>
+    }
+
+}
+
 
 window.onload = function(){
 
-document.querySelectorAll(
-'input[name="payment_type"]'
-).forEach((i,index)=>{
-
-console.log(
-index,
-i.value,
-i.checked
-);
-
-});
+    selectPayment("COD");
 
 };
 
 </script>
+
 {% endblock %}
 
 

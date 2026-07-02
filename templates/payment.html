@@ -252,6 +252,250 @@ body{
     font-size:13px;
     margin-top:10px;
 }
+
+.payment-timer-card{
+
+    max-width:420px;
+
+    margin:25px auto;
+
+    padding:24px;
+
+    border-radius:22px;
+
+    background:white;
+
+    box-shadow:0 10px 35px rgba(0,0,0,.08);
+
+    text-align:center;
+
+}
+
+.timer-label{
+
+    font-size:16px;
+
+    color:#666;
+
+    margin-bottom:12px;
+
+}
+
+#countdown{
+
+    font-size:42px;
+
+    font-weight:800;
+
+    transition:.3s;
+
+}
+
+.timer-green{
+
+    color:#22c55e;
+
+}
+
+.timer-orange{
+
+    color:#f59e0b;
+
+}
+
+.timer-red{
+
+    color:#ef4444;
+
+    animation:pulse 1s infinite;
+
+}
+
+.timer-subtext{
+
+    margin-top:12px;
+
+    font-size:14px;
+
+    color:#777;
+
+}
+
+@keyframes pulse{
+
+0%{
+
+transform:scale(1);
+
+}
+
+50%{
+
+transform:scale(1.06);
+
+}
+
+100%{
+
+transform:scale(1);
+
+}
+
+}
+
+.pay-btn{
+
+    position:relative;
+
+    overflow:hidden;
+
+    width:100%;
+
+    border:none;
+
+    border-radius:18px;
+
+    padding:18px 24px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:15px;
+
+    background:linear-gradient(
+        135deg,
+        #16a34a,
+        #22c55e
+    );
+
+    color:white;
+
+    cursor:pointer;
+
+    transition:0.3s ease;
+
+    box-shadow:
+        0 8px 25px rgba(22,163,74,.25);
+
+}
+
+.pay-btn:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 12px 35px rgba(22,163,74,.4);
+
+}
+
+.pay-btn:active{
+
+    transform:scale(.98);
+
+}
+
+.pay-btn .shine{
+
+    position:absolute;
+
+    top:0;
+
+    right:-120px;
+
+    width:80px;
+
+    height:100%;
+
+    background:
+
+        linear-gradient(
+
+            90deg,
+
+            transparent,
+
+            rgba(255,255,255,.45),
+
+            transparent
+
+        );
+
+    transform:skewX(-25deg);
+
+    animation:
+
+        moveShine
+
+        2.5s linear infinite;
+
+}
+
+@keyframes moveShine{
+
+    0%{
+
+        right:-120px;
+
+    }
+
+    100%{
+
+        right:120%;
+
+    }
+
+}
+
+.lock-icon{
+
+    font-size:24px;
+
+    position:relative;
+
+    z-index:2;
+
+}
+
+.pay-text{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    position:relative;
+
+    z-index:2;
+
+}
+
+.pay-text small{
+
+    font-size:12px;
+
+    opacity:.85;
+
+}
+
+.pay-amount{
+
+    font-size:22px;
+
+    font-weight:800;
+
+    position:relative;
+
+    z-index:2;
+
+}
 </style>
 
 
@@ -371,10 +615,55 @@ body{
                     Card and UPI details are never stored on RucHiGo servers.
                 </div>
 
-                <button id="pay-btn" class="pay-btn">
-                    🔒 Pay Securely ₹{{ order.final_total }}
-                </button>
+<div class="payment-timer-card">
 
+    <div class="timer-label">
+
+        ⏳ Complete payment before timer expires
+
+    </div>
+
+    <div id="countdown"
+         class="timer-green">
+
+        15:00
+
+    </div>
+
+    <div class="timer-subtext">
+
+        Place your order immediately to avoid cancellation.
+
+    </div>
+
+</div>
+<button id="pay-btn" class="pay-btn">
+
+    <span class="shine"></span>
+
+    <span class="lock-icon">
+      
+    </span>
+
+    <span class="pay-text">
+
+        Pay Securely
+
+        <small>
+
+            via UPI • Cards • Wallets
+
+        </small>
+
+    </span>
+
+    <span class="pay-amount">
+
+        ₹{{ order.final_total }}
+
+    </span>
+
+</button>
 <div class="payment-flow">
     1️⃣ Click Pay Securely<br>
     2️⃣ Choose UPI/Card/Wallet in Razorpay<br>
@@ -403,91 +692,303 @@ body{
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
+
 document.getElementById("pay-btn").onclick = function() {
 
     fetch("/create_payment/{{ order.id }}")
+
     .then(res => res.json())
+
     .then(data => {
 
-        if(!data.success){
-            alert(data.message);
+        if (!data.success) {
+
+            alert(
+
+                data.message ||
+
+                "Unable to start payment"
+
+            );
+
             return;
+
         }
 
         const options = {
+
             key: data.key,
+
             amount: data.amount,
+
             currency: "INR",
+
             order_id: data.order_id,
 
             name: "RucHiGo",
 
             prefill: {
+
                 name: data.name,
+
                 email: data.email,
+
                 contact: data.contact
+
             },
 
             handler: function(response) {
 
                 fetch("/verify_payment", {
+
                     method: "POST",
+
                     headers: {
+
                         "Content-Type":
+
                         "application/json"
+
                     },
+
                     body: JSON.stringify({
-                        order_id: {{ order.id }},
+
+                        order_id:
+
+                            {{ order.id }},
+
                         razorpay_payment_id:
+
                             response.razorpay_payment_id,
+
                         razorpay_order_id:
+
                             response.razorpay_order_id,
+
                         razorpay_signature:
+
                             response.razorpay_signature
+
                     })
+
                 })
+
                 .then(res => res.json())
+
                 .then(result => {
 
-                    if(result.success){
+                    if (result.success) {
+
                         window.location.href =
+
                             result.redirect_url;
+
                     }
-                    else{
-                        alert(
-                            "Payment verification failed"
-                        );
+
+                    else {
+
+                        if (
+
+                            result.redirect_url
+
+                        ) {
+
+                            window.location.href =
+
+                                result.redirect_url;
+
+                        }
+
+                        else {
+
+                            alert(
+
+                                result.message ||
+
+                                "Payment verification failed"
+
+                            );
+
+                        }
+
                     }
+
+                })
+
+                .catch(error => {
+
+                    console.log(error);
+
+                    alert(
+
+                        "Something went wrong"
+
+                    );
 
                 });
 
             },
 
             modal: {
+
                 ondismiss: function() {
 
                     fetch(
+
                         "/payment_failed/{{ order.id }}",
+
                         {
-                            method:"POST"
+
+                            method:
+
+                                "POST"
+
                         }
+
                     );
 
-                    alert(
-                        "Payment cancelled"
-                    );
                 }
+
             }
+
         };
 
         const rzp = new Razorpay(
+
             options
+
         );
 
         rzp.open();
 
+    })
+
+    .catch(error => {
+
+        console.log(error);
+
     });
+
+};
+
+</script> 
+
+
+<script>
+
+const expiresAt = new Date(
+
+"{{ expires_at.isoformat() }}Z"
+
+);
+
+function updateTimer(){
+
+    const now = new Date();
+
+    const diff = expiresAt - now;
+
+    if(diff <= 0){
+
+        window.location.href =
+
+        "{{ url_for('payment_page',
+                     order_id=order.id) }}";
+
+        return;
+
+    }
+
+    const totalSeconds =
+
+        Math.floor(diff/1000);
+
+    const minutes =
+
+        Math.floor(totalSeconds/60);
+
+    const seconds =
+
+        totalSeconds % 60;
+
+    const timer =
+
+        document.getElementById(
+
+            "countdown"
+
+        );
+
+    timer.innerHTML =
+
+        String(minutes)
+
+        .padStart(2,'0')
+
+        +
+
+        ":"
+
+        +
+
+        String(seconds)
+
+        .padStart(2,'0');
+
+    timer.classList.remove(
+
+        "timer-green",
+
+        "timer-orange",
+
+        "timer-red"
+
+    );
+
+    if(totalSeconds <= 120){
+
+        timer.classList.add(
+
+            "timer-red"
+
+        );
+
+    }
+
+    else if(totalSeconds <= 300){
+
+        timer.classList.add(
+
+            "timer-orange"
+
+        );
+
+    }
+
+    else{
+
+        timer.classList.add(
+
+            "timer-green"
+
+        );
+
+    }
+
 }
-</script>
+
+updateTimer();
+
+setInterval(
+
+updateTimer,
+
+1000
+
+);
+
+</script> 
+
+
 
 {% endblock %}

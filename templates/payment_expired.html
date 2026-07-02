@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+.expired-wrapper{
+
+    min-height:80vh;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:30px;
+
+}
+
+.expired-card{
+
+    width:100%;
+
+    max-width:700px;
+
+    background:#fff;
+
+    border-radius:32px;
+
+    padding:50px;
+
+    text-align:center;
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.08);
+
+}
+
+.expired-icon{
+
+    width:120px;
+
+    height:120px;
+
+    margin:auto;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:56px;
+
+    background:linear-gradient(
+        135deg,
+        #fff7d6,
+        #ffe082
+    );
+
+    margin-bottom:25px;
+
+}
+
+.expired-title{
+
+    font-size:38px;
+
+    font-weight:700;
+
+    color:#d32f2f;
+
+    margin-bottom:18px;
+
+}
+
+.expired-text{
+
+    font-size:18px;
+
+    color:#555;
+
+    line-height:1.8;
+
+}
+
+.order-id{
+
+    color:#111;
+
+    font-weight:700;
+
+}
+
+.cart-note{
+
+    margin-top:25px;
+
+    padding:18px;
+
+    border-radius:16px;
+
+    background:#e8f5e9;
+
+    color:#2e7d32;
+
+    font-weight:600;
+
+    font-size:16px;
+
+}
+
+.order-btn{
+
+    margin-top:35px;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    padding:16px 40px;
+
+    border-radius:60px;
+
+    background:#ff9800;
+
+    color:white;
+
+    text-decoration:none;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    transition:.3s;
+
+    box-shadow:
+        0 10px 30px rgba(255,152,0,.35);
+
+}
+
+.order-btn:hover{
+
+    background:#f57c00;
+
+    color:white;
+
+    transform:translateY(-3px);
+
+}
+
+.tip{
+
+    margin-top:18px;
+
+    color:#888;
+
+    font-size:14px;
+
+}
+
+</style>
+
+<div class="expired-wrapper">
+
+<div class="expired-card">
+
+<div class="expired-icon">
+
+⏳
+
+</div>
+
+<h1 class="expired-title">
+
+Payment Session Expired
+
+</h1>
+
+<p class="expired-text">
+
+Your payment session for
+
+<span class="order-id">
+
+{{ order.order_id }}
+
+</span>
+
+has expired because payment was not completed within the allowed time.
+
+</p>
+
+<div class="cart-note">
+
+🛒 Don't worry!
+
+All selected items are still available in your cart.
+
+You can return to the cart page, review your items and place the order again.
+
+</div>
+
+<a href="{{ url_for(
+'cart_page',
+restaurant_id=order.restaurant_id
+) }}"
+
+class="order-btn">
+
+🍔 Go Back To Cart
+
+</a>
+
+<div class="tip">
+
+You won't need to select your items again.
+
+</div>
+
+</div>
+
+</div>
+<script
+src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+{% endblock %}

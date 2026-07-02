@@ -220,7 +220,38 @@ def calculate_distance_km(lat1, lng1, lat2, lng2):
         km = km * 1.35
         km = math.ceil(km * 2) / 2
 
-        return km
+        return km 
+
+def cancel_unpaid_orders():
+
+    cutoff = datetime.utcnow() - timedelta(minutes=15)
+
+    unpaid_orders = Order.query.filter(
+
+        Order.payment_type == "Online",
+
+        Order.status == "Pending Payment",
+
+        Order.payment_status == "Pending",
+
+        Order.created_at < cutoff
+
+    ).all()
+
+    for order in unpaid_orders:
+
+        order.status = "Cancelled"
+
+        order.cancel_reason = (
+            "Payment not completed"
+        )
+
+    db.session.commit() 
+
+@app.before_request
+def cleanup_orders():
+
+    cancel_unpaid_orders()
 # ------------------ ADMIN CONFIG ------------------
 
 # Admin credentials
@@ -1080,8 +1111,19 @@ def place_order():
         delivery_note=delivery_note,
         payment_type=payment_type,
         payment_status="Pending" if payment_type == "Online" else "Pending",
-        payment_verified=False,
-        payment_source="Checkout" if payment_type == "Online" else "COD",
+        payment_verified=False, 
+        status=(
+            "Pending Payment"
+            if payment_type == "Online"
+            else "Pending"
+        ),
+
+        payment_source=(
+            "Checkout"
+            if payment_type == "Online"
+            else "COD"
+        ),
+        
         device_fingerprint=device_fingerprint,
         order_type=order_type,
         items_total=items_total,
@@ -1443,10 +1485,39 @@ def restaurant_dashboard():
     yesterday = today - timedelta(days=1)
     week_ago = today - timedelta(days=7)
 
-    # Fetch orders only for this restaurant
-    orders = Order.query.filter_by(
-        restaurant_id=restaurant_id
-    ).order_by(Order.created_at.desc()).all()
+    orders = Order.query.filter(
+
+        Order.restaurant_id == restaurant_id,
+
+        Order.status.in_(
+
+            [
+
+                "Pending",
+
+                "Accepted",
+
+                "Preparing",
+
+                "Ready",
+
+                "Out for Delivery",
+
+                "Started",
+
+                "Delivered",
+
+                "Cancelled"
+
+            ]
+
+        )
+
+    ).order_by(
+
+        Order.created_at.desc()
+
+    ).all()
 
     # Classify orders by day
     for o in orders:
@@ -4500,6 +4571,18 @@ def employee_dashboard():
     # ✅ FETCH ALL ORDERS (optimized)
     orders = (
         Order.query
+        .filter(
+            Order.status.in_([
+                "Pending",
+                "Accepted",
+                "Preparing",
+                "Ready",
+                "Out for Delivery",
+                "Started",
+                "Delivered",
+                "Cancelled"
+            ])
+        )
         .options(
             db.joinedload(Order.restaurant),
             db.joinedload(Order.items),
@@ -4963,13 +5046,14 @@ def join_order(data):
     join_room(room)
 
     print("🟢 Joined room:", room) 
-
 @app.route("/payment/<int:order_id>")
 def payment_page(order_id):
 
     order = Order.query.get_or_404(order_id)
 
+    # ✅ Already paid
     if order.payment_status == "Paid":
+
         return redirect(
             url_for(
                 "order_placed",
@@ -4977,12 +5061,26 @@ def payment_page(order_id):
             )
         )
 
+    # ❌ Payment window expired
+    if order.status == "Cancelled":
+
+        flash(
+            "Payment session expired. Please place your order again.",
+            "warning"
+        )
+    
+        return render_template(
+            "payment_expired.html",
+            order=order
+        )
+    expires_at = order.created_at + timedelta(minutes=15)
+    # ⏳ Still waiting for payment
     return render_template(
         "payment.html",
         order=order,
-        razorpay_key=RAZORPAY_KEY_ID
+        razorpay_key=RAZORPAY_KEY_ID,
+        expires_at=expires_at
     )
-
 @app.route("/create_payment/<int:order_id>")
 def create_payment(order_id):
 
@@ -5015,7 +5113,7 @@ def create_payment(order_id):
     })   
 
 from datetime import datetime
-from flask import request, jsonify, url_for
+from flask import request, jsonify, url_for 
 
 @app.route("/verify_payment", methods=["POST"])
 def verify_payment():
@@ -5026,48 +5124,112 @@ def verify_payment():
         data["order_id"]
     )
 
-    try:
-        # Verify Razorpay signature
-        razorpay_client.utility.verify_payment_signature({
-            "razorpay_order_id": data["razorpay_order_id"],
-            "razorpay_payment_id": data["razorpay_payment_id"],
-            "razorpay_signature": data["razorpay_signature"]
+    # 🔒 Do not allow payment for cancelled orders
+    if order.status == "Cancelled":
+
+        return jsonify({
+
+            "success": False,
+
+            "redirect_url":
+
+                url_for(
+
+                    "payment_page",
+
+                    order_id=order.id
+
+                )
+
         })
 
-        # Payment successful
+    # 🔒 Already paid
+    if order.payment_status == "Paid":
+
+        return jsonify({
+
+            "success": True,
+
+            "redirect_url":
+            url_for(
+                "order_placed",
+                order_id=order.order_id
+            )
+
+        })
+
+    try:
+
+        razorpay_client.utility.verify_payment_signature({
+
+            "razorpay_order_id":
+            data["razorpay_order_id"],
+
+            "razorpay_payment_id":
+            data["razorpay_payment_id"],
+
+            "razorpay_signature":
+            data["razorpay_signature"]
+
+        })
+
+        # ✅ Payment successful
         order.payment_status = "Paid"
+
         order.payment_type = "Online"
+
         order.payment_verified = True
 
+        order.status = "Pending"
+
         order.payment_id = data["razorpay_payment_id"]
-        order.payment_order_id = data["razorpay_order_id"]
-        order.payment_signature = data["razorpay_signature"]
+
+        order.payment_order_id = (
+            data["razorpay_order_id"]
+        )
+
+        order.payment_signature = (
+            data["razorpay_signature"]
+        )
 
         order.payment_time = datetime.utcnow()
 
-        # Optional fields
         order.payment_method_used = "UPI"
+
         order.payment_source = "Checkout"
 
         db.session.commit()
 
         return jsonify({
+
             "success": True,
-            "redirect_url": url_for(
+
+            "redirect_url":
+            url_for(
                 "order_placed",
                 order_id=order.order_id
             )
+
         })
 
     except Exception as e:
-        print("Payment verification error:", e)
+
+        print(
+            "Payment verification error:",
+            e
+        )
 
         order.payment_status = "Failed"
+
         db.session.commit()
 
         return jsonify({
+
             "success": False,
-            "message": "Payment verification failed"
+
+            "message":
+            "Payment verification failed"
+
         }), 400
 @app.route(
     "/payment_failed/<int:order_id>",
