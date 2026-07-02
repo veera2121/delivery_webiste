@@ -5124,7 +5124,7 @@ def verify_payment():
         data["order_id"]
     )
 
-    # 🔒 Do not allow payment for cancelled orders
+    # 🔒 Do not allow payment for cancelled orders until 
     if order.status == "Cancelled":
 
         return jsonify({
