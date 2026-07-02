@@ -35,7 +35,7 @@ def login():
 
         if is_new_user:
             if customer:
-                flash("User already exists. Please login.", "warning")
+                flash("User already exists. Please login.", "error")
                 return redirect(url_for("users.login"))
 
             customer = Customer(mobile=normalized_mobile, name=name)
