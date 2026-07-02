@@ -1473,15 +1473,11 @@ def restaurant_login():
 from datetime import datetime, timedelta
 from flask import session, redirect, url_for, render_template
 from models import Order, OrderItem, DeliveryPerson, db
+
 from datetime import datetime, timedelta
-from sqlalchemy.orm import joinedload
-
-
 @app.route("/restaurant/dashboard")
 def restaurant_dashboard():
-
     restaurant_id = session.get("restaurant_id")
-
     if not restaurant_id:
         return redirect(url_for("restaurant_login"))
 
@@ -1489,353 +1485,97 @@ def restaurant_dashboard():
     yesterday = today - timedelta(days=1)
     week_ago = today - timedelta(days=7)
 
-    VALID_STATUSES = [
+    orders = Order.query.filter(
 
-        "Pending",
+        Order.restaurant_id == restaurant_id,
 
-        "Accepted",
+        Order.status.in_(
 
-        "Preparing",
+            [
 
-        "Ready",
+                "Pending",
 
-        "Out for Delivery",
+                "Accepted",
 
-        "Started",
+                "Preparing",
 
-        "Delivered",
+                "Ready",
 
-        "Cancelled"
+                "Out for Delivery",
 
-    ]
+                "Started",
 
+                "Delivered",
 
-    orders = (
+                "Cancelled"
 
-        Order.query
-
-        .options(
-
-            joinedload(Order.items),
-
-            joinedload(Order.delivery_person)
+            ]
 
         )
 
-        .filter(
+    ).order_by(
 
-            Order.restaurant_id == restaurant_id,
+        Order.created_at.desc()
 
-            Order.status.in_(VALID_STATUSES),
+    ).all()
 
-            Order.payment_status != "Expired"
-
-        )
-
-        .filter(
-
-            ~
-
-            (
-
-                (Order.payment_type == "Online")
-
-                &
-
-                (Order.payment_status != "Paid")
-
-                &
-
-                (Order.status == "Cancelled")
-
-            )
-
-        )
-
-        .order_by(
-
-            Order.created_at.desc()
-
-        )
-
-        .limit(300)
-
-        .all()
-
-    )
-
-
+    # Classify orders by day
     for o in orders:
-
         if o.created_at.date() == today:
-
             o.day_category = "Today"
-
         elif o.created_at.date() == yesterday:
-
             o.day_category = "Yesterday"
-
         else:
-
             o.day_category = "Older"
 
-
-
-    today_orders = [
-
-        o for o in orders
-
-        if o.created_at.date() == today
-
-    ]
-
-
-    delivered_today = [
-
-        o for o in today_orders
-
-        if o.status == "Delivered"
-
-    ]
-
+    today_orders = [o for o in orders if o.day_category == "Today"]
+    delivered_today_orders = [o for o in today_orders if o.status == "Delivered"]
 
     stats = {
-
-        "today_orders":
-
-        len(today_orders),
-
-
-        "delivered_today":
-
-        len(delivered_today),
-
-
-        "pending_today":
-
-        len(
-
-            [
-
-                o for o in today_orders
-
-                if o.status == "Pending"
-
-            ]
-
-        ),
-
-
-        "cancelled_today":
-
-        len(
-
-            [
-
-                o for o in today_orders
-
-                if o.status == "Cancelled"
-
-            ]
-
-        ),
-
-
-        "active_orders":
-
-        len(
-
-            [
-
-                o for o in orders
-
-                if o.status in [
-
-                    "Accepted",
-
-                    "Preparing",
-
-                    "Ready",
-
-                    "Out for Delivery"
-
-                ]
-
-            ]
-
-        ),
-
-
-        "today_earnings":
-
-        sum(
-
-            o.get_final_total()
-
-            for o in delivered_today
-
-        ),
-
-
-        "today_cod_amount":
-
-        sum(
-
-            o.get_final_total()
-
-            for o in delivered_today
-
-            if o.payment_type == "COD"
-
-        ),
-
-
-        "today_online_amount":
-
-        sum(
-
-            o.get_final_total()
-
-            for o in delivered_today
-
-            if o.payment_type == "Online"
-
-        ),
-
-
-        "weekly_orders":
-
-        len(
-
-            [
-
-                o for o in orders
-
-                if o.created_at.date() >= week_ago
-
-            ]
-
-        ),
-
-
-        "weekly_earnings":
-
-        sum(
-
-            o.get_final_total()
-
-            for o in orders
-
-            if
-
-            o.created_at.date() >= week_ago
-
-            and
-
-            o.status == "Delivered"
-
-        ),
-
-
-        "weekly_delivered_orders":
-
-        len(
-
-            [
-
-                o for o in orders
-
-                if
-
-                o.created_at.date() >= week_ago
-
-                and
-
-                o.status == "Delivered"
-
-            ]
-
-        )
-
+        "today_orders": len(today_orders),
+        "delivered_today": len(delivered_today_orders),
+        "pending_today": len([o for o in today_orders if o.status == "Pending"]),
+        "cancelled_today": len([o for o in today_orders if o.status == "Cancelled"]),
+        "active_orders": len([o for o in orders if o.status in ["Accepted", "Preparing","Ready", "Out for Delivery"]]),
+        "today_earnings": sum(o.get_final_total() for o in delivered_today_orders),
+        "today_cod_amount": sum(o.get_final_total() for o in delivered_today_orders if o.payment_type == "COD"),
+        "today_online_amount": sum(o.get_final_total() for o in delivered_today_orders if o.payment_type == "Online"),
+        "weekly_orders": len([o for o in orders if o.created_at.date() >= week_ago]),
+        "weekly_earnings": sum(o.get_final_total() for o in orders if o.created_at.date() >= week_ago and o.status == "Delivered"),
+        "weekly_delivered_orders": len([o for o in orders if o.created_at.date() >= week_ago and o.status == "Delivered"])
     }
+     
+    # ------------------ Delivery Boy Status ------------------
+    # Mark inactive delivery boys offline
+    threshold = datetime.utcnow() - timedelta(minutes=5)
+
+    inactive_delivery_persons = DeliveryPerson.query.filter(
+        DeliveryPerson.is_online == True,
+        DeliveryPerson.last_seen < threshold
+    ).all()
+
+    for dp in inactive_delivery_persons:
+        dp.is_online = False
+
+    db.session.commit()
 
 
-    threshold = (
 
-        datetime.utcnow()
-
-        - timedelta(minutes=5)
-
-    )
-
-
-    inactive_delivery_persons = (
-
-        DeliveryPerson.query
-
-        .join(RestaurantDelivery)
-
-        .filter(
-
-            RestaurantDelivery.restaurant_id
-
-            == restaurant_id,
-
-            DeliveryPerson.is_online == True,
-
-            DeliveryPerson.last_seen < threshold
-
-        )
-
-        .all()
-
-    )
-
-
-    if inactive_delivery_persons:
-
-        for dp in inactive_delivery_persons:
-
-            dp.is_online = False
-
-        db.session.commit()
-
-
+    # ✅ FIXED: Only this restaurant’s delivery boys
     delivery_persons = (
-
         DeliveryPerson.query
-
         .join(RestaurantDelivery)
-
-        .filter(
-
-            RestaurantDelivery.restaurant_id
-
-            == restaurant_id
-
-        )
-
-        .order_by(
-
-            DeliveryPerson.name
-
-        )
-
+        .filter(RestaurantDelivery.restaurant_id == restaurant_id)
+        .order_by(DeliveryPerson.name)
         .all()
-
     )
 
 
     return render_template(
-
         "restaurant_dashboard.html",
-
         stats=stats,
-
         orders=orders,
-
         delivery_persons=delivery_persons
-
     )
 @app.route("/restaurant/delivery-persons")
 def restaurant_delivery_persons():
