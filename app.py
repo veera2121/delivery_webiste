@@ -716,9 +716,8 @@ def home():
                 OrderItem.price
             ).label("avg_price"),
 
-            func.max(
-                OrderItem.item_image
-            ).label("item_image")
+
+            func.max(MenuItem.image_url).label("item_image")
 
         )
 
@@ -752,12 +751,17 @@ def home():
 
         )
 
-        .limit(20)
+        .limit(25)
 
         .all()
 
     )
-
+    for item in popular_items[:10]:
+        print(
+            item.item_name,
+            "->",
+            item.item_image
+        )
     popular_items = list(popular_items)
 
     popular_sorted = []
@@ -842,7 +846,7 @@ def home():
 
             MenuItem.price.between(
 
-                40,
+                60,
 
                 150
 
@@ -900,11 +904,11 @@ def home():
 
         final_budget_items.extend(
 
-            items[:3]
+            items[:4]
 
         )
 
-    budget_items = final_budget_items[:21]
+    budget_items = final_budget_items[:24]
     # ================= LOCATION DROPDOWN (CACHED) =================
     all_locations = get_all_locations()
 
