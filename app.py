@@ -345,7 +345,6 @@ def format_phone(phone):
 
     return phone
 import pandas as pd
-
 def sync_restaurant_menu(restaurant):
 
     if not restaurant.sheet_url:
@@ -353,16 +352,35 @@ def sync_restaurant_menu(restaurant):
 
     try:
 
-        df = pd.read_csv(restaurant.sheet_url)
+        df = pd.read_csv(
+
+            restaurant.sheet_url,
+
+            engine="python",
+
+            on_bad_lines="skip"
+
+        )
 
         df = df.fillna("")
 
-        # remove old items
-        MenuItem.query.filter_by(
-            restaurant_id=restaurant.id
-        ).delete()
+        new_items = []
 
         for _, row in df.iterrows():
+
+            raw_price = str(
+
+                row.get("price", "")
+
+            ).strip()
+
+            try:
+
+                price = float(raw_price)
+
+            except:
+
+                price = 0
 
             item = MenuItem(
 
@@ -370,21 +388,32 @@ def sync_restaurant_menu(restaurant):
 
                 name=row.get("name", ""),
 
-                description=row.get("description", ""),
+                description=row.get(
 
-                category=row.get("category", ""),
+                    "description", ""
 
-                price=float(
-                    row.get("price", 0)
                 ),
 
+                category=row.get(
+
+                    "category", ""
+
+                ),
+
+                price=price,
+
                 image_url=row.get(
+
                     "image_url", ""
+
                 ),
 
                 availability=row.get(
+
                     "availability",
+
                     "yes"
+
                 ),
 
                 item_type=restaurant.category_type,
@@ -393,22 +422,37 @@ def sync_restaurant_menu(restaurant):
 
             )
 
+            new_items.append(item)
+
+        MenuItem.query.filter_by(
+
+            restaurant_id=restaurant.id
+
+        ).delete()
+
+        for item in new_items:
+
             db.session.add(item)
 
         db.session.commit()
 
         print(
+
             restaurant.name,
+
             "synced"
+
         )
 
     except Exception as e:
 
         print(
-            restaurant.name,
-            e
-        ) 
 
+            restaurant.name,
+
+            e
+
+        )
 def sync_all_restaurants():
 
     restaurants = Restaurant.query.all()
@@ -4378,101 +4422,181 @@ def normalize_name(name):
     name = re.sub(r"\s+", " ", name)
     return name.strip()
 
-
-# ================= ROUTE =================
 @app.route("/bakery/<int:restaurant_id>")
 def bakery_menu(restaurant_id):
 
-    restaurant = Restaurant.query.get_or_404(restaurant_id)
+    restaurant = Restaurant.query.get_or_404(
+        restaurant_id
+    )
 
     if restaurant.category_type != "bakery":
         abort(404)
 
-    if not restaurant.sheet_url:
-        return "No bakery menu sheet configured"
+    menu_items = (
 
-    df = pd.read_csv(restaurant.sheet_url)
+        MenuItem.query
 
-    print("\n================ BAKERY SHEET RAW DATA ================")
-    print(df)
-    print("\nCOLUMN TYPES:")
-    print(df.dtypes)
+        .filter(
 
-    # ✅ CLEAN NaN VALUES
-    df = df.fillna("")
+            MenuItem.restaurant_id == restaurant.id,
 
-    print("\n================ AFTER fillna('') =====================")
-    print(df)
+            MenuItem.availability == "yes"
 
-    # ================= FETCH ORDERS =================
-    raw = (
-        db.session.query(
-            OrderItem.item_name,
-            func.count(OrderItem.id)
         )
-        .join(Order, OrderItem.order_id == Order.id)
-        .filter(Order.restaurant_id == restaurant_id)
-        .group_by(OrderItem.item_name)
+
+        .order_by(
+
+            MenuItem.category,
+
+            MenuItem.name
+
+        )
+
         .all()
+
     )
 
-    reorder_map = {
-        normalize_name(name): count
-        for name, count in raw
-    }
+    reorder_map = {}
 
-    print("\n================ REORDER COUNT MAP ====================")
-    print(reorder_map)
+    if current_user.is_authenticated:
 
-    # ================= PROCESS ITEMS =================
+        raw = (
+
+            db.session.query(
+
+                OrderItem.item_name,
+
+                func.count(
+
+                    OrderItem.id
+
+                )
+
+            )
+
+            .join(
+
+                Order,
+
+                Order.id == OrderItem.order_id
+
+            )
+
+            .filter(
+
+                Order.customer_id
+
+                == current_user.id
+
+            )
+
+            .group_by(
+
+                OrderItem.item_name
+
+            )
+
+            .all()
+
+        )
+
+        reorder_map = {
+
+            normalize_name(name): count
+
+            for name, count in raw
+
+        }
+
     items = []
 
-    for i, item in enumerate(df.to_dict(orient="records")):
+    for item in menu_items:
 
-        print(f"\n--- ROW {i+1} BEFORE CLEAN ---")
-        print(item)
+        data = item.extra_data or {}
 
-        # PRICE CLEAN
-        raw_price = str(item.get("price", "")).strip()
-        item["price"] = float(raw_price) if raw_price else 0
+        data["id"] = item.id
 
-        # WEIGHT CLEAN
-        raw_weights = str(item.get("weight_prices", "")).strip()
-        item["weight_prices"] = raw_weights
+        data["name"] = item.name
 
-        # ✅ NORMALIZE CSV NAME
-        item_name = normalize_name(item.get("name", ""))
+        data["description"] = item.description
 
-        item["reorder_count"] = reorder_map.get(item_name, 0)
+        data["price"] = item.price
 
-        print(f"PRICE PARSED: {item['price']}")
-        print(f"WEIGHTS PARSED: '{item['weight_prices']}'")
-        print(f"NORMALIZED NAME: {item_name}")
-        print(f"REORDER COUNT: {item['reorder_count']}")
+        data["category"] = item.category
 
-        items.append(item)
+        data["image_url"] = item.image_url
 
-    print("\n================ FINAL ITEMS SENT TO TEMPLATE ==========")
-    for item in items:
-        print(item)
+        data["availability"] = item.availability
 
-    # ================= GROUP BY CATEGORY =================
+        data["item_type"] = item.item_type
+
+        data["weight_prices"] = (
+
+            data.get(
+
+                "weight_prices",
+
+                ""
+
+            )
+
+        )
+
+        data["reorder_count"] = (
+
+            reorder_map.get(
+
+                normalize_name(
+
+                    item.name
+
+                ),
+
+                0
+
+            )
+
+        )
+
+        items.append(
+
+            data
+
+        )
+
     menu_by_category = {}
 
     for item in items:
-        category = item.get("category", "Other")
-        menu_by_category.setdefault(category, []).append(item)
 
-    print("\n================ CATEGORY GROUPING =====================")
-    for k, v in menu_by_category.items():
-        print(f"{k}: {len(v)} items")
+        category = item.get(
+
+            "category",
+
+            "Other"
+
+        )
+
+        menu_by_category.setdefault(
+
+            category,
+
+            []
+
+        ).append(
+
+            item
+
+        )
 
     return render_template(
-        "bakery_menu.html",
-        restaurant=restaurant,
-        menu_by_category=menu_by_category
-    )
 
+        "bakery_menu.html",
+
+        restaurant=restaurant,
+
+        menu_by_category=menu_by_category
+
+    )
 
 from sqlalchemy import event, inspect
 
@@ -4482,7 +4606,8 @@ def protect_bakery(mapper, connection, target):
     if state.attrs.category_type.history.has_changes():
         old = state.attrs.category_type.history.deleted
         if old and old[0] == "bakery":
-            target.category_type = "bakery"
+            target.category_type = "bakery" 
+
 @app.route("/restaurant/<int:restaurant_id>/menu", methods=["GET", "POST"])
 def manage_menu(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)

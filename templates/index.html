@@ -4265,7 +4265,13 @@ font-size:18px;
                 </div>
                 {% endif %}
 
-                <img src="{{ item.item_image or '/static/default_food.jpg' }}">
+                <img
+src="{{
+item.restaurant.image_url
+if item.restaurant and item.restaurant.image_url
+else item.item_image or '/static/images/default_food.jpg'
+}}"
+alt="{{ item.item_name }}">
 
                 <div class="item-content">
 
