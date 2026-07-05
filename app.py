@@ -716,8 +716,10 @@ def home():
                 OrderItem.price
             ).label("avg_price"),
 
-
-            func.max(MenuItem.image_url).label("item_image")
+            func.max(
+                OrderItem.item_image
+            ).label("item_image") 
+            
 
         )
 
@@ -756,12 +758,7 @@ def home():
         .all()
 
     )
-    for item in popular_items[:10]:
-        print(
-            item.item_name,
-            "->",
-            item.item_image
-        )
+
     popular_items = list(popular_items)
 
     popular_sorted = []
