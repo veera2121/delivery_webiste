@@ -95,7 +95,6 @@ class Restaurant(db.Model):
 
 
 
-
     # ================= ACTIVE OFFER =================
     @property
     def active_offer(self):
@@ -199,9 +198,12 @@ class RestaurantUser(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+from sqlalchemy.dialects.postgresql import JSONB
 
-# ----------------- Menu Item -----------------
+
 class MenuItem(db.Model):
+    __tablename__ = "menu_items"
+
     id = db.Column(db.Integer, primary_key=True)
 
     restaurant_id = db.Column(
@@ -210,26 +212,45 @@ class MenuItem(db.Model):
         nullable=False
     )
 
-    # BASIC
+    # Common fields
     name = db.Column(db.String(200), nullable=False)
-    category = db.Column(db.String(100))          # Cakes, Custom Cakes
+
     description = db.Column(db.Text)
 
-    # PRICING
-    price = db.Column(db.Float, default=0)
-    weight_prices = db.Column(db.Text)            # 0.5kg:350,1kg:650
+    category = db.Column(db.String(100))
 
-    # MEDIA
+    price = db.Column(db.Float, default=0)
+
     image_url = db.Column(db.String(500))
 
-    # STATUS / TYPE
-    availability = db.Column(db.String(10), default="yes")
-    type = db.Column(db.String(20), default="ordinary")  
-    # ordinary | cool
+    availability = db.Column(
+        db.String(10),
+        default="yes"
+    )
 
-    # EXTRA
-    flavour = db.Column(db.Text)
-    order_type = db.Column(db.String(20))  # instant | custom
+    # bakery / restaurant / grocery
+    item_type = db.Column(
+        db.String(50),
+        nullable=False
+    )
+
+    # Flexible attributes
+    extra_data = db.Column(
+        JSONB,
+        default=dict
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
 
 # ----------------- Delivery Person -----------------
 class DeliveryPerson(db.Model):

@@ -47,7 +47,8 @@ from models import (
     CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,CoinLedger,ShopSettings,RewardSetting,RewardBadge,Category, Offer ,Employee, EmployeeOTP, EmployeeSession
 )
 from reward_engine import add_coins, redeem_coins
-
+from apscheduler.schedulers.background import BackgroundScheduler
+import os
 # ================= APP =================
 # ================= APP =================
 app = Flask(__name__)
@@ -343,7 +344,88 @@ def format_phone(phone):
         return None
 
     return phone
+import pandas as pd
 
+def sync_restaurant_menu(restaurant):
+
+    if not restaurant.sheet_url:
+        return
+
+    try:
+
+        df = pd.read_csv(restaurant.sheet_url)
+
+        df = df.fillna("")
+
+        # remove old items
+        MenuItem.query.filter_by(
+            restaurant_id=restaurant.id
+        ).delete()
+
+        for _, row in df.iterrows():
+
+            item = MenuItem(
+
+                restaurant_id=restaurant.id,
+
+                name=row.get("name", ""),
+
+                description=row.get("description", ""),
+
+                category=row.get("category", ""),
+
+                price=float(
+                    row.get("price", 0)
+                ),
+
+                image_url=row.get(
+                    "image_url", ""
+                ),
+
+                availability=row.get(
+                    "availability",
+                    "yes"
+                ),
+
+                item_type=restaurant.category_type,
+
+                extra_data=dict(row)
+
+            )
+
+            db.session.add(item)
+
+        db.session.commit()
+
+        print(
+            restaurant.name,
+            "synced"
+        )
+
+    except Exception as e:
+
+        print(
+            restaurant.name,
+            e
+        ) 
+
+def sync_all_restaurants():
+
+    restaurants = Restaurant.query.all()
+
+    for restaurant in restaurants:
+
+        sync_restaurant_menu(
+            restaurant
+        )
+
+    print("Done") 
+
+def scheduled_sync():
+
+    with app.app_context():
+
+        sync_all_restaurants()
 import os
 import json
 import firebase_admin
@@ -393,7 +475,67 @@ def make_whatsapp_link(order):
     )
     encoded = urllib.parse.quote_plus(msg)
     return f"https://wa.me/{phone}?text={encoded}"
+import time
+def restaurant_open(restaurant):
 
+    now = datetime.now(
+        pytz.timezone(
+            "Asia/Kolkata"
+        )
+    ).time()
+
+    if not restaurant.can_accept_orders:
+        return False
+
+    if restaurant.opening_time and restaurant.closing_time:
+
+        if restaurant.opening_time < restaurant.closing_time:
+
+            return (
+
+                restaurant.opening_time
+                <= now
+                <= restaurant.closing_time
+
+            )
+
+        return (
+
+            now >= restaurant.opening_time
+
+            or
+
+            now <= restaurant.closing_time
+
+        )
+
+    return True 
+
+def restaurant_open(r):
+
+    if not r.opening_time or not r.closing_time:
+        return True
+
+    now = datetime.now(
+        pytz.timezone("Asia/Kolkata")
+    ).time()
+
+    if r.opening_time < r.closing_time:
+
+        return (
+            r.opening_time <= now <= r.closing_time
+        )
+
+    return (
+
+        now >= r.opening_time
+
+        or
+
+        now <= r.closing_time
+
+    )
+total = time.time()
 from datetime import datetime 
 from zoneinfo import ZoneInfo
 from sqlalchemy.orm import joinedload
@@ -434,7 +576,8 @@ def get_all_locations():
 
 # ===== FIXED HOME ROUTE =====
 @app.route("/")
-def home():
+def home(): 
+    start = time.time()
     ist = pytz.timezone("Asia/Kolkata")
     now = datetime.now(ist).time()
     selected_location = request.args.get("location", "").strip()
@@ -497,7 +640,227 @@ def home():
         ).all()
 
     categories = Category.query.all()
+    
 
+
+# ================= POPULAR ITEMS =================
+
+# ================= POPULAR ITEMS =================
+
+    restaurant_lookup = {
+        r.id: r
+        for r in restaurants
+    }
+
+    popular_items = (
+
+        db.session.query(
+
+            Restaurant.id.label("restaurant_id"),
+
+            Restaurant.name.label("restaurant_name"),
+
+            Restaurant.category_type.label("source_type"),
+
+            OrderItem.item_name,
+
+            func.sum(
+                OrderItem.quantity
+            ).label("total_orders"),
+
+            func.avg(
+                OrderItem.price
+            ).label("avg_price"),
+
+            func.max(
+                OrderItem.item_image
+            ).label("item_image")
+
+        )
+
+        .join(
+            Order,
+            Order.id == OrderItem.order_id
+        )
+
+        .join(
+            Restaurant,
+            Restaurant.id == Order.restaurant_id
+        )
+
+        .group_by(
+
+            Restaurant.id,
+
+            Restaurant.name,
+
+            Restaurant.category_type,
+
+            OrderItem.item_name
+
+        )
+
+        .order_by(
+
+            func.sum(
+                OrderItem.quantity
+            ).desc()
+
+        )
+
+        .limit(20)
+
+        .all()
+
+    )
+
+    popular_items = list(popular_items)
+
+    popular_sorted = []
+
+    for item in popular_items:
+
+        restaurant = restaurant_lookup.get(
+            item.restaurant_id
+        )
+
+        if not restaurant:
+            continue
+
+        popular_sorted.append({
+
+            "restaurant_id": item.restaurant_id,
+
+            "restaurant_name": item.restaurant_name,
+
+            "source_type": item.source_type,
+
+            "item_name": item.item_name,
+
+            "total_orders": item.total_orders,
+
+            "avg_price": item.avg_price,
+
+            "item_image": item.item_image,
+
+            "restaurant": restaurant,
+
+            "can_order": (
+
+                restaurant.can_accept_orders
+
+                and
+
+                restaurant_open(restaurant)
+
+            )
+
+        })
+
+    popular_sorted.sort(
+
+        key=lambda x: (
+
+            not x["can_order"],
+
+            -x["total_orders"]
+
+        )
+
+    )
+
+    popular_items = popular_sorted[:20]
+
+
+    # ================= UNDER ₹150 ITEMS =================
+
+    restaurant_ids = [
+
+        r.id
+
+        for r in restaurants
+
+    ]
+
+    budget_items = (
+
+        MenuItem.query
+
+        .filter(
+
+            MenuItem.restaurant_id.in_(
+
+                restaurant_ids
+
+            ),
+
+            MenuItem.availability == "yes",
+
+            MenuItem.price.between(
+
+                40,
+
+                150
+
+            )
+
+        )
+
+        .all()
+
+    )
+
+    for item in budget_items:
+
+        item.can_order = (
+
+            item.restaurant.can_accept_orders
+
+            and
+
+            restaurant_open(
+
+                item.restaurant
+
+            )
+
+        )
+
+    budget_items.sort(
+
+        key=lambda x: (
+
+            not x.can_order,
+
+            x.price
+
+        )
+
+    )
+
+    restaurant_items = {}
+
+    for item in budget_items:
+
+        restaurant_items.setdefault(
+
+            item.restaurant_id,
+
+            []
+
+        ).append(item)
+
+    final_budget_items = []
+
+    for items in restaurant_items.values():
+
+        final_budget_items.extend(
+
+            items[:3]
+
+        )
+
+    budget_items = final_budget_items[:21]
     # ================= LOCATION DROPDOWN (CACHED) =================
     all_locations = get_all_locations()
 
@@ -556,6 +919,8 @@ def home():
             limited_restaurants.append(r)
 
     restaurants = get_sorted_restaurants(restaurants)
+    
+
 
     # ================= SEO =================
     if selected_location:
@@ -575,7 +940,12 @@ def home():
             trending_items=trending_items,
             now=now
         )
+    print( 
 
+        "HOME LOAD:",
+        round(time.time() - start, 2),
+        "seconds"
+        )
     # ================= FULL PAGE =================
     return render_template(
         "index.html",
@@ -599,7 +969,9 @@ def home():
         gold_count=gold_count,
         platinum_count=platinum_count,
         progress_percent=progress_percent,
-        categories=categories
+        categories=categories,
+        popular_items=popular_items,
+        budget_items=budget_items
     )
 
 
@@ -2010,111 +2382,271 @@ def normalize_name(name):
     return name.strip()
 
 
+# ================= MENU ROUTE ================= 
+
 # ================= MENU ROUTE =================
 @app.route("/menu/<int:restaurant_id>")
 def menu(restaurant_id):
 
-    restaurant = Restaurant.query.get_or_404(restaurant_id)
-    print("OPENING MENU FOR:", restaurant.name, restaurant.category_type)
+    restaurant = Restaurant.query.get_or_404(
+        restaurant_id
+    )
 
-    # ================= TIME CHECK =================
-    ist = pytz.timezone("Asia/Kolkata")
-    now = datetime.now(ist).time()
+    print(
+        "OPENING MENU:",
+        restaurant.name
+    )
 
-    if restaurant.opening_time and restaurant.closing_time:
-        is_open = restaurant.opening_time <= now <= restaurant.closing_time
+    # ================= OPEN/CLOSE =================
+
+    ist = pytz.timezone(
+        "Asia/Kolkata"
+    )
+
+    now = datetime.now(
+        ist
+    ).time()
+
+    if (
+        restaurant.opening_time
+        and restaurant.closing_time
+    ):
+
+        if (
+            restaurant.opening_time
+            < restaurant.closing_time
+        ):
+
+            is_open = (
+                restaurant.opening_time
+                <= now
+                <= restaurant.closing_time
+            )
+
+        else:
+
+            is_open = (
+
+                now >= restaurant.opening_time
+
+                or
+
+                now <= restaurant.closing_time
+
+            )
+
     else:
+
         is_open = True
 
-    if not is_open or not restaurant.can_accept_orders:
-        from flask import flash, redirect, url_for
-        flash("Restaurant is currently not accepting orders", "warning")
-        return redirect(url_for("home"))
+    if (
 
-    if not restaurant.sheet_url:
-        return "Error: No Google Sheet URL set"
+        not is_open
 
-    # ================= LOAD SHEET =================
-    df = pd.read_csv(restaurant.sheet_url)
-    print("RAW SHEET DATA:\n", df.head())
+        or
 
-    df = df.fillna("")
+        not restaurant.can_accept_orders
+
+    ):
+
+        flash(
+
+            "Restaurant is currently not accepting orders",
+
+            "warning"
+
+        )
+
+        return redirect(
+
+            url_for("home")
+
+        )
+
+    # ================= LOAD FROM POSTGRES =================
+
+    menu_items = (
+
+        MenuItem.query
+
+        .filter(
+
+            MenuItem.restaurant_id
+            == restaurant.id,
+
+            MenuItem.availability
+            == "yes"
+
+        )
+
+        .order_by(
+
+            MenuItem.category,
+
+            MenuItem.name
+
+        )
+
+        .all()
+
+    )
 
     # ================= REORDER DATA =================
+
     reorder_map = {}
 
     if current_user.is_authenticated:
 
         raw = (
+
             db.session.query(
+
                 OrderItem.item_name,
-                func.count(OrderItem.id)
+
+                func.count(
+                    OrderItem.id
+                )
+
             )
-            .join(Order, Order.id == OrderItem.order_id)
-            .filter(Order.customer_id == current_user.id)
-            .group_by(OrderItem.item_name)
+
+            .join(
+
+                Order,
+
+                Order.id
+                ==
+                OrderItem.order_id
+
+            )
+
+            .filter(
+
+                Order.customer_id
+                ==
+                current_user.id
+
+            )
+
+            .group_by(
+
+                OrderItem.item_name
+
+            )
+
             .all()
+
         )
 
         reorder_map = {
+
             normalize_name(name): count
+
             for name, count in raw
+
         }
 
-    print("\n================ USER REORDER MAP =================")
-    print(reorder_map)
-
     # ================= PROCESS ITEMS =================
+
     items = []
 
-    for i, item in enumerate(df.to_dict(orient="records")):
+    for item in menu_items:
 
-        price_raw = str(item.get("price", "")).strip()
-        weight_raw = str(item.get("weight_prices", "")).strip()
+        data = item.extra_data or {}
 
-        print(f"ITEM {i}: name={item.get('name')}, price_raw='{price_raw}', weight_raw='{weight_raw}'")
+        data["id"] = item.id
 
-        # PRICE
-        try:
-            item["price"] = float(price_raw) if price_raw else 0
-        except Exception as e:
-            print(f"⚠️ PRICE PARSE ERROR for {item.get('name')}: {e}")
-            item["price"] = 0
+        data["name"] = item.name
 
-        item["weight_prices"] = weight_raw
+        data["description"] = item.description
 
-        # 🔥 NORMALIZED REORDER COUNT
-        item_name = normalize_name(item.get("name", ""))
-        item["reorder_count"] = reorder_map.get(item_name, 0)
+        data["price"] = item.price
 
-        print(f"NORMALIZED NAME: {item_name}")
-        print(f"REORDER COUNT: {item['reorder_count']}")
+        data["category"] = item.category
 
-        items.append(item)
+        data["image_url"] = item.image_url
+
+        data["availability"] = item.availability
+
+        data["item_type"] = item.item_type
+
+        data["reorder_count"] = (
+
+            reorder_map.get(
+
+                normalize_name(
+
+                    item.name
+
+                ),
+
+                0
+
+            )
+
+        )
+
+        items.append(
+
+            data
+
+        )
 
     # ================= GROUP BY CATEGORY =================
+
     menu_by_category = {}
 
     for item in items:
-        category = item.get("category", "Other")
-        menu_by_category.setdefault(category, []).append(item)
 
-    print("✅ MENU BY CATEGORY:\n", menu_by_category)
+        category = item.get(
 
-    # ================= RENDER =================
-    if restaurant.category_type == "bakery":
-        print("👉 Loading BAKERY menu")
-        return render_template(
-            "bakery_menu.html",
-            restaurant=restaurant,
-            menu_by_category=menu_by_category
+            "category",
+
+            "Other"
+
         )
 
-    print("👉 Loading NORMAL restaurant menu")
+        menu_by_category.setdefault(
+
+            category,
+
+            []
+
+        ).append(
+
+            item
+
+        )
+
+    # ================= RENDER =================
+
+    if (
+
+        restaurant.category_type
+
+        ==
+
+        "bakery"
+
+    ):
+
+        return render_template(
+
+            "bakery_menu.html",
+
+            restaurant=restaurant,
+
+            menu_by_category=menu_by_category
+
+        )
+
     return render_template(
+
         "menu.html",
+
         restaurant=restaurant,
+
         menu_by_category=menu_by_category
+
     )
 
 @app.route("/restaurant/assign_delivery/<int:order_id>", methods=["POST"])
@@ -5645,9 +6177,18 @@ def delivery_generate_qr(order_id):
         }), 500
 # ------------------ DB INIT ------------------
 
-# ------------------ RUN ------------------
+# ------------------ RUN 
 # Your routes here...
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    socketio.run(app, host="0.0.0.0", port=port, debug=True)
+
+    port = int(
+        os.environ.get("PORT", 5000)
+    )
+
+    socketio.run(
+        app,
+        host="0.0.0.0",
+        port=port,
+        debug=True
+    )

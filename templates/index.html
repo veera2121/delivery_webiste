@@ -3608,6 +3608,270 @@ font-size:18px;
 @keyframes shimmer {
     0% { background-position: 100% 0; }
     100% { background-position: -100% 0; }
+} 
+/* ================= SECTION ================= */
+/* ================= HOME ITEM SECTIONS ================= */
+
+.homepage-items{
+    margin:45px 0;
+}
+
+.homepage-items h2{
+    font-size:28px;
+    font-weight:800;
+    margin-bottom:20px;
+    color:#222;
+}
+
+/* Horizontal scroll */
+
+.items-row{
+    display:flex;
+    gap:18px;
+    overflow-x:auto;
+    scroll-behavior:smooth;
+    padding-bottom:15px;
+}
+
+.items-row::-webkit-scrollbar{
+    height:8px;
+}
+
+.items-row::-webkit-scrollbar-thumb{
+    background:#d6d6d6;
+    border-radius:30px;
+}
+
+.items-row::-webkit-scrollbar-track{
+    background:transparent;
+}
+
+/* Link */
+
+.item-link{
+    text-decoration:none;
+    color:inherit;
+    flex:0 0 auto;
+}
+
+/* Card */
+
+.item-card{
+    width:260px;
+    background:#fff;
+    border-radius:22px;
+    overflow:hidden;
+    transition:.35s;
+    box-shadow:0 8px 28px rgba(0,0,0,.08);
+    position:relative;
+}
+
+.item-card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 20px 45px rgba(0,0,0,.18);
+}
+
+/* Image */
+
+.item-card img{
+    width:100%;
+    height:180px;
+    object-fit:cover;
+    display:block;
+}
+
+/* Floating price */
+
+.item-price{
+    position:absolute;
+    top:145px;
+    right:12px;
+
+    background:#fff;
+    color:#0f9d58;
+
+    padding:8px 16px;
+
+    border-radius:40px;
+
+    font-weight:800;
+    font-size:17px;
+
+    box-shadow:0 8px 18px rgba(0,0,0,.15);
+}
+
+/* Content */
+
+.item-content{
+    padding:18px;
+}
+.item-content h3{
+    font-size:18px;
+    font-weight:700;
+    line-height:1.4;
+    color:#222;
+
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+
+    overflow:hidden;
+    text-overflow:ellipsis;
+
+    min-height:50px;
+    max-height:50px;
+
+    word-break:break-word;
+}
+
+/* Meta */
+
+.item-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+/* Badges */
+
+.order-badge,
+.source-badge,
+.budget-badge{
+
+    padding:7px 12px;
+
+    border-radius:30px;
+
+    font-size:12px;
+
+    font-weight:700;
+}
+
+.order-badge{
+    background:#FFF5E6;
+    color:#FF6A00;
+}
+
+.restaurant-badge{
+    background:#E9F8EE;
+    color:#188038;
+}
+
+.bakery-badge{
+    background:#FFF2E8;
+    color:#D35400;
+}
+
+.budget-badge{
+    background:#EDF4FF;
+    color:#1967D2;
+}
+
+/* Small animation */
+
+.item-card:hover img{
+    transform:scale(1.05);
+}
+
+.item-card img{
+    transition:.35s;
+}
+
+/* Mobile */
+
+@media(max-width:768px){
+
+.item-card{
+
+    width:210px;
+
+}
+
+.item-card img{
+
+    height:150px;
+
+}
+
+.item-price{
+
+    top:118px;
+
+    font-size:15px;
+
+}
+
+.homepage-items h2{
+
+    font-size:22px;
+
+}
+
+} 
+.closed-card{
+
+    opacity:.65;
+
+    filter:grayscale(100%);
+
+    cursor:not-allowed;
+
+    position:relative;
+
+}
+
+.closed-card img{
+
+    filter:grayscale(100%);
+
+}
+
+.disabled-link{
+
+    pointer-events:none;
+
+}
+
+.closed-overlay{
+
+    position:absolute;
+
+    inset:0;
+
+    background:rgba(0,0,0,.45);
+
+    color:white;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:20px;
+
+    font-weight:700;
+
+    border-radius:16px;
+
+    z-index:5;
+
+}
+
+.closed-badge{
+
+    background:#e53935;
+
+    color:white;
+
+    padding:4px 10px;
+
+    border-radius:20px;
+
+    font-size:12px;
+
+    font-weight:700;
+
 }
 </style>
 
@@ -3975,10 +4239,172 @@ font-size:18px;
 
     </div>
 
+</section>  
+{% if popular_items %}
+<section class="homepage-items">
+
+    <h2>🔥 Popular Items</h2>
+
+    <div class="items-row">
+
+        {% for item in popular_items %}
+
+        {% if item.can_order %}
+        <a href="{{ url_for('menu',
+                restaurant_id=item.restaurant_id) }}"
+           class="item-link">
+        {% else %}
+        <div class="item-link disabled-link">
+        {% endif %}
+
+            <div class="item-card {% if not item.can_order %}closed-card{% endif %}">
+
+                {% if not item.can_order %}
+                <div class="closed-overlay">
+                    CLOSED
+                </div>
+                {% endif %}
+
+                <img src="{{ item.item_image or '/static/default_food.jpg' }}">
+
+                <div class="item-content">
+
+                    <h3>
+                        {{ item.item_name }}
+                    </h3>
+
+                    <p class="item-price">
+                        ₹{{ item.avg_price|round|int }}
+                    </p>
+
+                    <div class="item-meta">
+
+                        <span class="order-badge">
+                            🔥 {{ item.total_orders }} orders
+                        </span>
+
+                        {% if item.source_type == "bakery" %}
+                        <span class="source-badge bakery-badge">
+                            🥐 {{ item.restaurant_name }}
+                        </span>
+                        {% else %}
+                        <span class="source-badge restaurant-badge">
+                            🍽 {{ item.restaurant_name }}
+                        </span>
+                        {% endif %}
+{% if item.restaurant %}
+<span class="location-badge">
+    📍 {{ item.restaurant.location }}
+</span>
+{% endif %}
+                        {% if not item.can_order %}
+                        <span class="closed-badge">
+                            🔴 Closed
+                        </span>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% if item.can_order %}
+        </a>
+        {% else %}
+        </div>
+        {% endif %}
+
+        {% endfor %}
+
+    </div>
+
 </section>
+{% endif %}
 
 
 
+{% if budget_items %}
+<section class="homepage-items">
+
+    <h2>💰 Under ₹150</h2>
+
+    <div class="items-row">
+
+        {% for item in budget_items %}
+
+        {% if item.can_order %}
+        <a href="{{ url_for('menu',
+                restaurant_id=item.restaurant_id) }}"
+           class="item-link">
+        {% else %}
+        <div class="item-link disabled-link">
+        {% endif %}
+
+            <div class="item-card {% if not item.can_order %}closed-card{% endif %}">
+
+                {% if not item.can_order %}
+                <div class="closed-overlay">
+                    CLOSED
+                </div>
+                {% endif %}
+
+                <img src="{{ item.image_url or '/static/default_food.jpg' }}">
+
+                <div class="item-content">
+
+                    <h3>
+                        {{ item.name }}
+                    </h3>
+
+                    <p class="item-price">
+                        ₹{{ item.price|int }}
+                    </p>
+
+                    <div class="item-meta">
+
+                        {% if item.item_type == "bakery" %}
+                        <span class="source-badge bakery-badge">
+                            🥐 {{ item.restaurant.name }}
+                        </span>
+                        {% else %}
+                        <span class="source-badge restaurant-badge">
+                            🍽 {{ item.restaurant.name }}
+                        </span>
+                        {% endif %}
+
+                        <span class="budget-badge">
+                            💰 Budget Pick
+                        </span>
+{% if item.restaurant %}
+<span class="location-badge">
+    📍 {{ item.restaurant.location }}
+</span>
+{% endif %}
+                        {% if not item.can_order %}
+                        <span class="closed-badge">
+                            🔴 Closed
+                        </span>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% if item.can_order %}
+        </a>
+        {% else %}
+        </div>
+        {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+</section>
+{% endif %}
 {% if limited_restaurants|length > 0 %}
 <section class="limited-section">
     <h2>🔥 Limited Drops</h2>
