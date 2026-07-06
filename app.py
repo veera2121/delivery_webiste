@@ -485,7 +485,22 @@ if not firebase_admin._apps:
         print("✅ Firebase initialized successfully")
     else:
         print("❌ FIREBASE_KEY not found in environment variables")
+@property
+def image_url(self):
 
+    if not self.item_image:
+        return "/static/default_food.jpg"
+
+    if self.item_image.startswith("http"):
+        return self.item_image
+
+    if self.item_image.startswith("/static/"):
+        return self.item_image
+
+    return url_for(
+        "static",
+        filename=f"images/menu/{self.item_image}"
+    )
 def make_whatsapp_link(order):
 
     restaurant = Restaurant.query.get(order.restaurant_id)
