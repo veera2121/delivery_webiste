@@ -716,9 +716,7 @@ def home():
                 OrderItem.price
             ).label("avg_price"),
 
-            func.max(
-                OrderItem.item_image
-            ).label("item_image") 
+            func.max(MenuItem.image_url).label("item_image") 
             
 
         )
@@ -732,7 +730,13 @@ def home():
             Restaurant,
             Restaurant.id == Order.restaurant_id
         )
-
+        .outerjoin(
+            MenuItem,
+            db.and_(
+                MenuItem.restaurant_id == Restaurant.id,
+                MenuItem.name == OrderItem.item_name
+            )
+        )
         .group_by(
 
             Restaurant.id,
@@ -753,13 +757,14 @@ def home():
 
         )
 
-        .limit(25)
+        .limit(30)
 
         .all()
 
     )
-
-    popular_items = list(popular_items)
+    for item in popular_items[:10]:
+        print(repr(item.item_image))  
+        popular_items = list(popular_items)
 
     popular_sorted = []
 
@@ -814,7 +819,7 @@ def home():
 
     )
 
-    popular_items = popular_sorted[:20]
+    popular_items = popular_sorted[:25]
 
 
     # ================= UNDER ₹150 ITEMS =================
@@ -843,9 +848,9 @@ def home():
 
             MenuItem.price.between(
 
-                60,
+                69,
 
-                150
+                159
 
             )
 
@@ -901,11 +906,11 @@ def home():
 
         final_budget_items.extend(
 
-            items[:4]
+            items[:3]
 
         )
 
-    budget_items = final_budget_items[:24]
+    budget_items = final_budget_items[:27]
     # ================= LOCATION DROPDOWN (CACHED) =================
     all_locations = get_all_locations()
 
