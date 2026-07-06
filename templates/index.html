@@ -5318,20 +5318,29 @@ CONTENT
             </div>
             {% endif %}
 
-            {% if item.item_image.startswith('http') %}
-                <img src="{{ item.item_image }}"
-                     onerror="this.onerror=null;this.src='/static/default_food.jpg';">
+          {% if item.item_image and item.item_image.startswith('http') %}
 
-            {% elif item.item_image.startswith('/static/') %}
-                <img src="{{ item.item_image }}"
-                     onerror="this.onerror=null;this.src='/static/default_food.jpg';">
+    <img src="{{ item.item_image }}"
+         onerror="this.onerror=null;this.src='/static/default_food.jpg';">
 
-            {% else %}
-                 
-                     <img src="{{ item.image_url }}"
-     onerror="this.onerror=null;this.src='/static/default_food.jpg';">
-            {% endif %}
+{% elif item.item_image and item.item_image.startswith('/static/') %}
 
+    <img src="{{ item.item_image }}"
+         onerror="this.onerror=null;this.src='/static/default_food.jpg';">
+
+{% elif item.item_image %}
+
+    <img src="{{ url_for(
+        'static',
+        filename='images/menu/' ~ item.item_image
+    ) }}"
+         onerror="this.onerror=null;this.src='/static/default_food.jpg';">
+
+{% else %}
+
+    <img src="/static/default_food.jpg">
+
+{% endif %}
             <div class="item-content">
 
                 <h3>{{ item.item_name }}</h3>
