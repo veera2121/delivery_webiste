@@ -705,6 +705,7 @@ def home():
 # ================= POPULAR ITEMS =================
 
 # ================= POPULAR ITEMS =================
+    # ================= POPULAR ITEMS =================
 
     restaurant_lookup = {
         r.id: r
@@ -727,31 +728,48 @@ def home():
                 OrderItem.quantity
             ).label("total_orders"),
 
-            func.avg(
-                OrderItem.price
-            ).label("avg_price"),
+            func.max(
+                MenuItem.price
+            ).label("current_price"),
 
-            func.max(MenuItem.image_url).label("item_image") 
-            
+            func.max(
+                MenuItem.image_url
+            ).label("item_image")
 
         )
 
         .join(
+
             Order,
+
             Order.id == OrderItem.order_id
+
         )
 
         .join(
+
             Restaurant,
+
             Restaurant.id == Order.restaurant_id
+
         )
+
         .outerjoin(
+
             MenuItem,
+
             db.and_(
-                MenuItem.restaurant_id == Restaurant.id,
-                MenuItem.name == OrderItem.item_name
+
+                MenuItem.restaurant_id
+                == Restaurant.id,
+
+                MenuItem.name
+                == OrderItem.item_name
+
             )
+
         )
+
         .group_by(
 
             Restaurant.id,
@@ -767,7 +785,9 @@ def home():
         .order_by(
 
             func.sum(
+
                 OrderItem.quantity
+
             ).desc()
 
         )
@@ -777,48 +797,114 @@ def home():
         .all()
 
     )
-    for item in popular_items[:10]:
-        print(repr(item.item_image))  
-        popular_items = list(popular_items)
+
 
     popular_sorted = []
 
     for item in popular_items:
 
         restaurant = restaurant_lookup.get(
+
             item.restaurant_id
+
         )
 
         if not restaurant:
             continue
 
+        price = item.current_price or 0
+
+        # Bakery fallback
+        if (
+            item.source_type == "bakery"
+            and price == 0
+        ):
+
+            menu = MenuItem.query.filter_by(
+
+                restaurant_id=item.restaurant_id,
+
+                name=item.item_name
+
+            ).first()
+
+            if menu:
+
+                extra = menu.extra_data or {}
+
+                wp = extra.get(
+
+                    "weight_prices",
+
+                    ""
+
+                )
+
+                if wp:
+
+                    try:
+
+                        price = float(
+
+                            wp.split(",")[0]
+
+                            .split(":")[1]
+
+                        )
+
+                    except:
+
+                        pass
+
         popular_sorted.append({
 
-            "restaurant_id": item.restaurant_id,
+            "restaurant_id":
 
-            "restaurant_name": item.restaurant_name,
+                item.restaurant_id,
 
-            "source_type": item.source_type,
+            "restaurant_name":
 
-            "item_name": item.item_name,
+                item.restaurant_name,
 
-            "total_orders": item.total_orders,
+            "source_type":
 
-            "avg_price": item.avg_price,
+                item.source_type,
 
-            "item_image": item.item_image,
+            "item_name":
 
-            "restaurant": restaurant,
+                item.item_name,
 
-            "can_order": (
+            "total_orders":
 
-                restaurant.can_accept_orders
+                item.total_orders,
 
-                and
+            "price":
 
-                restaurant_open(restaurant)
+                price,
 
-            )
+            "item_image":
+
+                item.item_image,
+
+            "restaurant":
+
+                restaurant,
+
+            "can_order":
+
+                (
+
+                    restaurant.can_accept_orders
+
+                    and
+
+                    restaurant_open(
+
+                        restaurant
+
+                    )
+
+                )
 
         })
 
@@ -835,7 +921,6 @@ def home():
     )
 
     popular_items = popular_sorted[:25]
-
 
     # ================= UNDER ₹150 ITEMS =================
 
