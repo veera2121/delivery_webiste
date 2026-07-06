@@ -5346,7 +5346,8 @@ CONTENT
                 <h3>{{ item.item_name }}</h3>
 
                 <p class="item-price">
-                    ₹{{ item.avg_price|round|int }}
+                    
+                    ₹{{ item.price|int if item.price else '--' }}
                 </p>
 
                 <div class="item-meta">
