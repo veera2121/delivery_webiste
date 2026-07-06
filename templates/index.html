@@ -5327,8 +5327,9 @@ CONTENT
                      onerror="this.onerror=null;this.src='/static/default_food.jpg';">
 
             {% else %}
-                <img src="{{ url_for('static', filename='images/menu/' ~ item.item_image) }}"
-                     onerror="this.onerror=null;this.src='/static/default_food.jpg';">
+                 
+                     <img src="{{ item.image_url }}"
+     onerror="this.onerror=null;this.src='/static/default_food.jpg';">
             {% endif %}
 
             <div class="item-content">
