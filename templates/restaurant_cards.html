@@ -1,0 +1,200 @@
+<section class="restaurants-section">
+<div class="section-title">
+    <span class="section-badge">🍽️ RucHiGo</span>
+    <h2>Explore Restaurants</h2>
+    <p>Fresh food • Fast delivery • Best offers</p>
+</div>
+<div class="restaurant-row">
+
+{% for r in restaurants %}
+
+{% set is_open = (
+    r.opening_time and r.closing_time and
+    r.opening_time <= now <= r.closing_time
+) %}
+{% set is_suspended = (r.status == 'suspended') %}
+{% set is_coming_soon = (r.status == 'coming_soon') %}
+{% set can_accept = r.can_accept_orders %}
+{% set is_bakery = (r.type == 'bakery') %}
+
+<div class="card
+    {{ 'bakery-card' if r.type == 'bakery' else 'restaurant-card' }}
+    {% if not r.deliverable or not r.can_accept_orders or not r.is_open %}
+        disabled
+    {% endif %}
+"
+data-category-ids="{{ r.categories | map(attribute='id') | join(',') }}">
+
+{% if is_suspended %}
+<div class="info-box suspended-box">🚫 Temporarily unavailable</div>
+
+{% elif is_coming_soon %}
+<div class="info-box coming-soon-box">
+    ⏳ Coming Soon
+    {% if r.start_date %}
+    <br>Starts on {{ r.start_date.strftime("%d %b %Y") }}
+    {% endif %}
+</div>
+{% endif %}
+
+{% if not r.deliverable %}
+<div class="info-box not-deliverable">
+    🚫 Not delivering to your location
+</div>
+{% endif %}
+
+{% if not is_suspended and not is_coming_soon %}
+    {% if not r.opening_time or not r.closing_time %}
+        <div class="info-box closed-box">
+            ❌ Closed — Timing not updated
+        </div>
+    {% elif now < r.opening_time %}
+        <div class="info-box closed-box">
+            ⏳ Opens at {{ r.opening_time.strftime("%I:%M %p") }}
+        </div>
+    {% elif now > r.closing_time %}
+        <div class="info-box closed-box">
+            🌙 Closed for today
+        </div>
+    {% endif %}
+{% endif %}
+
+{% if r.active_offer and r.deliverable and is_open and can_accept %}
+<div class="info-box offer-box">
+    🔥 {{ r.active_offer.title }} — {{ r.active_offer.description }}
+</div>
+{% endif %}
+
+<div class="image-wrap">
+
+<div class="timer"
+     data-opening="{{ r.opening_time.strftime('%H:%M:%S') if r.opening_time else '' }}"
+     data-closing="{{ r.closing_time.strftime('%H:%M:%S') if r.closing_time else '' }}">
+</div>
+
+{% if is_new_restaurant(r) %}
+<span class="corner-badge new-badge">NEW</span>
+{% endif %}
+
+<img
+src="/static/images/restaurants/{{ r.id }}.jpg"
+alt="{{ r.name }}"
+class="restaurant-img"
+onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';">
+
+<div class="tag-container">
+
+{% if r.is_best_seller %}
+<span class="tag best">🔥 Best Seller</span>
+{% endif %}
+
+{% if r.is_fast_delivery %}
+<span class="tag fast">⚡ Fast Delivery</span>
+{% endif %}
+
+</div>
+
+</div>
+
+<div class="content">
+
+<div class="restaurant-name">{{ r.name }}</div>
+
+{% if is_bakery %}
+
+<div class="bakery-tags">
+
+{% if r.is_veg %}
+<span class="tag eggless">🥚 Eggless</span>
+{% endif %}
+
+<span class="tag fresh">🍰 Fresh Today</span>
+
+</div>
+
+{% else %}
+
+{% if r.is_veg %}
+<div class="veg-badge">Veg</div>
+{% else %}
+<div class="nonveg-badge">Non-Veg</div>
+{% endif %}
+
+{% endif %}
+
+{% if not is_bakery %}
+
+<div class="details">
+
+<div class="rating">{{ r.rating }} ⭐</div>
+
+<div class="price">{{ r.price_level }}</div>
+
+<div class="time">{{ r.delivery_time }}</div>
+
+</div>
+
+<div class="popular">🍽️ {{ r.popular_items }}</div>
+
+{% else %}
+
+<div class="details bakery-details">
+
+<div>⭐ {{ r.rating }}</div>
+
+<div>🎂 Custom Cakes Available</div>
+
+</div>
+
+{% endif %}
+
+{% if r.free_delivery_limit > 0 %}
+<div class="free-delivery">
+🚚 Free Delivery on ₹{{ r.free_delivery_limit }}+
+</div>
+{% else %}
+<div class="delivery-charge">
+🚚 Delivery ₹{{ r.delivery_charge }}
+</div>
+{% endif %}
+
+{% if is_suspended %}
+<span class="view-btn disabled-btn">🚫 Temporarily Closed</span>
+
+{% elif is_coming_soon %}
+<span class="view-btn disabled-btn">
+⏳ Starts {{ r.start_date.strftime("%d %b") if r.start_date else "Soon" }}
+</span>
+
+{% elif not r.deliverable %}
+<span class="view-btn disabled-btn">📍 Not Delivering</span>
+
+{% elif not r.opening_time or not r.closing_time %}
+<span class="view-btn disabled-btn">❌ Timing Not Set</span>
+
+{% elif now < r.opening_time %}
+<span class="view-btn disabled-btn">
+⏳ Opens at {{ r.opening_time.strftime("%I:%M %p") }}
+</span>
+
+{% elif now > r.closing_time %}
+<span class="view-btn disabled-btn">🌙 Closed</span>
+
+{% elif not can_accept %}
+<span class="view-btn disabled-btn">🚫 Not Accepting Orders</span>
+
+{% else %}
+<a href="/menu/{{ r.id }}" class="view-btn view-menu-btn">
+{{ 'View Cakes' if is_bakery else 'View Menu' }}
+</a>
+{% endif %}
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</section>

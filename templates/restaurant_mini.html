@@ -1,0 +1,65 @@
+{% if restaurants|length > 0 %}
+<section class="restaurant-mini-section">
+
+<div class="container restaurant-preview">
+
+  <div class="section-heading">
+    <span class="section-subtitle">Freshly Delivered</span>
+    <h2>Discover Amazing Restaurants</h2>
+    <p>Order from the best restaurants near you.</p>
+</div>
+    <div class="restaurant-scroll">
+
+        {% for r in restaurants %}
+
+        <a href="/menu/{{ r.id }}" class="mini-card-link">
+
+            <div class="mini-card
+                {% if not r.deliverable or not r.is_open or not r.can_accept_orders %}
+                    disabled
+                {% endif %}
+            "
+            data-category-ids="{{ r.categories | map(attribute='id') | join(',') }}">
+
+                <div class="mini-card-media">
+
+                    <img
+                        src="/static/images/restaurants/{{ r.id }}.jpg"
+                        alt="{{ r.name }}"
+                        onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';">
+
+                    {% if is_new_restaurant(r) %}
+                    <span class="corner-badge new-badge">NEW</span>
+                    {% endif %}
+
+                    <span class="mini-badge diet-dot {{ 'veg' if r.is_veg else 'nonveg' }}"
+                          title="{{ 'Veg' if r.is_veg else 'Non-Veg' }}"></span>
+
+                    {% if not r.is_open %}
+                    <div class="closed-scrim">Closed</div>
+                    {% endif %}
+
+                </div>
+
+                <div class="mini-card-body">
+
+                    <div class="mini-name two-line">{{ r.name }}</div>
+
+                    <span class="mini-badge {{ 'open' if r.is_open else 'closed' }}">
+                        {{ "Open now" if r.is_open else "Closed" }}
+                    </span>
+
+                </div>
+
+            </div>
+
+        </a>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+</section>
+{% endif %}

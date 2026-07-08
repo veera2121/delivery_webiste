@@ -2993,6 +2993,452 @@ box-shadow:
 0 0 0 6px rgba(34,197,94,.12);
 
 }
+.recommend-section{
+    margin-top:25px;
+}
+
+.recommend-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+    gap:15px;
+}
+
+.recommend-card{
+    border:1px solid #ddd;
+    border-radius:12px;
+    padding:12px;
+    text-align:center;
+    background:#fff;
+}
+
+.recommend-card img{
+    width:100%;
+    height:120px;
+    object-fit:cover;
+    border-radius:10px;
+}
+
+.recommend-btn{
+    display:inline-block;
+    margin-top:10px;
+    background:#27ae60;
+    color:#fff;
+    padding:8px 18px;
+    border-radius:8px;
+    text-decoration:none;
+}
+.recommend-scroll{
+    display:flex;
+    overflow-x:auto;
+    gap:16px;
+    padding:10px 0;
+    scroll-snap-type:x mandatory;
+    scrollbar-width:none;
+}
+
+.recommend-scroll::-webkit-scrollbar{
+    display:none;
+}
+
+.recommend-card{
+    flex:0 0 190px;
+    background:#fff;
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
+    scroll-snap-align:start;
+    transition:.3s;
+}
+
+.recommend-card:hover{
+    transform:translateY(-4px);
+}
+
+.recommend-image{
+    width:100%;
+    height:135px;
+    object-fit:cover;
+}
+
+.recommend-image-placeholder{
+    width:100%;
+    height:135px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:55px;
+    background:#f5f5f5;
+}
+
+.recommend-content{
+    padding:12px;
+}
+
+.recommend-badge{
+    display:inline-block;
+    background:#E8F8EE;
+    color:#16a34a;
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:700;
+    margin-bottom:8px;
+}
+
+.recommend-title{
+    margin:0;
+    font-size:17px;
+    font-weight:700;
+}
+
+.recommend-desc{
+    margin:8px 0;
+    color:#777;
+    font-size:13px;
+    min-height:34px;
+}
+
+.recommend-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:10px;
+}
+
+.recommend-price{
+    font-size:20px;
+    font-weight:700;
+    color:#111;
+}
+
+.recommend-btn{
+    border:none;
+    background:#16a34a;
+    color:#fff;
+    padding:8px 16px;
+    border-radius:30px;
+    cursor:pointer;
+    font-weight:700;
+    transition:.25s;
+}
+
+.recommend-btn:hover{
+    background:#15803d;
+    transform:scale(1.05);
+} 
+/* ==============================
+   RECOMMENDATIONS
+================================= */
+
+.recommend-section{
+    margin:18px 0;
+}
+
+.recommend-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-bottom:14px;
+}
+
+.recommend-header h3{
+    margin:0;
+    font-size:20px;
+    font-weight:700;
+}
+
+.recommend-header span{
+    font-size:13px;
+    color:#777;
+}
+
+.recommend-scroll{
+    display:flex;
+    gap:14px;
+    overflow-x:auto;
+    padding-bottom:10px;
+    scroll-behavior:smooth;
+}
+
+.recommend-scroll::-webkit-scrollbar{
+    height:6px;
+}
+
+.recommend-scroll::-webkit-scrollbar-thumb{
+    background:#dcdcdc;
+    border-radius:20px;
+}
+
+/* ==============================
+   CARD
+================================= */
+
+.recommend-card{
+
+    min-width:240px;
+    max-width:240px;
+
+    background:#fff;
+    border-radius:18px;
+
+    overflow:hidden;
+
+    border:1px solid #ececec;
+
+    transition:.25s;
+
+    flex-shrink:0;
+
+}
+
+.recommend-card:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+}
+
+/* ==============================
+   IMAGE
+================================= */
+
+.recommend-image{
+
+    width:100%;
+    height:140px;
+
+    object-fit:cover;
+
+    display:block;
+
+}
+
+.recommend-image-placeholder{
+
+    width:100%;
+    height:140px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-size:48px;
+
+    background:#f4f4f4;
+
+}
+
+/* ==============================
+   CONTENT
+================================= */
+
+.recommend-content{
+
+    padding:14px;
+
+}
+
+.recommend-badge{
+
+    display:inline-block;
+
+    background:#eef9ef;
+
+    color:#179b44;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    padding:5px 10px;
+
+    border-radius:50px;
+
+    margin-bottom:10px;
+
+}
+
+.recommend-title{
+
+    margin:0;
+
+    font-size:17px;
+
+    font-weight:700;
+
+}
+
+.recommend-desc{
+
+    margin:6px 0 14px;
+
+    color:#666;
+
+    font-size:13px;
+
+    line-height:1.4;
+
+    min-height:34px;
+
+}
+
+.recommend-footer{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+.recommend-price{
+
+    font-size:18px;
+
+    font-weight:700;
+
+    color:#111;
+
+}
+
+/* ==============================
+   ADD BUTTON
+================================= */
+
+.recommend-btn{
+
+    background:#16a34a;
+
+    color:#fff;
+
+    border:none;
+
+    border-radius:12px;
+
+    padding:10px 18px;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.recommend-btn:hover{
+
+    background:#15803d;
+
+    transform:scale(1.05);
+
+}
+
+/* ==============================
+   QTY BUTTONS
+================================= */
+
+.recommend-qty{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    background:#16a34a;
+
+    border-radius:14px;
+
+    padding:6px 10px;
+
+}
+
+.recommend-qty button{
+
+    width:28px;
+
+    height:28px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:#fff;
+
+    color:#16a34a;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.recommend-qty button:hover{
+
+    transform:scale(1.1);
+
+}
+
+.recommend-qty span{
+
+    color:#fff;
+
+    font-weight:700;
+
+    font-size:16px;
+
+    min-width:18px;
+
+    text-align:center;
+
+}
+
+/* ==============================
+   MOBILE
+================================= */
+
+@media(max-width:768px){
+
+.recommend-card{
+
+    min-width:185px;
+    max-width:185px;
+
+}
+
+.recommend-image{
+
+    height:110px;
+
+}
+
+.recommend-image-placeholder{
+
+    height:110px;
+
+}
+
+.recommend-title{
+
+    font-size:15px;
+
+}
+
+.recommend-price{
+
+    font-size:16px;
+
+}
+
+}
 </style>
 </head>
 <body> 
@@ -3104,7 +3550,16 @@ box-shadow:
 
     <!-- Cart Items -->
     <div id="cart-items" class="cart-list"></div>
+<div id="recommend-section" class="recommend-section" style="display:none;">
 
+    <div class="recommend-header">
+        <h3>✨ Complete Your Meal</h3>
+        <span>Frequently Bought Together</span>
+    </div>
+
+    <div id="recommend-grid" class="recommend-scroll"></div>
+
+</div>
     <!-- Coupon Box -->
     <div id="coupon-box" class="info-box active">
         Click here to apply FIRST20 coupon
@@ -3368,7 +3823,7 @@ let locationSelected = false;
 let currentDeliveryCharge = null
 let freeDeliveryReason = "";
 let messageLocked = false;
-
+let offerMsgLocked = false;
 /* ===========================================================
    CONFIG (FROM BACKEND)
 ============================================================ */
@@ -4209,6 +4664,278 @@ window.onload = function(){
     selectPayment("COD");
 
 };
+
+</script>
+<script>
+async function loadRecommendations() {
+
+    const restaurantId = "{{ restaurant.id }}";
+
+    // Read cart from localStorage
+    
+
+const currentCart = carts[restaurantId];
+
+if (!currentCart) {
+    document.getElementById("recommend-section").style.display = "none";
+    return;
+}
+
+const cart = currentCart.items;
+    
+
+    if (cart.length === 0) {
+        document.getElementById("recommend-section").style.display = "none";
+        return;
+    }
+
+    const res = await fetch("/api/recommendations", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            restaurant_id: restaurantId,
+            cart: cart
+        })
+    });
+
+    const recommendations = await res.json();
+
+    const section = document.getElementById("recommend-section");
+    const grid = document.getElementById("recommend-grid");
+
+    grid.innerHTML = "";
+
+    if (recommendations.length === 0) {
+        section.style.display = "none";
+        return;
+    }
+
+    section.style.display = "block";
+recommendations.forEach(item => {
+
+    const existing =
+        carts[restaurantId]?.items.find(i => i.id === item.id);
+
+    grid.innerHTML += `
+<div class="recommend-card">
+
+    ${
+        item.image_url && item.image_url !== "..."
+        ? `<img class="recommend-image"
+                src="${item.image_url}"
+                alt="${item.name}">`
+        : `
+        <div class="recommend-image-placeholder">
+            🍽️
+        </div>
+        `
+    }
+
+    <div class="recommend-content">
+
+        <span class="recommend-badge">
+            Perfect Match
+        </span>
+
+        <h4 class="recommend-title">
+            ${item.name}
+        </h4>
+
+        <p class="recommend-desc">
+            ${item.description || "Frequently bought together"}
+        </p>
+
+        <div class="recommend-footer">
+
+            <span class="recommend-price">
+                ₹${item.price}
+            </span>
+
+            ${
+                existing
+                ? `
+                <div class="recommend-qty">
+
+                    <button
+                        type="button"
+                        onclick="changeRecommendationQty(${item.id},-1)">
+                        −
+                    </button>
+
+                    <span>
+                        ${existing.quantity}
+                    </span>
+
+                    <button
+                        type="button"
+                        onclick="changeRecommendationQty(${item.id},1)">
+                        +
+                    </button>
+
+                </div>
+                `
+                : `
+                <button
+                    type="button"
+                    class="recommend-btn"
+                    onclick="event.preventDefault(); addRecommendedItem(
+                        ${item.id},
+                        '${item.name.replace(/'/g, "\\'")}',
+                        ${item.price},
+                        '${item.category.replace(/'/g, "\\'")}'
+                    );">
+
+                    + Add
+
+                </button>
+                `
+            }
+
+        </div>
+
+    </div>
+
+</div>
+`;
+
+
+});
+}
+
+document.addEventListener("DOMContentLoaded", loadRecommendations);
+</script>
+<script>
+function addRecommendedItem(id, name, price, category) {
+
+    // Use SAME function as menu page
+    addItemToCart(id,name, price, 1, category);
+
+    // Refresh cart UI
+    renderCart();
+
+    // Refresh recommendations
+    loadRecommendations();
+
+    // Refresh totals
+    updateTotals();
+
+    // Refresh cart count
+    updateCartCount();
+    
+}
+function changeRecommendationQty(id, diff) {
+
+    let currentCart = carts[RESTAURANT_ID];
+
+    let item = currentCart.items.find(i => i.id === id);
+
+    if (!item) return;
+
+    item.quantity += diff;
+
+    if (item.quantity <= 0) {
+        currentCart.items =
+            currentCart.items.filter(i => i.id !== id);
+    }
+
+    carts[RESTAURANT_ID] = currentCart;
+    cart = currentCart;
+
+    saveCarts();
+
+    renderCart();
+    updateTotals();
+    updateCartCount();
+    loadRecommendations();
+
+}
+</script>
+<script> 
+/* ================= ADD ITEM FUNCTION ================= */
+function addItemToCart(id, name, price, qty, category) {
+
+    if (!carts[RESTAURANT_ID]) {
+        carts[RESTAURANT_ID] = {
+            items: [],
+            restaurantName: RESTAURANT_NAME
+        };
+    }
+
+    // Use a different variable name
+    let currentCart = carts[RESTAURANT_ID];
+
+    const existing = currentCart.items.find(i => i.id === id);
+
+    if (existing) {
+        existing.quantity += qty;
+    } else {
+        currentCart.items.push({
+            id: id,
+            name: name,
+            price: price,
+            quantity: qty,
+            category: category
+        });
+    }
+
+    currentCart.restaurantName = RESTAURANT_NAME;
+
+    // Save back
+    carts[RESTAURANT_ID] = currentCart;
+    saveCarts();
+
+    // Update global cart variable
+    cart = currentCart;
+
+    updateCartCount();
+
+    if (window.refreshCartButton)
+        window.refreshCartButton();
+
+    if (typeof renderCart === "function")
+        renderCart();
+
+    if (typeof updateTotals === "function")
+        updateTotals();
+
+    if (typeof loadRecommendations === "function")
+        loadRecommendations();
+
+    showAddedAnimation(`${qty} × ${name} added`);
+    
+}
+/* ================= SAVE CARTS ================= */
+function saveCarts() {
+    localStorage.setItem("carts", JSON.stringify(carts));
+}
+
+/* ================= CART COUNT ================= */
+function updateCartCount() {
+    const cart = carts[RESTAURANT_ID] || { items: [] };
+    const totalQty = cart.items.reduce((s, i) => s + i.quantity, 0);
+    const badge = document.getElementById("cart-count");
+    if (badge) badge.innerText = totalQty;
+}
+
+/* ================= ADD ANIMATION ================= */
+function showAddedAnimation(text) {
+    const anim = document.createElement("div");
+    anim.innerText = text;
+    anim.style.position = "fixed";
+    anim.style.bottom = "90px";
+    anim.style.left = "50%";
+    anim.style.transform = "translateX(-50%)";
+    anim.style.background = "#10b981";
+    anim.style.color = "#fff";
+    anim.style.padding = "10px 16px";
+    anim.style.borderRadius = "20px";
+    anim.style.fontSize = "14px";
+    anim.style.zIndex = "9999";
+    document.body.appendChild(anim);
+    setTimeout(() => anim.remove(), 1600);
+}
 
 </script>
 

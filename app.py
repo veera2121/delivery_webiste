@@ -49,6 +49,7 @@ from models import (
 from reward_engine import add_coins, redeem_coins
 from apscheduler.schedulers.background import BackgroundScheduler
 import os
+from recommendation_engine import get_recommendations
 # ================= APP =================
 # ================= APP =================
 app = Flask(__name__)
@@ -343,7 +344,8 @@ def format_phone(phone):
     else:
         return None
 
-    return phone
+    return phone 
+
 import pandas as pd
 def sync_restaurant_menu(restaurant):
 
@@ -855,7 +857,9 @@ def home():
                     except:
 
                         pass
-
+        # Only show items costing ₹99 or more
+        if price < 99:
+            continue
         popular_sorted.append({
 
             "restaurant_id":
@@ -1417,7 +1421,7 @@ def cart_page(restaurant_id):
     items = []
     items_total = 0
     for c in cart_items:
-        item = FoodItem.query.get(c["id"])
+        item = MenuItem.query.get(c["id"])
         if item:
             total = item.price * c["quantity"]
             items_total += total
@@ -1426,7 +1430,11 @@ def cart_page(restaurant_id):
                 "name": item.name,
                 "price": item.price,
                 "quantity": c["quantity"],
-                "total": total
+                "total": total,
+                "category": item.category,
+                "image_url": item.image_url,
+                "description": item.description,
+                "extra_data": item.extra_data or {}
             })
 
     # -------------------- DISTANCE --------------------
@@ -1475,11 +1483,25 @@ def cart_page(restaurant_id):
             (Order.restaurant_offer_id == active_offer.id) &
             (func.lower(Order.status) == "delivered")
         ).first() is not None
-    order = None
+    order = None 
+    print("========== SESSION CART ==========")
 
+    for c in cart_items:
+
+        print(c)
+
+    print("Restaurant ID:", restaurant.id)
+    # -------------------- RECOMMENDATIONS --------------------
+    recommendations = get_recommendations(
+        cart_items,
+        restaurant.id
+    ) 
+    print("========== CART PAGE OPENED ==========")
+    print(recommendations)
     # -------------------- RENDER --------------------
     return render_template(
         "cart.html",
+        recommendations=recommendations,
         restaurant=restaurant,
         items=items,
         items_total=items_total,
@@ -3479,21 +3501,49 @@ def add_to_cart(restaurant_id, item_id):
 
     # Check if item already in cart
     for c in cart:
+
         if c["id"] == item.id:
             c["quantity"] += 1
+
+            # Keep latest information
+            c["category"] = item.category
+            c["item_type"] = item.item_type
+            c["extra_data"] = item.extra_data or {}
+
             break
     else:
-        cart.append({
-            "id": item.id,
-            "name": item.name,
-            "price": float(item.price),
-            "quantity": 1
-        })
+            
+            cart.append({
+                "id": item.id,
+                "restaurant_id": restaurant_id,
+                "name": item.name,
+                "price": float(item.price),
+                "quantity": 1,
 
+                # Recommendation Engine
+                "category": item.category,
+                "item_type": item.item_type,
+
+                # Optional (Future ML)
+                "description": item.description,
+
+                # Extra Google Sheet Data
+                "extra_data": item.extra_data or {}
+            })
+    print("========== BEFORE SAVING ==========")
+    print(cart)
     session["cart"] = cart
     session["cart_count"] = sum(i["quantity"] for i in cart)
+    print("========== AFTER SAVING ==========")
+    print(session.get("cart"))
+    return redirect(
 
-    return redirect(url_for("cart_page")) 
+            url_for(
+                "cart_page",
+                restaurant_id=restaurant_id,
+                
+            )
+        ) 
 @login_manager.user_loader
 def load_user(user_id):
     return Customer.query.get(int(user_id))
@@ -6405,7 +6455,49 @@ def delivery_generate_qr(order_id):
         return jsonify({
             "success": False,
             "error": str(e)
-        }), 500
+        }), 500 
+    
+from flask import request, jsonify
+
+@app.route("/api/recommendations", methods=["POST"])
+def api_recommendations():
+
+    data = request.get_json()
+
+    restaurant_id = int(data.get("restaurant_id"))
+    cart = data.get("cart", [])
+
+    recommendations = get_recommendations(
+        cart,
+        restaurant_id
+    )
+
+    result = []
+
+    for item in recommendations:
+
+        result.append({
+            "id": item.id,
+            "name": item.name,
+            "price": float(item.price),
+            "category": item.category,
+            "image_url": item.image_url,
+            "description": item.description
+        })
+
+    return jsonify(result)
+
+@app.route("/api/get_cart", methods=["POST"])
+def get_cart():
+
+    data = request.get_json()
+    restaurant_id = data.get("restaurant_id")
+
+    cart = session.get("cart", [])
+
+    return jsonify({
+        "cart": cart
+    })
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN 

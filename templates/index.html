@@ -523,343 +523,827 @@ body {
 /* =========================
    RESTAURANTS SECTION
 ========================= */
+/* ==========================================================================
+   RESTAURANT / BAKERY LISTING — PREMIUM DESIGN SYSTEM
+   Pure CSS. Mobile-first. Glassmorphism + soft gradients.
+   Structure, classes, and IDs are untouched — styling only.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   0. FONT IMPORT
+   -------------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700&display=swap');
+
+/* --------------------------------------------------------------------------
+   1. DESIGN TOKENS — CSS VARIABLES (LIGHT THEME DEFAULT)
+   -------------------------------------------------------------------------- */
+:root{
+
+  /* =========================
+      BRAND COLORS
+  ========================== */
+
+  --color-primary:#6D28D9;
+  --color-primary-dark:#5B21B6;
+  --color-primary-light:#A78BFA;
+
+  --color-accent:#F97316;
+  --color-accent-dark:#EA580C;
+
+  /* =========================
+      PAGE
+  ========================== */
+
+  --color-bg:transparent;
+
+  --color-card:#ffffff;
+
+  --color-card-glass:rgba(255,255,255,.82);
+
+  --color-overlay-glass:rgba(0,0,0,.25);
+
+  /* =========================
+      TEXT
+  ========================== */
+
+  --color-text:#111827;
+
+  --color-text-muted:#6B7280;
+
+  --color-text-inverse:#ffffff;
+
+  /* =========================
+      BORDER
+  ========================== */
+
+  --color-border:#ECECEC;
+
+  --color-border-soft:rgba(0,0,0,.05);
+
+  /* =========================
+      STATUS
+  ========================== */
+
+  --color-danger:#EF4444;
+  --color-danger-bg:#FEE2E2;
+
+  --color-warning:#F59E0B;
+  --color-warning-bg:#FEF3C7;
+
+  --color-veg:#16A34A;
+
+  --color-nonveg:#DC2626;
+
+  /* =========================
+      GRADIENTS
+  ========================== */
+
+  --gradient-primary:
+      linear-gradient(135deg,
+      #7C3AED,
+      #8B5CF6);
+
+  --gradient-accent:
+      linear-gradient(135deg,
+      #F97316,
+      #FB923C);
+
+  --gradient-hero:
+      linear-gradient(
+      to top,
+      rgba(0,0,0,.70),
+      rgba(0,0,0,0));
+
+  --gradient-skeleton:
+      linear-gradient(
+      90deg,
+      #f5f5f5 25%,
+      #fafafa 37%,
+      #f5f5f5 63%);
+
+  /* =========================
+      RADIUS
+  ========================== */
+
+  --radius-sm:14px;
+  --radius-md:18px;
+  --radius-lg:24px;
+  --radius-pill:999px;
+
+  /* =========================
+      SHADOWS
+  ========================== */
+
+  --shadow-sm:
+      0 2px 8px rgba(0,0,0,.05);
+
+  --shadow-md:
+      0 12px 35px rgba(0,0,0,.09);
+
+  --shadow-lg:
+      0 25px 60px rgba(0,0,0,.13);
+
+  --shadow-glow-primary:
+      0 10px 35px rgba(109,40,217,.25);
+
+  --shadow-glow-accent:
+      0 10px 35px rgba(249,115,22,.25);
+
+  /* =========================
+      SPACING
+  ========================== */
+
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-8:32px;
+
+  /* =========================
+      MOTION
+  ========================== */
+
+  --transition-fast:.2s cubic-bezier(.4,0,.2,1);
+
+  --transition-base:.35s cubic-bezier(.4,0,.2,1);
+
+  /* =========================
+      FONTS
+  ========================== */
+
+  --font-display:'Poppins',sans-serif;
+
+  --font-body:'Inter',sans-serif;
+
+}
+@media (prefers-color-scheme:dark){
+
+:root{
+
+--color-bg:transparent;
+
+--color-card:#18181B;
+
+--color-card-glass:rgba(24,24,27,.88);
+
+--color-overlay-glass:rgba(0,0,0,.55);
+
+--color-text:#F8FAFC;
+
+--color-text-muted:#A1A1AA;
+
+--color-text-inverse:#111827;
+
+--color-border:#2A2A2E;
+
+--color-border-soft:rgba(255,255,255,.05);
+
+--shadow-sm:0 2px 8px rgba(0,0,0,.40);
+
+--shadow-md:0 15px 35px rgba(0,0,0,.50);
+
+--shadow-lg:0 30px 70px rgba(0,0,0,.65);
+
+}
+
+}
+/* --------------------------------------------------------------------------
+   2. RESET / BASE
+   -------------------------------------------------------------------------- */
+.restaurants-section,
+.restaurants-section * {
+  box-sizing: border-box;
+}
+
 .restaurants-section {
-    padding: 25px 8px;
-    overflow: visible;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  padding: var(--space-8) var(--space-4);
+  transition: background var(--transition-base), color var(--transition-base);
+  -webkit-font-smoothing: antialiased;
 }
 
-.restaurants-section h2 {
-    font-size: 32px;
-    margin-bottom: 24px;
-    color: #2b1d3a;
-    text-align: center;
-    font-weight: 800;
+/* Visible, accessible focus ring across all interactive elements */
+.restaurants-section a:focus-visible,
+.restaurants-section button:focus-visible,
+.restaurants-section input:focus-visible,
+.restaurants-section [tabindex]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
 }
 
-/* =========================
-   SCROLLABLE ROW
-========================= */
+@media (prefers-reduced-motion: reduce) {
+  .restaurants-section * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. LAYOUT — GRID (MOBILE FIRST)
+   -------------------------------------------------------------------------- */
 .restaurant-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+@media (min-width: 560px) {
+  .restaurant-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .restaurant-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-6);
+  }
+}
+
+@media (min-width: 1200px) {
+  .restaurant-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. CARD — CORE COMPONENT
+   -------------------------------------------------------------------------- */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-base), box-shadow var(--transition-base),
+    border-color var(--transition-base);
+  opacity: 0;
+  animation: card-enter 0.5s var(--transition-base) forwards;
+  will-change: transform;
+}
+
+/* Staggered fade/slide-in so the grid feels alive on load */
+.restaurant-row .card:nth-child(1) { animation-delay: 0.02s; }
+.restaurant-row .card:nth-child(2) { animation-delay: 0.06s; }
+.restaurant-row .card:nth-child(3) { animation-delay: 0.10s; }
+.restaurant-row .card:nth-child(4) { animation-delay: 0.14s; }
+.restaurant-row .card:nth-child(5) { animation-delay: 0.18s; }
+.restaurant-row .card:nth-child(6) { animation-delay: 0.22s; }
+.restaurant-row .card:nth-child(n+7) { animation-delay: 0.26s; }
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.card:active {
+  transform: translateY(-4px) scale(0.995);
+  transition-duration: 0.12s;
+}
+
+/* Bakery cards get a soft accent-tinted top border to distinguish category */
+.card.bakery-card {
+  border-top: 3px solid var(--color-accent);
+}
+.card.restaurant-card {
+  border-top: 3px solid var(--color-primary);
+}
+
+/* Disabled / unavailable state */
+.card.disabled {
+  cursor: not-allowed;
+}
+.card.disabled .restaurant-img {
+  filter: grayscale(0.55) brightness(0.75);
+}
+.card.disabled:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
+/* --------------------------------------------------------------------------
+   5. IMAGE AREA, BADGES & TAGS
+   -------------------------------------------------------------------------- */
+.image-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  overflow: hidden;
+  background: var(--gradient-skeleton);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.restaurant-img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s var(--transition-base);
+}
+
+.card:hover:not(.disabled) .restaurant-img {
+  transform: scale(1.07);
+}
+
+/* Soft gradient scrim for legibility of overlaid badges */
+.image-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: var(--gradient-hero);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Timer element kept in DOM for JS, visually hidden */
+.timer {
+  position: absolute;
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Corner "NEW" badge */
+.corner-badge.new-badge {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 4;
+  background: var(--gradient-primary);
+  color: var(--color-text-inverse);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-glow-primary);
+  animation: badge-pop 0.4s var(--transition-base) 0.15s backwards, badge-pulse 2.4s ease-in-out 0.6s infinite;
+}
+
+@keyframes badge-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: var(--shadow-glow-primary); }
+  50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
+}
+
+.tag-container {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    z-index: 4;
+
     display: flex;
+    align-items: center;
     gap: 8px;
 
+    flex-wrap: nowrap;
     overflow-x: auto;
-    overflow-y: visible;
-
-    padding: 16px 18px 28px;
-    margin-bottom: 36px;
-
-    scroll-behavior: smooth;
-    scroll-snap-type: x mandatory;
-    scroll-padding-left: 18px;
-
-    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 }
 
-/* Hide scrollbar */
-.restaurant-row::-webkit-scrollbar {
-    display: none;
+.tag-container::-webkit-scrollbar{
+    display:none;
+}
+/* Glassmorphism tag chips */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+
+  border-radius: var(--radius-pill);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  transition: transform var(--transition-fast);
 }
 
-/* =========================
-   CARD
-========================= */
-.card {
-    position: relative;
-    flex: 0 0 auto;
-    width: 280px;
-
-    background: #fff;
-    border-radius: 20px;
-    overflow: visible;   /* ✅ FIXED */
-       position: relative;
-    z-index: 1;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.14);
-    cursor: pointer;
-
-    scroll-snap-align: start;
-
-    transition:
-        transform 0.35s ease,
- 
-        box-shadow 0.35s ease;
+.tag:hover {
+  transform: translateY(-2px);
 }
 
-/* EDGE GLOW */
-.card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 20px;
-    padding: 2px;
-
-    background: linear-gradient(
-        135deg,
-        #ff9800,
-        #ff5722,
-        #ec407a,
-        #7e57c2
-    );
-
-    -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-
-    opacity: 0.75;
-    pointer-events: none;
-    transition: opacity 0.35s ease; 
-    z-index: 0; /* ✅ FIX */
+.tag.best {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.85), rgba(239, 68, 68, 0.75));
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
-.card:hover::before {
-    opacity: 1;
+.tag.fast {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.85), rgba(37, 99, 235, 0.7));
 }
 
-/* HOVER FLOAT */
-.card:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+.tag.eggless,
+.tag.fresh {
+  color: var(--color-text);
+  background: var(--color-card-glass);
+  border-color: var(--color-border-soft);
+  backdrop-filter: blur(8px);
 }
 
-/* IMAGE */
-.card img {
-    width: 100%;
-    height: 220px;
-    object-fit: cover; 
-    
-
-}
-
-/* =========================
-   CARD CONTENT
-========================= */
-.content {
-    padding: 12px;
-}
-
-/* RESTAURANT NAME */
-.restaurant-name { 
-     margin-top: -5px; /* adjust like -3px, -8px as needed */
-    font-size: 21px;
-    font-weight: 800;
-    margin-bottom: 6px;
-    letter-spacing: 0.4px;
-
-    background: linear-gradient(
-        90deg,
-        #ff9800,
-        #ff5722,
-        #e91e63
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-/* Veg / Non-Veg */
-.veg-badge,
-.nonveg-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 14px;
-    font-size: 12px;
-    font-weight: 700;
-    margin-bottom: 10px;
-}
-
-.veg-badge {
-    background: #4caf50;
-    color: #fff;
-}
-
-.nonveg-badge {
-    background: #f44336;
-    color: #fff;
-}
-
-/* Details */
-.details {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    margin-bottom: 8px;
-    color: #555;
-}
-
-.popular {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    padding: 6px 14px;
-    margin-bottom: 10px;
-    color: #fff;
-
-    background: linear-gradient(
-        120deg,
-        #00c3ff,
-        #038b62,
-        #ea00ff
-    );
-    background-size: 200% 200%;
-
-    border-radius: 999px;
-    box-shadow:
-        0 0 10px rgba(255, 61, 0, 0.6),
-        0 6px 16px rgba(0, 0, 0, 0.25);
-
-    animation: gradientMove 3s infinite linear,
-               pulseGlow 1.6s infinite ease-in-out;
-}
-
-/* 🔥 Fire icon */
-.popular::before {
-    content: "🔥";
-    font-size: 13px;
-}
-
-/* 🌈 Gradient motion */
-@keyframes gradientMove {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
-}
-
-/* 💓 Pulse glow */
-@keyframes pulseGlow {
-    0% {
-        transform: scale(1);
-        box-shadow:
-            0 0 10px rgba(255, 61, 0, 0.6),
-            0 6px 16px rgba(0, 0, 0, 0.25);
-    }
-    50% {
-        transform: scale(1.08);
-        box-shadow:
-            0 0 20px rgba(0, 255, 170, 0.9),
-            0 10px 22px rgba(0, 0, 0, 0.35);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
-
-
-.free-delivery,
-.delivery-charge {
-    font-size: 13px;
-    margin-bottom: 12px;
-    color: #ff5722;
-}
-
-/* BUTTON */
-.view-btn {
-    display: inline-block;
-    padding: 9px 18px;
-    border-radius: 30px;
-    font-size: 14px;
-    font-weight: 700;
-    text-decoration: none;
-
-    color: #fff;
-    background: linear-gradient(135deg, #ff5722, #ff9800);
-    box-shadow: 0 6px 14px rgba(255,87,34,0.45);
-
-    transition:
-        transform 0.25s ease,
-        box-shadow 0.25s ease;
-}
-
-.view-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(255,87,34,0.65);
-}
-
-/* =========================
-   INFO BADGES
-========================= */
+/* --------------------------------------------------------------------------
+   6. INFO / STATUS OVERLAYS (GLASSMORPHISM)
+   -------------------------------------------------------------------------- */
 .info-box {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-
-    z-index: 99999; /* enough now */
-
-    padding: 6px 12px;
-    border-radius: 10px;
-
-    font-size: 12px;
-    font-weight: 700;
-    color: #fff;
-
-    backdrop-filter: blur(6px);
+  position: relative;
+  z-index: 5;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  padding: var(--space-2) var(--space-4);
+  animation: fade-slide-in 0.35s var(--transition-base);
 }
+
+@keyframes fade-slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Overlays that sit on top of the image (suspended / coming soon / not deliverable / closed)
+   are rendered as full-width glass banners above the image-wrap in DOM order,
+   styled to look like frosted status ribbons */
+.suspended-box,
+.coming-soon-box,
+.not-deliverable,
+.closed-box {
+  margin: var(--space-3) var(--space-3) 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  background: var(--color-card-glass);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid var(--color-border-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.suspended-box {
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.coming-soon-box {
+  color: var(--color-primary-dark);
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.28);
+}
+
 .not-deliverable {
-    background: #d32f2f;
+  color: var(--color-text-muted);
 }
 
 .closed-box {
-    background: #ec454d;
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
+/* Offer ribbon — sits between overlays and image, styled as a premium gradient strip */
 .offer-box {
-    background: linear-gradient(45deg, #ff9800, #ff5722);
-    animation: pulseGlow 1.6s infinite alternate;
+  margin: var(--space-3) var(--space-3) 0;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  background: var(--gradient-accent);
+  box-shadow: var(--shadow-glow-accent);
 }
 
-/* OFFER GLOW */
-@keyframes pulseGlow {
-    from { box-shadow: 0 0 8px rgba(255,152,0,0.6); }
-    to   { box-shadow: 0 0 16px rgba(255,87,34,0.9); }
+/* --------------------------------------------------------------------------
+   7. CONTENT AREA
+   -------------------------------------------------------------------------- */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  flex: 1;
 }
 
-/* =========================
-   DISABLED CARD
-========================= */
-.card.disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
+.restaurant-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
 }
 
-.card.disabled::before {
-    background: linear-gradient(135deg, #c7c6c6, #bdbdbd);
-    opacity: 0.4;
+/* Veg / Non-veg indicator badges, Swiggy-style square-dot markers */
+.veg-badge,
+.nonveg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 3px 10px 3px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.veg-badge {
+  color: var(--color-accent-dark);
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+.veg-badge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--color-veg);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+.nonveg-badge {
+  color: #B91C1C;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.nonveg-badge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--color-nonveg);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.bakery-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: 2px;
+}
+
+.bakery-tags .tag {
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  backdrop-filter: none;
+}
+
+/* Rating / price / time row */
+.details {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px dashed var(--color-border);
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.details .rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-accent-dark);
+  font-weight: 700;
+  background: rgba(34, 197, 94, 0.1);
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+}
+
+.details .price,
+.details .time {
+  position: relative;
+  padding-left: var(--space-3);
+}
+.details .price::before,
+.details .time::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+.details.bakery-details > div:first-child {
+  padding-left: 0;
+}
+.details.bakery-details > div:first-child::before {
+  display: none;
+}
+
+.popular {
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.free-delivery,
+.delivery-charge {
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+.free-delivery {
+  color: var(--color-accent-dark);
+}
+.delivery-charge {
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   8. BUTTONS
+   -------------------------------------------------------------------------- */
+.view-btn {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin-top: var(--space-3);
+  text-align: center;
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+    filter var(--transition-fast);
+  overflow: hidden;
+}
+
+.view-menu-btn {
+  color: #fff;
+  background: var(--gradient-primary);
+  background-size: 160% 160%;
+  background-position: 0% 50%;
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.view-menu-btn:hover {
+  transform: translateY(-2px);
+  background-position: 100% 50%;
+  box-shadow: 0 12px 28px -8px rgba(37, 99, 235, 0.5);
+}
+
+.view-menu-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Subtle shine sweep on hover */
+.view-menu-btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.6s ease;
+}
+.view-menu-btn:hover::after {
+  left: 130%;
 }
 
 .disabled-btn {
-    background: #9e9e9e;
-    cursor: not-allowed;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.disabled-btn:hover {
+  transform: none;
 }
 
-/* =========================
-   MOBILE RESPONSIVE
-========================= */
-/* =========================
-   MOBILE: ONE RESTAURANT PER ROW
-========================= */
-@media (max-width: 768px) {
+/* --------------------------------------------------------------------------
+   9. SECTION HEADERS (utility, in case a heading is present above the grid)
+   -------------------------------------------------------------------------- */
+.restaurants-section h1,
+.restaurants-section h2,
+.restaurants-section h3 {
+  font-family: var(--font-display);
+  color: var(--color-text);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
 
-    .restaurant-row {
-        display: flex;
-        flex-direction: column;   /* ✅ STACK VERTICALLY */
-        overflow-x: hidden;       /* ✅ REMOVE HORIZONTAL SCROLL */
-        gap: 18px;
-        padding: 12px 16px;
-    }
+/* --------------------------------------------------------------------------
+   10. FORM ELEMENTS (elegant animated focus states, for any inputs/filters)
+   -------------------------------------------------------------------------- */
+.restaurants-section input[type="text"],
+.restaurants-section input[type="search"],
+.restaurants-section select {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-card);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
 
-    .card {
-        width: 100%;              /* ✅ FULL WIDTH */
-        max-width: 100%;
-        scroll-snap-align: none;  /* disable snap */
-    }
+.restaurants-section input[type="text"]:focus,
+.restaurants-section input[type="search"]:focus,
+.restaurants-section select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  transform: translateY(-1px);
+}
 
-    .card:hover {
-        transform: none;          /* smoother mobile UX */
-    }
+/* --------------------------------------------------------------------------
+   11. STICKY UTILITIES (e.g. sticky filter bar / section header if present)
+   -------------------------------------------------------------------------- */
+.restaurants-section .sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--color-card-glass);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-bottom: 1px solid var(--color-border-soft);
+  padding: var(--space-3) var(--space-4);
+}
+
+/* --------------------------------------------------------------------------
+   12. GENERIC SKELETON UTILITY (reusable for async-loaded cards)
+   -------------------------------------------------------------------------- */
+.skeleton {
+  position: relative;
+  color: transparent !important;
+  background: var(--gradient-skeleton) !important;
+  background-size: 400% 100% !important;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite !important;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   13. RESPONSIVE FINE-TUNING
+   -------------------------------------------------------------------------- */
+@media (max-width: 559px) {
+  .restaurants-section {
+    padding: var(--space-6) var(--space-3);
+  }
+  .content {
+    padding: var(--space-4);
+  }
+  .restaurant-name {
+    font-size: 16.5px;
+  }
+  .corner-badge.new-badge {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .restaurant-name {
+    font-size: 19px;
+  }
 }
 
 /* =========================
@@ -1698,102 +2182,7 @@ body {
 
 /* ================= MINI RESTAURANT CARDS ================= */
 
-.mini-card-link {
-    text-decoration: none;
-    color: inherit;
-}
 
-/* Card */
-.mini-card {
-    min-width: 135px;
-    background: linear-gradient(135deg, #ff7ad9, #7b6cff);
-    border-radius: 18px;
-    padding: 10px;
-    text-align: center;
-    flex-shrink: 0;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.18);
-    position: relative;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-/* Hover pop */
-.mini-card:hover {
-    transform: translateY(-6px) scale(1.04);
-    box-shadow: 0 18px 35px rgba(0,0,0,0.25);
-}
-
-/* Image */
-.mini-card img {
-    width: 100%;
-    height: 85px;
-    object-fit: cover;
-    border-radius: 14px;
-    border: 2px solid rgba(255,255,255,0.6);
-}
-
-/* Name */
-.mini-name {
-    margin-top: 8px;
-    font-size: 13px;
-    font-weight: 700;
-    color: #fff;
-
-    /* 🔥 Two-line clamp */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-
-    line-height: 1.2em;
-    min-height: 2.4em;   /* keeps card height SAME */
-}
-
-
-/* Badges */
-.mini-badge {
-    display: inline-block;
-    margin-top: 5px;
-    padding: 3px 8px;
-    font-size: 10px;
-    font-weight: 700;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.9);
-}
-
-.mini-badge.veg {
-    color: #087f5b;
-}
-
-.mini-badge.nonveg {
-    color: #c92a2a;
-}
-
-/* Disabled */
-.mini-card.disabled {
-    opacity: 0.45;
-    filter: grayscale(1);
-    pointer-events: none;
-}
-
-/* Optional shimmer effect */
-.mini-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        120deg,
-        transparent 30%,
-        rgba(255,255,255,0.35) 50%,
-        transparent 70%
-    );
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    border-radius: 18px;
-}
-
-.mini-card:hover::after {
-    opacity: 1;
-}
 /* ================= Flash / Limited Card ================= */
 .limited-card {
     position: relative;
@@ -1891,6 +2280,472 @@ body {
 /* ===============================
    MINI CATEGORY SECTION
 ================================ */
+/* ==========================================================================
+   Restaurant Mini Section — RucHiGo (v2)
+   Two-row horizontal scrolling grid of restaurant cards
+   ========================================================================== */
+.restaurant-mini-section {
+
+  --rmc-card-w:180px;
+  --rmc-media-h:112px;
+  --rmc-radius:20px;
+
+  --rmc-gap-x:18px;
+  --rmc-gap-y:18px;
+
+  --rmc-bg:#ffffff;
+
+  --rmc-border:rgba(0,0,0,.06);
+
+  --rmc-text:#161616;
+  --rmc-text-muted:#707070;
+
+  --rmc-accent:#7C3AED;
+  --rmc-accent-soft:#F3E8FF;
+
+  --rmc-veg:#22C55E;
+  --rmc-veg-soft:#DCFCE7;
+
+  --rmc-nonveg:#EF4444;
+  --rmc-closed:#9CA3AF;
+
+  --rmc-shadow:
+      0 4px 12px rgba(0,0,0,.05);
+
+  --rmc-shadow-hover:
+      0 25px 50px rgba(0,0,0,.15);
+
+  position:relative;
+  overflow:hidden;
+  padding:3.5rem 0 5rem;
+
+  background:
+
+      radial-gradient(circle at top left,
+      rgba(124,58,237,.07),
+      transparent 45%),
+
+      radial-gradient(circle at top right,
+      rgba(249,115,22,.07),
+      transparent 45%),
+
+      linear-gradient(
+      180deg,
+      #f5f1e0 0%,
+      #fcfcfd 100%);
+}
+.restaurant-mini-section{
+    position:relative;
+    overflow:hidden;
+}
+
+.restaurant-mini-section::after{
+    content:"";
+    position:absolute;
+    left:0;
+    bottom:-1px;
+    width:100%;
+    height:40px;
+
+    background:#4ddbc8;
+
+    clip-path:polygon(
+        0% 0%,
+        2.5% 100%,
+        5% 0%,
+        7.5% 100%,
+        10% 0%,
+        12.5% 100%,
+        15% 0%,
+        17.5% 100%,
+        20% 0%,
+        22.5% 100%,
+        25% 0%,
+        27.5% 100%,
+        30% 0%,
+        32.5% 100%,
+        35% 0%,
+        37.5% 100%,
+        40% 0%,
+        42.5% 100%,
+        45% 0%,
+        47.5% 100%,
+        50% 0%,
+        52.5% 100%,
+        55% 0%,
+        57.5% 100%,
+        60% 0%,
+        62.5% 100%,
+        65% 0%,
+        67.5% 100%,
+        70% 0%,
+        72.5% 100%,
+        75% 0%,
+        77.5% 100%,
+        80% 0%,
+        82.5% 100%,
+        85% 0%,
+        87.5% 100%,
+        90% 0%,
+        92.5% 100%,
+        95% 0%,
+        97.5% 100%,
+        100% 0%,
+        100% 100%,
+        0% 100%
+    );
+
+    z-index:5;
+}
+.restaurant-mini-section::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    width:100%;
+    height:40px;
+
+    background:#4ddbc8;
+
+    clip-path:polygon(
+        0% 100%,
+        2.5% 0%,
+        5% 100%,
+        7.5% 0%,
+        10% 100%,
+        12.5% 0%,
+        15% 100%,
+        17.5% 0%,
+        20% 100%,
+        22.5% 0%,
+        25% 100%,
+        27.5% 0%,
+        30% 100%,
+        32.5% 0%,
+        35% 100%,
+        37.5% 0%,
+        40% 100%,
+        42.5% 0%,
+        45% 100%,
+        47.5% 0%,
+        50% 100%,
+        52.5% 0%,
+        55% 100%,
+        57.5% 0%,
+        60% 100%,
+        62.5% 0%,
+        65% 100%,
+        67.5% 0%,
+        70% 100%,
+        72.5% 0%,
+        75% 100%,
+        77.5% 0%,
+        80% 100%,
+        82.5% 0%,
+        85% 100%,
+        87.5% 0%,
+        90% 100%,
+        92.5% 0%,
+        95% 100%,
+        97.5% 0%,
+        100% 100%,
+        100% 0,
+        0 0
+    );
+
+    z-index:5;
+}
+.restaurant-mini-section .restaurant-preview {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.restaurant-mini-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 1.25rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--rmc-text);
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Two-row scrolling grid ---------- */
+
+.restaurant-scroll {
+  display: grid;
+  grid-template-rows: repeat(2, auto);
+  grid-auto-flow: column;
+  grid-auto-columns: var(--rmc-card-w);
+  column-gap: var(--rmc-gap-x);
+  row-gap: var(--rmc-gap-y);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 6px 6px 16px;
+  margin: -6px -6px 0;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #fffefd transparent;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+}
+
+.restaurant-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.restaurant-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.restaurant-scroll::-webkit-scrollbar-thumb {
+  background-color: #ddd3c1;
+  border-radius: 999px;
+}
+
+/* ---------- Card link / card ---------- */
+
+.mini-card-link {
+  scroll-snap-align: start;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  border-radius: var(--rmc-radius);
+}
+
+.mini-card-link:focus-visible {
+  outline: 2px solid var(--rmc-accent);
+  outline-offset: 3px;
+}
+
+.mini-card {
+  width: var(--rmc-card-w);
+  height: 100%;
+  background: var(--rmc-bg);
+  border: 1px solid var(--rmc-border);
+  border-radius: var(--rmc-radius);
+  overflow: hidden;
+  box-shadow: var(--rmc-shadow);
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.22s ease,
+              border-color 0.22s ease;
+}
+
+.mini-card-link:hover .mini-card {
+  transform: translateY(-4px);
+  box-shadow: var(--rmc-shadow-hover);
+  border-color: #e4d9c5;
+}
+
+.mini-card-link:hover .mini-card-media img {
+  transform: scale(1.06);
+}
+
+.mini-card.disabled {
+  opacity: 0.5;
+  filter: grayscale(0.4);
+}
+
+.mini-card-link:has(.mini-card.disabled) {
+  cursor: not-allowed;
+}
+
+.mini-card-link:has(.mini-card.disabled):hover .mini-card {
+  transform: none;
+  box-shadow: var(--rmc-shadow);
+  border-color: var(--rmc-border);
+}
+
+.mini-card-link:has(.mini-card.disabled):hover .mini-card-media img {
+  transform: none;
+}
+
+/* ---------- Media ---------- */
+
+.mini-card-media {
+  position: relative;
+  width: 100%;
+  height: var(--rmc-media-h);
+  background: #f2ede2;
+  overflow: hidden;
+}
+
+.mini-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mini-card-media::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 42%;
+  background: linear-gradient(180deg, transparent, rgba(20, 16, 12, 0.32));
+  pointer-events: none;
+}
+
+.corner-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  line-height: 1;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--rmc-accent);
+  box-shadow: 0 2px 6px rgba(232, 145, 44, 0.45);
+}
+
+.mini-badge.diet-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 17px;
+  height: 17px;
+  border-radius: 4px;
+  background: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.mini-badge.diet-dot::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.mini-badge.diet-dot.veg::after {
+  background: var(--rmc-veg);
+}
+
+.mini-badge.diet-dot.nonveg::after {
+  background: var(--rmc-nonveg);
+}
+
+.closed-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 16, 12, 0.58);
+  backdrop-filter: blur(1.5px);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ---------- Body ---------- */
+
+.mini-card-body {
+  padding: 12px 13px 13px;
+}
+
+.mini-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--rmc-text);
+  line-height: 1.32;
+  margin-bottom: 8px;
+}
+
+.mini-name.two-line {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(1.32em * 2);
+}
+
+.mini-card-body > .mini-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+}
+
+.mini-card-body > .mini-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.mini-card-body > .mini-badge.open {
+  background: var(--rmc-veg-soft);
+  color: var(--rmc-veg);
+}
+
+.mini-card-body > .mini-badge.open::before {
+  background: var(--rmc-veg);
+}
+
+.mini-card-body > .mini-badge.closed {
+  background: #f2f0ea;
+  color: var(--rmc-closed);
+}
+
+.mini-card-body > .mini-badge.closed::before {
+  background: var(--rmc-closed);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 640px) {
+  .restaurant-mini-section {
+    --rmc-card-w: 144px;
+    --rmc-media-h: 96px;
+    --rmc-gap-x: 12px;
+    --rmc-gap-y: 12px;
+    padding: 1.75rem 0;
+  }
+
+  .restaurant-mini-section .restaurant-preview {
+    padding: 0 1rem;
+  }
+
+  .restaurant-mini-section h3 {
+    font-size: 1.1rem;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .mini-card,
+  .mini-card-link,
+  .mini-card-media img {
+    transition: none !important;
+  }
+
+  .mini-card-link:hover .mini-card,
+  .mini-card-link:hover .mini-card-media img {
+    transform: none;
+  }
+}
 
 .fc-mini-section {
     padding: 6px 2px;
@@ -4907,6 +5762,71 @@ CONTENT
   outline: 2px solid var(--gold);
   outline-offset: 3px;
 }
+.section-heading{
+    text-align:center;
+    margin-bottom:32px;
+    position:relative;
+    z-index:20;
+}
+
+.section-subtitle{
+    display:inline-block;
+    padding:6px 14px;
+    background:#fff;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:700;
+    color:#7C3AED;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+    margin-bottom:12px;
+}
+
+.section-heading h2{
+    margin:0;
+    font-size:2rem;
+    font-weight:800;
+    color:#222;
+}
+
+.section-heading p{
+    margin-top:8px;
+    color:#666;
+    font-size:15px;
+}
+.section-title{
+    text-align:center;
+    margin:20px 0 40px;
+}
+
+.section-badge{
+    display:inline-block;
+    padding:6px 16px;
+    border:1px solid #e5e7eb;
+    border-radius:999px;
+    background:#fff;
+    color:#7C3AED;
+    font-weight:600;
+}
+
+.section-title h2{
+    font-size:40px;
+    margin:15px 0 8px;
+}
+
+.section-title p{
+    color:#777;
+}
+.section-title h2::after{
+    content:"";
+    display:block;
+    width:80px;
+    height:4px;
+    margin:15px auto 0;
+    border-radius:999px;
+    background:linear-gradient(90deg,#7C3AED,#F97316);
+}
 </style>
 
 <header class="app-header">
@@ -5274,6 +6194,8 @@ CONTENT
     </div>
 
 </section>  
+
+{% include "restaurant_mini.html" %}
 {% if popular_items %}
 <section class="homepage-items popular-section">
 
@@ -5396,7 +6318,10 @@ CONTENT
 
 </section>
 {% endif %} 
+{% if restaurants|length > 0 %}
 
+</section>
+{% endif %}
 {% if budget_items %}
 
 <section class="budget-section">
@@ -5554,16 +6479,11 @@ CONTENT
     </div>
 </section>
 {% endif %}
-<section class="demand-heat">
-    <div class="heat-layer"></div>
+{% include "restaurant_cards.html" %}
 
-    <section class="restaurants-section" id="restaurantsSection">
-        <div class="container" id="restaurants">
-            <!-- restaurant cards -->
-        </div>
-    </section>
-</section>
-
+<!-- ==========================================
+     FULL RESTAURANTS SECTION
+========================================== -->
 
 
 <link rel="icon" href="/static/favicon.ico">
