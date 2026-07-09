@@ -858,7 +858,7 @@ def home():
 
                         pass
         # Only show items costing ₹99 or more
-        if price < 99:
+        if price < 30 :
             continue
         popular_sorted.append({
 

@@ -882,12 +882,7 @@ body {
 }
 
 /* Timer element kept in DOM for JS, visually hidden */
-.timer {
-  position: absolute;
-  z-index: 3;
-  opacity: 0;
-  pointer-events: none;
-}
+
 
 /* Corner "NEW" badge */
 .corner-badge.new-badge {
@@ -1245,7 +1240,9 @@ body {
 }
 
 .disabled-btn {
-  color: var(--color-text-muted);
+  
+  color: #000000;
+  font-weight:900;
   background: var(--color-bg);
   border: 1px dashed var(--color-border);
   cursor: not-allowed;
@@ -2148,21 +2145,18 @@ body {
     font-size: 18px;
     font-weight: 700;
 }
+.restaurant-scroll{
+    display:grid;
+    grid-template-rows:repeat(2,auto);
+    grid-auto-flow:column;
+    grid-auto-columns:var(--rmc-card-w);
 
-.restaurant-scroll {
-    display: grid;
-    grid-auto-flow: column;             /* Fill vertically first */
-    grid-template-rows: repeat(2, auto);/* 2 rows */
-    gap: 12px;
+    overflow-x:auto;
+    overflow-y:visible;
 
-    overflow-x: auto;
-    overflow-y: hidden;
+    gap:18px;
 
-    padding-bottom: 8px;
-
-    scroll-behavior: smooth;            /* Smooth scroll */
-    scroll-snap-type: x mandatory;      /* Snap like Netflix */
-    -webkit-overflow-scrolling: touch;  /* Smooth on mobile */
+    padding:20px;
 }
 
 /* Hide scrollbar but keep scroll */
@@ -2293,7 +2287,7 @@ body {
   --rmc-gap-x:18px;
   --rmc-gap-y:18px;
 
-  --rmc-bg:#ffffff;
+  --rmc-bg:#bbf3f5;
 
   --rmc-border:rgba(0,0,0,.06);
 
@@ -2301,7 +2295,7 @@ body {
   --rmc-text-muted:#707070;
 
   --rmc-accent:#7C3AED;
-  --rmc-accent-soft:#F3E8FF;
+
 
   --rmc-veg:#22C55E;
   --rmc-veg-soft:#DCFCE7;
@@ -2331,7 +2325,7 @@ body {
 
       linear-gradient(
       180deg,
-      #f5f1e0 0%,
+      #ffffff 0%,
       #fcfcfd 100%);
 }
 .restaurant-mini-section{
@@ -2508,13 +2502,7 @@ body {
 
 /* ---------- Card link / card ---------- */
 
-.mini-card-link {
-  scroll-snap-align: start;
-  text-decoration: none;
-  color: inherit;
-  display: block;
-  border-radius: var(--rmc-radius);
-}
+
 
 .mini-card-link:focus-visible {
   outline: 2px solid var(--rmc-accent);
@@ -2547,6 +2535,7 @@ body {
 .mini-card.disabled {
   opacity: 0.5;
   filter: grayscale(0.4);
+ 
 }
 
 .mini-card-link:has(.mini-card.disabled) {
@@ -2648,9 +2637,9 @@ body {
   justify-content: center;
   background: rgba(20, 16, 12, 0.58);
   backdrop-filter: blur(1.5px);
-  color: #fff;
+  color: #000000;
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 900;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
@@ -7296,127 +7285,131 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <script>
-document.querySelectorAll(".fc-mini-card").forEach(card => {
-  card.addEventListener("click", () => {
+document.addEventListener("DOMContentLoaded", () => {
 
-    const catId = card.dataset.categoryId;
+    const categoryCards = document.querySelectorAll(".fc-mini-card");
 
-    // highlight selected
-    document.querySelectorAll(".fc-mini-card")
-      .forEach(c => c.classList.remove("selected"));
-    card.classList.add("selected");
+    categoryCards.forEach(category => {
 
-    // BIG CARDS
-    document.querySelectorAll(".restaurant-card, .bakery-card")
-      .forEach(r => filterCard(r, catId));
+        category.addEventListener("click", () => {
 
-    // MINI CARDS
-    document.querySelectorAll(".mini-card")
-      .forEach(r => filterCard(r, catId));
+            const catId = category.dataset.categoryId;
 
-    // SCROLL TO RESTAURANTS SECTION
-    const target = document.getElementById("restaurantsSection");
-    if(target){
-      const headerOffset = 80; // adjust to your header height
-      const elementPosition = target.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            // -----------------------------
+            // Selected Category
+            // -----------------------------
+            categoryCards.forEach(c => c.classList.remove("selected"));
+            category.classList.add("selected");
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth"
-      });
-    }
-  });
-});
+            // -----------------------------
+            // BIG RESTAURANT CARDS
+            // -----------------------------
+            document.querySelectorAll(".restaurant-card, .bakery-card")
+                .forEach(card => {
 
-function filterCard(card, catId) {
-  const ids = card.dataset.categoryIds;
+                    const ids = card.dataset.categoryIds || "";
 
-  if (catId === "all") {
-    card.style.display = "block";
-    return;
-  }
+                    if (
+                        catId === "all" ||
+                        (ids && ids.split(",").includes(catId))
+                    ) {
+                        card.style.display = "";
+                    } else {
+                        card.style.display = "none";
+                    }
 
-  if (!ids || ids.trim() === "") {
-    card.style.display = "none";
-    return;
-  }
+                });
 
-  if (ids.split(",").includes(catId)) {
-    card.style.display = "block";
-  } else {
-    card.style.display = "none";
-  }
-}
+            // -----------------------------
+            // MINI RESTAURANT CARDS
+            // -----------------------------
+            const scrollContainer = document.querySelector(".restaurant-scroll");
 
+            if(scrollContainer){
 
+                const miniLinks = [...scrollContainer.querySelectorAll(".mini-card-link")];
 
-function setCategorySticky() {
-    const header = document.querySelector('.app-header');
-    const categoryBar = document.querySelector('.fc-mini-section');
+                miniLinks.forEach(link=>{
 
-    if(header && categoryBar){
-        const headerHeight = header.offsetHeight;
-        categoryBar.style.top = headerHeight + "px";
-    }
-}
+                    const card = link.querySelector(".mini-card");
+                    const ids = card.dataset.categoryIds || "";
 
-// Run on load
-window.addEventListener('load', setCategorySticky);
-// Run on resize
-window.addEventListener('resize', setCategorySticky);
-document.querySelectorAll(".fc-mini-card").forEach(card => {
-  card.addEventListener("click", () => {
-    const catId = card.dataset.categoryId;
+                    const show =
+                        catId === "all" ||
+                        (ids && ids.split(",").includes(catId));
 
-    // Highlight selected
-    document.querySelectorAll(".fc-mini-card").forEach(c => c.classList.remove("selected"));
-    card.classList.add("selected");
+                    if(show){
+                        link.style.display = "";
+                        scrollContainer.appendChild(link); // Move visible cards to front
+                    }else{
+                        link.style.display = "none";
+                    }
 
-    // Filter cards
-    document.querySelectorAll(".restaurant-card, .bakery-card, .mini-card")
-      .forEach(r => filterCard(r, catId));
+                });
 
-    // Scroll restaurants section into view below sticky category bar
-    const target = document.getElementById("restaurantsSection");
-    if(target){
-        const categoryBar = document.querySelector('.fc-mini-section');
-        const headerHeight = document.querySelector('.app-header').offsetHeight;
-        const offset = categoryBar.offsetHeight + headerHeight;
-        const elementPos = target.getBoundingClientRect().top + window.scrollY - offset;
+                // Scroll back to first card
+                scrollContainer.scrollTo({
+                    left:0,
+                    behavior:"smooth"
+                });
 
-        window.scrollTo({ top: elementPos, behavior: "smooth" });
-    }
+            }
 
-    // Optional: scroll category card into view (mobile)
-    card.scrollIntoView({ behavior: "smooth", inline: "center" });
-  });
-});
+            // -----------------------------
+            // Scroll to Restaurant Section
+            // -----------------------------
+            const target = document.getElementById("restaurantsSection");
 
-</script>
-<script>
-document.querySelectorAll(".fc-mini-card").forEach(card => {
-    card.addEventListener("click", function () {
+            if(target){
 
-        // Remove selected from all
-        document.querySelectorAll(".fc-mini-card")
-            .forEach(c => c.classList.remove("selected"));
+                const header = document.querySelector(".app-header");
+                const categoryBar = document.querySelector(".fc-mini-section");
 
-        // Add selected to clicked one
-        this.classList.add("selected");
+                const offset =
+                    (header ? header.offsetHeight : 0) +
+                    (categoryBar ? categoryBar.offsetHeight : 0);
 
-        // 🔥 Smooth Scroll Part
-        const targetId = this.getAttribute("data-target");
-        const targetSection = document.getElementById(targetId);
+                const position =
+                    target.getBoundingClientRect().top +
+                    window.scrollY -
+                    offset;
 
-        if (targetSection) {
-            targetSection.scrollIntoView({
+                window.scrollTo({
+                    top: position,
+                    behavior: "smooth"
+                });
+
+            }
+
+            // Keep selected category visible
+            category.scrollIntoView({
                 behavior: "smooth",
-                block: "start"
+                inline: "center",
+                block: "nearest"
             });
-        }
+
+        });
 
     });
+
+    // -----------------------------
+    // Sticky Category Bar
+    // -----------------------------
+    function setCategorySticky(){
+
+        const header = document.querySelector(".app-header");
+        const categoryBar = document.querySelector(".fc-mini-section");
+
+        if(header && categoryBar){
+            categoryBar.style.top = header.offsetHeight + "px";
+        }
+
+    }
+
+    setCategorySticky();
+
+    window.addEventListener("resize", setCategorySticky);
+
 });
 </script>
 <script>
