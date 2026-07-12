@@ -148,15 +148,12 @@ onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';">
 
 {% endif %}
 
-{% if r.free_delivery_limit > 0 %}
+
 <div class="free-delivery">
-🚚 Free Delivery on ₹{{ r.free_delivery_limit }}+
+
+    🚚 Delivery starts at ₹35 (Up to 4 km). Charges may increase based on distance.
 </div>
-{% else %}
-<div class="delivery-charge">
-🚚 Delivery ₹{{ r.delivery_charge }}
-</div>
-{% endif %}
+
 
 {% if is_suspended %}
 <span class="view-btn disabled-btn">🚫 Temporarily Closed</span>

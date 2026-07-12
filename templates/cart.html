@@ -4139,11 +4139,12 @@ document.getElementById("delivery_charge_input").value = deliveryCharge;
 
     // ✅ Only overwrite if no coupon or offer message locked
     if (!couponMsgLocked && !offerMsgLocked) {
+        
         if (freeDeliveryReason === "offer") {
             msg.innerText = "🎉 Free delivery via offer";
             msg.className = "soft-success";
         } else if (deliveryCharge === 0) {
-            msg.innerText = "🎉 Free delivery";
+            msg.innerText = "wait";
             msg.className = "soft-success";
         } else if (FREE_DELIVERY_LIMIT > 0 && itemsTotal < FREE_DELIVERY_LIMIT) {
             msg.innerText =

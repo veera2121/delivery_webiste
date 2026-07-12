@@ -675,7 +675,9 @@ function updateMenuIncentive(){
         if(!offerUnlocked){ fireConfetti(); offerUnlocked=true; }
     }
 
-    msgEl.innerHTML = msg;
+      // Temporary: Hide the message
+  msgEl.style.display = "none";
+
     fill.style.width = Math.min((total/target)*100,100)+"%";
 }
 updateMenuIncentive();
@@ -691,6 +693,7 @@ function showAddedAnimation(text){
 
 /* ================= CONFETTI ================= */
 function fireConfetti(){
+    return; // Temporary disable confetti
     const canvas = document.getElementById("confetti");
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;

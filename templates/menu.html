@@ -1351,7 +1351,7 @@ box-shadow:
     <div class="menu-message" id="menu-message"></div>
 
     <div class="progress-bar">
-        <div class="progress-fill" id="progress-fill"></div>
+       <!-----<div class="progress-fill" id="progress-fill"></div> -->
     </div>
 </div>
 
@@ -1825,7 +1825,8 @@ function updateMenuIncentive() {
   }
 
   card.classList.remove("hidden");
-
+    // Temporary: Hide the message
+  msgEl.style.display = "none";
   let target = 0;
   let message = "";
 
@@ -1854,6 +1855,7 @@ function updateMenuIncentive() {
   fill.style.width = progress + "%";
 }
 function fireConfetti() {
+    return; // Temporary disable confetti
   const canvas = document.getElementById("confetti");
   const ctx = canvas.getContext("2d");
   canvas.width = window.innerWidth;

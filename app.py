@@ -4383,6 +4383,7 @@ def update_feedback_status(feedback_id):
     db.session.commit()
     flash("Status updated successfully", "success")
     return redirect(url_for("admin_feedback"))  
+
 def calculate_delivery_charge(distance_km, items_total, restaurant):
     s = DeliverySettings.query.first()
 
@@ -4392,12 +4393,13 @@ def calculate_delivery_charge(distance_km, items_total, restaurant):
     # =========================
     # 1️⃣ RESTAURANT FREE DELIVERY (ONLY THIS)
     # =========================
-    if (
-        restaurant.free_delivery_limit
-        and restaurant.free_delivery_limit > 0
-        and items_total >= restaurant.free_delivery_limit
-    ):
-        return 0, "🎉 Free delivery (Restaurant)"
+    #if (
+
+        #restaurant.free_delivery_limit
+        #and restaurant.free_delivery_limit > 0
+        #and items_total >= restaurant.free_delivery_limit
+    #):
+        #return 0, "🎉 Free delivery (Restaurant)"
 
     # =========================
     # 2️⃣ DISTANCE SLAB
@@ -4442,6 +4444,7 @@ def calculate_delivery():
     )
 
     delivery_charge, message =calculate_delivery_charge(distance_km, items_total, restaurant)
+    
 
     
 
