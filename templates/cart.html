@@ -2993,158 +2993,120 @@ box-shadow:
 0 0 0 6px rgba(34,197,94,.12);
 
 }
-.recommend-section{
-    margin-top:25px;
-}
-
-.recommend-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-    gap:15px;
-}
-
-.recommend-card{
-    border:1px solid #ddd;
-    border-radius:12px;
-    padding:12px;
-    text-align:center;
-    background:#fff;
-}
-
-.recommend-card img{
-    width:100%;
-    height:120px;
-    object-fit:cover;
-    border-radius:10px;
-}
-
-.recommend-btn{
-    display:inline-block;
-    margin-top:10px;
-    background:#27ae60;
-    color:#fff;
-    padding:8px 18px;
-    border-radius:8px;
-    text-decoration:none;
-}
-.recommend-scroll{
-    display:flex;
-    overflow-x:auto;
-    gap:16px;
-    padding:10px 0;
-    scroll-snap-type:x mandatory;
-    scrollbar-width:none;
-}
-
-.recommend-scroll::-webkit-scrollbar{
-    display:none;
-}
-
-.recommend-card{
-    flex:0 0 190px;
-    background:#fff;
-    border-radius:20px;
-    overflow:hidden;
-    box-shadow:0 6px 18px rgba(0,0,0,.08);
-    scroll-snap-align:start;
-    transition:.3s;
-}
-
-.recommend-card:hover{
-    transform:translateY(-4px);
-}
-
-.recommend-image{
-    width:100%;
-    height:135px;
-    object-fit:cover;
-}
-
-.recommend-image-placeholder{
-    width:100%;
-    height:135px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:55px;
-    background:#f5f5f5;
-}
-
-.recommend-content{
-    padding:12px;
-}
-
-.recommend-badge{
-    display:inline-block;
-    background:#E8F8EE;
-    color:#16a34a;
-    padding:4px 10px;
-    border-radius:20px;
-    font-size:11px;
-    font-weight:700;
-    margin-bottom:8px;
-}
-
-.recommend-title{
-    margin:0;
-    font-size:17px;
-    font-weight:700;
-}
-
-.recommend-desc{
-    margin:8px 0;
-    color:#777;
-    font-size:13px;
-    min-height:34px;
-}
-
-.recommend-footer{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top:10px;
-}
-
-.recommend-price{
-    font-size:20px;
-    font-weight:700;
-    color:#111;
-}
-
-.recommend-btn{
-    border:none;
-    background:#16a34a;
-    color:#fff;
-    padding:8px 16px;
-    border-radius:30px;
-    cursor:pointer;
-    font-weight:700;
-    transition:.25s;
-}
-
-.recommend-btn:hover{
-    background:#15803d;
-    transform:scale(1.05);
-} 
-/* ==============================
+/* ==========================================
    RECOMMENDATIONS
-================================= */
-
+========================================== */
 .recommend-section{
-    margin:18px 0;
+
+    margin:28px 0;
+
+    padding:22px;
+
+    background:#fff;
+
+    border-radius:22px;
+
+    border:1px solid #ececec;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.05);
+
+}
+
+.recommend-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:20px;
+
+}
+
+.recommend-header-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+}
+
+.recommend-icon{
+
+    width:54px;
+
+    height:54px;
+
+    border-radius:16px;
+
+    background:#fff5e5;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:28px;
+
+}
+
+.recommend-header h2{
+
+    margin:0;
+
+    font-size:22px;
+
+    font-weight:700;
+
+    color:#111;
+
+}
+
+.recommend-header p{
+
+    margin:4px 0 0;
+
+    font-size:14px;
+
+    color:#777;
+
+}
+
+.recommend-count{
+
+    background:#16a34a;
+
+    color:#fff;
+
+    padding:8px 14px;
+
+    border-radius:40px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+}
+.recommend-section{
+    margin:24px 0;
 }
 
 .recommend-header{
     display:flex;
     justify-content:space-between;
     align-items:flex-end;
-    margin-bottom:14px;
+    margin-bottom:16px;
 }
 
 .recommend-header h3{
     margin:0;
-    font-size:20px;
+    font-size:22px;
     font-weight:700;
+    color:#111;
 }
 
 .recommend-header span{
@@ -3152,86 +3114,81 @@ box-shadow:
     color:#777;
 }
 
+/* ==========================================
+   HORIZONTAL SCROLL
+========================================== */
+
 .recommend-scroll{
     display:flex;
-    gap:14px;
+    gap:16px;
     overflow-x:auto;
-    padding-bottom:10px;
+    padding:6px 2px 14px;
     scroll-behavior:smooth;
+    scrollbar-width:none;
 }
 
 .recommend-scroll::-webkit-scrollbar{
-    height:6px;
+    display:none;
 }
 
-.recommend-scroll::-webkit-scrollbar-thumb{
-    background:#dcdcdc;
-    border-radius:20px;
-}
-
-/* ==============================
+/* ==========================================
    CARD
-================================= */
+========================================== */
 
 .recommend-card{
 
-    min-width:240px;
-    max-width:240px;
+    flex:0 0 230px;
 
     background:#fff;
+
     border-radius:18px;
 
     overflow:hidden;
 
     border:1px solid #ececec;
 
-    transition:.25s;
+    transition:.25s ease;
 
-    flex-shrink:0;
+    box-shadow:0 4px 14px rgba(0,0,0,.05);
 
 }
 
 .recommend-card:hover{
 
-    transform:translateY(-4px);
+    transform:translateY(-5px);
 
-    box-shadow:0 10px 30px rgba(0,0,0,.08);
+    box-shadow:0 14px 35px rgba(0,0,0,.12);
 
 }
 
-/* ==============================
+/* ==========================================
    IMAGE
-================================= */
+========================================== */
 
 .recommend-image{
-
     width:100%;
-    height:140px;
-
-    object-fit:cover;
-
-    display:block;
-
+    height:155px;
+    object-fit:contain;
+    background:#fff;
 }
 
 .recommend-image-placeholder{
 
     width:100%;
-    height:140px;
+    height:155px;
 
     display:flex;
-    justify-content:center;
     align-items:center;
+    justify-content:center;
 
-    font-size:48px;
+    font-size:52px;
 
-    background:#f4f4f4;
-
+    background:#f3f3f3;
 }
 
-/* ==============================
+/* ==========================================
    CONTENT
-================================= */
+========================================== */
 
 .recommend-content{
 
@@ -3241,19 +3198,20 @@ box-shadow:
 
 .recommend-badge{
 
-    display:inline-block;
+    display:inline-flex;
+    align-items:center;
 
-    background:#eef9ef;
+    padding:5px 12px;
 
-    color:#179b44;
+    background:#E8F8EE;
+
+    color:#16a34a;
+
+    border-radius:50px;
 
     font-size:11px;
 
     font-weight:700;
-
-    padding:5px 10px;
-
-    border-radius:50px;
 
     margin-bottom:10px;
 
@@ -3267,19 +3225,27 @@ box-shadow:
 
     font-weight:700;
 
+    color:#222;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+
 }
 
 .recommend-desc{
 
-    margin:6px 0 14px;
+    margin:8px 0 14px;
 
-    color:#666;
+    color:#777;
 
     font-size:13px;
 
-    line-height:1.4;
+    line-height:1.45;
 
-    min-height:34px;
+    height:38px;
+
+    overflow:hidden;
 
 }
 
@@ -3291,33 +3257,37 @@ box-shadow:
 
     align-items:center;
 
+    gap:10px;
+
 }
 
 .recommend-price{
 
-    font-size:18px;
+    font-size:20px;
 
     font-weight:700;
 
     color:#111;
 
+    white-space:nowrap;
+
 }
 
-/* ==============================
-   ADD BUTTON
-================================= */
+/* ==========================================
+   BUTTON
+========================================== */
 
 .recommend-btn{
+
+    border:none;
 
     background:#16a34a;
 
     color:#fff;
 
-    border:none;
+    padding:9px 18px;
 
     border-radius:12px;
-
-    padding:10px 18px;
 
     font-size:14px;
 
@@ -3325,7 +3295,7 @@ box-shadow:
 
     cursor:pointer;
 
-    transition:.2s;
+    transition:.25s;
 
 }
 
@@ -3337,9 +3307,9 @@ box-shadow:
 
 }
 
-/* ==============================
-   QTY BUTTONS
-================================= */
+/* ==========================================
+   QTY
+========================================== */
 
 .recommend-qty{
 
@@ -3347,11 +3317,11 @@ box-shadow:
 
     align-items:center;
 
-    gap:12px;
+    gap:10px;
 
     background:#16a34a;
 
-    border-radius:14px;
+    border-radius:12px;
 
     padding:6px 10px;
 
@@ -3383,7 +3353,7 @@ box-shadow:
 
 .recommend-qty button:hover{
 
-    transform:scale(1.1);
+    transform:scale(1.08);
 
 }
 
@@ -3391,9 +3361,9 @@ box-shadow:
 
     color:#fff;
 
-    font-weight:700;
+    font-size:15px;
 
-    font-size:16px;
+    font-weight:700;
 
     min-width:18px;
 
@@ -3401,44 +3371,48 @@ box-shadow:
 
 }
 
-/* ==============================
+/* ==========================================
    MOBILE
-================================= */
+========================================== */
 
-@media(max-width:768px){
+@media (max-width:768px){
 
-.recommend-card{
+    .recommend-scroll{
+        gap:12px;
+    }
 
-    min-width:185px;
-    max-width:185px;
+    .recommend-card{
+        flex:0 0 180px;
+    }
 
+    .recommend-image,
+    .recommend-image-placeholder{
+        height:120px;
+    }
+
+    .recommend-content{
+        padding:12px;
+    }
+
+    .recommend-title{
+        font-size:15px;
+    }
+
+    .recommend-desc{
+        font-size:12px;
+        height:34px;
+    }
+
+    .recommend-price{
+        font-size:17px;
+    }
+
+    .recommend-btn{
+        padding:8px 14px;
+        font-size:13px;
+    }
 }
 
-.recommend-image{
-
-    height:110px;
-
-}
-
-.recommend-image-placeholder{
-
-    height:110px;
-
-}
-
-.recommend-title{
-
-    font-size:15px;
-
-}
-
-.recommend-price{
-
-    font-size:16px;
-
-}
-
-}
 </style>
 </head>
 <body> 
@@ -3550,16 +3524,36 @@ box-shadow:
 
     <!-- Cart Items -->
     <div id="cart-items" class="cart-list"></div>
-<div id="recommend-section" class="recommend-section" style="display:none;">
+<section id="recommend-section" class="recommend-section" style="display:none;">
 
     <div class="recommend-header">
-        <h3>✨ Complete Your Meal</h3>
-        <span>Frequently Bought Together</span>
+
+        <div class="recommend-header-left">
+
+            <span class="recommend-icon">🥤</span>
+
+            <div>
+
+                <h2>Complete Your Order</h2>
+
+                <p>Add drinks & sides loved by customers</p>
+
+            </div>
+
+        </div>
+
+        <div class="recommend-count" id="recommend-count">
+            Recommended
+        </div>
+
     </div>
 
-    <div id="recommend-grid" class="recommend-scroll"></div>
+    <div
+        id="recommend-grid"
+        class="recommend-scroll">
+    </div>
 
-</div>
+</section>
     <!-- Coupon Box -->
     <div id="coupon-box" class="info-box active">
         Click here to apply FIRST20 coupon

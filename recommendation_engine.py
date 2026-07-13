@@ -33,9 +33,12 @@ def get_recommendations(cart, restaurant_id):
         print(item.name, data)
 
         # Only Add-ons
-        if str(
-            data.get("is_addon", "")
-        ).lower() != "yes":
+        recommend_for = str(
+            data.get("recommend_for", "")
+        ).strip().lower()
+
+        # Skip only items that don't have any recommendation target
+        if not recommend_for:
             continue
 
         # Don't recommend already added items
@@ -104,4 +107,4 @@ def get_recommendations(cart, restaurant_id):
             r.extra_data.get("recommend_for"),
             r.extra_data.get("addon_priority")
         )
-    return recommendations[:6]
+    return recommendations[:12]

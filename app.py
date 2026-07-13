@@ -437,15 +437,15 @@ def sync_restaurant_menu(restaurant):
             db.session.add(item)
 
         db.session.commit()
-
+   
         print(
 
             restaurant.name,
 
             "synced"
-
+        
         )
-
+        
     except Exception as e:
 
         print(
@@ -464,7 +464,7 @@ def sync_all_restaurants():
         sync_restaurant_menu(
             restaurant
         )
-
+    
     print("Done") 
 
 def scheduled_sync():
@@ -2637,17 +2637,19 @@ def menu(restaurant_id):
 
     # ================= LOAD FROM POSTGRES =================
 
-    menu_items = (
+    menu_items = [
+
+    item
+
+    for item in (
 
         MenuItem.query
 
         .filter(
 
-            MenuItem.restaurant_id
-            == restaurant.id,
+            MenuItem.restaurant_id == restaurant.id,
 
-            MenuItem.availability
-            == "yes"
+            MenuItem.availability == "yes"
 
         )
 
@@ -2662,6 +2664,20 @@ def menu(restaurant_id):
         .all()
 
     )
+
+    if str(
+
+        (item.extra_data or {}).get(
+
+            "is_addon",
+
+            "No"
+
+        )
+
+    ).lower() != "yes"
+
+]
 
     # ================= REORDER DATA =================
 
@@ -4591,7 +4607,11 @@ def bakery_menu(restaurant_id):
     if restaurant.category_type != "bakery":
         abort(404)
 
-    menu_items = (
+    menu_items = [
+
+    item
+
+    for item in (
 
         MenuItem.query
 
@@ -4614,6 +4634,20 @@ def bakery_menu(restaurant_id):
         .all()
 
     )
+
+    if str(
+
+        (item.extra_data or {}).get(
+
+            "is_addon",
+
+            "No"
+
+        )
+
+    ).lower() != "yes"
+
+]
 
     reorder_map = {}
 
@@ -4672,6 +4706,7 @@ def bakery_menu(restaurant_id):
     for item in menu_items:
 
         data = item.extra_data or {}
+        
 
         data["id"] = item.id
 
