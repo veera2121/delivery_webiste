@@ -3122,13 +3122,31 @@ box-shadow:
     display:flex;
     gap:16px;
     overflow-x:auto;
+    overflow-y:hidden;
     padding:6px 2px 14px;
     scroll-behavior:smooth;
-    scrollbar-width:none;
+
+    scrollbar-width:thin;           /* Firefox */
+    scrollbar-color:#ff6b35 #f1f1f1;
 }
 
+/* Chrome, Edge, Safari */
 .recommend-scroll::-webkit-scrollbar{
-    display:none;
+    height:8px;
+}
+
+.recommend-scroll::-webkit-scrollbar-track{
+    background:#f1f1f1;
+    border-radius:10px;
+}
+
+.recommend-scroll::-webkit-scrollbar-thumb{
+    background:#ff6b35;
+    border-radius:10px;
+}
+
+.recommend-scroll::-webkit-scrollbar-thumb:hover{
+    background:#e85d24;
 }
 
 /* ==========================================
