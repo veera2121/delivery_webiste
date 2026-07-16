@@ -2499,7 +2499,7 @@ def delivery_dashboard():
         delivery_person=delivery_person,
         orders=orders,
         stats=stats,
-       VAPID_PUBLIC_KEY=VAPID_PUBLIC_KEY
+       VAPID_PUBLIC_KEY=os.environ.get("VAPID_PUBLIC_KEY")
     )
 
 @app.route("/admin/add_restaurant_user", methods=["GET", "POST"])
