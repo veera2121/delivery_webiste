@@ -16,15 +16,19 @@ if ('serviceWorker' in navigator && 'PushManager' in window) {
                     });
                 });
         })
-        .then(subscription => {
-            console.log("✅ Push subscribed");
+       .then(subscription => {
+        console.log("✅ Push subscribed");
 
-            return fetch("/subscribe", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(subscription)
-            });
-        })
+        const url = window.IS_DELIVERY
+            ? "/delivery/subscribe"
+            : "/subscribe";
+
+        return fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(subscription)
+        });
+    })
         .catch(err => {
             console.error("❌ Push subscription error:", err);
         });

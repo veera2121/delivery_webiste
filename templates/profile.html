@@ -188,6 +188,17 @@
 .btn-confirm:hover {
   background: #e03e3e;
 }
+
+.btn-history{
+    background:linear-gradient(135deg,#7c3aed,#5b21b6);
+    color:#fff;
+    border:none;
+}
+
+.btn-history:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 25px rgba(91,33,182,.35);
+}
 </style>
 
 
@@ -236,7 +247,15 @@
 
     <!-- ACTIONS -->
     <div class="profile-actions">
-
+<a href="{{ url_for('edit_profile') }}" class="profile-btn btn-track">
+    ✏️ Edit Profile
+</a>
+<a href="{{ url_for('order_history') }}" class="profile-btn btn-track">
+    📜 Order History
+</a>
+<a href="{{ url_for('wallet') }}" class="profile-btn btn-track">
+    Wallet & Rewards
+</a>
         <a href="{{ url_for('myorders') }}" class="profile-btn btn-track">
             📦 Track My Orders
         </a>

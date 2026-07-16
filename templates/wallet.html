@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Wallet & Rewards{% endblock %}
+{% block content %}
+<style>
+body{background:#eef2ff}
+.wrap{max-width:900px;margin:30px auto;padding:18px}
+.card{background:rgba(255,255,255,.18);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.25);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+.wallet{padding:30px;background:linear-gradient(135deg,#5b6cff,#7b3ff2);color:#fff}
+.coin{font-size:48px}
+.balance{font-size:44px;font-weight:800}
+.badge{display:inline-block;margin-top:10px;padding:8px 14px;background:rgba(255,255,255,.18);border-radius:999px}
+.section{margin-top:24px;padding:22px;background:#fff}
+.progress{height:12px;background:#ececec;border-radius:999px;overflow:hidden}
+.fill{height:100%;background:linear-gradient(90deg,#34d399,#10b981)}
+.log{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eee}
+.plus{color:#16a34a;font-weight:700}
+.minus{color:#dc2626;font-weight:700}
+.tip{padding:12px;border-radius:12px;background:#f8fafc;margin:8px 0}
+.empty{text-align:center;padding:40px;color:#666}
+</style>
+
+<div class="wrap">
+
+<div class="card wallet">
+<div class="coin">🪙</div>
+<div>Available Balance</div>
+<div class="balance">{{ current_user.coins }} Coins</div>
+
+{% if current_badge %}
+<div class="badge">🏆 {{ current_badge.name }}</div>
+{% else %}
+<div class="badge">🏆 No Badge Yet</div>
+{% endif %}
+</div>
+
+{% if next_badge %}
+<div class="card section">
+<h3>Progress to {{ next_badge.name }}</h3>
+{% set percent=((current_user.coins/next_badge.required_coins)*100)|round(0,'floor') %}
+<div class="progress">
+<div class="fill" style="width:{{ percent if percent<100 else 100 }}%"></div>
+</div>
+<p>{{ current_user.coins }} / {{ next_badge.required_coins }} Coins</p>
+</div>
+{% endif %}
+
+<div class="card section">
+<h3>💡 Ways to Earn Coins</h3>
+<div class="tip">✔ Earn coins on every eligible order.</div>
+<div class="tip">✔ Festival and promotional bonus rewards.</div>
+<div class="tip">✔ Referral rewards (future feature).</div>
+</div>
+
+<div class="card section">
+<h3>📜 Coin History</h3>
+
+{% if logs %}
+{% for log in logs %}
+<div class="log">
+<div>
+<strong>{{ log.action }}</strong><br>
+<small>{{ log.created_at.strftime('%d %b %Y %I:%M %p') }}</small>
+</div>
+<div class="{{ 'plus' if log.coins>=0 else 'minus' }}">
+{% if log.coins>=0 %}+{% endif %}{{ log.coins }} 🪙
+</div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty">
+<h2>🪙</h2>
+<p>No wallet activity yet.</p>
+<p>Place your first order to earn rewards.</p>
+</div>
+{% endif %}
+</div>
+
+</div>
+{% endblock %}

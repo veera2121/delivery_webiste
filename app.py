@@ -478,15 +478,25 @@ import firebase_admin
 from firebase_admin import credentials
 
 # Initialize Firebase ONLY ONCE
+import os
+import json
+import firebase_admin
+from firebase_admin import credentials
+
 if not firebase_admin._apps:
+
     firebase_json = os.environ.get("FIREBASE_KEY")
 
     if firebase_json:
+        # Railway / Production
         cred = credentials.Certificate(json.loads(firebase_json))
-        firebase_admin.initialize_app(cred)
-        print("✅ Firebase initialized successfully")
+        print("✅ Firebase initialized from environment")
     else:
-        print("❌ FIREBASE_KEY not found in environment variables")
+        # Local Development
+        cred = credentials.Certificate("firebase_key.json")
+        print("✅ Firebase initialized from local JSON")
+
+    firebase_admin.initialize_app(cred)
 @property
 def image_url(self):
 
@@ -1015,6 +1025,129 @@ def home():
         )
 
     budget_items = final_budget_items[:27]
+
+    # ================= WEEKLY TOP RESTAURANTS =================
+
+    one_week_ago = datetime.utcnow() - timedelta(days=7)
+
+    top_restaurants_raw = (
+        db.session.query(
+            Restaurant,
+            func.count(Order.id).label("orders_count")
+        )
+        .join(
+            Order,
+            Restaurant.id == Order.restaurant_id
+        )
+        .filter(
+            Order.created_at >= one_week_ago,
+            Order.status == "Delivered"
+        )
+        .group_by(
+            Restaurant.id
+        )
+        .order_by(
+            func.count(Order.id).desc()
+        )
+        .limit(20)
+        .all()
+    )
+
+
+    top_restaurants = []
+
+
+    for restaurant, count in top_restaurants_raw:
+
+        restaurant.is_open_now = (
+            restaurant.can_accept_orders
+            and
+            restaurant_open(restaurant)
+        )
+
+        top_restaurants.append(
+            (
+                restaurant,
+                count
+            )
+        )
+
+
+    # OPEN FIRST + HIGH ORDERS FIRST
+    top_restaurants.sort(
+        key=lambda x: (
+            not x[0].is_open_now,
+            -x[1]
+        )
+    )
+
+
+    # keep only top 10 after sorting
+    top_restaurants = top_restaurants[:10]
+
+
+    section_title = "🔥 This Week's Most Ordered"
+
+
+    # If no weekly orders
+    if not top_restaurants:
+
+        fallback_restaurants = (
+            db.session.query(
+                Restaurant,
+                func.count(Order.id).label("orders_count")
+            )
+            .join(
+                Order,
+                Restaurant.id == Order.restaurant_id
+            )
+            .filter(
+                Order.status == "Delivered"
+            )
+            .group_by(
+                Restaurant.id
+            )
+            .order_by(
+                func.count(Order.id).desc()
+            )
+            .limit(20)
+            .all()
+        )
+
+
+        top_restaurants = []
+
+
+        for restaurant, count in fallback_restaurants:
+
+            restaurant.is_open_now = (
+                restaurant.can_accept_orders
+                and
+                restaurant_open(restaurant)
+            )
+
+
+            top_restaurants.append(
+                (
+                    restaurant,
+                    count
+                )
+            )
+
+
+        # OPEN FIRST AGAIN
+        top_restaurants.sort(
+            key=lambda x: (
+                not x[0].is_open_now,
+                -x[1]
+            )
+        )
+
+
+        top_restaurants = top_restaurants[:10]
+
+        section_title = "🏆 Most Ordered Restaurants"
+
     # ================= LOCATION DROPDOWN (CACHED) =================
     all_locations = get_all_locations()
 
@@ -1125,7 +1258,8 @@ def home():
         progress_percent=progress_percent,
         categories=categories,
         popular_items=popular_items,
-        budget_items=budget_items
+        budget_items=budget_items,
+        top_restaurants=top_restaurants
     )
 
 
@@ -2365,7 +2499,7 @@ def delivery_dashboard():
         delivery_person=delivery_person,
         orders=orders,
         stats=stats,
-        VAPID_PUBLIC_KEY=VAPID_PUBLIC_KEY
+       VAPID_PUBLIC_KEY=VAPID_PUBLIC_KEY
     )
 
 @app.route("/admin/add_restaurant_user", methods=["GET", "POST"])
@@ -2859,9 +2993,27 @@ def restaurant_assign_delivery(order_id):
     order.delivery_boy_name = dp.name
     order.delivery_boy_phone = dp.phone
     order.status = "Out for Delivery"
+    import json
 
-    db.session.commit()  # 🔴 MUST commit before emit
+    db.session.commit()
 
+    # Web Push
+
+
+    # Firebase (only if a token exists)
+    if dp.fcm_token:
+        send_push_notification(
+        title="🚴 New Delivery Assigned",
+        body=f"Order #{order.order_id} from {order.restaurant.name}",
+        target_type="token",
+        target_value=dp.fcm_token,
+
+        data={
+            "type": "new_order",
+            "order_id": str(order.id),
+            "restaurant": order.restaurant.name
+        }
+    )
     # 🔔 SEND REAL-TIME NOTIFICATION TO DELIVERY PERSON (ADD HERE)
     socketio.emit(
         "new_order_assigned",
@@ -4268,9 +4420,7 @@ def live_track():
 def order_status(order_id):
     order = Order.query.get(order_id)
     return jsonify({"status": order.status}) 
-def send_push(order, message):
-    print("🔔 PUSH:", message)
-
+import json
 @app.route("/live/update_status/<int:order_id>", methods=["POST"])
 def live_update_status(order_id):
     order = Order.query.get(order_id)
@@ -5127,28 +5277,45 @@ from flask import send_from_directory
 @app.route('/firebase-messaging-sw.js')
 def firebase_sw():
     return send_from_directory('static', 'firebase-messaging-sw.js')
-
 from firebase_admin import messaging
-def send_push_notification(title, body, target_type="topic", target_value="all_users"):
+
+def send_push_notification(
+    title,
+    body,
+    target_type="topic",
+    target_value="all_users",
+    data=None
+):
 
     message = messaging.Message(
+
         notification=messaging.Notification(
             title=title,
-            body=body,
-        )
+            body=body
+        ),
+
+        data=data or {}
+
     )
 
     if target_type == "topic":
         message.topic = target_value
+
     elif target_type == "token":
         message.token = target_value
 
     try:
+
         response = messaging.send(message)
+
         print("FCM Response:", response)
+
         return response
+
     except Exception as e:
+
         print("FCM ERROR:", e)
+
         return None
 
 from flask import request, redirect, flash
@@ -5651,11 +5818,32 @@ def employee_assign_delivery(order_id):
     # 🔥 AUTO STATUS CHANGE
     order.status = "Out for Delivery"
 
+    import json
+
     db.session.commit()
+
+    # Web Push
+
+
+    # Firebase (only if a token exists)
+    if dp.fcm_token:
+        send_push_notification(
+            title="🚴 New Delivery Assigned",
+            body=f"Order #{order.order_id} from {order.restaurant.name}",
+            target_type="token",
+            target_value=dp.fcm_token,
+
+            data={
+                "type": "new_order",
+                "order_id": str(order.id),
+                "restaurant": order.restaurant.name
+            }
+        )
     socketio.emit(
         "delivery_assigned",
         {
             "order_id": order.id,
+
             "delivery_person_name": dp.name,
             "delivery_person_phone": dp.phone,
             "status": order.status
@@ -6536,6 +6724,148 @@ def get_cart():
     return jsonify({
         "cart": cart
     })
+
+
+@app.route("/edit-profile", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+
+    if request.method == "POST":
+
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+
+        # Validation
+        if not name:
+            flash("Name cannot be empty.", "danger")
+            return redirect(url_for("edit_profile"))
+
+        # Check if email already belongs to another customer
+        if email:
+            existing = Customer.query.filter(
+                Customer.email == email,
+                Customer.id != current_user.id
+            ).first()
+
+            if existing:
+                flash("Email already exists.", "danger")
+                return redirect(url_for("edit_profile"))
+
+        current_user.name = name
+        current_user.email = email
+
+        db.session.commit()
+
+        flash("Profile updated successfully!", "success")
+        return redirect(url_for("profile"))
+
+    return render_template("edit_profile.html")
+
+
+
+@app.route("/wallet")
+@login_required
+def wallet():
+
+    logs = (
+        CoinLedger.query
+        .filter_by(customer_id=current_user.id)
+        .order_by(CoinLedger.created_at.desc())
+        .all()
+    )
+
+    badges = (
+        RewardBadge.query
+        .filter_by(active=True)
+        .order_by(RewardBadge.required_coins)
+        .all()
+    )
+
+    current_badge = current_user.badge
+
+    next_badge = None
+
+    for badge in badges:
+        if badge.required_coins > current_user.coins:
+            next_badge = badge
+            break
+
+    return render_template(
+        "wallet.html",
+        logs=logs,
+        current_badge=current_badge,
+        next_badge=next_badge
+    )
+
+
+
+@app.route("/order-details/<int:order_id>")
+@login_required
+def order_details(order_id):
+
+    order = Order.query.filter_by(
+        id=order_id,
+        customer_id=current_user.id
+    ).first_or_404()
+
+    return render_template(
+        "order_details.html",
+        order=order
+    )
+@app.route("/order-history")
+@login_required
+def order_history():
+
+    orders = (
+        Order.query
+        .filter_by(customer_id=current_user.id)
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+
+    return render_template(
+        "order_history.html",
+        orders=orders
+    )
+
+
+@app.route("/delivery/save-fcm-token", methods=["POST"])
+def save_delivery_fcm_token():
+
+    if not session.get("delivery_logged_in"):
+        return {"success": False}, 401
+
+    dp = DeliveryPerson.query.get(session["delivery_person_id"])
+
+    data = request.get_json()
+
+    dp.fcm_token = data["token"]
+
+    db.session.commit()
+
+    return {"success": True}
+import json
+
+@app.route("/delivery/subscribe", methods=["POST"])
+def delivery_subscribe():
+
+    if not session.get("delivery_logged_in"):
+        return jsonify({"success": False}), 401
+
+    dp = DeliveryPerson.query.get(session["delivery_person_id"])
+
+    if not dp:
+        return jsonify({"success": False}), 404
+
+    subscription = request.get_json()
+
+    dp.push_subscription = json.dumps(subscription)
+
+    db.session.commit()
+
+    print("✅ Delivery subscription saved")
+
+    return jsonify({"success": True})
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN 

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+
+<style>
+
+.edit-wrapper{
+    min-height:90vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+}
+
+.edit-card{
+    width:100%;
+    max-width:420px;
+    padding:30px;
+    border-radius:20px;
+    background:rgba(255,255,255,.15);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.2);
+    color:#fff;
+}
+
+.edit-card h2{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.form-group{
+    margin-bottom:18px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:6px;
+    font-size:14px;
+    font-weight:600;
+}
+
+.form-control{
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:12px;
+    outline:none;
+    font-size:15px;
+}
+
+.mobile-info{
+    width:100%;
+    padding:13px 15px;
+    border-radius:12px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.25);
+    color:#fff;
+    font-size:15px;
+    font-weight:600;
+}
+
+.mobile-note{
+    display:block;
+    margin-top:8px;
+    color:rgba(255,255,255,.8);
+    font-size:13px;
+    line-height:1.5;
+}
+
+.save-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,#00c6ff,#0072ff);
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    font-weight:bold;
+    transition:.3s;
+}
+
+.save-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 20px rgba(0,0,0,.2);
+}
+
+</style>
+
+<div class="edit-wrapper">
+
+    <div class="edit-card">
+
+        <h2>✏️ Edit Profile</h2>
+
+        <form method="POST">
+
+            <div class="form-group">
+                <label>Name</label>
+
+                <input
+                    type="text"
+                    name="name"
+                    class="form-control"
+                    value="{{ current_user.name }}"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+
+                <input
+                    type="email"
+                    name="email"
+                    class="form-control"
+                    value="{{ current_user.email or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label>Registered Mobile</label>
+
+                <div class="mobile-info">
+                    📱 {{ current_user.mobile }}
+                </div>
+
+                <small class="mobile-note">
+                    🔒 This mobile number is your account's unique identifier and cannot be changed.
+                </small>
+            </div>
+
+            <button type="submit" class="save-btn">
+                Save Changes
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

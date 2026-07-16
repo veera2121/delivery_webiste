@@ -4,7 +4,7 @@
 
 // Change ONLY these values on every deployment
 
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.0.1";
 const BUILD_NUMBER = "20260713";
 
 // Service Worker Cache Name

@@ -479,47 +479,6 @@ body {
 
 
 
-.hero {
-  padding-top: 140px; /* pushes below fixed header */
-}
-
-.hero-row.full {
-  width: 100%;
-
-
-  height: 260px;
-  margin-bottom: 14px;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.hero-row.full img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.hero-row.split {
-  display: flex;
-  gap: 14px;
-}
-
-.hero-card {
-  flex: 1;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-/* FULL IMAGE – NO CROP */
-.hero-card img {
-  width: 100%;
-  height: auto;          /* 👈 natural height */
-  object-fit: contain;   /* 👈 show full image */
-  display: block;
-}
-
-
-
 /* =========================
    RESTAURANTS SECTION
 ========================= */
@@ -2752,7 +2711,38 @@ body {
     justify-content: center;
     gap: 3px;
 }
+.fc-section-title{
+    font-size: 28px;
+    font-weight: 800;
+    text-align: center;
+    color: #1f2937;
+    margin-bottom: 22px;
+    letter-spacing: -0.5px;
+    position: relative;
+}
 
+.fc-section-title::after{
+    content: "";
+    width: 70px;
+    height: 4px;
+    background: linear-gradient(90deg,#2563eb,#22c55e);
+    display: block;
+    margin: 10px auto 0;
+    border-radius: 999px;
+}
+@media (max-width:768px){
+
+.fc-section-title{
+    font-size:22px;
+    margin-bottom:18px;
+}
+
+.fc-section-title::after{
+    width:55px;
+    height:3px;
+}
+
+}
 /* All Icon Circle */
 .all-icon {
     width: 48px;
@@ -2774,12 +2764,7 @@ body {
         0 4px 12px rgba(0,0,0,0.3),
         inset 0 1px 2px rgba(255,255,255,0.4);
 }
-.fc-mini-title{
-    font-size: 22px;
-    font-weight: 800;
-    margin-bottom: 18px;
-    text-align: center;
-}
+
 
 /* GRID */
 .fc-mini-grid{
@@ -2897,98 +2882,120 @@ body {
     transform: scale(0.95);
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
+
 .mobile-slider {
-  display: none;
-  width: 100%;
-  overflow: hidden;
-  border-radius: 14px;
-  position: relative;
+    display: none;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+
+    border-radius: 18px;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
 /* Mobile only */
-@media (max-width: 768px) {
-  .mobile-slider {
-    display: block;
-  }
+@media (max-width:768px){
 
-  .slider-track {
-    display: flex;
-    width: 100%;
-    will-change: transform;
-    transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
-  }
+    .mobile-slider{
+        display:block;
+    }
 
-  .slider-track img {
-    width: 100%;
-    flex-shrink: 0;
-    border-radius: 14px;
-    object-fit: cover;
+    .slider-track{
+        display:flex;
+        width:100%;
+        transition:transform .8s ease;
+        will-change:transform;
+    }
 
-    /* ✨ Beauty effects */
-    transform: scale(0.97);
-    transition: transform 0.9s ease, filter 0.9s ease;
-    filter: brightness(0.95) contrast(1.05);
-  }
+    .slider-track img{
 
-  /* Active slide glow */
-  .slider-track img.active {
-    transform: scale(1);
-    filter: brightness(1) contrast(1.1);
-  }
+        width:100%;
+        height:220px;          /* Same height for all images */
 
-  /* Soft shadow for depth */
-  .mobile-slider::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 30%;
-    background: linear-gradient(to top, rgba(0,0,0,0.25), transparent);
-    pointer-events: none;
-  }
+        flex-shrink:0;
+        display:block;
+
+        object-fit:cover;      /* Fill nicely */
+        object-position:center;
+
+        border-radius:18px;
+
+        transition:transform .8s ease,
+                   filter .8s ease;
+
+        filter:brightness(.98) contrast(1.03);
+
+        border:1px solid #f2f2f2;
+    }
+
+    .slider-track img.active{
+
+        transform:scale(1.02);
+
+        filter:brightness(1)
+               contrast(1.06)
+               saturate(1.05);
+    }
+
 }
-/* Dots below slider */
+
+/* Dots */
+
 .slider-dots{
-  position: static;        /* move dots outside image */
-  margin-top: 12px;        /* space below banner */
-  width: 100%;
-  text-align: center;
+
+    margin-top:14px;
+    text-align:center;
+
 }
 
-/* Dot style */
 .dot{
-  height: 9px;
-  width: 9px;
-  margin: 0 5px;
-  background: #000;
-  border-radius: 50%;
-  display: inline-block;
-  opacity: 0.4;
-  cursor: pointer;
-  transition: all 0.3s ease;
+
+    width:9px;
+    height:9px;
+
+    margin:0 5px;
+
+    border-radius:50%;
+
+    background:#d5d5d5;
+
+    transition:.3s;
+
 }
 
-/* Active dot */
 .dot.active{
-  opacity: 1;
-  transform: scale(1.4);
-  background: #a808589c;   /* highlight color */
-}
-.mobile-slider::after{
-  display:none;
-}
-/* Section spacing */
-.mobile-slider-section{
-  margin-top:20px;
+
+    width:24px;
+
+    border-radius:20px;
+
+    background:#2f80ed;
+
 }
 
-/* Title above banner */
+/* Section */
+
+.mobile-slider-section{
+
+    margin-top:20px;
+
+}
+
+/* Title */
+
 .slider-main-title{
-  text-align:center;
-  font-size:22px;
-  font-weight:bold;
-  margin-bottom:10px;
+
+    text-align:center;
+
+    font-size:22px;
+
+    font-weight:700;
+
+    margin-bottom:14px;
+
+    color:#222;
+
 }
 /* ONLY bakery View Menu button */
 /* FORCE bakery View Menu color */
@@ -6150,13 +6157,12 @@ CONTENT
       <h2 class="slider-main-title">RucHiGo Special</h2>
   <div class="slider-track">
     
-    <img src="{{ url_for('static', filename='images/gold.png') }}">
-    <img src="{{ url_for('static', filename='images/image1.jpg') }}">
-    <img src="{{ url_for('static', filename='images/limited.jpg') }}">
-    <img src="{{ url_for('static', filename='images/image4.jpg') }}">
-    <img src="{{ url_for('static', filename='images/image2.jpg') }}">
-    <img src="{{ url_for('static', filename='images/image5.jpg') }}">
-    <img src="{{ url_for('static', filename='images/image3.jpg') }}">
+
+    <img src="{{ url_for('static', filename='images/craving.png') }}">
+    <img src="{{ url_for('static', filename='images/happy.png') }}">
+    <img src="{{ url_for('static', filename='images/doorstep.jpg') }}">
+    <img src="{{ url_for('static', filename='images/fam.jpg') }}">
+
   </div>
 
   <!-- Dots Auto Generated -->
@@ -6168,7 +6174,7 @@ CONTENT
 
 <section id="food-categories" class="fc-mini-section">
 
-    <h2 class="fc-mini-title">Food Categories</h2>
+    <h2 class="fc-section-title">Explore by Category</h2>
 
     <div class="fc-mini-grid">
 
@@ -6313,7 +6319,9 @@ CONTENT
     </div>
 
 </section>
-{% endif %} 
+{% endif %}
+
+{% include "components/weekly_restaurants.html" %}
 {% if restaurants|length > 0 %}
 
 </section>
@@ -6463,7 +6471,6 @@ CONTENT
     </div>
 
 </section>
-
 {% endif %}
 {% if limited_restaurants|length > 0 %}
 <section class="limited-section">
@@ -7291,6 +7298,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 </script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -7368,23 +7376,26 @@ document.addEventListener("DOMContentLoaded", () => {
             const target = document.getElementById("restaurantsSection");
 
             if(target){
+const header = document.querySelector(".app-header");
+const categoryBar = document.querySelector(".fc-mini-section");
 
-                const header = document.querySelector(".app-header");
-                const categoryBar = document.querySelector(".fc-mini-section");
+const headerHeight = header ? header.offsetHeight : 0;
+const categoryHeight = categoryBar ? categoryBar.offsetHeight : 0;
 
-                const offset =
-                    (header ? header.offsetHeight : 0) +
-                    (categoryBar ? categoryBar.offsetHeight : 0);
+// Extra spacing below the sticky header
+const extraSpace = 15;
 
-                const position =
-                    target.getBoundingClientRect().top +
-                    window.scrollY -
-                    offset;
+const position =
+    target.getBoundingClientRect().top +
+    window.pageYOffset -
+    headerHeight -
+    categoryHeight -
+    extraSpace;
 
-                window.scrollTo({
-                    top: position,
-                    behavior: "smooth"
-                });
+window.scrollTo({
+    top: position,
+    behavior: "smooth"
+});
 
             }
 

@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% block title %}Order Details{% endblock %}
+
+{% block content %}
+
+<style>
+
+.details-container{
+    max-width:900px;
+    margin:30px auto;
+    padding:15px;
+}
+
+.details-card{
+    background:#fff;
+    border-radius:15px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+.details-title{
+    font-size:28px;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+.section-title{
+    font-size:18px;
+    font-weight:bold;
+    margin-bottom:12px;
+    color:#444;
+}
+
+.info-row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid #eee;
+}
+
+.item-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 0;
+    border-bottom:1px solid #f1f1f1;
+}
+
+.item-name{
+    font-weight:600;
+}
+
+.summary-row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+}
+
+.grand-total{
+    font-size:22px;
+    font-weight:bold;
+    color:#16a34a;
+}
+
+.badge{
+    display:inline-block;
+    padding:6px 15px;
+    border-radius:30px;
+    color:#fff;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.completed{
+    background:#16a34a;
+}
+
+.pending{
+    background:#f59e0b;
+}
+
+.cancelled{
+    background:#dc2626;
+}
+
+.btns{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+    flex-wrap:wrap;
+}
+
+.btn{
+    text-decoration:none;
+    padding:12px 20px;
+    border-radius:10px;
+    color:#fff;
+    font-weight:bold;
+}
+
+.blue{
+    background:#2563eb;
+}
+
+.green{
+    background:#16a34a;
+}
+
+.gray{
+    background:#6b7280;
+}
+
+@media(max-width:700px){
+
+.info-row{
+    flex-direction:column;
+    gap:5px;
+}
+
+.item-row{
+    flex-direction:column;
+    align-items:flex-start;
+}
+
+}
+
+</style>
+
+<div class="details-container">
+
+<div class="details-card">
+
+<div class="details-title">
+Order Details
+</div>
+
+{% if order.status=="Completed" %}
+<span class="badge completed">Completed</span>
+
+{% elif order.status=="Cancelled" %}
+<span class="badge cancelled">Cancelled</span>
+
+{% else %}
+<span class="badge pending">{{ order.status }}</span>
+{% endif %}
+
+</div>
+
+<div class="details-card">
+
+<div class="section-title">
+Customer Details
+</div>
+
+<div class="info-row">
+<span>Name</span>
+<b>{{ order.customer_name }}</b>
+</div>
+
+<div class="info-row">
+<span>Mobile</span>
+<b>{{ order.phone }}</b>
+</div>
+
+<div class="info-row">
+<span>Email</span>
+<b>{{ order.email or "-" }}</b>
+</div>
+
+<div class="info-row">
+<span>Order ID</span>
+<b>{{ order.order_id }}</b>
+</div>
+
+<div class="info-row">
+<span>Date</span>
+<b>{{ order.created_at.strftime("%d %b %Y %I:%M %p") }}</b>
+</div>
+
+</div>
+
+<div class="details-card">
+
+<div class="section-title">
+Delivery Address
+</div>
+
+<p>
+
+{{ order.house_no }}<br>
+
+{{ order.address }}<br>
+
+{{ order.landmark }}<br>
+
+{{ order.city }} - {{ order.pincode }}
+
+</p>
+
+</div>
+
+<div class="details-card">
+
+<div class="section-title">
+
+Ordered Items
+
+</div>
+
+{% for item in order.items %}
+
+<div class="item-row">
+
+<div>
+
+<div class="item-name">
+
+{{ item.item_name }}
+
+</div>
+
+Qty : {{ item.quantity }}
+
+</div>
+
+<div>
+
+₹{{ item.item_total() }}
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<div class="details-card">
+
+<div class="section-title">
+
+Bill Summary
+
+</div>
+
+<div class="summary-row">
+
+<span>Items Total</span>
+
+<span>₹{{ order.items_total }}</span>
+
+</div>
+
+<div class="summary-row">
+
+<span>Discount</span>
+
+<span>- ₹{{ order.discount }}</span>
+
+</div>
+
+<div class="summary-row">
+
+<span>Coins Discount</span>
+
+<span>- ₹{{ order.coins_discount_amount }}</span>
+
+</div>
+
+<div class="summary-row">
+
+<span>Delivery Charge</span>
+
+<span>₹{{ order.delivery_charge }}</span>
+
+</div>
+
+<hr>
+
+<div class="summary-row grand-total">
+
+<span>Total</span>
+
+<span>₹{{ order.final_total }}</span>
+
+</div>
+
+</div>
+
+<div class="details-card">
+
+<div class="section-title">
+
+Payment
+
+</div>
+
+<div class="info-row">
+
+<span>Method</span>
+
+<b>{{ order.payment_method_used or order.payment_type }}</b>
+
+</div>
+
+<div class="info-row">
+
+<span>Status</span>
+
+<b>{{ order.payment_status }}</b>
+
+</div>
+
+</div>
+
+<div class="details-card">
+
+<div class="btns">
+
+<a href="{{ url_for('order_history') }}" class="btn gray">
+
+← Back
+
+</a>
+
+<a href="#" class="btn blue">
+
+Download Invoice
+
+</a>
+
+<a href="#" class="btn green">
+
+Order Again
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

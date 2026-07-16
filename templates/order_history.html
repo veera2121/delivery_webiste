@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+{% block title %}Order History{% endblock %}
+
+{% block content %}
+
+<style>
+
+.order-history{
+    max-width:900px;
+    margin:30px auto;
+    padding:15px;
+}
+
+.page-title{
+    font-size:30px;
+    font-weight:700;
+    margin-bottom:20px;
+}
+
+.order-card{
+
+    background:#fff;
+
+    border-radius:16px;
+
+    padding:18px;
+
+    margin-bottom:20px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+    border:1px solid #eee;
+
+}
+
+.order-top{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:15px;
+
+}
+
+.restaurant{
+
+    font-size:20px;
+
+    font-weight:bold;
+
+}
+.status{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:30px;
+    color:#fff;
+    font-size:13px;
+    font-weight:600;
+    text-transform:capitalize;
+}
+
+/* Order Status Colors */
+
+.pending{
+    background:#f59e0b;
+}
+
+.confirmed{
+    background:#3b82f6;
+}
+
+.accepted{
+    background:#2563eb;
+}
+
+.preparing{
+    background:#8b5cf6;
+}
+
+.ready{
+    background:#06b6d4;
+}
+
+.outfordelivery{
+    background:#f97316;
+}
+
+.completed{
+    background:#16a34a;
+}
+
+.delivered{
+    background:#16a34a;
+}
+
+.cancelled{
+    background:#dc2626;
+}
+
+.rejected{
+    background:#991b1b;
+}
+
+.failed{
+    background:#6b7280;
+}
+
+.refunded{
+    background:#9333ea;
+}
+.order-info{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:10px;
+
+    margin-bottom:15px;
+
+}
+
+.order-info div{
+
+    color:#555;
+
+}
+
+.items{
+
+    border-top:1px solid #eee;
+
+    border-bottom:1px solid #eee;
+
+    padding:12px 0;
+
+}
+
+.item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    margin-bottom:8px;
+
+}
+
+.total{
+
+    margin-top:15px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+}
+
+.actions{
+
+    margin-top:18px;
+
+    display:flex;
+
+    gap:10px;
+
+}
+
+.btn{
+
+    padding:10px 18px;
+
+    border-radius:10px;
+
+    text-decoration:none;
+
+    color:#fff;
+
+    font-weight:600;
+
+}
+
+.btn-view{
+
+    background:#2563eb;
+
+}
+
+.btn-order{
+
+    background:#16a34a;
+
+}
+
+.empty{
+
+    background:white;
+
+    padding:50px;
+
+    text-align:center;
+
+    border-radius:15px;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+@media(max-width:700px){
+
+.order-info{
+
+grid-template-columns:1fr;
+
+}
+
+.order-top{
+
+flex-direction:column;
+
+align-items:flex-start;
+
+gap:10px;
+
+}
+
+.actions{
+
+flex-direction:column;
+
+}
+
+.btn{
+
+text-align:center;
+
+}
+
+}
+
+</style>
+
+
+<div class="order-history">
+
+<h1 class="page-title">
+📜 Order History
+</h1>
+
+{% if orders %}
+
+{% for order in orders %}
+
+<div class="order-card">
+
+<div class="order-top">
+
+<div>
+
+<div class="restaurant">
+
+{{ order.restaurant.name if order.restaurant else "Restaurant" }}
+
+</div>
+
+<div>
+
+Order ID :
+<b>{{ order.order_id }}</b>
+
+</div>
+
+</div>
+
+<div>
+{% set status = order.status|lower|replace(' ', '') %}
+
+<span class="status
+{% if status == 'pending' %}
+pending
+
+{% elif status == 'confirmed' %}
+confirmed
+
+{% elif status == 'accepted' %}
+accepted
+
+{% elif status == 'preparing' %}
+preparing
+
+{% elif status == 'ready' %}
+ready
+
+{% elif status == 'outfordelivery' %}
+outfordelivery
+
+{% elif status == 'completed' %}
+completed
+
+{% elif status == 'delivered' %}
+delivered
+
+{% elif status == 'cancelled' %}
+cancelled
+
+{% elif status == 'rejected' %}
+rejected
+
+{% elif status == 'failed' %}
+failed
+
+{% elif status == 'refunded' %}
+refunded
+
+{% else %}
+pending
+{% endif %}
+">
+
+{{ order.status }}
+
+</span>
+
+</div>
+
+</div>
+
+<div class="order-info">
+
+<div>
+
+<b>Date</b><br>
+
+{{ order.created_at.strftime("%d %b %Y %I:%M %p") }}
+
+</div>
+
+<div>
+
+<b>Payment</b><br>
+
+{{ order.payment_method_used or order.payment_type }}
+
+</div>
+
+<div>
+
+<b>Items</b><br>
+
+{{ order.items|length }}
+
+</div>
+
+<div>
+
+<b>Payment Status</b><br>
+
+{{ order.payment_status }}
+
+</div>
+
+</div>
+
+<div class="items">
+
+{% for item in order.items[:3] %}
+
+<div class="item">
+
+<span>
+
+{{ item.item_name }}
+
+× {{ item.quantity }}
+
+</span>
+
+<span>
+
+₹{{ item.item_total() }}
+
+</span>
+
+</div>
+
+{% endfor %}
+
+{% if order.items|length > 3 %}
+
+<div>
+
++ {{ order.items|length - 3 }} More Items
+
+</div>
+
+{% endif %}
+
+</div>
+
+<div class="total">
+
+<span>
+
+Grand Total
+
+</span>
+
+<span>
+
+₹{{ order.final_total }}
+
+</span>
+
+</div>
+
+<div class="actions">
+
+<a href="/order-details/{{ order.id }}" class="btn btn-view">
+
+View Details
+
+</a>
+
+
+
+</div>
+
+</div>
+
+{% endfor %}
+
+{% else %}
+
+<div class="empty">
+
+<h2>
+
+📦 No Orders Found
+
+</h2>
+
+<p>
+
+Your completed orders will appear here.
+
+</p>
+
+</div>
+
+{% endif %}
+
+</div>
+
+{% endblock %}

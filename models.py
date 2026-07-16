@@ -264,6 +264,10 @@ class DeliveryPerson(db.Model):
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
     last_seen = db.Column(db.DateTime)
+        # ✅ NEW
+    fcm_token = db.Column(db.Text)
+        # ✅ NEW
+    push_subscription = db.Column(db.Text)
 
     is_active = db.Column(db.Boolean, default=True)
     is_online = db.Column(db.Boolean, default=False)  # ✅ real-time status

@@ -33,9 +33,11 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
   <!-- ✅ PWA / MANIFEST -->
-  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-  <meta name="theme-color" content="#ff5722">
-
+<!-- ✅ PWA / MANIFEST -->
+{% block manifest %}
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<meta name="theme-color" content="#ff5722">
+{% endblock %}
   <!-- ✅ GOOGLE ANALYTICS -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-HXFDJY7X7E"></script>
   <script>
@@ -800,7 +802,55 @@ html {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
-  </style> 
+
+
+
+.page-skeleton {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 9999;
+    padding: 16px;
+}
+
+.skeleton-banner {
+    height: 140px;
+    border-radius: 18px;
+    margin-bottom: 16px;
+}
+
+.skeleton-title {
+    height: 24px;
+    width: 60%;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.skeleton-item {
+    height: 120px;
+    border-radius: 16px;
+}
+
+/* shimmer */
+.skeleton-banner,
+.skeleton-title,
+.skeleton-item {
+    background: linear-gradient(90deg, #eee, #f5f5f5, #eee);
+    background-size: 400px 100%;
+    animation: shimmer 1.2s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+</style> 
 
 </head>
 <body>
@@ -834,8 +884,8 @@ html {
 
 </button>
 <div class="mobile-location-dropdown" id="mobileLocationDropdown">
-    <select id="mobileLocationSelect"
-    onchange="window.location.replace('/?location=' + encodeURIComponent(this.value))">
+    
+    <select id="mobileLocationSelect" onchange="setLocation(this.value)">
 
         <option value="">Select Restaurants Location</option>
 
@@ -1241,7 +1291,8 @@ window.addEventListener("beforeunload", function () {
     navigator.sendBeacon("/abandon_cart");
 });
 </script>
-<script>
+<script> 
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const dropdown = document.getElementById("mobileLocationDropdown");
@@ -1264,10 +1315,14 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // ✅ When user selects location
-    select.addEventListener("change", function () {
-        localStorage.setItem("selectedLocation", select.value);
-        dropdown.style.display = "none";
-    });
+select.addEventListener("change", function () {
+    const value = select.value;
+
+    localStorage.setItem("selectedLocation", value);
+    dropdown.style.display = "none";
+
+    changeLocation("mobile"); // 🔥 important
+});
 
 });
 </script>  
@@ -1427,7 +1482,106 @@ setTimeout(function(){
     t.style.opacity = "0";
     setTimeout(() => t.remove(), 500);
   });
-}, 4000);
+}, 5000);
+</script> 
+<script>
+function setLocation(location) {
+    if (!location) return;
+
+    localStorage.setItem("selected_location", location);
+
+    window.location.href = '/?location=' + encodeURIComponent(location);
+}
+</script> 
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const skeleton = document.getElementById("pageSkeleton");
+    const appContent = document.getElementById("appContent");
+    const pageCache = new Map();
+    let currentController = null;
+
+    function renderPage(html, url) {
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        const newContent = doc.getElementById("appContent");
+        if (!newContent) {
+            window.location.href = url;
+            return;
+        }
+        appContent.innerHTML = newContent.innerHTML;
+        appContent.style.opacity = "1";
+        skeleton.classList.add("hidden");
+        window.scrollTo(0, 0);
+        attachLinkHandlers();
+    }
+
+    function navigate(url) {
+        if (currentController) currentController.abort();
+        currentController = new AbortController();
+
+        window.history.pushState({ url }, "", url);
+
+        // Show skeleton + hide content BEFORE fetch
+        skeleton.style.display = "block";
+        appContent.style.opacity = "0";
+        appContent.style.pointerEvents = "none";
+
+        const fetchPromise = pageCache.has(url)
+            ? Promise.resolve(pageCache.get(url))
+            : fetch(url, { signal: currentController.signal })
+                .then(res => res.text());
+
+        fetchPromise
+            .then(html => {
+                pageCache.set(url, html);
+                renderPage(html, url);
+            })
+            .catch(err => {
+                if (err.name === "AbortError") return;
+                window.location.href = url;
+            });
+    }
+
+    function attachLinkHandlers() {
+        document.querySelectorAll(".shop-link").forEach(link => {
+            if (link.dataset.bound) return;
+            link.dataset.bound = "true";
+            const url = link.href;
+
+            link.addEventListener("mouseenter", () => {
+                if (!pageCache.has(url)) {
+                    fetch(url).then(r => r.text())
+                        .then(html => pageCache.set(url, html))
+                        .catch(() => {});
+                }
+            });
+
+            link.addEventListener("click", (e) => {
+                e.preventDefault();
+                navigate(url);
+            });
+        });
+    }
+
+    window.addEventListener("popstate", (e) => {
+        const url = e.state?.url || window.location.href;
+        skeleton.style.display = "block";
+        appContent.style.opacity = "0";
+        appContent.style.pointerEvents = "none";
+
+        if (pageCache.has(url)) {
+            renderPage(pageCache.get(url), url);
+            return;
+        }
+        fetch(url).then(res => res.text()).then(html => {
+            pageCache.set(url, html);
+            renderPage(html, url);
+        });
+    });
+
+    attachLinkHandlers();
+});
+
 </script>
 <!-- Flash Toast -->
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -1455,7 +1609,20 @@ setTimeout(function(){
     </div>
 </div>
 
+<div id="pageSkeleton" class="page-skeleton hidden">
 
+    <div class="skeleton-banner"></div>
+
+    <div class="skeleton-title"></div>
+
+    <div class="skeleton-grid">
+        <div class="skeleton-item"></div>
+        <div class="skeleton-item"></div>
+        <div class="skeleton-item"></div>
+        <div class="skeleton-item"></div>
+    </div>
+
+</div>
 <!-- LOCATION POPUP (FIRST TIME ONLY) -->
 
 </body>
