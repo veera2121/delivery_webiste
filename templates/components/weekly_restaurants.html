@@ -286,6 +286,23 @@ font-size:22px;
     content:"Closed Now";
     position:absolute;
 }
+.restaurant-name{
+    font-size: 10px;
+    font-weight: 300;
+    line-height: 1.35;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;      /* Maximum 2 lines */
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    min-height: 48px;           /* Same height for all cards */
+    max-height: 48px;
+
+    margin-bottom: 8px;
+}
 </style>
 <section class="weekly-section">
 
@@ -329,13 +346,13 @@ font-size:22px;
 
             </div>
 
-            <div class="weekly-content">
+ <div class="weekly-content">
+    <h3 class="restaurant-name">{{ restaurant.name }}</h3>
 
-                <h3>{{ restaurant.name }}</h3>
+    <div class="meta">
+        <span>⭐ {{ restaurant.rating }}</span>
+    </div>
 
-                <div class="meta">
-
-                    <span>⭐ {{ restaurant.rating }}</span>
 
                     <span>🚀 {{ count }} Orders</span>
 
