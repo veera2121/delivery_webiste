@@ -3002,18 +3002,34 @@ def restaurant_assign_delivery(order_id):
 
     # Firebase (only if a token exists)
     if dp.fcm_token:
-        send_push_notification(
-        title="🚴 New Delivery Assigned",
-        body=f"Order #{order.order_id} from {order.restaurant.name}",
-        target_type="token",
-        target_value=dp.fcm_token,
+        distance = order.distance_km or 0
 
-        data={
-            "type": "new_order",
-            "order_id": str(order.id),
-            "restaurant": order.restaurant.name
-        }
-    )
+        body = (
+            f"🏪 {order.restaurant.name}\n"
+            f"👤 {order.customer_name}\n"
+            f"💰 ₹{order.final_total}\n"
+            f"📏 {distance} km\n"
+            f"💳 {order.payment_type}"
+        )
+
+        send_push_notification(
+            title="🚴 New Delivery Assigned",
+            body=body,
+            target_type="token",
+            target_value=dp.fcm_token,
+            data={
+                "type": "new_order",
+                "order_id": str(order.id),
+                "order_number": order.order_id or "",
+                "restaurant_name": order.restaurant.name or "",
+                "customer_name": order.customer_name or "",
+                "customer_phone": order.phone or "",
+                "address": order.address or "",
+                "distance": str(distance),
+                "total": str(order.final_total or 0),
+                "payment_type": order.payment_type or "COD"
+            }
+        )
     # 🔔 SEND REAL-TIME NOTIFICATION TO DELIVERY PERSON (ADD HERE)
     socketio.emit(
         "new_order_assigned",
