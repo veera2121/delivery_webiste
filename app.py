@@ -7637,32 +7637,50 @@ def global_menu_search():
         similarity_score,
         order_count
     ) in results:
-
+        
         extra_data = dict(
+                
             item.extra_data or {}
         )
 
-        if extra_data.get("is_addon"):
+        is_addon = str(
+            extra_data.get(
+                "is_addon",
+                "no"
+            )
+        ).strip().lower() in (
+            "yes",
+            "true",
+            "1"
+        )
+
+        if is_addon:
             continue
+
 
         # -----------------------------------------------------
         # Image URL
         # -----------------------------------------------------
 
-        image_url = item.image_url
+       # -----------------------------------------------------
+        # ITEM IMAGE
+        # Keep empty when there is no image.
+        # JavaScript will create a dynamic placeholder.
+        # -----------------------------------------------------
 
-        if not image_url:
+        image_url = str(
+            item.image_url or ""
+        ).strip()
 
-            image_url = url_for(
-                "static",
-                filename="images/default_food.jpg"
-            )
-
-        elif not image_url.startswith(
-            (
-                "http://",
-                "https://",
-                "/"
+        if (
+            image_url
+            and
+            not image_url.startswith(
+                (
+                    "http://",
+                    "https://",
+                    "/"
+                )
             )
         ):
 
@@ -7670,7 +7688,6 @@ def global_menu_search():
                 "static",
                 filename=f"images/menu/{image_url}"
             )
-
         # -----------------------------------------------------
         # Match type
         # -----------------------------------------------------
@@ -7708,8 +7725,62 @@ def global_menu_search():
         # -----------------------------------------------------
 
         item_price = float(
+
+
             item.price or 0
         )
+
+        weight_prices_raw = str(
+            extra_data.get(
+                "weight_prices",
+                ""
+            ) or ""
+        ).strip()
+
+        weight_price_options = []
+
+        if weight_prices_raw:
+
+            for option in weight_prices_raw.split(","):
+
+                option = option.strip()
+
+                if ":" not in option:
+                    continue
+
+                weight, price = option.split(
+                    ":",
+                    1
+                )
+
+                try:
+                    numeric_price = float(
+                        price
+                        .replace("₹", "")
+                        .strip()
+                    )
+                except ValueError:
+                    continue
+
+                if numeric_price <= 0:
+                    continue
+
+                weight_price_options.append({
+                    "weight": weight.strip(),
+                    "price": numeric_price
+                })
+
+
+        if (
+            item_price <= 0
+            and
+            weight_price_options
+        ):
+
+            item_price = min(
+                option["price"]
+                for option in weight_price_options
+            )
 
         item_order_count = int(
             order_count or 0
@@ -7719,6 +7790,12 @@ def global_menu_search():
             "id": item.id,
             "name": item.name,
             "price": item_price,
+            "has_weight_prices": bool(
+
+                weight_price_options
+            ),
+
+            "weight_prices": weight_price_options,
             "category": item.category or "",
             "description": item.description or "",
             "image_url": image_url,
@@ -7726,7 +7803,7 @@ def global_menu_search():
             "restaurant_id": restaurant.id,
             "restaurant_name": restaurant.name,
             "restaurant_open": is_restaurant_open,
-
+            "item_type": item.item_type or "",
             "menu_url": url_for(
                 "menu",
                 restaurant_id=restaurant.id

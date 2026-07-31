@@ -1574,6 +1574,281 @@ font-size:20px;
     }
 
 }
+/* =========================================================
+   DYNAMIC FOOD PLACEHOLDER
+========================================================= */
+
+.global-search-card-image-wrapper {
+    position: relative;
+    overflow: hidden;
+    background: #eef2f6;
+}
+
+.menu-img-real {
+    position: relative;
+    z-index: 2;
+
+    width: 100%;
+    height: 100%;
+
+    display: block;
+    object-fit: cover;
+}
+
+
+/* Placeholder base */
+
+.menu-placeholder {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 7px;
+
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+
+    overflow: hidden;
+    text-align: center;
+}
+
+.menu-placeholder.placeholder-active {
+    display: flex;
+}
+
+
+/* Background decoration */
+
+.placeholder-shape {
+    position: absolute;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.placeholder-shape.shape-a {
+    width: 90px;
+    height: 90px;
+
+    top: -32px;
+    right: -28px;
+}
+
+.placeholder-shape.shape-b {
+    width: 68px;
+    height: 68px;
+
+    bottom: -24px;
+    left: -22px;
+}
+
+
+/* Placeholder icon */
+
+.placeholder-icon {
+    position: relative;
+    z-index: 2;
+
+    font-size: 32px;
+    line-height: 1;
+}
+
+
+/* Item name inside placeholder */
+
+.placeholder-name {
+    position: relative;
+    z-index: 2;
+
+    width: 95%;
+    max-width: 95%;
+
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1.25;
+
+    overflow-wrap: anywhere;
+
+    text-shadow:
+        0 2px 8px
+        rgba(0, 0, 0, 0.28);
+}
+
+.placeholder-name.long-name {
+    font-size: 9px;
+}
+
+
+/* Veg / non-veg marker */
+
+.menu-placeholder::after {
+    content: "";
+
+    position: absolute;
+    top: 9px;
+    left: 9px;
+    z-index: 3;
+
+    width: 9px;
+    height: 9px;
+
+    border-radius: 50%;
+
+    background: #dc2626;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(255, 255, 255, 0.9);
+}
+
+.menu-placeholder.placeholder-veg::after {
+    background: #16a34a;
+}
+
+
+/* Category gradients */
+
+.placeholder-biryani {
+    background:
+        linear-gradient(
+            135deg,
+            #ff8a00,
+            #e65100
+        );
+}
+
+.placeholder-pizza {
+    background:
+        linear-gradient(
+            135deg,
+            #ff5f6d,
+            #ffc371
+        );
+}
+
+.placeholder-burger {
+    background:
+        linear-gradient(
+            135deg,
+            #f7971e,
+            #ffd200
+        );
+}
+
+.placeholder-noodles {
+    background:
+        linear-gradient(
+            135deg,
+            #7b4397,
+            #dc2430
+        );
+}
+
+.placeholder-rice {
+    background:
+        linear-gradient(
+            135deg,
+            #11998e,
+            #38ef7d
+        );
+}
+
+.placeholder-chicken {
+    background:
+        linear-gradient(
+            135deg,
+            #cb2d3e,
+            #ef473a
+        );
+}
+
+.placeholder-cake {
+    background:
+        linear-gradient(
+            135deg,
+            #ec008c,
+            #fc6767
+        );
+}
+
+.placeholder-rolls {
+    background:
+        linear-gradient(
+            135deg,
+            #8360c3,
+            #2ebf91
+        );
+}
+
+.placeholder-drinks {
+    background:
+        linear-gradient(
+            135deg,
+            #2193b0,
+            #6dd5ed
+        );
+}
+
+.placeholder-icecream {
+    background:
+        linear-gradient(
+            135deg,
+            #ee9ca7,
+            #ffdde1
+        );
+}
+
+.placeholder-breakfast {
+    background:
+        linear-gradient(
+            135deg,
+            #56ab2f,
+            #a8e063
+        );
+}
+
+.placeholder-meals {
+    background:
+        linear-gradient(
+            135deg,
+            #f2994a,
+            #f2c94c
+        );
+}
+
+.placeholder-default {
+    background:
+        linear-gradient(
+            135deg,
+            #475569,
+            #1e293b
+        );
+}
+
+
+/* Mobile placeholder sizing */
+
+@media (max-width: 600px) {
+
+    .placeholder-icon {
+        font-size: 27px;
+    }
+
+    .placeholder-name {
+        font-size: 10px;
+    }
+
+    .placeholder-name.long-name {
+        font-size: 8px;
+    }
+
+}
 </style>
 
 {% endblock %}
@@ -2409,7 +2684,313 @@ document.addEventListener(
         /* =================================================
            FOOD ITEM CARD
         ================================================= */
+/* =================================================
+   DYNAMIC PLACEHOLDER INFORMATION
+================================================= */
 
+function getPlaceholderData(
+    item
+) {
+
+    const itemName =
+        String(
+            item.name || ""
+        ).toLowerCase();
+
+    const category =
+        String(
+            item.category || ""
+        ).toLowerCase();
+
+    const searchableText =
+        `${itemName} ${category}`;
+
+
+    if (searchableText.includes("biryani")) {
+
+        return {
+            icon: "🍚",
+            gradient: "placeholder-biryani"
+        };
+
+    }
+
+
+    if (searchableText.includes("pizza")) {
+
+        return {
+            icon: "🍕",
+            gradient: "placeholder-pizza"
+        };
+
+    }
+
+
+    if (searchableText.includes("burger")) {
+
+        return {
+            icon: "🍔",
+            gradient: "placeholder-burger"
+        };
+
+    }
+
+
+    if (
+        searchableText.includes("noodle")
+    ) {
+
+        return {
+            icon: "🍜",
+            gradient: "placeholder-noodles"
+        };
+
+    }
+
+
+    if (
+        searchableText.includes("fried rice")
+    ) {
+
+        return {
+            icon: "🍛",
+            gradient: "placeholder-rice"
+        };
+
+    }
+
+
+    if (
+        searchableText.includes("chicken")
+    ) {
+
+        return {
+            icon: "🍗",
+            gradient: "placeholder-chicken"
+        };
+
+    }
+
+
+    if (
+        searchableText.includes("cake")
+    ) {
+
+        return {
+            icon: "🎂",
+            gradient: "placeholder-cake"
+        };
+
+    }
+
+
+    if (
+        searchableText.includes("roll") ||
+        searchableText.includes("wrap")
+    ) {
+
+        return {
+            icon: "🌯",
+            gradient: "placeholder-rolls"
+        };
+
+    }
+
+
+    if (
+        searchableText.includes("juice") ||
+        searchableText.includes("drink") ||
+        searchableText.includes("shake")
+    ) {
+
+        return {
+            icon: "🥤",
+            gradient: "placeholder-drinks"
+        };
+
+    }
+
+
+    if (
+        searchableText.includes("ice cream")
+    ) {
+
+        return {
+            icon: "🍨",
+            gradient: "placeholder-icecream"
+        };
+
+    }
+
+
+    if (
+        searchableText.includes("idli") ||
+        searchableText.includes("dosa") ||
+        searchableText.includes("breakfast")
+    ) {
+
+        return {
+            icon: "🍽️",
+            gradient: "placeholder-breakfast"
+        };
+
+    }
+
+
+    if (
+        searchableText.includes("meals") ||
+        searchableText.includes("meal") ||
+        searchableText.includes("thali")
+    ) {
+
+        return {
+            icon: "🍛",
+            gradient: "placeholder-meals"
+        };
+
+    }
+
+
+    return {
+        icon: "🍴",
+        gradient: "placeholder-default"
+    };
+
+}
+
+
+/* =================================================
+   BUILD REAL IMAGE OR PLACEHOLDER
+================================================= */
+
+function buildFoodImage(
+    item
+) {
+
+    const imageUrl =
+        String(
+            item.image_url || ""
+        ).trim();
+
+
+    const itemNameRaw =
+        String(
+            item.name || "Food item"
+        );
+
+
+    const safeItemName =
+        escapeHtml(
+            itemNameRaw
+        );
+
+
+    const placeholder =
+        getPlaceholderData(
+            item
+        );
+
+
+    const itemType =
+        String(
+            item.item_type || ""
+        ).toLowerCase();
+
+
+    const isVeg =
+        (
+            itemType.includes("veg") &&
+            !itemType.includes("non")
+        );
+
+
+    const foodClass =
+        isVeg
+            ? "placeholder-veg"
+            : "placeholder-nonveg";
+
+
+    const longNameClass =
+        itemNameRaw.length > 20
+            ? "long-name"
+            : "";
+
+
+    const placeholderHtml = `
+
+        <div
+            class="
+                menu-placeholder
+                ${placeholder.gradient}
+                ${foodClass}
+                ${imageUrl ? "" : "placeholder-active"}
+            "
+        >
+
+            <div
+                class="
+                    placeholder-shape
+                    shape-a
+                "
+            ></div>
+
+            <div
+                class="
+                    placeholder-shape
+                    shape-b
+                "
+            ></div>
+
+            <span
+                class="
+                    placeholder-icon
+                "
+            >
+                ${placeholder.icon}
+            </span>
+
+            <span
+                class="
+                    placeholder-name
+                    ${longNameClass}
+                "
+            >
+                ${safeItemName}
+            </span>
+
+        </div>
+
+    `;
+
+
+    if (!imageUrl) {
+
+        return placeholderHtml;
+
+    }
+
+
+    return `
+
+        <img
+            src="${escapeHtml(imageUrl)}"
+            alt="${safeItemName}"
+            loading="lazy"
+            class="
+                global-search-card-image
+                menu-img-real
+            "
+            onerror="
+                this.style.display='none';
+                this.nextElementSibling.classList.add('placeholder-active');
+            "
+        >
+
+        ${placeholderHtml}
+
+    `;
+
+}
         function buildFoodItemCard(
             item,
             query
@@ -2446,9 +3027,6 @@ document.addEventListener(
                 "#";
 
 
-            const imageUrl =
-                item.image_url ||
-                "/static/images/default_food.jpg";
 
 
             const itemName =
@@ -2515,42 +3093,22 @@ document.addEventListener(
                     "
                 >
 
-                    <div
-                        class="
-                            global-search-card-image-wrapper
-                        "
-                    >
+<div
+    class="
+        global-search-card-image-wrapper
+    "
+>
 
-                        <img
-                            src="${
-                                escapeHtml(
-                                    imageUrl
-                                )
-                            }"
-                            alt="${
-                                escapeHtml(
-                                    itemName
-                                )
-                            }"
-                            class="
-                                global-search-card-image
-                            "
-                            loading="lazy"
-                            onerror="
-                                this.onerror=null;
-                                this.src='/static/images/default_food.jpg';
-                            "
-                        >
+    ${buildFoodImage(item)}
 
+    <span
+        class="
+            search-item-type
+            ${typeClass}
+        "
+    ></span>
 
-                        <span
-                            class="
-                                search-item-type
-                                ${typeClass}
-                            "
-                        ></span>
-
-                    </div>
+</div>
 
 
                     <div
@@ -2620,17 +3178,21 @@ document.addEventListener(
                             "
                         >
 
-                            <span
-                                class="
-                                    global-search-price
-                                "
-                            >
-                                ₹${
-                                    formatPrice(
-                                        item.price
-                                    )
-                                }
-                            </span>
+                            <span class="global-search-price">
+
+    ${
+        item.has_weight_prices
+            ? `
+                <small class="search-price-prefix">
+                    Starting from
+                </small>
+            `
+            : ""
+    }
+
+    ₹${formatPrice(item.price)}
+
+</span>
 
 
                             <span
