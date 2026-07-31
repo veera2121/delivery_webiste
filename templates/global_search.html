@@ -1,0 +1,3335 @@
+{% extends "base.html" %}
+
+{% block title %}
+Search Food | RucHiGo
+{% endblock %}
+
+
+{% block content %}
+
+<div class="ruchigo-search-page">
+
+    <!-- ================= SEARCH HEADER ================= -->
+
+    <div class="search-page-header">
+
+        <a
+            href="{{ url_for('home') }}"
+            class="search-back-btn"
+            aria-label="Go back"
+        >
+            <i class="fa fa-arrow-left"></i>
+        </a>
+
+        <div class="search-input-wrapper">
+
+            <i class="fa fa-search search-input-icon"></i>
+
+            <input
+                type="search"
+                id="globalSearchInput"
+                placeholder="Search biryani, pizza, chicken..."
+                autocomplete="off"
+                autofocus
+            >
+
+            <button
+                type="button"
+                id="clearSearchBtn"
+                class="clear-search-btn"
+                aria-label="Clear search"
+                hidden
+            >
+                <i class="fa fa-times"></i>
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= INITIAL CONTENT ================= -->
+
+    <div
+        id="searchWelcome"
+        class="search-welcome"
+    >
+
+        <div class="search-welcome-icon">
+            🍽️
+        </div>
+
+        <h1>
+            What are you craving?
+        </h1>
+
+        <p>
+            Search food items from all RucHiGo restaurants.
+        </p>
+
+
+        <div class="popular-searches">
+
+            <h3>
+                Popular searches
+            </h3>
+
+            <div class="search-chips">
+
+                <button
+                    type="button"
+                    class="search-chip"
+                    data-search="Biryani"
+                >
+                    🍚 Biryani
+                </button>
+
+                <button
+                    type="button"
+                    class="search-chip"
+                    data-search="Chicken"
+                >
+                    🍗 Chicken
+                </button>
+
+                <button
+                    type="button"
+                    class="search-chip"
+                    data-search="Pizza"
+                >
+                    🍕 Pizza
+                </button>
+
+                <button
+                    type="button"
+                    class="search-chip"
+                    data-search="Burger"
+                >
+                    🍔 Burger
+                </button>
+
+                <button
+                    type="button"
+                    class="search-chip"
+                    data-search="Roll"
+                >
+                    🌯 Rolls
+                </button>
+
+                <button
+                    type="button"
+                    class="search-chip"
+                    data-search="Cake"
+                >
+                    🎂 Cake
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= LOADER ================= -->
+
+    <div
+        id="searchLoader"
+        class="search-loader"
+        hidden
+    >
+
+        <div class="search-spinner"></div>
+
+        <p>
+            Finding delicious food...
+        </p>
+
+    </div>
+
+
+    <!-- ================= RESULT COUNT ================= -->
+
+    <div
+        id="searchResultHeader"
+        class="search-result-header"
+        hidden
+    >
+
+        <div>
+
+            <h2 id="searchResultTitle">
+                Search results
+            </h2>
+
+            <p id="searchResultCount">
+                0 items found
+            </p>
+
+        </div>
+
+    </div> 
+<!-- RESTAURANT SEARCH RESULTS -->
+
+<section
+    id="restaurantSearchSection"
+    class="restaurant-search-section"
+    hidden
+>
+
+    <div class="restaurant-search-heading">
+
+        <div>
+            <h2>
+                🏪 Restaurants
+            </h2>
+
+            <p id="restaurantSearchCount">
+                0 restaurants found
+            </p>
+        </div>
+
+    </div>
+
+    <div
+        id="restaurantSearchResults"
+        class="restaurant-search-results"
+    ></div>
+
+</section>
+<div
+    id="smartComparison"
+    class="smart-comparison"
+    hidden
+>
+
+    <div class="smart-comparison-heading">
+
+        <div>
+            <span class="smart-comparison-label">
+                ⭐ Smart Food Comparison
+            </span>
+
+            <h3>
+                Compare the best options
+            </h3>
+        </div>
+
+    </div>
+
+
+    <div
+        id="smartComparisonCards"
+        class="smart-comparison-cards"
+    ></div>
+
+</div>
+
+    <!-- ================= RESULTS ================= -->
+
+    <div
+        id="globalSearchResults"
+        class="global-search-results"
+        hidden
+    ></div>
+
+
+    <!-- ================= EMPTY STATE ================= -->
+
+    <div
+        id="searchEmpty"
+        class="search-empty"
+        hidden
+    >
+
+        <div class="search-empty-icon">
+            🔍
+        </div>
+
+        <h2>
+            No items found
+        </h2>
+
+        <p id="searchEmptyText">
+            Try searching for biryani, chicken, pizza or rolls.
+        </p>
+
+    </div>
+
+
+    <!-- ================= ERROR STATE ================= -->
+
+    <div
+        id="searchError"
+        class="search-empty"
+        hidden
+    >
+
+        <div class="search-empty-icon">
+            ⚠️
+        </div>
+
+        <h2>
+            Search unavailable
+        </h2>
+
+        <p>
+            Please check your connection and try again.
+        </p>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+/* =========================================================
+   GLOBAL SEARCH PAGE
+========================================================= */
+
+.ruchigo-search-page {
+    min-height: 100vh;
+    padding:
+        12px
+        14px
+        110px;
+    background:
+        linear-gradient(
+            180deg,
+            #f6faff 0%,
+            #ffffff 40%
+        );
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.search-page-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding:
+        10px
+        0
+        14px;
+    background:
+        rgba(246, 250, 255, 0.96);
+    backdrop-filter: blur(12px);
+}
+
+.search-back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 15px;
+    background: #ffffff;
+    color: #182333;
+    text-decoration: none;
+    border: 1px solid #e7edf4;
+    box-shadow:
+        0 7px 22px
+        rgba(21, 39, 70, 0.08);
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    height: 54px;
+    background: #ffffff;
+    border:
+        1.5px solid
+        #dfe8f2;
+    border-radius: 17px;
+    box-shadow:
+        0 8px 26px
+        rgba(22, 44, 80, 0.08);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.search-input-wrapper:focus-within {
+    border-color: #1677ff;
+    box-shadow:
+        0 9px 28px
+        rgba(22, 119, 255, 0.15);
+}
+
+.search-input-icon {
+    margin-left: 17px;
+    color: #557086;
+    font-size: 17px;
+}
+
+#globalSearchInput {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    padding:
+        0
+        48px
+        0
+        12px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #142033;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#globalSearchInput::placeholder {
+    color: #8a98a8;
+    font-weight: 500;
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 33px;
+    height: 33px;
+    border: none;
+    border-radius: 50%;
+    background: #eef3f8;
+    color: #536476;
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   WELCOME
+========================================================= */
+
+.search-welcome {
+    max-width: 720px;
+    margin:
+        55px
+        auto
+        0;
+    text-align: center;
+}
+
+.search-welcome-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 86px;
+    height: 86px;
+    margin:
+        0
+        auto
+        20px;
+    border-radius: 28px;
+    background:
+        linear-gradient(
+            135deg,
+            #e6f2ff,
+            #ebfff3
+        );
+    font-size: 42px;
+    box-shadow:
+        0 12px 35px
+        rgba(40, 104, 170, 0.12);
+}
+
+.search-welcome h1 {
+    margin: 0;
+    color: #162235;
+    font-size: 28px;
+    font-weight: 900;
+}
+
+.search-welcome > p {
+    margin:
+        10px
+        auto
+        30px;
+    color: #758398;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.popular-searches {
+    text-align: left;
+}
+
+.popular-searches h3 {
+    margin:
+        0
+        0
+        14px;
+    color: #354458;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.search-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.search-chip {
+    padding:
+        11px
+        16px;
+    border:
+        1px solid
+        #dfe7ef;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #26364a;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow:
+        0 5px 16px
+        rgba(29, 48, 77, 0.06);
+}
+
+.search-chip:active {
+    transform: scale(0.97);
+}
+
+
+/* =========================================================
+   LOADER
+========================================================= */
+
+.search-loader {
+    padding:
+        70px
+        20px;
+    text-align: center;
+    color: #718095;
+}
+
+.search-spinner {
+    width: 42px;
+    height: 42px;
+    margin:
+        0
+        auto
+        16px;
+    border:
+        4px solid
+        #e2eaf2;
+    border-top-color: #1677ff;
+    border-radius: 50%;
+    animation:
+        searchSpin
+        0.8s
+        linear
+        infinite;
+}
+
+@keyframes searchSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   RESULT HEADER
+========================================================= */
+
+.search-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 920px;
+    margin:
+        18px
+        auto
+        14px;
+}
+
+.search-result-header h2 {
+    margin: 0;
+    color: #172438;
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.search-result-header p {
+    margin:
+        5px
+        0
+        0;
+    color: #7a8798;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   RESULT GRID
+========================================================= */
+
+.global-search-results {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+    gap: 15px;
+    max-width: 920px;
+    margin: 0 auto;
+}
+
+.global-search-card {
+    display: flex;
+    min-width: 0;
+    overflow: hidden;
+    border:
+        1px solid
+        #e5ebf1;
+    border-radius: 19px;
+    background: #ffffff;
+    color: inherit;
+    text-decoration: none;
+    box-shadow:
+        0 8px 25px
+        rgba(23, 42, 71, 0.07);
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.global-search-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 13px 31px
+        rgba(23, 42, 71, 0.12);
+}
+
+.global-search-card-image-wrapper {
+    position: relative;
+    width: 128px;
+    min-width: 128px;
+    min-height: 135px;
+    overflow: hidden;
+    background: #edf1f5;
+}
+
+.global-search-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.search-item-type {
+    position: absolute;
+    top: 9px;
+    left: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 21px;
+    height: 21px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.search-item-type::after {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #18a84b;
+}
+
+.search-item-type.non-veg::after {
+    background: #dd3030;
+}
+
+.global-search-card-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    padding: 13px;
+}
+
+.global-search-card-title {
+    margin: 0;
+    color: #172235;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.35;
+}
+
+.global-search-card-title mark {
+    padding: 0;
+    background: #fff1a9;
+    color: inherit;
+}
+
+.global-search-restaurant {
+    margin:
+        6px
+        0
+        0;
+    overflow: hidden;
+    color: #65758a;
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.global-search-category {
+    margin:
+        4px
+        0
+        0;
+    color: #8b97a6;
+    font-size: 12px;
+}
+
+.global-search-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 13px;
+}
+
+.global-search-price {
+    color: #172235;
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.restaurant-status {
+    padding:
+        5px
+        9px;
+    border-radius: 999px;
+    background: #e9f9ef;
+    color: #148744;
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.restaurant-status.closed {
+    background: #fff0f0;
+    color: #cf3333;
+}
+
+
+/* =========================================================
+   EMPTY / ERROR
+========================================================= */
+
+.search-empty {
+    max-width: 520px;
+    margin:
+        70px
+        auto
+        0;
+    padding: 25px;
+    text-align: center;
+}
+
+.search-empty-icon {
+    margin-bottom: 14px;
+    font-size: 48px;
+}
+
+.search-empty h2 {
+    margin: 0;
+    color: #1b293d;
+    font-size: 22px;
+}
+
+.search-empty p {
+    margin:
+        10px
+        0
+        0;
+    color: #7b8899;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .ruchigo-search-page {
+        padding:
+            8px
+            10px
+            105px;
+    }
+
+    .search-page-header {
+        gap: 8px;
+    }
+
+    .search-back-btn {
+        width: 43px;
+        height: 43px;
+        border-radius: 14px;
+    }
+
+    .search-input-wrapper {
+        height: 50px;
+        border-radius: 15px;
+    }
+
+    #globalSearchInput {
+        font-size: 15px;
+    }
+
+    .search-welcome {
+        margin-top: 42px;
+    }
+
+    .search-welcome h1 {
+        font-size: 24px;
+    }
+
+    .global-search-results {
+        grid-template-columns: 1fr;
+        gap: 11px;
+    }
+
+    .global-search-card {
+        border-radius: 17px;
+    }
+
+    .global-search-card-image-wrapper {
+        width: 112px;
+        min-width: 112px;
+        min-height: 125px;
+    }
+
+    .global-search-card-content {
+        padding: 11px;
+    }
+
+    .global-search-card-title {
+        font-size: 15px;
+    }
+
+    .global-search-price {
+        font-size: 15px;
+    }
+
+}
+#searchResultCount strong{
+    color:#ff6b00;
+}
+
+#searchResultCount{
+    line-height:1.5;
+} 
+
+.global-search-card-image-wrapper {
+    position: relative;
+}
+
+.similar-match-badge {
+    position: absolute;
+    left: 7px;
+    bottom: 7px;
+    z-index: 5;
+
+    display: inline-flex;
+    align-items: center;
+
+    padding: 5px 8px;
+
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #ffd38c;
+    border-radius: 20px;
+
+    color: #d75b00;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
+    white-space: nowrap;
+}
+
+#searchResultCount {
+    line-height: 1.6;
+}
+
+#searchResultCount strong {
+    color: #e65c00;
+}
+
+.global-search-card-image-wrapper {
+    position: relative;
+}
+
+.similar-match-badge {
+    position: absolute;
+    left: 7px;
+    bottom: 7px;
+    z-index: 5;
+
+    padding: 5px 8px;
+
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #ffd38c;
+    border-radius: 20px;
+
+    color: #d75b00;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
+    white-space: nowrap;
+}
+
+#searchResultCount {
+    line-height: 1.6;
+}
+
+#searchResultCount strong {
+    color: #e65c00;
+}
+/* ==========================================================
+   SMART FOOD COMPARISON
+========================================================== */
+
+.smart-comparison{
+margin:20px 0 28px;
+}
+
+.smart-comparison-heading{
+display:flex;
+align-items:center;
+justify-content:space-between;
+margin-bottom:16px;
+}
+
+.smart-comparison-label{
+
+display:inline-flex;
+align-items:center;
+gap:6px;
+
+padding:6px 12px;
+
+background:#fff5d6;
+
+border:1px solid #ffd36d;
+
+border-radius:999px;
+
+font-size:12px;
+
+font-weight:700;
+
+color:#b36a00;
+
+}
+
+.smart-comparison-heading h3{
+
+margin-top:10px;
+
+font-size:24px;
+
+font-weight:800;
+
+color:#1f2937;
+
+}
+
+.smart-comparison-cards{
+
+display:grid;
+
+grid-template-columns:
+repeat(4,minmax(0,1fr));
+
+gap:16px;
+
+}
+
+.smart-comparison-card{
+
+display:flex;
+
+align-items:flex-start;
+
+gap:14px;
+
+padding:18px;
+
+background:#fff;
+
+border-radius:20px;
+
+border:1px solid #edf0f5;
+
+box-shadow:
+0 8px 28px rgba(0,0,0,.06);
+
+transition:
+.25s;
+
+text-decoration:none;
+
+color:inherit;
+
+}
+
+.smart-comparison-link:hover{
+
+transform:translateY(-4px);
+
+box-shadow:
+0 14px 35px rgba(0,0,0,.10);
+
+border-color:#bde5ca;
+
+}
+
+.smart-comparison-icon{
+
+width:52px;
+
+height:52px;
+
+border-radius:16px;
+
+background:#f5f7fa;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+font-size:24px;
+
+flex-shrink:0;
+
+}
+
+.smart-comparison-info{
+
+display:flex;
+
+flex-direction:column;
+
+min-width:0;
+
+}
+
+.smart-comparison-title{
+
+font-size:11px;
+
+font-weight:800;
+
+letter-spacing:.6px;
+
+text-transform:uppercase;
+
+color:#7b8794;
+
+}
+
+.smart-comparison-value{
+
+margin-top:4px;
+
+font-size:22px;
+
+font-weight:800;
+
+color:#111827;
+
+line-height:1.2;
+
+}
+
+.smart-comparison-subtitle{
+
+margin-top:6px;
+
+font-size:13px;
+
+color:#5b6574;
+
+overflow:hidden;
+
+white-space:nowrap;
+
+text-overflow:ellipsis;
+
+}
+
+.smart-comparison-restaurant{
+
+margin-top:4px;
+
+font-size:13px;
+
+font-weight:700;
+
+color:#16a34a;
+
+overflow:hidden;
+
+white-space:nowrap;
+
+text-overflow:ellipsis;
+
+}
+
+.smart-comparison-status{
+
+display:inline-flex;
+
+align-items:center;
+
+width:max-content;
+
+margin-top:8px;
+
+padding:4px 10px;
+
+border-radius:999px;
+
+font-size:11px;
+
+font-weight:700;
+
+}
+
+.smart-comparison-status.open{
+
+background:#eafbf0;
+
+color:#11843c;
+
+}
+
+.smart-comparison-status.closed{
+
+background:#fff2f2;
+
+color:#dc2626;
+
+}
+
+/* ==========================================================
+   TABLET
+========================================================== */
+
+@media (max-width:900px){
+
+.smart-comparison-cards{
+
+grid-template-columns:
+repeat(2,1fr);
+
+}
+
+}
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (max-width:600px){
+
+.smart-comparison{
+
+margin:16px 0 24px;
+
+}
+
+.smart-comparison-heading h3{
+
+font-size:20px;
+
+}
+
+.smart-comparison-cards{
+
+display:flex;
+
+overflow-x:auto;
+
+gap:12px;
+
+padding-bottom:6px;
+
+scroll-snap-type:x mandatory;
+
+scrollbar-width:none;
+
+}
+
+.smart-comparison-cards::-webkit-scrollbar{
+
+display:none;
+
+}
+
+.smart-comparison-card{
+
+min-width:260px;
+
+scroll-snap-align:start;
+
+}
+
+.smart-comparison-value{
+
+font-size:20px;
+
+}
+
+}
+/* ==========================================================
+   SEARCH CARD CATEGORY AND ORDER COUNT
+========================================================== */
+
+.global-search-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    margin-top: 7px;
+}
+
+.global-search-category {
+    min-width: 0;
+
+    overflow: hidden;
+    color: #6b7280;
+
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.global-search-order-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+
+    padding: 4px 8px;
+
+    background: #fff4e8;
+    border: 1px solid #ffd9b3;
+    border-radius: 999px;
+
+    color: #e55b00;
+
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.global-search-order-count i {
+    font-size: 10px;
+}
+
+@media (max-width: 500px) {
+
+    .global-search-meta {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+}
+/* =========================================================
+   RESTAURANT SEARCH SECTION
+========================================================= */
+
+.restaurant-search-section {
+    width: 100%;
+    max-width: 920px;
+    margin: 20px auto 26px;
+}
+
+.restaurant-search-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 13px;
+}
+
+.restaurant-search-heading h2 {
+    margin: 0;
+    color: #172235;
+    font-size: 21px;
+    font-weight: 900;
+    line-height: 1.3;
+}
+
+.restaurant-search-heading p {
+    margin: 5px 0 0;
+    color: #7b8797;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   RESTAURANT RESULT GRID
+========================================================= */
+
+.restaurant-search-results {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+}
+
+
+/* =========================================================
+   RESTAURANT CARD
+========================================================= */
+
+.restaurant-search-card {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    min-width: 0;
+    padding: 12px;
+
+    background: #ffffff;
+    border: 1px solid #e4eaf1;
+    border-radius: 18px;
+
+    color: inherit;
+    text-decoration: none;
+
+    box-shadow:
+        0 7px 24px
+        rgba(22, 40, 68, 0.07);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.restaurant-search-card:hover {
+    transform: translateY(-2px);
+
+    border-color: #b9d9ff;
+
+    box-shadow:
+        0 12px 30px
+        rgba(22, 40, 68, 0.12);
+}
+
+
+/* Closed restaurant appearance */
+
+.restaurant-search-card-closed {
+    opacity: 0.72;
+}
+
+.restaurant-search-card-closed:hover {
+    opacity: 0.88;
+}
+
+
+/* =========================================================
+   RESTAURANT IMAGE
+========================================================= */
+
+.restaurant-search-card img {
+    width: 78px;
+    height: 78px;
+    flex: 0 0 78px;
+
+    object-fit: cover;
+
+    background: #eef2f6;
+    border-radius: 16px;
+}
+
+
+/* =========================================================
+   RESTAURANT CONTENT
+========================================================= */
+
+.restaurant-search-content {
+    display: flex;
+    flex-direction: column;
+
+    flex: 1;
+    min-width: 0;
+}
+
+.restaurant-search-content h3 {
+    margin: 0;
+
+    overflow: hidden;
+
+    color: #172235;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.35;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.restaurant-search-content p {
+    margin: 5px 0 9px;
+
+    color: #7b8795;
+    font-size: 12px;
+    font-weight: 600;
+
+    text-transform: capitalize;
+}
+
+
+/* =========================================================
+   OPEN / CLOSED BADGE
+========================================================= */
+
+.restaurant-search-content .restaurant-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: max-content;
+    max-width: 100%;
+
+    padding: 5px 9px;
+
+    background: #e9f9ef;
+    border: 1px solid #c6eed4;
+    border-radius: 999px;
+
+    color: #148744;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.restaurant-search-content .restaurant-status.closed {
+    background: #fff0f0;
+    border-color: #ffd0d0;
+
+    color: #cc3434;
+}
+
+
+/* =========================================================
+   RIGHT ARROW
+========================================================= */
+
+.restaurant-search-arrow {
+    flex-shrink: 0;
+
+    margin-left: auto;
+
+    color: #9aa5b1;
+    font-size: 13px;
+
+    transition:
+        transform 0.2s ease,
+        color 0.2s ease;
+}
+
+.restaurant-search-card:hover
+.restaurant-search-arrow {
+    color: #1677ff;
+    transform: translateX(3px);
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 820px) {
+
+    .restaurant-search-results {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .restaurant-search-section {
+        margin: 16px auto 22px;
+    }
+
+    .restaurant-search-heading {
+        margin-bottom: 10px;
+    }
+
+    .restaurant-search-heading h2 {
+        font-size: 18px;
+    }
+
+    .restaurant-search-heading p {
+        font-size: 12px;
+    }
+
+    .restaurant-search-results {
+        gap: 10px;
+    }
+
+    .restaurant-search-card {
+        gap: 11px;
+
+        padding: 10px;
+
+        border-radius: 16px;
+    }
+
+    .restaurant-search-card img {
+        width: 67px;
+        height: 67px;
+        flex-basis: 67px;
+
+        border-radius: 14px;
+    }
+
+    .restaurant-search-content h3 {
+        font-size: 14px;
+    }
+
+    .restaurant-search-content p {
+        margin: 4px 0 8px;
+        font-size: 11px;
+    }
+
+    .restaurant-search-content
+    .restaurant-status {
+        padding: 4px 8px;
+        font-size: 9px;
+    }
+
+    .restaurant-search-arrow {
+        font-size: 11px;
+    }
+
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 380px) {
+
+    .restaurant-search-card img {
+        width: 60px;
+        height: 60px;
+        flex-basis: 60px;
+    }
+
+    .restaurant-search-content h3 {
+        font-size: 13px;
+    }
+
+}
+</style>
+
+{% endblock %}
+{% block extra_js %}
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        /* =================================================
+           ELEMENTS
+        ================================================= */
+
+        const searchInput =
+            document.getElementById(
+                "globalSearchInput"
+            );
+
+        const clearButton =
+            document.getElementById(
+                "clearSearchBtn"
+            );
+
+        const welcomeBox =
+            document.getElementById(
+                "searchWelcome"
+            );
+
+        const loader =
+            document.getElementById(
+                "searchLoader"
+            );
+
+        const resultHeader =
+            document.getElementById(
+                "searchResultHeader"
+            );
+
+        const resultTitle =
+            document.getElementById(
+                "searchResultTitle"
+            );
+
+        const resultCount =
+            document.getElementById(
+                "searchResultCount"
+            );
+
+        const resultsBox =
+            document.getElementById(
+                "globalSearchResults"
+            );
+
+        const emptyBox =
+            document.getElementById(
+                "searchEmpty"
+            );
+
+        const emptyText =
+            document.getElementById(
+                "searchEmptyText"
+            );
+
+        const errorBox =
+            document.getElementById(
+                "searchError"
+            );
+
+        const smartComparison =
+            document.getElementById(
+                "smartComparison"
+            );
+
+        const smartComparisonCards =
+            document.getElementById(
+                "smartComparisonCards"
+            );
+
+        const restaurantSearchSection =
+            document.getElementById(
+                "restaurantSearchSection"
+            );
+
+        const restaurantSearchCount =
+            document.getElementById(
+                "restaurantSearchCount"
+            );
+
+        const restaurantSearchResults =
+            document.getElementById(
+                "restaurantSearchResults"
+            );
+
+        const searchChips =
+            document.querySelectorAll(
+                ".search-chip"
+            );
+
+
+        /* =================================================
+           REQUIRED ELEMENT CHECK
+        ================================================= */
+
+        if (
+            !searchInput ||
+            !clearButton ||
+            !welcomeBox ||
+            !loader ||
+            !resultHeader ||
+            !resultTitle ||
+            !resultCount ||
+            !resultsBox ||
+            !emptyBox ||
+            !emptyText ||
+            !errorBox ||
+            !smartComparison ||
+            !smartComparisonCards ||
+            !restaurantSearchSection ||
+            !restaurantSearchCount ||
+            !restaurantSearchResults
+        ) {
+
+            console.error(
+                "Global search page elements are missing."
+            );
+
+            return;
+        }
+
+
+        let debounceTimer = null;
+        let requestController = null;
+
+
+        /* =================================================
+           SEARCH INPUT
+        ================================================= */
+
+        searchInput.addEventListener(
+            "input",
+            function () {
+
+                const query =
+                    searchInput.value.trim();
+
+                clearButton.hidden =
+                    !query;
+
+                clearTimeout(
+                    debounceTimer
+                );
+
+
+                if (query.length < 2) {
+
+                    resetSearchPage();
+
+                    return;
+                }
+
+
+                debounceTimer =
+                    setTimeout(
+                        function () {
+
+                            searchMenuItems(
+                                query
+                            );
+
+                        },
+                        350
+                    );
+
+            }
+        );
+
+
+        /* =================================================
+           CLEAR BUTTON
+        ================================================= */
+
+        clearButton.addEventListener(
+            "click",
+            function () {
+
+                searchInput.value = "";
+
+                clearButton.hidden = true;
+
+                searchInput.focus();
+
+                resetSearchPage();
+
+            }
+        );
+
+
+        /* =================================================
+           POPULAR SEARCH CHIPS
+        ================================================= */
+
+        searchChips.forEach(
+            function (chip) {
+
+                chip.addEventListener(
+                    "click",
+                    function () {
+
+                        const query =
+                            String(
+                                chip.dataset.search || ""
+                            ).trim();
+
+
+                        if (!query) {
+                            return;
+                        }
+
+
+                        searchInput.value =
+                            query;
+
+                        clearButton.hidden =
+                            false;
+
+                        searchInput.focus();
+
+                        searchMenuItems(
+                            query
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+        /* =================================================
+           SEARCH API
+        ================================================= */
+
+        async function searchMenuItems(
+            query
+        ) {
+
+            if (requestController) {
+
+                requestController.abort();
+
+            }
+
+
+            requestController =
+                new AbortController();
+
+
+            showLoader();
+
+
+            try {
+
+                const response =
+                    await fetch(
+
+                        `/api/global-menu-search?q=${
+                            encodeURIComponent(
+                                query
+                            )
+                        }`,
+
+                        {
+                            method: "GET",
+
+                            cache: "no-store",
+
+                            headers: {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            },
+
+                            signal:
+                                requestController.signal
+                        }
+
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `Search failed: ${
+                            response.status
+                        }`
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                const currentQuery =
+                    searchInput.value
+                        .trim()
+                        .toLowerCase();
+
+
+                /*
+                 * Ignore an older response if the user
+                 * has already entered another search.
+                 */
+
+                if (
+                    currentQuery !==
+                    query.toLowerCase()
+                ) {
+
+                    return;
+                }
+
+
+                if (!data.success) {
+
+                    throw new Error(
+                        data.message ||
+                        "Search failed"
+                    );
+
+                }
+
+
+                renderSearchResults(
+
+                    Array.isArray(
+                        data.items
+                    )
+                        ? data.items
+                        : [],
+
+                    Array.isArray(
+                        data.restaurants
+                    )
+                        ? data.restaurants
+                        : [],
+
+                    query,
+
+                    data.comparison || null
+
+                );
+
+
+            } catch (error) {
+
+                if (
+                    error.name ===
+                    "AbortError"
+                ) {
+
+                    return;
+                }
+
+
+                console.error(
+                    "GLOBAL SEARCH ERROR:",
+                    error
+                );
+
+
+                showError();
+
+            }
+
+        }
+
+
+        /* =================================================
+           SIMILAR / TYPO CHECK
+        ================================================= */
+
+        function isSimilarMatch(
+            item,
+            query
+        ) {
+
+            const matchType =
+                String(
+                    item.match_type || ""
+                )
+                .trim()
+                .toLowerCase();
+
+
+            const itemName =
+                String(
+                    item.name || ""
+                )
+                .trim()
+                .toLowerCase();
+
+
+            const category =
+                String(
+                    item.category || ""
+                )
+                .trim()
+                .toLowerCase();
+
+
+            const description =
+                String(
+                    item.description || ""
+                )
+                .trim()
+                .toLowerCase();
+
+
+            const restaurantName =
+                String(
+                    item.restaurant_name || ""
+                )
+                .trim()
+                .toLowerCase();
+
+
+            const searchQuery =
+                String(
+                    query || ""
+                )
+                .trim()
+                .toLowerCase();
+
+
+            if (!searchQuery) {
+                return false;
+            }
+
+
+            if (
+                matchType === "typo" ||
+                matchType === "similarity" ||
+                matchType === "similar" ||
+                matchType === "fuzzy"
+            ) {
+
+                return true;
+
+            }
+
+
+            /*
+             * A normal direct match is not a typo match.
+             */
+
+            if (
+                itemName.includes(
+                    searchQuery
+                ) ||
+                category.includes(
+                    searchQuery
+                ) ||
+                description.includes(
+                    searchQuery
+                ) ||
+                restaurantName.includes(
+                    searchQuery
+                )
+            ) {
+
+                return false;
+
+            }
+
+
+            /*
+             * The API returned this item, but the entered
+             * text is absent from all normal fields.
+             */
+
+            return (
+                matchType === "partial"
+            );
+
+        }
+
+
+        /* =================================================
+           MAIN RESULT RENDERER
+        ================================================= */
+
+        function renderSearchResults(
+            items,
+            restaurants,
+            query,
+            comparison
+        ) {
+
+            console.log(
+                "SEARCH ITEMS:",
+                items
+            );
+
+            console.log(
+                "SEARCH RESTAURANTS:",
+                restaurants
+            );
+
+            console.log(
+                "SMART COMPARISON:",
+                comparison
+            );
+
+
+            loader.hidden = true;
+            welcomeBox.hidden = true;
+            errorBox.hidden = true;
+
+
+            const hasItems =
+                items.length > 0;
+
+            const hasRestaurants =
+                restaurants.length > 0;
+
+
+            /*
+             * Render restaurant results first.
+             */
+
+            renderRestaurantResults(
+                restaurants
+            );
+
+
+            /*
+             * Nothing matched at all.
+             */
+
+            if (
+                !hasItems &&
+                !hasRestaurants
+            ) {
+
+                resultHeader.hidden = true;
+
+                resultsBox.hidden = true;
+                resultsBox.innerHTML = "";
+
+                smartComparison.hidden = true;
+                smartComparisonCards.innerHTML = "";
+
+                restaurantSearchSection.hidden = true;
+                restaurantSearchResults.innerHTML = "";
+
+                emptyText.textContent =
+                    `No food items or restaurants found for "${query}". Try another name.`;
+
+                emptyBox.hidden = false;
+
+                return;
+            }
+
+
+            emptyBox.hidden = true;
+
+
+            /*
+             * If only restaurants matched, hide the food
+             * header, comparison and item-result grid.
+             */
+
+            if (!hasItems) {
+
+                resultHeader.hidden = true;
+
+                resultsBox.hidden = true;
+                resultsBox.innerHTML = "";
+
+                smartComparison.hidden = true;
+                smartComparisonCards.innerHTML = "";
+
+                return;
+            }
+
+
+            /*
+             * Food items exist.
+             */
+
+            resultHeader.hidden = false;
+            resultsBox.hidden = false;
+
+
+            const hasSimilarResults =
+                items.some(
+                    function (item) {
+
+                        return isSimilarMatch(
+                            item,
+                            query
+                        );
+
+                    }
+                );
+
+
+            if (hasSimilarResults) {
+
+                resultTitle.textContent =
+                    "Similar food results";
+
+                resultCount.innerHTML = `
+                    ✨ Showing similar food results for
+                    "<strong>${
+                        escapeHtml(query)
+                    }</strong>"
+                    <br>
+                    ${items.length}
+                    ${
+                        items.length === 1
+                            ? "item"
+                            : "items"
+                    } found
+                `;
+
+            } else {
+
+                resultTitle.textContent =
+                    `Food results for "${query}"`;
+
+                resultCount.textContent =
+                    `${items.length} matching item${
+                        items.length === 1
+                            ? ""
+                            : "s"
+                    } found`;
+
+            }
+
+
+            renderSmartComparison(
+                comparison
+            );
+
+
+            resultsBox.innerHTML =
+                items.map(
+                    function (item) {
+
+                        return buildFoodItemCard(
+                            item,
+                            query
+                        );
+
+                    }
+                ).join("");
+
+        }
+
+
+        /* =================================================
+           RESTAURANT RESULTS
+        ================================================= */
+
+        function renderRestaurantResults(
+            restaurants
+        ) {
+
+            if (!restaurants.length) {
+
+                restaurantSearchSection.hidden =
+                    true;
+
+                restaurantSearchResults.innerHTML =
+                    "";
+
+                restaurantSearchCount.textContent =
+                    "0 restaurants found";
+
+                return;
+            }
+
+
+            restaurantSearchSection.hidden =
+                false;
+
+
+            restaurantSearchCount.textContent =
+                `${restaurants.length} restaurant${
+                    restaurants.length === 1
+                        ? ""
+                        : "s"
+                } found`;
+
+
+            restaurantSearchResults.innerHTML =
+                restaurants.map(
+                    function (restaurant) {
+
+                        const isOpen =
+                            Boolean(
+                                restaurant.is_open
+                            );
+
+
+                        const statusText =
+                            isOpen
+                                ? "OPEN"
+                                : "CLOSED";
+
+
+                        const statusClass =
+                            isOpen
+                                ? ""
+                                : "closed";
+
+
+                        const name =
+                            restaurant.name ||
+                            "RucHiGo Restaurant";
+
+
+                        const categoryType =
+                            restaurant.category_type ||
+                            "restaurant";
+
+
+                        const imageUrl =
+                            restaurant.image_url ||
+                            "/static/images/restaurants/img1.jpg";
+
+
+                        const menuUrl =
+                            restaurant.menu_url ||
+                            "#";
+
+
+                        return `
+
+                            <a
+                                href="${
+                                    escapeHtml(
+                                        menuUrl
+                                    )
+                                }"
+                                class="
+                                    restaurant-search-card
+                                    ${
+                                        isOpen
+                                            ? ""
+                                            : "restaurant-search-card-closed"
+                                    }
+                                "
+                            >
+
+                                <img
+                                    src="${
+                                        escapeHtml(
+                                            imageUrl
+                                        )
+                                    }"
+                                    alt="${
+                                        escapeHtml(
+                                            name
+                                        )
+                                    }"
+                                    loading="lazy"
+                                    onerror="
+                                        this.onerror=null;
+                                        this.src='/static/images/restaurants/img1.jpg';
+                                    "
+                                >
+
+
+                                <div
+                                    class="
+                                        restaurant-search-content
+                                    "
+                                >
+
+                                    <h3>
+                                        ${
+                                            escapeHtml(
+                                                name
+                                            )
+                                        }
+                                    </h3>
+
+
+                                    <p>
+                                        ${
+                                            escapeHtml(
+                                                categoryType
+                                            )
+                                        }
+                                    </p>
+
+
+                                    <span
+                                        class="
+                                            restaurant-status
+                                            ${statusClass}
+                                        "
+                                    >
+                                        ${statusText}
+                                    </span>
+
+                                </div>
+
+
+                                <i
+                                    class="
+                                        fa
+                                        fa-chevron-right
+                                        restaurant-search-arrow
+                                    "
+                                ></i>
+
+                            </a>
+
+                        `;
+
+                    }
+                ).join("");
+
+        }
+
+
+        /* =================================================
+           FOOD ITEM CARD
+        ================================================= */
+
+        function buildFoodItemCard(
+            item,
+            query
+        ) {
+
+            const restaurantIsOpen =
+                Boolean(
+                    item.restaurant_open
+                );
+
+
+            const statusText =
+                restaurantIsOpen
+                    ? "OPEN"
+                    : "CLOSED";
+
+
+            const statusClass =
+                restaurantIsOpen
+                    ? ""
+                    : "closed";
+
+
+            const typeClass =
+                isNonVeg(
+                    item.item_type
+                )
+                    ? "non-veg"
+                    : "";
+
+
+            const menuUrl =
+                item.menu_url ||
+                "#";
+
+
+            const imageUrl =
+                item.image_url ||
+                "/static/images/default_food.jpg";
+
+
+            const itemName =
+                item.name ||
+                "Food item";
+
+
+            const restaurantName =
+                item.restaurant_name ||
+                "RucHiGo Restaurant";
+
+
+            const categoryName =
+                item.category ||
+                "Other";
+
+
+            const orderCount =
+                Number(
+                    item.order_count || 0
+                );
+
+
+            const orderCountMarkup =
+                orderCount > 0
+                    ? `
+                        <span
+                            class="
+                                global-search-order-count
+                            "
+                        >
+                            <i class="fa fa-fire"></i>
+
+                            ${orderCount} ordered
+                        </span>
+                    `
+                    : `
+                        <span
+                            class="
+                                global-search-order-count
+                                new-item
+                            "
+                        >
+                            New item
+                        </span>
+                    `;
+
+
+            return `
+
+                <a
+                    href="${
+                        escapeHtml(
+                            menuUrl
+                        )
+                    }"
+                    class="
+                        global-search-card
+                        ${
+                            restaurantIsOpen
+                                ? ""
+                                : "global-search-card-closed"
+                        }
+                    "
+                >
+
+                    <div
+                        class="
+                            global-search-card-image-wrapper
+                        "
+                    >
+
+                        <img
+                            src="${
+                                escapeHtml(
+                                    imageUrl
+                                )
+                            }"
+                            alt="${
+                                escapeHtml(
+                                    itemName
+                                )
+                            }"
+                            class="
+                                global-search-card-image
+                            "
+                            loading="lazy"
+                            onerror="
+                                this.onerror=null;
+                                this.src='/static/images/default_food.jpg';
+                            "
+                        >
+
+
+                        <span
+                            class="
+                                search-item-type
+                                ${typeClass}
+                            "
+                        ></span>
+
+                    </div>
+
+
+                    <div
+                        class="
+                            global-search-card-content
+                        "
+                    >
+
+                        <h3
+                            class="
+                                global-search-card-title
+                            "
+                        >
+                            ${
+                                highlightText(
+                                    itemName,
+                                    query
+                                )
+                            }
+                        </h3>
+
+
+                        <p
+                            class="
+                                global-search-restaurant
+                            "
+                        >
+
+                            <i class="fa fa-store"></i>
+
+                            ${
+                                escapeHtml(
+                                    restaurantName
+                                )
+                            }
+
+                        </p>
+
+
+                        <div
+                            class="
+                                global-search-meta
+                            "
+                        >
+
+                            <span
+                                class="
+                                    global-search-category
+                                "
+                            >
+                                ${
+                                    escapeHtml(
+                                        categoryName
+                                    )
+                                }
+                            </span>
+
+
+                            ${orderCountMarkup}
+
+                        </div>
+
+
+                        <div
+                            class="
+                                global-search-card-bottom
+                            "
+                        >
+
+                            <span
+                                class="
+                                    global-search-price
+                                "
+                            >
+                                ₹${
+                                    formatPrice(
+                                        item.price
+                                    )
+                                }
+                            </span>
+
+
+                            <span
+                                class="
+                                    restaurant-status
+                                    ${statusClass}
+                                "
+                            >
+                                ${statusText}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </a>
+
+            `;
+
+        }
+
+
+        /* =================================================
+           SMART FOOD COMPARISON
+        ================================================= */
+
+        function renderSmartComparison(
+            comparison
+        ) {
+
+            if (
+                !comparison ||
+                !comparison.total_items
+            ) {
+
+                smartComparison.hidden =
+                    true;
+
+                smartComparisonCards.innerHTML =
+                    "";
+
+                return;
+            }
+
+
+            const cards = [];
+
+
+            /* ---------------------------------------------
+               LOWEST PRICE
+            --------------------------------------------- */
+
+            if (
+                comparison.lowest_price
+            ) {
+
+                const lowest =
+                    comparison.lowest_price;
+
+
+                const isOpen =
+                    Boolean(
+                        lowest.restaurant_open
+                    );
+
+
+                cards.push(`
+
+                    <a
+                        href="${
+                            escapeHtml(
+                                lowest.menu_url || "#"
+                            )
+                        }"
+                        class="
+                            smart-comparison-card
+                            smart-comparison-link
+                        "
+                    >
+
+                        <div
+                            class="
+                                smart-comparison-icon
+                            "
+                        >
+                            💰
+                        </div>
+
+
+                        <div
+                            class="
+                                smart-comparison-info
+                            "
+                        >
+
+                            <span
+                                class="
+                                    smart-comparison-title
+                                "
+                            >
+                                Lowest Price
+                            </span>
+
+
+                            <strong
+                                class="
+                                    smart-comparison-value
+                                "
+                            >
+                                ₹${
+                                    formatPrice(
+                                        lowest.price
+                                    )
+                                }
+                            </strong>
+
+
+                            <span
+                                class="
+                                    smart-comparison-subtitle
+                                "
+                            >
+                                ${
+                                    escapeHtml(
+                                        lowest.item_name ||
+                                        "Food item"
+                                    )
+                                }
+                            </span>
+
+
+                            <span
+                                class="
+                                    smart-comparison-restaurant
+                                "
+                            >
+                                ${
+                                    escapeHtml(
+                                        lowest.restaurant_name ||
+                                        "Restaurant"
+                                    )
+                                }
+                            </span>
+
+
+                            <span
+                                class="
+                                    smart-comparison-status
+                                    ${
+                                        isOpen
+                                            ? "open"
+                                            : "closed"
+                                    }
+                                "
+                            >
+                                ${
+                                    isOpen
+                                        ? "Open now"
+                                        : "Currently closed"
+                                }
+                            </span>
+
+                        </div>
+
+                    </a>
+
+                `);
+
+            }
+
+
+            /* ---------------------------------------------
+               MOST ORDERED
+            --------------------------------------------- */
+
+            if (
+                comparison.most_ordered
+            ) {
+
+                const mostOrdered =
+                    comparison.most_ordered;
+
+
+                cards.push(`
+
+                    <a
+                        href="${
+                            escapeHtml(
+                                mostOrdered.menu_url || "#"
+                            )
+                        }"
+                        class="
+                            smart-comparison-card
+                            smart-comparison-link
+                        "
+                    >
+
+                        <div
+                            class="
+                                smart-comparison-icon
+                            "
+                        >
+                            🔥
+                        </div>
+
+
+                        <div
+                            class="
+                                smart-comparison-info
+                            "
+                        >
+
+                            <span
+                                class="
+                                    smart-comparison-title
+                                "
+                            >
+                                Most Ordered
+                            </span>
+
+
+                            <strong
+                                class="
+                                    smart-comparison-value
+                                "
+                            >
+                                ${
+                                    Number(
+                                        mostOrdered.order_count || 0
+                                    )
+                                } orders
+                            </strong>
+
+
+                            <span
+                                class="
+                                    smart-comparison-subtitle
+                                "
+                            >
+                                ${
+                                    escapeHtml(
+                                        mostOrdered.item_name ||
+                                        "Food item"
+                                    )
+                                }
+                            </span>
+
+
+                            <span
+                                class="
+                                    smart-comparison-restaurant
+                                "
+                            >
+                                ${
+                                    escapeHtml(
+                                        mostOrdered.restaurant_name ||
+                                        "Restaurant"
+                                    )
+                                }
+                            </span>
+
+                        </div>
+
+                    </a>
+
+                `);
+
+            }
+
+
+            /* ---------------------------------------------
+               AVAILABLE RESTAURANTS
+            --------------------------------------------- */
+
+            const restaurantCount =
+                Number(
+                    comparison.restaurant_count || 0
+                );
+
+
+            cards.push(`
+
+                <div
+                    class="
+                        smart-comparison-card
+                    "
+                >
+
+                    <div
+                        class="
+                            smart-comparison-icon
+                        "
+                    >
+                        🏪
+                    </div>
+
+
+                    <div
+                        class="
+                            smart-comparison-info
+                        "
+                    >
+
+                        <span
+                            class="
+                                smart-comparison-title
+                            "
+                        >
+                            Available At
+                        </span>
+
+
+                        <strong
+                            class="
+                                smart-comparison-value
+                            "
+                        >
+                            ${restaurantCount}
+                            restaurant${
+                                restaurantCount === 1
+                                    ? ""
+                                    : "s"
+                            }
+                        </strong>
+
+
+                        <span
+                            class="
+                                smart-comparison-subtitle
+                            "
+                        >
+                            Compare prices and options
+                        </span>
+
+                    </div>
+
+                </div>
+
+            `);
+
+
+            /* ---------------------------------------------
+               OPEN RESTAURANTS
+            --------------------------------------------- */
+
+            const openCount =
+                Number(
+                    comparison.open_restaurant_count || 0
+                );
+
+
+            cards.push(`
+
+                <div
+                    class="
+                        smart-comparison-card
+                    "
+                >
+
+                    <div
+                        class="
+                            smart-comparison-icon
+                        "
+                    >
+                        ✅
+                    </div>
+
+
+                    <div
+                        class="
+                            smart-comparison-info
+                        "
+                    >
+
+                        <span
+                            class="
+                                smart-comparison-title
+                            "
+                        >
+                            Open Now
+                        </span>
+
+
+                        <strong
+                            class="
+                                smart-comparison-value
+                            "
+                        >
+                            ${openCount}
+                            restaurant${
+                                openCount === 1
+                                    ? ""
+                                    : "s"
+                            }
+                        </strong>
+
+
+                        <span
+                            class="
+                                smart-comparison-subtitle
+                            "
+                        >
+                            ${
+                                openCount > 0
+                                    ? "Ready to accept orders"
+                                    : "No restaurants open now"
+                            }
+                        </span>
+
+                    </div>
+
+                </div>
+
+            `);
+
+
+            smartComparisonCards.innerHTML =
+                cards.join("");
+
+
+            smartComparison.hidden =
+                false;
+
+        }
+
+
+        /* =================================================
+           UI STATES
+        ================================================= */
+
+        function showLoader() {
+
+            welcomeBox.hidden = true;
+
+            resultHeader.hidden = true;
+
+            resultsBox.hidden = true;
+            resultsBox.innerHTML = "";
+
+            emptyBox.hidden = true;
+            errorBox.hidden = true;
+
+            smartComparison.hidden = true;
+            smartComparisonCards.innerHTML = "";
+
+            restaurantSearchSection.hidden = true;
+            restaurantSearchResults.innerHTML = "";
+            restaurantSearchCount.textContent =
+                "0 restaurants found";
+
+            loader.hidden = false;
+
+        }
+
+
+        function showError() {
+
+            loader.hidden = true;
+            welcomeBox.hidden = true;
+
+            resultHeader.hidden = true;
+
+            resultsBox.hidden = true;
+            resultsBox.innerHTML = "";
+
+            emptyBox.hidden = true;
+
+            smartComparison.hidden = true;
+            smartComparisonCards.innerHTML = "";
+
+            restaurantSearchSection.hidden = true;
+            restaurantSearchResults.innerHTML = "";
+            restaurantSearchCount.textContent =
+                "0 restaurants found";
+
+            errorBox.hidden = false;
+
+        }
+
+
+        function resetSearchPage() {
+
+            if (requestController) {
+
+                requestController.abort();
+
+                requestController = null;
+
+            }
+
+
+            clearTimeout(
+                debounceTimer
+            );
+
+
+            clearButton.hidden =
+                !searchInput.value.trim();
+
+
+            loader.hidden = true;
+
+            resultHeader.hidden = true;
+
+            resultsBox.hidden = true;
+            resultsBox.innerHTML = "";
+
+            emptyBox.hidden = true;
+            errorBox.hidden = true;
+
+            smartComparison.hidden = true;
+            smartComparisonCards.innerHTML = "";
+
+            restaurantSearchSection.hidden = true;
+            restaurantSearchResults.innerHTML = "";
+            restaurantSearchCount.textContent =
+                "0 restaurants found";
+
+            welcomeBox.hidden = false;
+
+
+            resultTitle.textContent =
+                "Search results";
+
+            resultCount.textContent =
+                "0 items found";
+
+        }
+
+
+        /* =================================================
+           PRICE FORMATTER
+        ================================================= */
+
+        function formatPrice(
+            value
+        ) {
+
+            const price =
+                Number(
+                    value || 0
+                );
+
+
+            if (
+                !Number.isFinite(
+                    price
+                )
+            ) {
+
+                return "0";
+            }
+
+
+            if (
+                Number.isInteger(
+                    price
+                )
+            ) {
+
+                return String(
+                    price
+                );
+            }
+
+
+            return price.toFixed(
+                2
+            );
+
+        }
+
+
+        /* =================================================
+           VEG / NON-VEG CHECK
+        ================================================= */
+
+        function isNonVeg(
+            itemType
+        ) {
+
+            const value =
+                String(
+                    itemType || ""
+                )
+                .trim()
+                .toLowerCase();
+
+
+            return (
+                value.includes("non") ||
+                value.includes("chicken") ||
+                value.includes("egg") ||
+                value.includes("meat") ||
+                value.includes("mutton") ||
+                value.includes("fish") ||
+                value.includes("prawn")
+            );
+
+        }
+
+
+        /* =================================================
+           HIGHLIGHT SEARCH TEXT
+        ================================================= */
+
+        function highlightText(
+            text,
+            query
+        ) {
+
+            const safeText =
+                escapeHtml(
+                    text || ""
+                );
+
+
+            const escapedQuery =
+                escapeRegExp(
+                    query
+                );
+
+
+            if (!escapedQuery) {
+
+                return safeText;
+            }
+
+
+            const expression =
+                new RegExp(
+                    `(${escapedQuery})`,
+                    "ig"
+                );
+
+
+            return safeText.replace(
+                expression,
+                "<mark>$1</mark>"
+            );
+
+        }
+
+
+        /* =================================================
+           ESCAPE REGEX
+        ================================================= */
+
+        function escapeRegExp(
+            value
+        ) {
+
+            return String(
+                value || ""
+            ).replace(
+                /[.*+?^${}()|[\]\\]/g,
+                "\\$&"
+            );
+
+        }
+
+
+        /* =================================================
+           ESCAPE HTML
+        ================================================= */
+
+        function escapeHtml(
+            value
+        ) {
+
+            return String(
+                value ?? ""
+            )
+            .replaceAll(
+                "&",
+                "&amp;"
+            )
+            .replaceAll(
+                "<",
+                "&lt;"
+            )
+            .replaceAll(
+                ">",
+                "&gt;"
+            )
+            .replaceAll(
+                '"',
+                "&quot;"
+            )
+            .replaceAll(
+                "'",
+                "&#039;"
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+{% endblock %}

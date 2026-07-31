@@ -60,7 +60,8 @@
   }
 }
 </script>
-
+{% block extra_css %}
+{% endblock %}
 </head>
 
 
@@ -910,10 +911,14 @@ html {
       <span>Home</span>
     </a>
 
-    <a href="javascript:void(0);" class="nav-btn" id="searchBtn">
-      <i class="icon fa fa-search"></i>
-      <span>Search</span>
-    </a>
+<a
+  href="{{ url_for('global_search_page') }}"
+  class="nav-btn {% if request.endpoint == 'global_search_page' %}active{% endif %}"
+  id="searchBtn"
+>
+  <i class="icon fa fa-search"></i>
+  <span>Search</span>
+</a>
 
     <a href="javascript:void(0);" class="nav-btn cart" id="cart-button">
       <i class="icon fa fa-shopping-cart"></i>
@@ -1624,6 +1629,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </div>
 <!-- LOCATION POPUP (FIRST TIME ONLY) -->
-
+{% block extra_js %}
+{% endblock %}
 </body>
 </html>

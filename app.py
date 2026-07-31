@@ -7360,6 +7360,646 @@ def admin_orders_ajax(order_group):
 
         make_whatsapp_link=make_whatsapp_link
     )
+
+@app.route("/search")
+def global_search_page():
+
+    return render_template(
+        "global_search.html"
+    )
+
+from flask import request, jsonify, url_for
+from sqlalchemy import or_, func, case
+@app.route("/api/global-menu-search")
+def global_menu_search():
+
+    search_text = request.args.get(
+        "q",
+        "",
+        type=str
+    ).strip()
+
+    if len(search_text) < 2:
+        return jsonify({
+            "success": True,
+            "query": search_text,
+            "count": 0,
+            "items": [],
+            "comparison": None
+        })
+
+    normalized_query = search_text.lower()
+    search_pattern = f"%{normalized_query}%"
+
+    # ---------------------------------------------------------
+    # PostgreSQL trigram similarity
+    # ---------------------------------------------------------
+
+    item_name_similarity = func.similarity(
+        func.lower(
+            func.coalesce(MenuItem.name, "")
+        ),
+        normalized_query
+    )
+
+    category_similarity = func.similarity(
+        func.lower(
+            func.coalesce(MenuItem.category, "")
+        ),
+        normalized_query
+    )
+
+    description_similarity = func.similarity(
+        func.lower(
+            func.coalesce(MenuItem.description, "")
+        ),
+        normalized_query
+    )
+
+    restaurant_name_similarity = func.similarity(
+        func.lower(
+            func.coalesce(Restaurant.name, "")
+        ),
+        normalized_query
+    )
+
+    highest_similarity = func.greatest(
+        item_name_similarity,
+        category_similarity,
+        description_similarity,
+        restaurant_name_similarity
+    )
+
+    # ---------------------------------------------------------
+    # Match priority
+    # ---------------------------------------------------------
+
+    match_score = case(
+
+        (
+            func.lower(
+                func.coalesce(MenuItem.name, "")
+            ) == normalized_query,
+            100
+        ),
+
+        (
+            func.lower(
+                func.coalesce(MenuItem.name, "")
+            ).like(f"{normalized_query}%"),
+            80
+        ),
+
+        (
+            func.lower(
+                func.coalesce(MenuItem.name, "")
+            ).like(search_pattern),
+            60
+        ),
+
+        (
+            func.lower(
+                func.coalesce(MenuItem.category, "")
+            ).like(search_pattern),
+            45
+        ),
+
+        (
+            func.lower(
+                func.coalesce(Restaurant.name, "")
+            ).like(search_pattern),
+            35
+        ),
+
+        (
+            func.lower(
+                func.coalesce(MenuItem.description, "")
+            ).like(search_pattern),
+            25
+        ),
+
+        else_=0
+    )
+
+    # ---------------------------------------------------------
+    # Real order count from OrderItem
+    # ---------------------------------------------------------
+
+    order_count_subquery = (
+
+        db.session.query(
+
+            Order.restaurant_id.label(
+                "restaurant_id"
+            ),
+
+            func.lower(
+                OrderItem.item_name
+            ).label(
+                "item_name"
+            ),
+
+            func.coalesce(
+                func.sum(
+                    OrderItem.quantity
+                ),
+                0
+            ).label(
+                "order_count"
+            )
+
+        )
+
+        .join(
+            Order,
+            Order.id == OrderItem.order_id
+        )
+
+        .group_by(
+            Order.restaurant_id,
+            func.lower(
+                OrderItem.item_name
+            )
+        )
+
+        .subquery()
+
+    )
+
+    # ---------------------------------------------------------
+    # Database search
+    # ---------------------------------------------------------
+
+    results = (
+
+        db.session.query(
+
+            MenuItem,
+
+            Restaurant,
+
+            match_score.label(
+                "match_score"
+            ),
+
+            highest_similarity.label(
+                "similarity_score"
+            ),
+
+            func.coalesce(
+                order_count_subquery.c.order_count,
+                0
+            ).label(
+                "order_count"
+            )
+
+        )
+
+        .join(
+            Restaurant,
+            MenuItem.restaurant_id == Restaurant.id
+        )
+
+        .outerjoin(
+
+            order_count_subquery,
+
+            db.and_(
+
+                order_count_subquery.c.restaurant_id
+                == MenuItem.restaurant_id,
+
+                order_count_subquery.c.item_name
+                ==
+                func.lower(
+                    MenuItem.name
+                )
+
+            )
+
+        )
+
+        .filter(
+            func.lower(
+                func.coalesce(MenuItem.availability, "")
+            ) == "yes"
+        )
+
+        .filter(
+            or_(
+
+                func.lower(
+                    func.coalesce(MenuItem.name, "")
+                ).like(search_pattern),
+
+                func.lower(
+                    func.coalesce(MenuItem.category, "")
+                ).like(search_pattern),
+
+                func.lower(
+                    func.coalesce(MenuItem.description, "")
+                ).like(search_pattern),
+
+                func.lower(
+                    func.coalesce(Restaurant.name, "")
+                ).like(search_pattern),
+
+                item_name_similarity >= 0.25,
+                category_similarity >= 0.30,
+                restaurant_name_similarity >= 0.30
+            )
+        )
+
+        .order_by(
+            match_score.desc(),
+            highest_similarity.desc(),
+            MenuItem.name.asc()
+        )
+
+        .limit(60)
+
+        .all()
+
+    )
+
+    search_items = []
+
+    restaurant_ids = set()
+    open_restaurant_ids = set()
+
+    lowest_price_item = None
+    most_ordered_item = None
+
+    for (
+        item,
+        restaurant,
+        result_match_score,
+        similarity_score,
+        order_count
+    ) in results:
+
+        extra_data = dict(
+            item.extra_data or {}
+        )
+
+        if extra_data.get("is_addon"):
+            continue
+
+        # -----------------------------------------------------
+        # Image URL
+        # -----------------------------------------------------
+
+        image_url = item.image_url
+
+        if not image_url:
+
+            image_url = url_for(
+                "static",
+                filename="images/default_food.jpg"
+            )
+
+        elif not image_url.startswith(
+            (
+                "http://",
+                "https://",
+                "/"
+            )
+        ):
+
+            image_url = url_for(
+                "static",
+                filename=f"images/menu/{image_url}"
+            )
+
+        # -----------------------------------------------------
+        # Match type
+        # -----------------------------------------------------
+
+        numeric_match_score = int(
+            result_match_score or 0
+        )
+
+        numeric_similarity = float(
+            similarity_score or 0
+        )
+
+        if numeric_match_score >= 100:
+            match_type = "exact"
+
+        elif numeric_match_score > 0:
+            match_type = "partial"
+
+        else:
+            match_type = "typo"
+
+        # -----------------------------------------------------
+        # Restaurant status
+        # -----------------------------------------------------
+
+        is_restaurant_open = (
+            bool(restaurant.can_accept_orders)
+            and
+            restaurant_open(restaurant)
+        )
+
+
+        # -----------------------------------------------------
+        # Price and real order count
+        # -----------------------------------------------------
+
+        item_price = float(
+            item.price or 0
+        )
+
+        item_order_count = int(
+            order_count or 0
+        )
+
+        item_data = {
+            "id": item.id,
+            "name": item.name,
+            "price": item_price,
+            "category": item.category or "",
+            "description": item.description or "",
+            "image_url": image_url,
+
+            "restaurant_id": restaurant.id,
+            "restaurant_name": restaurant.name,
+            "restaurant_open": is_restaurant_open,
+
+            "menu_url": url_for(
+                "menu",
+                restaurant_id=restaurant.id
+            ),
+
+            "match_type": match_type,
+
+            "similarity_score": round(
+                numeric_similarity,
+                3
+            ),
+
+            "order_count": item_order_count
+        }
+
+        search_items.append(
+            item_data
+        )
+
+        # -----------------------------------------------------
+        # Comparison calculations
+        # -----------------------------------------------------
+
+        restaurant_ids.add(
+            restaurant.id
+        )
+
+        if is_restaurant_open:
+
+            open_restaurant_ids.add(
+                restaurant.id
+            )
+
+        if item_price > 0:
+
+            if (
+                lowest_price_item is None or
+                item_price <
+                lowest_price_item["price"]
+            ):
+
+                lowest_price_item = item_data
+
+        if item_order_count > 0:
+
+            if (
+                most_ordered_item is None or
+                item_order_count >
+                most_ordered_item["order_count"]
+            ):
+
+                most_ordered_item = item_data
+    # ---------------------------------------------------------
+    # OPEN RESTAURANTS FIRST
+    # ---------------------------------------------------------
+
+    search_items.sort(
+        key=lambda x: (
+            not x["restaurant_open"]
+        )
+    )
+    # ---------------------------------------------------------
+    # Smart comparison response
+    # ---------------------------------------------------------
+
+    comparison = None
+
+    if search_items:
+
+        comparison = {
+            "total_items": len(search_items),
+
+            "restaurant_count": len(
+                restaurant_ids
+            ),
+
+            "open_restaurant_count": len(
+                open_restaurant_ids
+            ),
+
+            "lowest_price": None,
+
+            "most_ordered": None
+        }
+
+        if lowest_price_item:
+
+            comparison["lowest_price"] = {
+                "item_id":
+                    lowest_price_item["id"],
+
+                "item_name":
+                    lowest_price_item["name"],
+
+                "price":
+                    lowest_price_item["price"],
+
+                "restaurant_id":
+                    lowest_price_item[
+                        "restaurant_id"
+                    ],
+
+                "restaurant_name":
+                    lowest_price_item[
+                        "restaurant_name"
+                    ],
+
+                "restaurant_open":
+                    lowest_price_item[
+                        "restaurant_open"
+                    ],
+
+                "menu_url":
+                    lowest_price_item[
+                        "menu_url"
+                    ]
+            }
+
+        if most_ordered_item:
+
+            comparison["most_ordered"] = {
+                "item_id":
+                    most_ordered_item["id"],
+
+                "item_name":
+                    most_ordered_item["name"],
+
+                "order_count":
+                    most_ordered_item[
+                        "order_count"
+                    ],
+
+                "price":
+                    most_ordered_item["price"],
+
+                "restaurant_id":
+                    most_ordered_item[
+                        "restaurant_id"
+                    ],
+
+                "restaurant_name":
+                    most_ordered_item[
+                        "restaurant_name"
+                    ],
+
+                "restaurant_open":
+                    most_ordered_item[
+                        "restaurant_open"
+                    ],
+
+                "menu_url":
+                    most_ordered_item[
+                        "menu_url"
+                    ]
+            }
+    # ---------------------------------------------------------
+    # RESTAURANT SEARCH
+    # ---------------------------------------------------------
+
+    restaurant_results = (
+        Restaurant.query
+        .filter(
+            or_(
+                func.lower(
+                    func.coalesce(
+                        Restaurant.name,
+                        ""
+                    )
+                ).like(search_pattern),
+
+                func.similarity(
+                    func.lower(
+                        func.coalesce(
+                            Restaurant.name,
+                            ""
+                        )
+                    ),
+                    normalized_query
+                ) >= 0.30
+            )
+        )
+        .order_by(
+            case(
+                (
+                    func.lower(
+                        Restaurant.name
+                    ) == normalized_query,
+                    0
+                ),
+                (
+                    func.lower(
+                        Restaurant.name
+                    ).like(
+                        f"{normalized_query}%"
+                    ),
+                    1
+                ),
+                else_=2
+            ),
+            Restaurant.name.asc()
+        )
+        .limit(10)
+        .all()
+    )
+
+    restaurant_search_items = []
+
+    for restaurant in restaurant_results:
+
+        is_open_and_accepting = (
+            bool(
+                restaurant.can_accept_orders
+            )
+            and
+            restaurant_open(
+                restaurant
+            )
+        )
+
+        restaurant_image = url_for(
+            "static",
+            filename=(
+                f"images/restaurants/"
+                f"{restaurant.id}.jpg"
+            )
+        )
+
+        restaurant_search_items.append({
+            "id": restaurant.id,
+            "name": restaurant.name,
+
+            "category_type": (
+                restaurant.category_type
+                or
+                "restaurant"
+            ),
+
+            "image_url": restaurant_image,
+
+            "is_open": (
+                is_open_and_accepting
+            ),
+
+            "menu_url": url_for(
+                "menu",
+                restaurant_id=restaurant.id
+            )
+        })
+
+    restaurant_search_items.sort(
+        key=lambda restaurant: (
+            not restaurant["is_open"],
+            restaurant["name"].lower()
+        )
+    )
+    return jsonify({
+
+        "success": True,
+        "query": search_text,
+
+        "count": len(search_items),
+        "items": search_items,
+
+        "restaurant_count": len(
+            restaurant_search_items
+        ),
+
+        "restaurants": (
+            restaurant_search_items
+        ),
+
+        "comparison": comparison
+    })
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN 
