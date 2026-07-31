@@ -1,0 +1,159 @@
+<div class="loaded-section-header">
+
+    <div>
+        <h2>🍽️ Restaurant Performance</h2>
+        <p>Today and weekly restaurant results</p>
+    </div>
+
+</div>
+
+{% if restaurant_stats %}
+
+<div class="performance-table-wrapper">
+
+<table class="performance-table">
+
+    <thead>
+
+        <tr>
+            <th>Restaurant</th>
+            <th>Today Orders</th>
+            <th>Today Earnings</th>
+            <th>Weekly Orders</th>
+            <th>Weekly Earnings</th>
+            <th>Pending</th>
+            <th>Completed</th>
+            <th>View</th>
+            <th>Edit</th>
+            <th>Tags</th>
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for r in restaurant_stats %}
+
+        <tr>
+
+            <td>
+                <strong>{{ r.name }}</strong>
+            </td>
+
+            <td>
+                {{ r.today_orders }}
+            </td>
+
+            <td>
+                ₹{{ "%.2f"|format(r.today_earnings or 0) }}
+            </td>
+
+            <td>
+                {{ r.weekly_orders }}
+            </td>
+
+            <td>
+                ₹{{ "%.2f"|format(r.weekly_earnings or 0) }}
+            </td>
+
+            <td>
+                <span class="performance-badge pending">
+                    {{ r.pending }}
+                </span>
+            </td>
+
+            <td>
+                <span class="performance-badge completed">
+                    {{ r.completed }}
+                </span>
+            </td>
+
+            <td>
+
+                <a
+                    href="{{ url_for('restaurant_dashboard') }}?id={{ r.id }}"
+                    class="small-action-btn open"
+                >
+                    Open
+                </a>
+
+            </td>
+
+            <td>
+
+                <a
+                    href="{{ url_for(
+                        'edit_restaurant',
+                        restaurant_id=r.id
+                    ) }}"
+                    class="small-action-btn edit"
+                >
+                    Edit
+                </a>
+
+            </td>
+
+            <td>
+
+                <form
+                    method="POST"
+                    action="{{ url_for(
+                        'update_tags',
+                        id=r.id
+                    ) }}"
+                    class="tags-form"
+                >
+
+                    <label>
+
+                        <input
+                            type="checkbox"
+                            name="best"
+                            {% if r.is_best_seller %}
+                                checked
+                            {% endif %}
+                        >
+
+                        🔥 Best
+
+                    </label>
+
+                    <label>
+
+                        <input
+                            type="checkbox"
+                            name="fast"
+                            {% if r.is_fast_delivery %}
+                                checked
+                            {% endif %}
+                        >
+
+                        ⚡ Fast
+
+                    </label>
+
+                    <button type="submit">
+                        Save
+                    </button>
+
+                </form>
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+</div>
+
+{% else %}
+
+<div class="empty-loaded-section">
+    No restaurant performance found.
+</div>
+
+{% endif %}

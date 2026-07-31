@@ -1,0 +1,102 @@
+<div class="loaded-section-header">
+
+    <div>
+        <h2>📊 Today Performance</h2>
+        <p>Live performance for today's orders</p>
+    </div>
+
+</div>
+
+<div class="stats-grid">
+
+    <div class="stat-card">
+        <span class="stat-icon">🍽️</span>
+        <span class="stat-label">
+            Restaurants
+        </span>
+        <strong>
+            {{ restaurant_count }}
+        </strong>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-icon">📦</span>
+        <span class="stat-label">
+            Total Orders
+        </span>
+        <strong>
+            {{ stats.today_orders }}
+        </strong>
+    </div>
+
+    <div class="stat-card success">
+        <span class="stat-icon">✅</span>
+        <span class="stat-label">
+            Delivered
+        </span>
+        <strong>
+            {{ stats.today_delivered }}
+        </strong>
+    </div>
+
+    <div class="stat-card danger">
+        <span class="stat-icon">❌</span>
+        <span class="stat-label">
+            Cancelled
+        </span>
+        <strong>
+            {{ stats.today_cancelled }}
+        </strong>
+    </div>
+
+    <div class="stat-card warning">
+        <span class="stat-icon">🔥</span>
+        <span class="stat-label">
+            Active
+        </span>
+        <strong>
+            {{ stats.today_active }}
+        </strong>
+    </div>
+
+    <div class="stat-card pending">
+        <span class="stat-icon">⏳</span>
+        <span class="stat-label">
+            Pending
+        </span>
+        <strong>
+            {{ stats.today_pending }}
+        </strong>
+    </div>
+
+    <div class="stat-card money">
+        <span class="stat-icon">💰</span>
+        <span class="stat-label">
+            Revenue
+        </span>
+        <strong>
+            ₹{{ "%.2f"|format(stats.today_revenue or 0) }}
+        </strong>
+    </div>
+
+    <div class="stat-card delivery">
+        <span class="stat-icon">🚚</span>
+        <span class="stat-label">
+            Delivery Charges
+        </span>
+        <strong>
+            ₹{{ "%.2f"|format(stats.today_delivery_charges or 0) }}
+        </strong>
+    </div>
+
+    <div class="stat-card items">
+        <span class="stat-icon">🍔</span>
+        <span class="stat-label">
+            Items Sold
+        </span>
+        <strong>
+            {{ stats.today_items }}
+        </strong>
+    </div>
+
+</div>

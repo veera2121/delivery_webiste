@@ -321,31 +321,81 @@ button:hover { background: #0056b3; }
     white-space: normal;
     background: #ffece4;
 }
+/* ===== STATUS BADGES ===== */
 
-/* ===== STATUS COLORS ===== */
-.status-Pending {
-    color: #ff9800;
-    font-weight: 600;
+.status-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:13px;
+    font-weight:700;
+    border:1px solid transparent;
 }
 
-.status-Preparing {
-    color: #2196f3;
-    font-weight: 600;
+/* Pending */
+
+.status-pending{
+    background:#FFF3CD;
+    color:#B45309;
+    border-color:#FCD34D;
 }
 
-.status-Assigned {
-    color: #673ab7;
-    font-weight: 600;
+/* Preparing */
+
+.status-preparing{
+    background:#DBEAFE;
+    color:#1D4ED8;
+    border-color:#93C5FD;
 }
 
-.status-Delivered {
-    color: #1a2074;
-    font-weight: 700;
+/* Started */
+
+.status-started{
+    background:#E0F2FE;
+    color:#0369A1;
+    border-color:#7DD3FC;
 }
 
-.status-Cancelled {
-    color: #d32f2f;
-    font-weight: 700;
+/* Assigned */
+
+.status-assigned{
+    background:#F3E8FF;
+    color:#7E22CE;
+    border-color:#D8B4FE;
+}
+
+/* Out for Delivery */
+
+.status-out-for-delivery{
+    background:#E0F2FE;
+    color:#0284C7;
+    border-color:#7DD3FC;
+}
+
+/* Delivered */
+
+.status-delivered{
+    background:#DCFCE7;
+    color:#15803D;
+    border-color:#86EFAC;
+}
+
+/* Cancelled */
+
+.status-cancelled{
+    background:#FEE2E2;
+    color:#DC2626;
+    border-color:#FCA5A5;
+}
+
+/* Refunded */
+
+.status-refunded{
+    background:#FCE7F3;
+    color:#BE185D;
+    border-color:#FDA4AF;
 }
 
 /* ===== WHATSAPP BUTTON ===== */
@@ -543,6 +593,1106 @@ font-size:12px;
 color:#b91c1c;
 
 }
+.admin-action-buttons{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.edit-order-btn{
+    display:inline-block;
+    padding:8px 12px;
+    background:#2563eb;
+    color:#fff;
+    text-decoration:none;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:600;
+    text-align:center;
+}
+
+.edit-order-btn:hover{
+    background:#1d4ed8;
+}
+/* =========================================================
+   LAZY DASHBOARD SECTIONS
+========================================================= */
+
+.lazy-dashboard-section {
+    margin: 25px 0;
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 5px 20px rgba(15, 23, 42, 0.06);
+}
+
+.lazy-section-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.lazy-section-top h2 {
+    margin: 0 0 5px;
+    color: #172033;
+    font-size: 21px;
+}
+
+.lazy-section-top p {
+    margin: 0;
+    color: #667085;
+    font-size: 14px;
+}
+
+.load-dashboard-btn {
+    flex-shrink: 0;
+    padding: 12px 18px;
+    color: #ffffff;
+    background: #2563eb;
+    border: none;
+    border-radius: 11px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    transition: transform 0.2s ease,
+                background 0.2s ease;
+}
+
+.load-dashboard-btn.restaurant {
+    background: #16a34a;
+}
+
+.load-dashboard-btn:hover {
+    transform: translateY(-1px);
+    background: #1d4ed8;
+}
+
+.load-dashboard-btn.restaurant:hover {
+    background: #15803d;
+}
+
+.load-dashboard-btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
+    transform: none;
+}
+
+.lazy-content-container:not(:empty) {
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px solid #eaecf0;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* =========================================================
+   LOADER
+========================================================= */
+
+.dashboard-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 130px;
+    color: #667085;
+}
+
+.dashboard-spinner {
+    width: 38px;
+    height: 38px;
+    margin-bottom: 12px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: dashboardSpin 0.8s linear infinite;
+}
+
+.button-spinner {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    margin-right: 6px;
+    vertical-align: middle;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: dashboardSpin 0.7s linear infinite;
+}
+
+@keyframes dashboardSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================================
+   STAT CARDS
+========================================================= */
+
+.loaded-section-header {
+    margin-bottom: 16px;
+}
+
+.loaded-section-header h2 {
+    margin: 0 0 4px;
+    color: #172033;
+}
+
+.loaded-section-header p {
+    margin: 0;
+    color: #667085;
+    font-size: 13px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(155px, 1fr));
+    gap: 14px;
+}
+
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 115px;
+    padding: 17px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+}
+
+.stat-icon {
+    font-size: 22px;
+}
+
+.stat-label {
+    color: #667085;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.stat-card strong {
+    color: #172033;
+    font-size: 23px;
+}
+
+.stat-card.success {
+    background: #f0fdf4;
+}
+
+.stat-card.danger {
+    background: #fef2f2;
+}
+
+.stat-card.warning {
+    background: #fff7ed;
+}
+
+.stat-card.pending {
+    background: #fffbeb;
+}
+
+.stat-card.money {
+    background: #ecfdf3;
+}
+
+.stat-card.delivery {
+    background: #eff6ff;
+}
+
+.stat-card.items {
+    background: #faf5ff;
+}
+
+/* =========================================================
+   PERFORMANCE TABLE
+========================================================= */
+
+.performance-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.performance-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+.performance-table th,
+.performance-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eaecf0;
+    text-align: left;
+}
+
+.performance-table th {
+    color: #475467;
+    background: #f8fafc;
+    font-size: 13px;
+}
+
+.performance-badge {
+    display: inline-flex;
+    min-width: 32px;
+    padding: 5px 9px;
+    border-radius: 20px;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.performance-badge.pending {
+    color: #92400e;
+    background: #fef3c7;
+}
+
+.performance-badge.completed {
+    color: #166534;
+    background: #dcfce7;
+}
+
+.small-action-btn {
+    display: inline-flex;
+    padding: 7px 11px;
+    border-radius: 8px;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.small-action-btn.open {
+    background: #2563eb;
+}
+
+.small-action-btn.edit {
+    background: #f59e0b;
+}
+
+.tags-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tags-form label {
+    font-size: 12px;
+}
+
+.tags-form button {
+    padding: 6px 10px;
+    color: #ffffff;
+    background: #172033;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.ajax-error {
+    padding: 16px;
+    color: #b42318;
+    background: #fef3f2;
+    border: 1px solid #fecdca;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.empty-loaded-section {
+    padding: 25px;
+    color: #667085;
+    background: #f8fafc;
+    border-radius: 12px;
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+
+    .lazy-section-top {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .load-dashboard-btn {
+        width: 100%;
+    }
+
+    .lazy-dashboard-section {
+        padding: 15px;
+    }
+}
+/* =====================================
+   Pagination
+===================================== */
+
+.order-pagination{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    margin:20px 0;
+    flex-wrap:wrap;
+}
+
+.order-pagination a,
+.order-pagination span{
+
+    min-width:42px;
+    height:42px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:0 14px;
+
+    border-radius:10px;
+
+    border:1px solid #d9dee8;
+
+    background:#ffffff;
+
+    color:#2c3e50;
+
+    text-decoration:none;
+
+    font-weight:600;
+
+    transition:.25s;
+}
+
+.order-pagination a:hover{
+
+    background:#0d6efd;
+
+    color:#fff;
+
+    border-color:#0d6efd;
+
+    transform:translateY(-2px);
+
+    box-shadow:0 8px 20px rgba(13,110,253,.25);
+}
+
+.order-pagination a.active{
+
+    background:#0d6efd;
+
+    color:#fff;
+
+    border-color:#0d6efd;
+
+    box-shadow:0 8px 20px rgba(13,110,253,.25);
+}
+
+.order-pagination span{
+
+    cursor:default;
+}
+
+.order-pagination span:not(.active){
+
+    background:#f5f7fb;
+
+    color:#666;
+}
+
+/* Previous / Next */
+
+.order-pagination a:first-child,
+.order-pagination a:last-child{
+
+    padding:0 18px;
+
+    font-weight:700;
+}
+
+/* Mobile */
+
+@media(max-width:768px){
+
+.order-pagination{
+
+    gap:6px;
+
+}
+
+.order-pagination a,
+.order-pagination span{
+
+    min-width:36px;
+
+    height:36px;
+
+    font-size:14px;
+
+    padding:0 10px;
+
+}
+
+}
+/* =========================================
+   AJAX PAGINATION
+========================================= */
+
+.order-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 22px 0 8px;
+}
+
+.order-pagination button,
+.order-pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 42px;
+    height: 42px;
+
+    padding: 0 14px;
+
+    color: #344054;
+    background: #ffffff;
+
+    border: 1px solid #d0d5dd;
+    border-radius: 10px;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.order-pagination button {
+    cursor: pointer;
+}
+
+.order-pagination button:hover:not(:disabled) {
+    color: #ffffff;
+    background: #2563eb;
+    border-color: #2563eb;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 7px 18px
+        rgba(37, 99, 235, 0.24);
+}
+
+.order-pagination button.active,
+.order-pagination button:disabled.active {
+    color: #ffffff;
+    background: #2563eb;
+    border-color: #2563eb;
+
+    cursor: default;
+
+    box-shadow:
+        0 7px 18px
+        rgba(37, 99, 235, 0.24);
+}
+
+.order-pagination .pagination-dots,
+.order-pagination span {
+    min-width: auto;
+    padding: 0 5px;
+
+    color: #667085;
+    background: transparent;
+    border: none;
+}
+
+.pagination-information {
+    margin: 10px 0 5px;
+
+    color: #667085;
+    text-align: center;
+
+    font-size: 13px;
+}
+
+
+/* =========================================
+   AJAX LOADER
+========================================= */
+
+.orders-ajax-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 220px;
+    padding: 30px;
+
+    color: #667085;
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+}
+
+.orders-loader-spinner {
+    width: 42px;
+    height: 42px;
+
+    margin-bottom: 13px;
+
+    border: 4px solid #e5e7eb;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+
+    animation:
+        ordersPaginationSpin
+        0.8s linear infinite;
+}
+
+@keyframes ordersPaginationSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.orders-loading {
+    min-height: 220px;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+
+    .order-pagination {
+        gap: 6px;
+    }
+
+    .order-pagination button {
+        min-width: 36px;
+        height: 36px;
+
+        padding: 0 10px;
+
+        font-size: 13px;
+    }
+
+    .order-pagination button:first-child,
+    .order-pagination button:last-child {
+        padding: 0 12px;
+    }
+}
+/* =========================================================
+   DESKTOP / MOBILE VISIBILITY
+========================================================= */
+
+.desktop-orders-view {
+    display: block;
+}
+
+.mobile-orders-view {
+    display: none;
+}
+
+
+/* =========================================================
+   MOBILE ORDER CARD
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .desktop-orders-view {
+        display: none !important;
+    }
+
+    .mobile-orders-view {
+        display: block;
+        width: 100%;
+    }
+
+    .mobile-order-card {
+        width: 100%;
+        margin-bottom: 18px;
+
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+
+        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+
+        box-sizing: border-box;
+    }
+
+    /* Header */
+
+    .mobile-order-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+
+        padding: 16px;
+
+        color: #ffffff;
+        background: linear-gradient(135deg, #2563eb, #0284c7);
+    }
+
+    .mobile-order-label {
+        display: block;
+        margin-bottom: 5px;
+
+        color: rgba(255, 255, 255, 0.75);
+
+        font-size: 9px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+    }
+
+    .mobile-order-id {
+        display: block;
+
+        color: #ffffff;
+
+        font-size: 16px;
+        font-weight: 900;
+        line-height: 1.4;
+    }
+
+    .mobile-order-header .status-badge {
+        flex-shrink: 0;
+        max-width: 48%;
+
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+    }
+
+    /* Generic field */
+
+    .mobile-order-field,
+    .mobile-order-section {
+        padding: 14px 15px;
+        border-bottom: 1px solid #edf1f5;
+    }
+
+    .mobile-field-label {
+        display: block;
+        margin-bottom: 9px;
+
+        color: #64748b;
+
+        font-size: 10px;
+        font-weight: 900;
+        line-height: 1.2;
+
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+    }
+
+    .mobile-field-value {
+        display: block;
+
+        color: #172033;
+
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1.5;
+
+        overflow-wrap: anywhere;
+    }
+
+    .mobile-empty-value {
+        color: #94a3b8;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    /* Customer and phone */
+
+    .mobile-order-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .mobile-order-grid .mobile-order-field:first-child {
+        border-right: 1px solid #edf1f5;
+    }
+
+    .customer-phone {
+        color: #2563eb;
+        text-decoration: none;
+    }
+
+    /* Items */
+
+    .mobile-order-section:has(.mobile-items-list) {
+        background: #f8fafc;
+    }
+
+    .mobile-items-list {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    .mobile-item-card {
+        width: 100%;
+        padding: 10px;
+
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+
+        box-sizing: border-box;
+    }
+
+    .food-name {
+        display: block;
+        margin-bottom: 7px;
+
+        color: #111827;
+
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.5;
+
+        overflow-wrap: anywhere;
+    }
+
+    .mobile-item-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .tag {
+        display: inline-flex;
+        align-items: center;
+
+        padding: 4px 7px;
+        border-radius: 999px;
+
+        font-size: 9px;
+        font-weight: 800;
+    }
+
+    .category-tag {
+        color: #4338ca;
+        background: #eef2ff;
+    }
+
+    .weight-tag {
+        color: #047857;
+        background: #ecfdf5;
+    }
+
+    .qty-tag {
+        color: #c2410c;
+        background: #fff7ed;
+    }
+
+    .price-tag {
+        color: #92400e;
+        background: #fef3c7;
+    }
+
+    .more-items {
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    /* Coupon and discount */
+
+    .mobile-summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .mobile-summary-grid .mobile-order-field:first-child {
+        border-right: 1px solid #edf1f5;
+    }
+
+    .coupon-used {
+        display: inline-flex;
+        padding: 6px 9px;
+
+        color: #9a3412;
+        background: #ffedd5;
+
+        border-radius: 7px;
+
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .discount-value {
+        color: #dc2626;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .no-discount {
+        color: #64748b;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    /* Final total */
+
+    .mobile-total-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+
+        padding: 15px;
+
+        color: #166534;
+        background: #f0fdf4;
+
+        border-bottom: 1px solid #dcfce7;
+
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .order-total {
+        color: #15803d;
+        font-size: 19px;
+        font-weight: 900;
+    }
+
+    /* Payment */
+
+    .mobile-payment-content {
+        width: 100%;
+    }
+
+    .payment-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        max-width: 100%;
+        padding: 8px 10px;
+
+        border-radius: 8px;
+
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.4;
+    }
+
+    .payment-time,
+    .lock-badge,
+    .cancel-reason {
+        width: 100%;
+        margin-top: 8px;
+        padding: 8px 10px;
+
+        border-radius: 8px;
+
+        font-size: 10px;
+        line-height: 1.5;
+
+        box-sizing: border-box;
+    }
+
+    .payment-time {
+        color: #475569;
+        background: #f8fafc;
+    }
+
+    .lock-badge {
+        color: #475569;
+        background: #e2e8f0;
+    }
+
+    .cancel-reason {
+        color: #b91c1c;
+        background: #fef2f2;
+    }
+
+    /* Placed time */
+
+    .placed-time {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+
+        color: #475569;
+
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+    /* Actions */
+
+    .admin-action-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+
+        width: 100%;
+    }
+
+    .wa-btn,
+    .edit-order-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 100%;
+        min-height: 42px;
+        padding: 9px;
+
+        color: #ffffff;
+
+        border: none;
+        border-radius: 9px;
+
+        font-size: 11px;
+        font-weight: 800;
+
+        text-align: center;
+        text-decoration: none;
+
+        box-sizing: border-box;
+    }
+
+    .wa-btn {
+        background: #16a34a;
+    }
+
+    .edit-order-btn {
+        background: #2563eb;
+    }
+
+    /* Delivery */
+
+    .mobile-delivery-section {
+        border-bottom: none;
+        background: #f8fafc;
+    }
+
+    .delivery-assign-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        width: 100%;
+    }
+
+    .delivery-select,
+    .assign-delivery-button {
+        width: 100%;
+        min-height: 42px;
+        padding: 9px 10px;
+
+        border-radius: 9px;
+
+        font-size: 12px;
+
+        box-sizing: border-box;
+    }
+
+    .delivery-select {
+        color: #334155;
+        background: #ffffff;
+
+        border: 1px solid #cbd5e1;
+    }
+
+    .assign-delivery-button {
+        color: #ffffff;
+        background: #f97316;
+
+        border: none;
+
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .assignment-locked {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 100%;
+        padding: 10px;
+
+        color: #475569;
+        background: #e2e8f0;
+
+        border-radius: 8px;
+
+        font-size: 11px;
+        font-weight: 800;
+
+        box-sizing: border-box;
+    }
+}
+
+
+/* Small phones */
+
+@media (max-width: 400px) {
+
+    .mobile-order-grid,
+    .mobile-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mobile-order-grid .mobile-order-field:first-child,
+    .mobile-summary-grid .mobile-order-field:first-child {
+        border-right: none;
+    }
+
+    .admin-action-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .mobile-order-header {
+        align-items: flex-start;
+    }
+}
+.desktop-orders-view {
+    display: block !important;
+}
+
+.mobile-orders-view {
+    display: none !important;
+}
+
+@media screen and (max-width: 768px) {
+
+    .desktop-orders-view {
+        display: none !important;
+    }
+
+    .mobile-orders-view {
+        display: block !important;
+        width: 100% !important;
+    }
+}
 </style>
 
 
@@ -602,346 +1752,1333 @@ color:#b91c1c;
     <button type="submit">Apply</button>
     <a href="{{ url_for('admin_dashboard') }}"><button type="button">Reset</button></a>
 </form>
-<h2>Today Performance</h2>
+<!-- ======================================================
+     LAZY LOAD DASHBOARD REPORTS
+====================================================== -->
 
-<table class="stats-table">
-<tr>
-    <th>Total Restaurants</th>
-    <th>Total Orders</th>
-    <th>Delivered</th>
-    <th>Cancelled</th>
-    <th>Active</th>
-    <th>Pending</th>
-    <th>Revenue</th>
-    <th>Delivery Charges</th>
-    <th>Items Sold</th>
-</tr>
+<section class="lazy-dashboard-section">
 
-<tr>
-    <td>{{ restaurants|length }}</td>
-    <td>{{ stats.today_orders }}</td>
-    <td>{{ stats.today_delivered }}</td>
-    <td>{{ stats.today_cancelled }}</td>
-    <td>{{ stats.today_active }}</td>
-    <td>{{ stats.today_pending }}</td>
-    <td>₹{{ stats.today_revenue }}</td>
-    <td>₹{{ stats.today_delivery_charges }}</td>
-    <td>{{ stats.today_items }}</td>
-</tr>
-</table>
-<!-- ===== RESTAURANT PERFORMANCE ===== -->
-<h2>Restaurant Performance</h2>
-<table>
-<tr>
-    <th>Restaurant</th>
-    <th>Today Orders</th>
-    <th>Today Earnings</th>
-    <th>Weekly Orders</th>
-    <th>Weekly Earnings</th>
-    <th>Pending</th>
-    <th>Completed</th>
-    <th>View</th>
-    <th>Edit</th> 
-    <th>Tags</th>
+    <div class="lazy-section-top">
 
-</tr>
-{% for r in restaurant_stats %}
-<tr>
-    <td>{{ r.name }}</td>
-    <td>{{ r.today_orders }}</td>
-    <td>₹{{ r.today_earnings }}</td>
-    <td>{{ r.weekly_orders }}</td>
-    <td>₹{{ r.weekly_earnings }}</td>
-    <td>{{ r.pending }}</td>
-    <td>{{ r.completed }}</td>
-    <td><a href="{{ url_for('restaurant_dashboard') }}?id={{ r.id }}">Open</a></td>
-    <td><a href="{{ url_for('edit_restaurant', restaurant_id=r.id) }}">Edit</a></td>
-    <td>
-<form method="POST" action="{{ url_for('update_tags', id=r.id) }}">
+        <div>
+            <h2>📊 Today Performance</h2>
 
-<label>
-<input type="checkbox" name="best"
-{% if r.is_best_seller %}checked{% endif %}>
-🔥 Best Seller
-</label>
+            <p>
+                Click the button to load today's statistics.
+            </p>
+        </div>
 
-<label>
-<input type="checkbox" name="fast"
-{% if r.is_fast_delivery %}checked{% endif %}>
-⚡ Fast Delivery
-</label>
+        <button
+            type="button"
+            id="loadTodayPerformanceBtn"
+            class="load-dashboard-btn"
+            onclick="loadTodayPerformance()"
+        >
+            📊 Load Today Performance
+        </button>
 
-<button type="submit">Save</button>
+    </div>
 
-</form>
-</td>
+    <div
+        id="todayPerformanceContainer"
+        class="lazy-content-container"
+    ></div>
 
-</tr>
-{% endfor %}
-</table>
+</section>
 
+
+<section class="lazy-dashboard-section">
+
+    <div class="lazy-section-top">
+
+        <div>
+            <h2>🍽️ Restaurant Performance</h2>
+
+            <p>
+                Restaurant data loads only when requested.
+            </p>
+        </div>
+
+        <button
+            type="button"
+            id="loadRestaurantPerformanceBtn"
+            class="load-dashboard-btn restaurant"
+            onclick="loadRestaurantPerformance()"
+        >
+            🍽️ Load Restaurant Performance
+        </button>
+
+    </div>
+
+    <div
+        id="restaurantPerformanceContainer"
+        class="lazy-content-container"
+    ></div>
+
+</section>
 <!-- ===== ALL ORDERS GROUPED BY DAY ===== -->
 
-{% for category in ['Today','Yesterday','Older'] %}
-<h2>{{ category }} Orders</h2>
+<!-- =====================================================
+     TODAY ORDERS
+===================================================== -->
+<!-- =====================================================
+     TODAY ORDERS
+===================================================== -->
+<!-- =====================================================
+     TODAY ORDERS
+===================================================== -->
 
-{% set filtered_orders = orders|selectattr("day_category","equalto",category)|list %}
-{% if filtered_orders %}
+<!-- =====================================================
+     TODAY ORDERS
+===================================================== -->
 
-<table id="ordersTable">
-    <thead>
-        <tr>
-            <th>Order ID</th>
-            <th>Restaurant</th>
-            <th>Customer</th>
-            <th>Phone</th>
-            <th>Items</th> 
-            <th>WhatsApp</th>
-            <th>Coupon</th>
-            <th>Discount (₹)</th>
-            <th>Final Total (₹)</th>
-            <th>Status</th>
-            <th>Payment</th>
-            <th>Placed</th>
-            <th>Assign Delivery</th>
-        </tr>
-    </thead>
+<section
+    class="order-section"
+    id="today-orders-container"
+>
 
-    <tbody>
-    {% for order in filtered_orders %}
-        <tr>
-            <td>{{ order.order_id }}</td>
-            <td>{{ order.restaurant.name }}</td>
-            <td>{{ order.customer_name }}</td>
-            <td>{{ order.phone }}</td>
-             
-<td>
+    <div class="order-section-header">
 
-{% for item in order.items[:3] %}
+        <div>
+            <h2>📅 Today Orders</h2>
 
-<div class="item-line">
-
-    <span class="food-name">
-        🍽️ {{ item.item_name }}
-    </span>
-
-    {% if item.category %}
-        <span class="tag category-tag">
-            {{ item.category }}
-        </span>
-    {% endif %}
-
-    {% if item.weight %}
-        <span class="tag weight-tag">
-            {{ item.weight }}
-        </span>
-    {% endif %}
-
-    <span class="tag qty-tag">
-        ×{{ item.quantity }}
-    </span>
-
-    <span class="tag price-tag">
-        ₹{{ item.price }}
-    </span>
-
-</div>
-
-{% endfor %}
-
-{% if order.items|length > 3 %}
-<div class="more-items">
-    +{{ order.items|length - 3 }} more items
-</div>
-{% endif %}
-
-</td>
-<td>
-    <a href="{{ make_whatsapp_link(order) }}"
-       target="_blank"
-       class="wa-btn">
-       📲 Send Msg
-    </a>
-</td>
-            <!-- ✅ Coupon Code -->
-            <td>
-                {% if order.coupon_used %}
-                    <span class="coupon-used">{{ order.coupon_used }}</span>
-                {% else %}
-                    —
-                {% endif %}
-            </td>
-
-            <!-- ✅ Discount -->
-            <td>
-                {% if order.discount %}
-                    ₹{{ order.discount }}
-                {% else %}
-                    0
-                {% endif %}
-            </td>
-
-            <!-- ✅ Final Total (correct everywhere) -->
-            <td><strong>₹{{ order.get_final_total() }}</strong></td>
-
-            <td class="status-{{ order.status }}">{{ order.status }}</td>
-<td class="status-cell">
-
-    <!-- Payment Status -->
-
-    {% if order.payment_source == "Checkout" %}
-
-        <span class="payment-badge online">
-            💳 Paid During Checkout
-        </span>
-
-    {% elif order.payment_source == "DeliveryLink" %}
-
-        <span class="payment-badge online">
-            🚚💳Online Paid At Delivery
-        </span>
-
-    {% elif order.payment_type == "COD"
-            and order.payment_status != "Paid" %}
-
-        <span class="payment-badge cod">
-            💵 Cash On Delivery
-        </span>
-
-    {% elif order.payment_type == "COD"
-            and order.payment_status == "Paid" %}
-
-        <span class="payment-badge online">
-            💳 Paid Online
-        </span>
-
-    {% else %}
-
-        <span class="payment-badge pending">
-            ⚠ Payment Pending
-        </span>
-
-    {% endif %}
-
-
-    {% if order.payment_time %}
-
-        <div class="payment-time">
-
-            🕒 {{ order.payment_time.strftime('%d %b %Y') }}
-
-            <br>
-
-            {{ order.payment_time.strftime('%I:%M %p') }}
-
+            <p id="today-orders-count">
+                {{ today_pagination.total }} orders found
+            </p>
         </div>
 
-    {% endif %}
+    </div>
 
 
-    {% if order.status in ['Delivered','Cancelled'] %}
+    <!-- CONTENT REPLACED BY AUTO REFRESH -->
+    <div id="today-orders-content">
 
-        <div class="lock-badge">
+        {% if today_orders %}
 
-            🔒 Locked
+        <!-- DESKTOP VIEW -->
+        <div class="desktop-orders-view">
 
-        </div>
+            <div class="orders-table-wrapper">
 
-    {% endif %}
+                <table class="orders-table">
 
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Restaurant</th>
+                            <th>Customer</th>
+                            <th>Phone</th>
+                            <th>Items</th>
+                            <th>WhatsApp</th>
+                            <th>Coupon</th>
+                            <th>Discount</th>
+                            <th>Final Total</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Placed</th>
+                            <th>Assign Delivery</th>
+                        </tr>
+                    </thead>
 
-    {% if order.status=='Cancelled'
-          and order.cancel_reason %}
+                    <tbody>
 
-        <div class="cancel-reason">
-
-            ❌ {{ order.cancel_reason }}
-
-        </div>
-
-    {% endif %}
-
-</td>
-            <td>{{ order.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
-
-            <td>
-                <form method="POST" action="{{ url_for('restaurant_assign_delivery', order_id=order.id) }}">
-
-                    <select name="delivery_person_id">
-                        <option value="">Select</option>
-                        {% for dp in delivery_persons %}
-                        <option value="{{ dp.id }}"
-                            {% if order.delivery_person_id == dp.id %}selected{% endif %}>
-                            {{ dp.name }}
-                        </option>
+                        {% for order in today_orders %}
+                            {% include "partials/admin_order_row.html" %}
                         {% endfor %}
-                    </select>
-                    <button type="submit">Assign</button>
-                </form>
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
 
-{% else %}
-<p>No {{ category.lower() }} orders.</p>
-{% endif %}
-{% endfor %}
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
 
 
-</div> 
+        <!-- MOBILE VIEW -->
+        <div class="mobile-orders-view">
+
+            {% for order in today_orders %}
+                {% include "partials/admin_order_mobile_card.html" %}
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-orders">
+            <p>No orders found for today.</p>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if today_pagination.pages > 1 %}
+
+    <nav class="order-pagination">
+
+        {% for page_number in today_pagination.iter_pages(
+            left_edge=1,
+            right_edge=1,
+            left_current=2,
+            right_current=2
+        ) %}
+
+            {% if page_number %}
+
+            <button
+                type="button"
+                class="{% if page_number == today_pagination.page %}active{% endif %}"
+                onclick="loadOrderPage(
+                    'today',
+                    {{ page_number }}
+                )"
+            >
+                {{ page_number }}
+            </button>
+
+            {% else %}
+
+            <span>…</span>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </nav>
+
+    {% endif %}
+
+</section>
 
 
 
-<!-- Quick fix: update only tbody (no backend changes) -->
-<SCRIPT>
-    let lastOrderCount = {{ orders|length }};
-const notifySound = new Audio("{{ url_for('static', filename='notify.mp3') }}");
+<!-- =====================================================
+     YESTERDAY ORDERS
+===================================================== -->
 
-async function quickRefresh() {
+<section
+    class="order-section"
+    id="yesterday-orders-container"
+>
+
+    <div class="order-section-header">
+
+        <div>
+            <h2>🕒 Yesterday Orders</h2>
+
+            <p id="yesterday-orders-count">
+                {{ yesterday_pagination.total }} orders found
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- CONTENT REPLACED BY AUTO REFRESH -->
+    <div id="yesterday-orders-content">
+
+        {% if yesterday_orders %}
+
+        <!-- DESKTOP VIEW -->
+        <div class="desktop-orders-view">
+
+            <div class="orders-table-wrapper">
+
+                <table class="orders-table">
+
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Restaurant</th>
+                            <th>Customer</th>
+                            <th>Phone</th>
+                            <th>Items</th>
+                            <th>WhatsApp</th>
+                            <th>Coupon</th>
+                            <th>Discount</th>
+                            <th>Final Total</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Placed</th>
+                            <th>Assign Delivery</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for order in yesterday_orders %}
+                            {% include "partials/admin_order_row.html" %}
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- MOBILE VIEW -->
+        <div class="mobile-orders-view">
+
+            {% for order in yesterday_orders %}
+                {% include "partials/admin_order_mobile_card.html" %}
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-orders">
+            <p>No orders found for yesterday.</p>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if yesterday_pagination.pages > 1 %}
+
+    <nav class="order-pagination">
+
+        {% for page_number in yesterday_pagination.iter_pages(
+            left_edge=1,
+            right_edge=1,
+            left_current=2,
+            right_current=2
+        ) %}
+
+            {% if page_number %}
+
+            <button
+                type="button"
+                class="{% if page_number == yesterday_pagination.page %}active{% endif %}"
+                onclick="loadOrderPage(
+                    'yesterday',
+                    {{ page_number }}
+                )"
+            >
+                {{ page_number }}
+            </button>
+
+            {% else %}
+
+            <span>…</span>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </nav>
+
+    {% endif %}
+
+</section>
+
+
+
+<!-- =====================================================
+     OLDER ORDERS
+===================================================== -->
+
+<section
+    class="order-section"
+    id="older-orders-container"
+>
+
+    <div class="order-section-header">
+
+        <div>
+            <h2>📦 Older Orders</h2>
+
+            <p id="older-orders-count">
+                {{ older_pagination.total }} orders found
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- CONTENT REPLACED BY AUTO REFRESH -->
+    <div id="older-orders-content">
+
+        {% if older_orders %}
+
+        <!-- DESKTOP VIEW -->
+        <div class="desktop-orders-view">
+
+            <div class="orders-table-wrapper">
+
+                <table class="orders-table">
+
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Restaurant</th>
+                            <th>Customer</th>
+                            <th>Phone</th>
+                            <th>Items</th>
+                            <th>WhatsApp</th>
+                            <th>Coupon</th>
+                            <th>Discount</th>
+                            <th>Final Total</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Placed</th>
+                            <th>Assign Delivery</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for order in older_orders %}
+                            {% include "partials/admin_order_row.html" %}
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- MOBILE VIEW -->
+        <div class="mobile-orders-view">
+
+            {% for order in older_orders %}
+                {% include "partials/admin_order_mobile_card.html" %}
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-orders">
+            <p>No older orders found.</p>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if older_pagination.pages > 1 %}
+
+    <nav class="order-pagination">
+
+        {% for page_number in older_pagination.iter_pages(
+            left_edge=1,
+            right_edge=1,
+            left_current=2,
+            right_current=2
+        ) %}
+
+            {% if page_number %}
+
+            <button
+                type="button"
+                class="{% if page_number == older_pagination.page %}active{% endif %}"
+                onclick="loadOrderPage(
+                    'older',
+                    {{ page_number }}
+                )"
+            >
+                {{ page_number }}
+            </button>
+
+            {% else %}
+
+            <span>…</span>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </nav>
+
+    {% endif %}
+
+</section>
+<script>
+/* =========================================================
+   ORDER PAGE STATE
+========================================================= */
+
+const orderRequestControllers = {};
+
+const currentOrderPages = {
+    today: Number(
+        new URLSearchParams(window.location.search)
+            .get("today_page")
+    ) || 1,
+
+    yesterday: Number(
+        new URLSearchParams(window.location.search)
+            .get("yesterday_page")
+    ) || 1,
+
+    older: Number(
+        new URLSearchParams(window.location.search)
+            .get("older_page")
+    ) || 1
+};
+
+
+let lastTodayOrderCount =
+    {{ today_pagination.total | default(0) }};
+
+let automaticOrderRefreshRunning = false;
+
+
+const notifySound = new Audio(
+    "{{ url_for('static', filename='sounds/notify.mp3') }}"
+);
+
+
+/* =========================================================
+   GET CURRENT FILTER VALUES
+========================================================= */
+
+function getOrderFilterParams(page) {
+
+    const queryInput =
+        document.querySelector(
+            '.global-filter input[name="query"]'
+        );
+
+    const dateInput =
+        document.querySelector(
+            '.global-filter input[name="date"]'
+        );
+
+    const statusInput =
+        document.querySelector(
+            '.global-filter select[name="status"]'
+        );
+
+
+    const params = new URLSearchParams();
+
+    params.set("page", page);
+
+
+    if (queryInput?.value.trim()) {
+        params.set(
+            "query",
+            queryInput.value.trim()
+        );
+    }
+
+
+    if (dateInput?.value) {
+        params.set(
+            "date",
+            dateInput.value
+        );
+    }
+
+
+    if (statusInput?.value) {
+        params.set(
+            "status",
+            statusInput.value
+        );
+    }
+
+
+    return params;
+}
+
+
+/* =========================================================
+   MANUAL PAGINATION
+========================================================= */
+
+async function loadOrderPage(
+    orderGroup,
+    page,
+    options = {}
+) {
+
+    const {
+        showLoader = true,
+        scrollToSection = true,
+        updateBrowserUrl = true
+    } = options;
+
+
+    /*
+     * Save the page currently selected by the user.
+     */
+    currentOrderPages[orderGroup] = page;
+
+
+    /*
+     * Update only the inner orders content.
+     */
+    const contentId =
+        `${orderGroup}-orders-content`;
+
+    const content =
+        document.getElementById(contentId);
+
+
+    if (!content) {
+        console.error(
+            `Orders content not found: ${contentId}`
+        );
+        return;
+    }
+
+
+    /*
+     * Cancel previous request for the same group.
+     */
+    if (orderRequestControllers[orderGroup]) {
+        orderRequestControllers[
+            orderGroup
+        ].abort();
+    }
+
+
+    const controller =
+        new AbortController();
+
+
+    orderRequestControllers[
+        orderGroup
+    ] = controller;
+
+
+    const params =
+        getOrderFilterParams(page);
+
+
+    const oldContent =
+        content.innerHTML;
+
+
+    if (showLoader) {
+
+        content.classList.add(
+            "orders-loading"
+        );
+
+        content.innerHTML = `
+            <div class="orders-ajax-loader">
+
+                <div class="orders-loader-spinner"></div>
+
+                <p>
+                    Loading ${orderGroup} orders...
+                </p>
+
+            </div>
+        `;
+    }
+
+
     try {
-        const res = await fetch(window.location.href, {cache: "no-store"});
-        const text = await res.text();
-        const tmp = document.createElement("div");
-        tmp.innerHTML = text;
 
-        const newTables = tmp.querySelectorAll("#ordersTable tbody");
-        const currentTables = document.querySelectorAll("#ordersTable tbody");
+        const response = await fetch(
+            `/admin/dashboard/orders/${orderGroup}?${params.toString()}`,
+            {
+                method: "GET",
 
-        newTables.forEach((newTbody, index) => {
+                cache: "no-store",
 
-            const currentTbody = currentTables[index];
-            if (!currentTbody) return;
+                headers: {
+                    "X-Requested-With":
+                        "XMLHttpRequest"
+                },
 
-            const newRows = newTbody.querySelectorAll("tr").length;
-
-            if (newRows > lastOrderCount) {
-                notifySound.play().catch(()=>{});
+                signal: controller.signal
             }
+        );
 
-            currentTbody.innerHTML = newTbody.innerHTML;
 
-            if (newRows > lastOrderCount && lastOrderCount !== 0) {
-                const countNew = newRows - lastOrderCount;
-                const trs = currentTbody.querySelectorAll("tr");
+        if (response.status === 401) {
 
-                for (let i = 0; i < Math.min(countNew, trs.length); i++) {
-                    trs[i].classList.add("new-order");
-                    setTimeout(() => trs[i].classList.remove("new-order"), 4000);
-                }
-            }
+            window.location.href =
+                "{{ url_for('admin_login') }}";
 
-            lastOrderCount = newRows;
-        });
+            return;
+        }
 
-    } catch (err) {
-        console.error("Quick refresh error:", err);
+
+        if (!response.ok) {
+            throw new Error(
+                `HTTP error ${response.status}`
+            );
+        }
+
+
+        const html =
+            await response.text();
+
+
+        /*
+         * AJAX partial contains:
+         * - desktop-orders-view
+         * - mobile-orders-view
+         * - pagination
+         */
+        content.innerHTML = html;
+
+
+        /*
+         * Update the current page from the AJAX response.
+         */
+        const returnedAjaxContent =
+            content.querySelector(
+                ".ajax-orders-content"
+            );
+
+
+        if (
+            returnedAjaxContent &&
+            returnedAjaxContent.dataset.currentPage
+        ) {
+
+            currentOrderPages[orderGroup] =
+                Number(
+                    returnedAjaxContent.dataset.currentPage
+                ) || page;
+        }
+
+
+        /*
+         * Update browser URL only for manual pagination.
+         */
+        if (updateBrowserUrl) {
+
+            const browserUrl =
+                new URL(window.location.href);
+
+
+            browserUrl.searchParams.set(
+                `${orderGroup}_page`,
+                currentOrderPages[orderGroup]
+            );
+
+
+            window.history.replaceState(
+                {},
+                "",
+                browserUrl
+            );
+        }
+
+
+        /*
+         * Scroll only when the user manually changes pages.
+         */
+        if (scrollToSection) {
+
+            const section =
+                document.getElementById(
+                    `${orderGroup}-orders-container`
+                );
+
+
+            section?.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+        }
+
+
+    } catch (error) {
+
+        if (error.name === "AbortError") {
+            return;
+        }
+
+
+        console.error(
+            `${orderGroup} pagination error:`,
+            error
+        );
+
+
+        /*
+         * Restore the previous content only if
+         * a loader replaced it.
+         */
+        if (showLoader) {
+            content.innerHTML =
+                oldContent;
+        }
+
+
+        if (showLoader) {
+            alert(
+                "Unable to load orders. Please try again."
+            );
+        }
+
+
+    } finally {
+
+        content.classList.remove(
+            "orders-loading"
+        );
+
+
+        if (
+            orderRequestControllers[
+                orderGroup
+            ] === controller
+        ) {
+
+            delete orderRequestControllers[
+                orderGroup
+            ];
+        }
     }
 }
 
-setInterval(quickRefresh, 10000);
-</SCRIPT>
 
+/* =========================================================
+   AUTOMATIC TODAY ORDER REFRESH
+========================================================= */
+
+async function automaticOrderRefresh() {
+
+    /*
+     * Prevent overlapping automatic refreshes.
+     */
+    if (automaticOrderRefreshRunning) {
+        return;
+    }
+
+
+    /*
+     * Do not refresh while the browser tab is hidden.
+     */
+    if (document.hidden) {
+        return;
+    }
+
+
+    /*
+     * Do not interrupt an active manual request.
+     */
+    if (orderRequestControllers.today) {
+        return;
+    }
+
+
+    automaticOrderRefreshRunning = true;
+
+
+    const currentTodayPage =
+        currentOrderPages.today || 1;
+
+
+    const params =
+        getOrderFilterParams(
+            currentTodayPage
+        );
+
+
+    try {
+
+        /*
+         * Refresh the current Today Orders page,
+         * not page 1.
+         */
+        const response = await fetch(
+            `/admin/dashboard/orders/today?${params.toString()}`,
+            {
+                method: "GET",
+
+                cache: "no-store",
+
+                headers: {
+                    "X-Requested-With":
+                        "XMLHttpRequest"
+                }
+            }
+        );
+
+
+        if (response.status === 401) {
+
+            window.location.href =
+                "{{ url_for('admin_login') }}";
+
+            return;
+        }
+
+
+        if (!response.ok) {
+            throw new Error(
+                `HTTP error ${response.status}`
+            );
+        }
+
+
+        const html =
+            await response.text();
+
+
+        const temporary =
+            document.createElement("div");
+
+
+        temporary.innerHTML = html;
+
+
+        const returnedContainer =
+            temporary.querySelector(
+                ".ajax-orders-content[data-total-orders]"
+            );
+
+
+        if (!returnedContainer) {
+
+            console.error(
+                "AJAX orders content was not found."
+            );
+
+            return;
+        }
+
+
+        const newOrderCount =
+            Number(
+                returnedContainer.dataset.totalOrders
+            ) || 0;
+
+
+        const returnedPage =
+            Number(
+                returnedContainer.dataset.currentPage
+            ) || currentTodayPage;
+
+
+        /*
+         * Keep track of the returned current page.
+         */
+        currentOrderPages.today =
+            returnedPage;
+
+
+        const newOrdersCount =
+            newOrderCount -
+            lastTodayOrderCount;
+
+
+        /*
+         * Play notification only when total orders increase.
+         */
+        if (
+            newOrdersCount > 0 &&
+            lastTodayOrderCount !== 0
+        ) {
+
+            notifySound
+                .play()
+                .catch(() => {});
+
+
+            showAutomaticOrderNotification(
+                newOrdersCount
+            );
+        }
+
+
+        /*
+         * Replace only the Today Orders inner content.
+         */
+        const todayContent =
+            document.getElementById(
+                "today-orders-content"
+            );
+
+
+        if (todayContent) {
+
+            todayContent.innerHTML =
+                returnedContainer.outerHTML;
+
+
+            /*
+             * Highlight new desktop rows.
+             */
+            if (newOrdersCount > 0) {
+
+                const rows =
+                    todayContent.querySelectorAll(
+                        ".desktop-orders-view tbody tr"
+                    );
+
+
+                for (
+                    let index = 0;
+                    index < Math.min(
+                        newOrdersCount,
+                        rows.length
+                    );
+                    index++
+                ) {
+
+                    rows[index].classList.add(
+                        "new-order"
+                    );
+
+
+                    setTimeout(() => {
+
+                        rows[index]?.classList.remove(
+                            "new-order"
+                        );
+
+                    }, 4000);
+                }
+
+
+                /*
+                 * Highlight new mobile cards.
+                 */
+                const mobileCards =
+                    todayContent.querySelectorAll(
+                        ".mobile-orders-view .mobile-order-card"
+                    );
+
+
+                for (
+                    let index = 0;
+                    index < Math.min(
+                        newOrdersCount,
+                        mobileCards.length
+                    );
+                    index++
+                ) {
+
+                    mobileCards[index].classList.add(
+                        "new-order"
+                    );
+
+
+                    setTimeout(() => {
+
+                        mobileCards[index]
+                            ?.classList.remove(
+                                "new-order"
+                            );
+
+                    }, 4000);
+                }
+            }
+        }
+
+
+        /*
+         * Update the visible Today Orders count.
+         */
+        const todayCountText =
+            document.getElementById(
+                "today-orders-count"
+            );
+
+
+        if (todayCountText) {
+
+            todayCountText.textContent =
+                `${newOrderCount} orders found`;
+        }
+
+
+        lastTodayOrderCount =
+            newOrderCount;
+
+
+    } catch (error) {
+
+        console.error(
+            "Automatic order refresh error:",
+            error
+        );
+
+
+    } finally {
+
+        automaticOrderRefreshRunning =
+            false;
+    }
+}
+
+
+/* =========================================================
+   NEW ORDER NOTIFICATION
+========================================================= */
+
+function showAutomaticOrderNotification(
+    numberOfOrders
+) {
+
+    const existingNotification =
+        document.getElementById(
+            "automatic-new-order-notification"
+        );
+
+
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+
+
+    const notification =
+        document.createElement("div");
+
+
+    notification.id =
+        "automatic-new-order-notification";
+
+
+    notification.className =
+        "admin-new-order-notification";
+
+
+    notification.innerHTML = `
+        <div class="new-order-icon">
+            🔔
+        </div>
+
+        <div class="new-order-content">
+
+            <strong>
+                ${numberOfOrders}
+                new order${numberOfOrders > 1 ? "s" : ""}
+                received!
+            </strong>
+
+            <span>
+                Today's orders were updated.
+            </span>
+
+        </div>
+
+        <button
+            type="button"
+            aria-label="Close"
+            onclick="this.parentElement.remove()"
+        >
+            ×
+        </button>
+    `;
+
+
+    document.body.appendChild(
+        notification
+    );
+
+
+    setTimeout(() => {
+
+        notification.remove();
+
+    }, 6000);
+}
+
+
+/* =========================================================
+   AUTOMATIC REFRESH TIMER
+========================================================= */
+
+setInterval(
+    automaticOrderRefresh,
+    10000
+);
+</script>
+<script>
+
+let todayPerformanceLoaded = false;
+let restaurantPerformanceLoaded = false;
+
+
+async function loadTodayPerformance() {
+
+    const button =
+        document.getElementById(
+            "loadTodayPerformanceBtn"
+        );
+
+    const container =
+        document.getElementById(
+            "todayPerformanceContainer"
+        );
+
+    if (todayPerformanceLoaded) {
+
+        container.classList.toggle("hidden");
+
+        button.innerHTML =
+            container.classList.contains("hidden")
+                ? "📊 Show Today Performance"
+                : "🙈 Hide Today Performance";
+
+        return;
+    }
+
+    button.disabled = true;
+
+    button.innerHTML = `
+        <span class="button-spinner"></span>
+        Loading Performance...
+    `;
+
+    container.innerHTML = `
+        <div class="dashboard-loader">
+            <div class="dashboard-spinner"></div>
+            <p>Loading today's performance...</p>
+        </div>
+    `;
+
+    try {
+
+        const response = await fetch(
+            "{{ url_for('admin_today_performance') }}",
+            {
+                method: "GET",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "Unable to load performance"
+            );
+        }
+
+        const html = await response.text();
+
+        container.innerHTML = html;
+
+        todayPerformanceLoaded = true;
+
+        button.innerHTML =
+            "🙈 Hide Today Performance";
+
+    } catch (error) {
+
+        console.error(error);
+
+        container.innerHTML = `
+            <div class="ajax-error">
+                ❌ Unable to load today's performance.
+                Please try again.
+            </div>
+        `;
+
+        button.innerHTML =
+            "🔄 Try Again";
+
+    } finally {
+
+        button.disabled = false;
+    }
+}
+
+
+async function loadRestaurantPerformance() {
+
+    const button =
+        document.getElementById(
+            "loadRestaurantPerformanceBtn"
+        );
+
+    const container =
+        document.getElementById(
+            "restaurantPerformanceContainer"
+        );
+
+    if (restaurantPerformanceLoaded) {
+
+        container.classList.toggle("hidden");
+
+        button.innerHTML =
+            container.classList.contains("hidden")
+                ? "🍽️ Show Restaurant Performance"
+                : "🙈 Hide Restaurant Performance";
+
+        return;
+    }
+
+    button.disabled = true;
+
+    button.innerHTML = `
+        <span class="button-spinner"></span>
+        Loading Restaurants...
+    `;
+
+    container.innerHTML = `
+        <div class="dashboard-loader">
+            <div class="dashboard-spinner"></div>
+            <p>Loading restaurant performance...</p>
+        </div>
+    `;
+
+    try {
+
+        const response = await fetch(
+            "{{ url_for(
+                'admin_restaurant_performance'
+            ) }}",
+            {
+                method: "GET",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "Unable to load restaurant performance"
+            );
+        }
+
+        const html = await response.text();
+
+        container.innerHTML = html;
+
+        restaurantPerformanceLoaded = true;
+
+        button.innerHTML =
+            "🙈 Hide Restaurant Performance";
+
+    } catch (error) {
+
+        console.error(error);
+
+        container.innerHTML = `
+            <div class="ajax-error">
+                ❌ Unable to load restaurant performance.
+                Please try again.
+            </div>
+        `;
+
+        button.innerHTML =
+            "🔄 Try Again";
+
+    } finally {
+
+        button.disabled = false;
+    }
+}
+
+</script>
 </body>
 </html>

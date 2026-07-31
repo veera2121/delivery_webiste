@@ -1,0 +1,484 @@
+<article class="mobile-order-card">
+
+    <!-- HEADER -->
+
+    <div class="mobile-order-header">
+
+        <div>
+            <span class="mobile-order-label">
+                Order ID
+            </span>
+
+            <strong class="mobile-order-id">
+                {{ order.order_id }}
+            </strong>
+        </div>
+
+        {% set status_value = order.status or "Pending" %}
+
+        {% set status_class =
+            status_value
+            |lower
+            |replace(' ', '-')
+            |replace('_', '-')
+        %}
+
+        <span class="status-badge status-{{ status_class }}">
+
+            {% if status_value == "Pending" %}
+                ⏳
+            {% elif status_value == "Accepted" %}
+                👍
+            {% elif status_value == "Confirmed" %}
+                ✔️
+            {% elif status_value == "Started" %}
+                ▶️
+            {% elif status_value == "Preparing" %}
+                👨‍🍳
+            {% elif status_value == "Ready" %}
+                📦
+            {% elif status_value == "Assigned" %}
+                👤
+            {% elif status_value == "Out for Delivery" %}
+                🛵
+            {% elif status_value == "Delivered" %}
+                ✅
+            {% elif status_value == "Cancelled" %}
+                ❌
+            {% elif status_value == "Refunded" %}
+                ↩️
+            {% elif status_value == "Not Available" %}
+                🚫
+            {% else %}
+                ℹ️
+            {% endif %}
+
+            {{ status_value }}
+
+        </span>
+
+    </div>
+
+
+    <!-- RESTAURANT -->
+
+    <div class="mobile-order-field">
+
+        <span class="mobile-field-label">
+            Restaurant
+        </span>
+
+        <span class="mobile-field-value restaurant-name">
+
+            {% if order.restaurant %}
+                {{ order.restaurant.name }}
+            {% else %}
+                —
+            {% endif %}
+
+        </span>
+
+    </div>
+
+
+    <!-- CUSTOMER -->
+
+    <div class="mobile-order-grid">
+
+        <div class="mobile-order-field">
+
+            <span class="mobile-field-label">
+                Customer
+            </span>
+
+            <span class="mobile-field-value customer-name">
+                {{ order.customer_name }}
+            </span>
+
+        </div>
+
+        <div class="mobile-order-field">
+
+            <span class="mobile-field-label">
+                Phone
+            </span>
+
+            <a
+                href="tel:{{ order.phone }}"
+                class="mobile-field-value customer-phone"
+            >
+                {{ order.phone }}
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ITEMS -->
+
+    <div class="mobile-order-section">
+
+        <span class="mobile-field-label">
+            Items
+        </span>
+
+        <div class="mobile-items-list">
+
+            {% for item in order.items[:3] %}
+
+            <div class="mobile-item-card">
+
+                <strong class="food-name">
+                    🍽️ {{ item.item_name }}
+                </strong>
+
+                <div class="mobile-item-tags">
+
+                    {% if item.category %}
+
+                    <span class="tag category-tag">
+                        {{ item.category }}
+                    </span>
+
+                    {% endif %}
+
+                    {% if item.weight %}
+
+                    <span class="tag weight-tag">
+                        {{ item.weight }}
+                    </span>
+
+                    {% endif %}
+
+                    <span class="tag qty-tag">
+                        ×{{ item.quantity }}
+                    </span>
+
+                    <span class="tag price-tag">
+                        ₹{{ item.price }}
+                    </span>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+            {% if order.items|length > 3 %}
+
+            <div class="more-items">
+                +{{ order.items|length - 3 }} more items
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- PRICE DETAILS -->
+
+    <div class="mobile-summary-grid">
+
+        <div class="mobile-order-field">
+
+            <span class="mobile-field-label">
+                Coupon
+            </span>
+
+            {% if order.coupon_used %}
+
+            <span class="coupon-used">
+                {{ order.coupon_used }}
+            </span>
+
+            {% else %}
+
+            <span class="mobile-empty-value">
+                —
+            </span>
+
+            {% endif %}
+
+        </div>
+
+        <div class="mobile-order-field">
+
+            <span class="mobile-field-label">
+                Discount
+            </span>
+
+            {% if order.discount and order.discount > 0 %}
+
+            <span class="discount-value">
+                − ₹{{ order.discount }}
+            </span>
+
+            {% else %}
+
+            <span class="no-discount">
+                ₹0
+            </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- TOTAL -->
+
+    <div class="mobile-total-row">
+
+        <span>
+            Final Total
+        </span>
+
+        <strong class="order-total">
+            ₹{{ order.get_final_total() }}
+        </strong>
+
+    </div>
+
+
+    <!-- PAYMENT -->
+
+    <div class="mobile-order-section">
+
+        <span class="mobile-field-label">
+            Payment
+        </span>
+
+        <div class="mobile-payment-content">
+
+            {% if order.payment_source == "Checkout" %}
+
+            <span class="payment-badge payment-online">
+                💳 Paid During Checkout
+            </span>
+
+            {% elif order.payment_source == "DeliveryLink" %}
+
+            <span class="payment-badge payment-online">
+                🚚💳 Online Paid At Delivery
+            </span>
+
+            {% elif order.payment_type == "COD"
+                  and order.payment_status != "Paid" %}
+
+            <span class="payment-badge payment-cod">
+                💵 Cash On Delivery
+            </span>
+
+            {% elif order.payment_type == "COD"
+                  and order.payment_status == "Paid" %}
+
+            <span class="payment-badge payment-online">
+                💳 Paid Online
+            </span>
+
+            {% elif order.payment_status == "Paid" %}
+
+            <span class="payment-badge payment-paid">
+                ✅ Payment Paid
+            </span>
+
+            {% elif order.payment_status == "Failed" %}
+
+            <span class="payment-badge payment-failed">
+                ❌ Payment Failed
+            </span>
+
+            {% elif order.payment_status == "Refunded" %}
+
+            <span class="payment-badge payment-refunded">
+                ↩️ Refunded
+            </span>
+
+            {% else %}
+
+            <span class="payment-badge payment-pending">
+                ⚠️ Payment Pending
+            </span>
+
+            {% endif %}
+
+
+            {% if order.payment_time %}
+
+            <div class="payment-time">
+
+                🕒 {{ order.payment_time.strftime('%d %b %Y') }}
+
+                <br>
+
+                {{ order.payment_time.strftime('%I:%M %p') }}
+
+            </div>
+
+            {% endif %}
+
+
+            {% if order.status in [
+                "Delivered",
+                "Cancelled",
+                "Refunded"
+            ] %}
+
+            <div class="lock-badge">
+                🔒 Locked
+            </div>
+
+            {% endif %}
+
+
+            {% if order.status == "Cancelled"
+                  and order.cancel_reason %}
+
+            <div class="cancel-reason">
+                ❌ {{ order.cancel_reason }}
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- PLACED TIME -->
+
+    <div class="mobile-order-field">
+
+        <span class="mobile-field-label">
+            Placed Time
+        </span>
+
+        <div class="placed-time">
+
+            <span>
+                📅 {{ order.created_at.strftime('%d-%m-%Y') }}
+            </span>
+
+            <span>
+                🕒 {{ order.created_at.strftime('%I:%M %p') }}
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- ACTIONS -->
+
+    <div class="mobile-order-section">
+
+        <span class="mobile-field-label">
+            Actions
+        </span>
+
+        <div class="admin-action-buttons">
+
+            <a
+                href="{{ make_whatsapp_link(order) }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="wa-btn"
+            >
+                📲 Send Msg
+            </a>
+
+            {% if order.status not in [
+                "Delivered",
+                "Cancelled",
+                "Refunded"
+            ] %}
+
+            <a
+                href="{{ url_for(
+                    'admin_edit_order',
+                    order_id=order.id
+                ) }}"
+                class="edit-order-btn"
+            >
+                ✏️ Edit Order
+            </a>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- DELIVERY ASSIGNMENT -->
+
+    <div class="mobile-order-section mobile-delivery-section">
+
+        <span class="mobile-field-label">
+            Assign Delivery
+        </span>
+
+        {% if order.status not in [
+            "Delivered",
+            "Cancelled",
+            "Refunded"
+        ] %}
+
+        <form
+            method="POST"
+            action="{{ url_for(
+                'restaurant_assign_delivery',
+                order_id=order.id
+            ) }}"
+            class="delivery-assign-form"
+        >
+
+            <select
+                name="delivery_person_id"
+                class="delivery-select"
+                required
+            >
+
+                <option value="">
+                    Select delivery person
+                </option>
+
+                {% for dp in delivery_persons %}
+
+                <option
+                    value="{{ dp.id }}"
+                    {% if order.delivery_person_id == dp.id %}
+                        selected
+                    {% endif %}
+                >
+                    {{ dp.name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+            <button
+                type="submit"
+                class="assign-delivery-button"
+            >
+                Assign Delivery
+            </button>
+
+        </form>
+
+        {% else %}
+
+        <span class="assignment-locked">
+            🔒 Assignment Locked
+        </span>
+
+        {% endif %}
+
+    </div>
+
+</article>

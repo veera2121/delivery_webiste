@@ -19,7 +19,9 @@ const messaging = firebase.messaging();
 /* ================= BACKGROUND MESSAGE ================= */
 messaging.onBackgroundMessage(function (payload) {
 
+
   console.log("✅ Received background message:", payload);
+  console.log("Payload Data:", payload.data);
 
   // 🔥 Support BOTH notification + data
   const notificationTitle =
@@ -36,9 +38,18 @@ messaging.onBackgroundMessage(function (payload) {
     badge: "/static/icons/icon-96x96.png",
     vibrate: [200, 100, 200],
     requireInteraction: true,
-    data: {
-      url: payload.data?.url || "/"
-    }
+  data: {
+    url: payload.data?.url || "/",
+    order_id: payload.data?.order_id || "",
+    order_number: payload.data?.order_number || "",
+    restaurant_name: payload.data?.restaurant_name || "",
+    customer_name: payload.data?.customer_name || "",
+    customer_phone: payload.data?.customer_phone || "",
+    address: payload.data?.address || "",
+    distance: payload.data?.distance || "",
+    total: payload.data?.total || "",
+    payment_type: payload.data?.payment_type || ""
+  }
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

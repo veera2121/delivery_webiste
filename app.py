@@ -44,7 +44,9 @@ from extensions import db
 from models import (
     db, Restaurant, RestaurantUser, MenuItem, Order,
     OrderItem, DeliveryPerson, FoodItem, OTP,
-    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,Item,CoinLedger,ShopSettings,RewardSetting,RewardBadge,Category, Offer ,Employee, EmployeeOTP, EmployeeSession
+    CouponUsage, RestaurantOffer, Customer ,UserFeedback, RestaurantDelivery,DeliverySettings,
+    Item,CoinLedger,ShopSettings,RewardSetting,RewardBadge,Category, Offer ,
+    Employee, EmployeeOTP, EmployeeSession,OrderEditHistory
 )
 from reward_engine import add_coins, redeem_coins
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -154,6 +156,19 @@ razorpay_client = razorpay.Client(auth=(
     RAZORPAY_KEY_ID,
     RAZORPAY_KEY_SECRET
 ))
+# ------------------ edit order imports ------------------
+from admin_order_edit import (
+    register_admin_order_edit
+)
+
+register_admin_order_edit(
+    app=app,
+    db=db,
+    Order=Order,
+    OrderItem=OrderItem,
+    MenuItem=MenuItem,
+    OrderEditHistory=OrderEditHistory
+)
 # ------------------ UTILS ------------------
 def generate_otp():
     return str(secrets.randbelow(900000) + 100000)
@@ -1910,177 +1925,227 @@ from sqlalchemy import or_
 
 @app.route("/admin/dashboard")
 def admin_dashboard():
+
     if not session.get("admin_logged_in"):
         return redirect(url_for("admin_login"))
 
-    query = request.args.get("query", "")
-    status_filter = request.args.get("status", "")
-    date_filter = request.args.get("date")  # Optional date filter (YYYY-MM-DD)
-    page = request.args.get("page", 1, type=int)
+    # =========================================================
+    # FILTER VALUES
+    # =========================================================
 
-    q = Order.query
+    query = request.args.get(
+        "query",
+        "",
+        type=str
+    ).strip()
 
-    # ---------------- SEARCH FILTER ----------------
+    status_filter = request.args.get(
+        "status",
+        "",
+        type=str
+    ).strip()
+
+    date_filter = request.args.get(
+        "date",
+        "",
+        type=str
+    ).strip()
+
+    today_page = request.args.get(
+        "today_page",
+        1,
+        type=int
+    )
+
+    yesterday_page = request.args.get(
+        "yesterday_page",
+        1,
+        type=int
+    )
+
+    older_page = request.args.get(
+        "older_page",
+        1,
+        type=int
+    )
+
+    per_page = 10
+
+    # =========================================================
+    # DATES
+    # =========================================================
+
+    today = datetime.utcnow().date()
+
+    yesterday = today - timedelta(days=1)
+
+    today_start = datetime.combine(
+        today,
+        datetime.min.time()
+    )
+
+    tomorrow_start = (
+        today_start + timedelta(days=1)
+    )
+
+    yesterday_start = datetime.combine(
+        yesterday,
+        datetime.min.time()
+    )
+
+    # =========================================================
+    # BASE QUERY
+    # =========================================================
+
+    base_query = Order.query
+
+    # ---------------- SEARCH ----------------
+
     if query:
-        q = q.filter(
+
+        search_value = f"%{query}%"
+
+        base_query = base_query.filter(
             or_(
-                Order.order_id.contains(query),
-                Order.customer_name.contains(query),
-                Order.phone.contains(query),
-                Order.email.contains(query)
+                Order.order_id.ilike(search_value),
+                Order.customer_name.ilike(search_value),
+                Order.phone.ilike(search_value),
+                Order.email.ilike(search_value)
             )
         )
 
-    # ---------------- STATUS FILTER ----------------
+    # ---------------- STATUS ----------------
+
     if status_filter:
-        q = q.filter(Order.status == status_filter)
 
-    # ---------------- DATE FILTER ----------------
+        base_query = base_query.filter(
+            Order.status == status_filter
+        )
+
+    # ---------------- SELECTED DATE ----------------
+
     if date_filter:
+
         try:
-            filter_date = datetime.strptime(date_filter, "%Y-%m-%d").date()
-            q = q.filter(db.func.date(Order.created_at) == filter_date)
+
+            selected_date = datetime.strptime(
+                date_filter,
+                "%Y-%m-%d"
+            ).date()
+
+            selected_start = datetime.combine(
+                selected_date,
+                datetime.min.time()
+            )
+
+            selected_end = (
+                selected_start + timedelta(days=1)
+            )
+
+            base_query = base_query.filter(
+                Order.created_at >= selected_start,
+                Order.created_at < selected_end
+            )
+
         except ValueError:
-            pass  # ignore invalid date input
 
-    q = q.order_by(Order.created_at.desc())
-    pagination = q.paginate(page=page, per_page=100)
-    orders = pagination.items
+            date_filter = ""
 
-    # ---------------- DELIVERY PERSONS & RESTAURANTS ----------------
-    delivery_persons = DeliveryPerson.query.order_by(DeliveryPerson.name).all()
-    restaurants = Restaurant.query.all()
+    # =========================================================
+    # TODAY ORDERS
+    # =========================================================
 
-    # ---------------- ADMIN STATISTICS ----------------
-    today = datetime.utcnow().date()
-    yesterday = today - timedelta(days=1)
-    week_start = today - timedelta(days=today.weekday())
-
-    from sqlalchemy import func
-
-    today_orders_query = Order.query.filter(
-        db.func.date(Order.created_at) == today
+    today_pagination = (
+        base_query
+        .filter(
+            Order.created_at >= today_start,
+            Order.created_at < tomorrow_start
+        )
+        .order_by(Order.created_at.desc())
+        .paginate(
+            page=today_page,
+            per_page=per_page,
+            error_out=False
+        )
     )
 
-    # ✅ Delivered orders (used for revenue + items)
-    today_delivered_orders = today_orders_query.filter(
-        Order.status == "Delivered"
-    ).all()
+    today_orders = today_pagination.items
 
-    stats = {
-        "total_orders": Order.query.count(),
+    # =========================================================
+    # YESTERDAY ORDERS
+    # =========================================================
 
-        "pending": Order.query.filter_by(status="Pending").count(),
-        "preparing": Order.query.filter_by(status="Preparing").count(),
-
-        "assigned": Order.query.filter(
-            Order.delivery_person_id.isnot(None),
-            Order.status != "Delivered",
-            Order.status != "Cancelled"
-        ).count(),
-
-        "delivered": Order.query.filter_by(status="Delivered").count(),
-        "cancelled": Order.query.filter_by(status="Cancelled").count(),
-
-        # ================= TODAY PERFORMANCE =================
-        "today_orders": today_orders_query.count(),
-
-        "today_delivered": len(today_delivered_orders),
-
-        "today_cancelled": today_orders_query.filter(
-            Order.status == "Cancelled"
-        ).count(),
-
-        "today_pending": today_orders_query.filter(
-            Order.status == "Pending"
-        ).count(),
-
-        # 🔥 ACTIVE = Preparing + Assigned + Out for Delivery
-        "today_active": today_orders_query.filter(
-            Order.status.in_(["Preparing", "Assigned", "Out for Delivery"])
-        ).count(),
-
-        # 💰 Revenue (only delivered)
-        "today_revenue": sum(
-            o.get_final_total() for o in today_delivered_orders
-        ),
-
-        # 🚚 Delivery charges
-        "today_delivery_charges": sum(
-            o.delivery_charge for o in today_delivered_orders if o.delivery_charge
-        ),
-
-        # 📦 Items sold
-        "today_items": sum(
-            item.quantity
-            for o in today_delivered_orders
-            for item in o.items
-        ) if today_delivered_orders else 0,
-
-        # ================= WEEK =================
-        "week_orders": Order.query.filter(
-            Order.created_at >= week_start
-        ).count(),
-
-        "weekly_revenue": sum(
-            o.get_final_total()
-            for o in Order.query.filter(
-                Order.created_at >= week_start,
-                Order.status == "Delivered"
-            ).all()
-        ),
-
-        # ================= TOTAL =================
-        "total_revenue": sum(
-            o.get_final_total()
-            for o in Order.query.filter_by(status="Delivered").all()
+    yesterday_pagination = (
+        base_query
+        .filter(
+            Order.created_at >= yesterday_start,
+            Order.created_at < today_start
         )
-    }
+        .order_by(Order.created_at.desc())
+        .paginate(
+            page=yesterday_page,
+            per_page=per_page,
+            error_out=False
+        )
+    )
 
-    # ---------------- CLASSIFY ORDERS BY DAY ----------------
-    for o in orders:
-        if o.created_at.date() == today:
-            o.day_category = "Today"
-        elif o.created_at.date() == yesterday:
-            o.day_category = "Yesterday"
-        else:
-            o.day_category = "Older"
+    yesterday_orders = (
+        yesterday_pagination.items
+    )
 
-    # ---------------- RESTAURANT PERFORMANCE ----------------
-    restaurant_performance = []
-    for r in restaurants:
-        r_orders = Order.query.filter_by(restaurant_id=r.id).all()
-        today_orders = [o for o in r_orders if o.created_at.date() == today and o.status=="Delivered"]
-        weekly_orders = [o for o in r_orders if o.created_at.date() >= week_start and o.status=="Delivered"]
-        restaurant_performance.append({
-            "id": r.id,
-            "name": r.name,
-            "today_orders": len(today_orders),
-            "today_earnings": sum(o.get_final_total() for o in today_orders),
-            "weekly_orders": len(weekly_orders),
-            "weekly_earnings": sum(o.get_final_total() for o in weekly_orders),
-            "pending": len([o for o in r_orders if o.status == "Pending"]),
-            "completed": len([o for o in r_orders if o.status == "Delivered"]),
-                        # ✅ ADD THESE TWO
-            "is_best_seller": r.is_best_seller,
-            "is_fast_delivery": r.is_fast_delivery
+    # =========================================================
+    # OLDER ORDERS
+    # =========================================================
 
-        })
+    older_pagination = (
+        base_query
+        .filter(
+            Order.created_at < yesterday_start
+        )
+        .order_by(Order.created_at.desc())
+        .paginate(
+            page=older_page,
+            per_page=per_page,
+            error_out=False
+        )
+    )
+
+    older_orders = older_pagination.items
+
+    # =========================================================
+    # DELIVERY PERSONS
+    # =========================================================
+
+    delivery_persons = (
+        DeliveryPerson.query
+        .order_by(DeliveryPerson.name.asc())
+        .all()
+    )
+
+    # Only count restaurants here.
+    # Do not load restaurant performance.
+    restaurant_count = Restaurant.query.count()
 
     return render_template(
         "admin_dashboard.html",
-        orders=orders,
+
+        today_orders=today_orders,
+        yesterday_orders=yesterday_orders,
+        older_orders=older_orders,
+
+        today_pagination=today_pagination,
+        yesterday_pagination=yesterday_pagination,
+        older_pagination=older_pagination,
+
         delivery_persons=delivery_persons,
-        pagination=pagination,
+        restaurant_count=restaurant_count,
+
         query=query,
         status_filter=status_filter,
         date_filter=date_filter,
-        restaurants=restaurants,
-        stats=stats,
-        restaurant_stats=restaurant_performance,
-        make_whatsapp_link=make_whatsapp_link 
-    )
 
+        make_whatsapp_link=make_whatsapp_link
+    )
 
 # ---------------- ASSIGN DELIVERY PERSON ----------------
 from flask_socketio import emit
@@ -6882,6 +6947,418 @@ def delivery_subscribe():
     print("✅ Delivery subscription saved")
 
     return jsonify({"success": True})
+
+
+@app.route("/admin/dashboard/today-performance")
+def admin_today_performance():
+
+    if not session.get("admin_logged_in"):
+        return (
+            '<div class="ajax-error">'
+            'Session expired. Please login again.'
+            '</div>',
+            401
+        )
+
+    today = datetime.utcnow().date()
+
+    today_start = datetime.combine(
+        today,
+        datetime.min.time()
+    )
+
+    tomorrow_start = (
+        today_start + timedelta(days=1)
+    )
+
+    today_orders_query = Order.query.filter(
+        Order.created_at >= today_start,
+        Order.created_at < tomorrow_start
+    )
+
+    today_delivered_orders = (
+        today_orders_query
+        .filter(
+            Order.status == "Delivered"
+        )
+        .all()
+    )
+
+    stats = {
+        "today_orders": (
+            today_orders_query.count()
+        ),
+
+        "today_delivered": (
+            len(today_delivered_orders)
+        ),
+
+        "today_cancelled": (
+            today_orders_query
+            .filter(
+                Order.status == "Cancelled"
+            )
+            .count()
+        ),
+
+        "today_active": (
+            today_orders_query
+            .filter(
+                Order.status.in_(
+                    [
+                        "Preparing",
+                        "Accepted",
+                        "Assigned",
+                        "Out for Delivery"
+                    ]
+                )
+            )
+            .count()
+        ),
+
+        "today_pending": (
+            today_orders_query
+            .filter(
+                Order.status == "Pending"
+            )
+            .count()
+        ),
+
+        "today_revenue": sum(
+            order.get_final_total()
+            for order in today_delivered_orders
+        ),
+
+        "today_delivery_charges": sum(
+            order.delivery_charge or 0
+            for order in today_delivered_orders
+        ),
+
+        "today_items": sum(
+            item.quantity
+            for order in today_delivered_orders
+            for item in order.items
+        ) if today_delivered_orders else 0
+    }
+
+    restaurant_count = Restaurant.query.count()
+
+    return render_template(
+        "partials/admin_today_performance.html",
+        stats=stats,
+        restaurant_count=restaurant_count
+    ) 
+
+@app.route("/admin/dashboard/restaurant-performance")
+def admin_restaurant_performance():
+
+    if not session.get("admin_logged_in"):
+        return (
+            '<div class="ajax-error">'
+            'Session expired. Please login again.'
+            '</div>',
+            401
+        )
+
+    today = datetime.utcnow().date()
+
+    week_start = (
+        today - timedelta(days=today.weekday())
+    )
+
+    today_start = datetime.combine(
+        today,
+        datetime.min.time()
+    )
+
+    tomorrow_start = (
+        today_start + timedelta(days=1)
+    )
+
+    week_start_datetime = datetime.combine(
+        week_start,
+        datetime.min.time()
+    )
+
+    restaurants = (
+        Restaurant.query
+        .order_by(Restaurant.name.asc())
+        .all()
+    )
+
+    restaurant_performance = []
+
+    for restaurant in restaurants:
+
+        restaurant_orders = (
+            Order.query
+            .filter(
+                Order.restaurant_id == restaurant.id
+            )
+            .all()
+        )
+
+        today_delivered = [
+            order
+            for order in restaurant_orders
+            if (
+                order.created_at >= today_start
+                and order.created_at < tomorrow_start
+                and order.status == "Delivered"
+            )
+        ]
+
+        weekly_delivered = [
+            order
+            for order in restaurant_orders
+            if (
+                order.created_at >= week_start_datetime
+                and order.status == "Delivered"
+            )
+        ]
+
+        restaurant_performance.append({
+            "id": restaurant.id,
+
+            "name": restaurant.name,
+
+            "today_orders": len(
+                today_delivered
+            ),
+
+            "today_earnings": sum(
+                order.get_final_total()
+                for order in today_delivered
+            ),
+
+            "weekly_orders": len(
+                weekly_delivered
+            ),
+
+            "weekly_earnings": sum(
+                order.get_final_total()
+                for order in weekly_delivered
+            ),
+
+            "pending": len([
+                order
+                for order in restaurant_orders
+                if order.status == "Pending"
+            ]),
+
+            "completed": len([
+                order
+                for order in restaurant_orders
+                if order.status == "Delivered"
+            ]),
+
+            "is_best_seller": (
+                restaurant.is_best_seller
+            ),
+
+            "is_fast_delivery": (
+                restaurant.is_fast_delivery
+            )
+        })
+
+    return render_template(
+        "partials/admin_restaurant_performance.html",
+        restaurant_stats=restaurant_performance
+    )
+
+@app.route("/admin/dashboard/orders/<order_group>")
+def admin_orders_ajax(order_group):
+
+    if not session.get("admin_logged_in"):
+        return (
+            '<div class="ajax-error">Session expired. Please log in again.</div>',
+            401
+        )
+
+    allowed_groups = {
+        "today",
+        "yesterday",
+        "older"
+    }
+
+    if order_group not in allowed_groups:
+        return (
+            '<div class="ajax-error">Invalid order group.</div>',
+            400
+        )
+
+    page = request.args.get(
+        "page",
+        1,
+        type=int
+    )
+
+    query = request.args.get(
+        "query",
+        "",
+        type=str
+    ).strip()
+
+    status_filter = request.args.get(
+        "status",
+        "",
+        type=str
+    ).strip()
+
+    date_filter = request.args.get(
+        "date",
+        "",
+        type=str
+    ).strip()
+
+    per_page = 10
+
+    today = datetime.utcnow().date()
+
+    yesterday = (
+        today - timedelta(days=1)
+    )
+
+    today_start = datetime.combine(
+        today,
+        datetime.min.time()
+    )
+
+    tomorrow_start = (
+        today_start + timedelta(days=1)
+    )
+
+    yesterday_start = datetime.combine(
+        yesterday,
+        datetime.min.time()
+    )
+
+    orders_query = Order.query
+
+    # =====================================================
+    # SEARCH
+    # =====================================================
+
+    if query:
+
+        search_value = f"%{query}%"
+
+        orders_query = orders_query.filter(
+            or_(
+                Order.order_id.ilike(search_value),
+                Order.customer_name.ilike(search_value),
+                Order.phone.ilike(search_value),
+                Order.email.ilike(search_value)
+            )
+        )
+
+    # =====================================================
+    # STATUS FILTER
+    # =====================================================
+
+    if status_filter:
+
+        orders_query = orders_query.filter(
+            Order.status == status_filter
+        )
+
+    # =====================================================
+    # OPTIONAL SELECTED DATE
+    # =====================================================
+
+    if date_filter:
+
+        try:
+
+            selected_date = datetime.strptime(
+                date_filter,
+                "%Y-%m-%d"
+            ).date()
+
+            selected_start = datetime.combine(
+                selected_date,
+                datetime.min.time()
+            )
+
+            selected_end = (
+                selected_start + timedelta(days=1)
+            )
+
+            orders_query = orders_query.filter(
+                Order.created_at >= selected_start,
+                Order.created_at < selected_end
+            )
+
+        except ValueError:
+            date_filter = ""
+
+    # =====================================================
+    # GROUP FILTER
+    # =====================================================
+
+    if order_group == "today":
+
+        orders_query = orders_query.filter(
+            Order.created_at >= today_start,
+            Order.created_at < tomorrow_start
+        )
+
+        section_title = "📅 Today Orders"
+
+    elif order_group == "yesterday":
+
+        orders_query = orders_query.filter(
+            Order.created_at >= yesterday_start,
+            Order.created_at < today_start
+        )
+
+        section_title = "🕒 Yesterday Orders"
+
+    else:
+
+        orders_query = orders_query.filter(
+            Order.created_at < yesterday_start
+        )
+
+        section_title = "📦 Older Orders"
+
+    # =====================================================
+    # PAGINATION
+    # =====================================================
+
+    pagination = (
+        orders_query
+        .order_by(Order.created_at.desc())
+        .paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+    )
+
+    delivery_persons = (
+        DeliveryPerson.query
+        .order_by(DeliveryPerson.name.asc())
+        .all()
+    )
+
+    return render_template(
+        "partials/admin_orders_ajax_table.html",
+
+        orders=pagination.items,
+        pagination=pagination,
+
+        order_group=order_group,
+        section_title=section_title,
+
+        delivery_persons=delivery_persons,
+
+        query=query,
+        status_filter=status_filter,
+        date_filter=date_filter,
+
+        make_whatsapp_link=make_whatsapp_link
+    )
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN 

@@ -1,0 +1,197 @@
+
+<div
+    class="ajax-orders-content"
+    data-total-orders="{{ pagination.total }}"
+    data-current-page="{{ pagination.page }}"
+    data-order-group="{{ order_group }}"
+>
+
+    {% if orders %}
+
+    <!-- =================================================
+         DESKTOP ORDERS VIEW
+    ================================================== -->
+
+    <div class="desktop-orders-view">
+
+        <div class="orders-table-wrapper">
+
+            <table class="orders-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Restaurant</th>
+                        <th>Customer</th>
+                        <th>Phone</th>
+                        <th>Items</th>
+                        <th>WhatsApp</th>
+                        <th>Coupon</th>
+                        <th>Discount</th>
+                        <th>Final Total</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th>Placed</th>
+                        <th>Assign Delivery</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for order in orders %}
+
+                        {% include "partials/admin_order_row.html" %}
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         MOBILE ORDERS VIEW
+    ================================================== -->
+
+    <div class="mobile-orders-view">
+
+        {% for order in orders %}
+
+            {% include "partials/admin_order_mobile_card.html" %}
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- =================================================
+         PAGINATION
+    ================================================== -->
+
+    {% if pagination.pages > 1 %}
+
+    <nav
+        class="order-pagination"
+        aria-label="{{ section_title }} pagination"
+    >
+
+        {% if pagination.has_prev %}
+
+        <button
+            type="button"
+            onclick="loadOrderPage(
+                '{{ order_group }}',
+                {{ pagination.prev_num }}
+            )"
+        >
+            ← Previous
+        </button>
+
+        {% endif %}
+
+
+        {% for page_number in pagination.iter_pages(
+            left_edge=1,
+            right_edge=1,
+            left_current=2,
+            right_current=2
+        ) %}
+
+            {% if page_number %}
+
+            <button
+                type="button"
+                class="{% if page_number == pagination.page %}active{% endif %}"
+                onclick="loadOrderPage(
+                    '{{ order_group }}',
+                    {{ page_number }}
+                )"
+                {% if page_number == pagination.page %}
+                    disabled
+                    aria-current="page"
+                {% endif %}
+            >
+                {{ page_number }}
+            </button>
+
+            {% else %}
+
+            <span class="pagination-dots">
+                …
+            </span>
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        {% if pagination.has_next %}
+
+        <button
+            type="button"
+            onclick="loadOrderPage(
+                '{{ order_group }}',
+                {{ pagination.next_num }}
+            )"
+        >
+            Next →
+        </button>
+
+        {% endif %}
+
+    </nav>
+
+
+    <div class="pagination-information">
+
+        Showing
+
+        {{ ((pagination.page - 1) * pagination.per_page) + 1 }}
+
+        to
+
+        {{
+            [
+                pagination.page * pagination.per_page,
+                pagination.total
+            ] | min
+        }}
+
+        of {{ pagination.total }} orders
+
+    </div>
+
+    {% endif %}
+
+
+    {% else %}
+
+    <!-- =================================================
+         EMPTY ORDERS
+    ================================================== -->
+
+    <div class="empty-orders">
+
+        <div class="empty-orders-icon">
+            📭
+        </div>
+
+        <h3>
+            No orders found
+        </h3>
+
+        <p>
+            There are no {{ order_group }} orders available.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</div>

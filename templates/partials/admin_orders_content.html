@@ -1,0 +1,56 @@
+{% if section_orders %}
+
+<!-- DESKTOP VIEW -->
+<div class="desktop-orders-view">
+
+    <div class="orders-table-wrapper">
+
+        <table class="orders-table">
+
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Restaurant</th>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Items</th>
+                    <th>WhatsApp</th>
+                    <th>Coupon</th>
+                    <th>Discount</th>
+                    <th>Final Total</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Placed</th>
+                    <th>Assign Delivery</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for order in section_orders %}
+                    {% include "partials/admin_order_row.html" %}
+                {% endfor %}
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<!-- MOBILE VIEW -->
+<div class="mobile-orders-view">
+
+    {% for order in section_orders %}
+        {% include "partials/admin_order_mobile_card.html" %}
+    {% endfor %}
+
+</div>
+
+{% else %}
+
+<div class="empty-orders">
+    No orders found.
+</div>
+
+{% endif %}

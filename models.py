@@ -271,7 +271,10 @@ class DeliveryPerson(db.Model):
 
     is_active = db.Column(db.Boolean, default=True)
     is_online = db.Column(db.Boolean, default=False)  # ✅ real-time status
+    is_available = db.Column(db.Boolean, default=True)
 
+
+    last_assignment = db.Column(db.DateTime)
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
     
@@ -400,6 +403,46 @@ class Order(db.Model):
     payment_qr_status = db.Column(
         db.String(30),
         default="active"
+    ) 
+    # ---------------- MANUAL ORDER EDITING ----------------
+
+    manual_discount = db.Column(
+        db.Float,
+        default=0.0,
+        nullable=False
+    )
+
+    extra_charge = db.Column(
+        db.Float,
+        default=0.0,
+        nullable=False
+    )
+
+    is_order_edited = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False
+    )
+
+    order_edit_reason = db.Column(
+        db.String(500),
+        nullable=True
+    )
+
+    order_edited_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    order_edited_by = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
+    customer_edit_approved = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False
     )
     order_type = db.Column(db.String(50))                   # Delivery / Pickup
     # ---------------- REWARD SYSTEM ----------------
@@ -426,7 +469,15 @@ class Order(db.Model):
     restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
     delivery_person_id = db.Column(db.Integer, db.ForeignKey('delivery_person.id'), nullable=True)
     delivery_person = db.relationship("DeliveryPerson", backref="orders", lazy=True)
-    items = db.relationship("OrderItem", backref="order", lazy=True)
+    items = db.relationship(
+
+
+        "OrderItem",
+        backref="order",
+        lazy=True,
+        cascade="all, delete-orphan",
+        order_by="OrderItem.id"
+    )
 
     # ---------------- TIMESTAMPS ----------------
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -459,14 +510,66 @@ class Order(db.Model):
         db.Float,
         default=0
     )
+    assigned_at = db.Column(db.DateTime, nullable=True)
 
-    
+    assignment_expires_at = db.Column(db.DateTime, nullable=True)
+
+    accepted_at = db.Column(db.DateTime, nullable=True)
+
+    rejected_at = db.Column(db.DateTime, nullable=True)
+
+    rider_response = db.Column(
+        db.String(20),
+        nullable=True,
+        default="Pending"
+    )
+        
     # ---------------- HELPER FUNCTION ----------------
     def get_final_total(self):
-        items_total = self.items_total or 0
-        delivery = self.delivery_charge or 0
-        discount = self.discount or 0
-        return round(items_total + delivery - discount, 2)
+
+
+        items_total = float(
+            self.items_total or 0
+        )
+
+        delivery_charge = float(
+            self.delivery_charge or 0
+        )
+
+        extra_charge = float(
+            self.extra_charge or 0
+        )
+
+        coupon_discount = float(
+            self.discount or 0
+        )
+
+        restaurant_discount = float(
+            self.restaurant_offer_discount or 0
+        )
+
+        coins_discount = float(
+            self.coins_discount_amount or 0
+        )
+
+        manual_discount = float(
+            self.manual_discount or 0
+        )
+
+        total = (
+            items_total
+            + delivery_charge
+            + extra_charge
+            - coupon_discount
+            - restaurant_discount
+            - coins_discount
+            - manual_discount
+        )
+
+        return round(
+            max(total, 0),
+            2
+        )
     
 # ----------------- Order Item -----------------
 class OrderItem(db.Model):
@@ -724,12 +827,13 @@ class User(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow) 
     coins = db.Column(db.Integer, default=0)
+
 class DeliverySettings(db.Model):
     __tablename__ = "delivery_settings"
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Distance slabs (km)
+    # ================= DELIVERY CHARGES =================
     base_distance = db.Column(db.Float, default=3)
     base_charge = db.Column(db.Integer, default=30)
 
@@ -744,15 +848,65 @@ class DeliverySettings(db.Model):
 
     max_charge = db.Column(db.Integer, default=90)
 
-    # Free delivery
+    # ================= FREE DELIVERY =================
     free_delivery_min_order = db.Column(db.Integer, default=499)
 
-    # Surge / Night
-    night_surge = db.Column(db.Integer, default=0)   # ₹
+    # ================= NIGHT SURGE =================
+    night_surge = db.Column(db.Integer, default=0)
     is_night_surge_active = db.Column(db.Boolean, default=False)
 
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # =====================================================
+    # NEW - DELIVERY ASSIGNMENT SETTINGS
+    # =====================================================
 
+    assignment_mode = db.Column(
+        db.String(30),
+        default="auto_override"
+    )
+    # manual
+    # auto
+    # auto_override
+
+    auto_assign_enabled = db.Column(
+        db.Boolean,
+        default=True
+    )
+
+    rider_search_radius = db.Column(
+        db.Float,
+        default=5
+    )
+
+    maximum_search_radius = db.Column(
+        db.Float,
+        default=10
+    )
+
+    rider_accept_timeout = db.Column(
+        db.Integer,
+        default=20
+    )
+
+    allow_manual_override = db.Column(
+        db.Boolean,
+        default=True
+    )
+
+    allow_multiple_orders = db.Column(
+        db.Boolean,
+        default=False
+    )
+
+    max_orders_per_rider = db.Column(
+        db.Integer,
+        default=1
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -930,3 +1084,109 @@ class EmployeeSession(db.Model):
 
     ip_address = db.Column(db.String(50))
 
+class OrderEditHistory(db.Model):
+
+    __tablename__ = "order_edit_history"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    order_id = db.Column(
+        db.Integer,
+        db.ForeignKey("order.id"),
+        nullable=False,
+        index=True
+    )
+
+    action = db.Column(
+        db.String(100),
+        default="Order Updated",
+        nullable=False
+    )
+
+    old_items = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    new_items = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    old_items_total = db.Column(
+        db.Float,
+        default=0.0
+    )
+
+    new_items_total = db.Column(
+        db.Float,
+        default=0.0
+    )
+
+    old_delivery_charge = db.Column(
+        db.Float,
+        default=0.0
+    )
+
+    new_delivery_charge = db.Column(
+        db.Float,
+        default=0.0
+    )
+
+    old_extra_charge = db.Column(
+        db.Float,
+        default=0.0
+    )
+
+    new_extra_charge = db.Column(
+        db.Float,
+        default=0.0
+    )
+
+    old_manual_discount = db.Column(
+        db.Float,
+        default=0.0
+    )
+
+    new_manual_discount = db.Column(
+        db.Float,
+        default=0.0
+    )
+
+    old_final_total = db.Column(
+        db.Float,
+        default=0.0
+    )
+
+    new_final_total = db.Column(
+        db.Float,
+        default=0.0
+    )
+
+    reason = db.Column(
+        db.String(500),
+        nullable=True
+    )
+
+    edited_by = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    order = db.relationship(
+        "Order",
+        backref=db.backref(
+            "edit_history",
+            lazy=True,
+            cascade="all, delete-orphan"
+        )
+    )

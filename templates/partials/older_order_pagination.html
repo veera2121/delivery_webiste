@@ -1,0 +1,73 @@
+{% if older_pagination.pages > 1 %}
+
+<nav class="order-pagination">
+
+    {% if older_pagination.has_prev %}
+
+    <a href="{{ url_for(
+        'admin_dashboard',
+        today_page=today_pagination.page,
+        yesterday_page=yesterday_pagination.page,
+        older_page=older_pagination.prev_num,
+        query=query,
+        status=status_filter,
+        date=date_filter
+    ) }}">
+        ← Previous
+    </a>
+
+    {% endif %}
+
+
+    {% for page_number in older_pagination.iter_pages(
+        left_edge=1,
+        right_edge=1,
+        left_current=2,
+        right_current=2
+    ) %}
+
+        {% if page_number %}
+
+        <a
+            href="{{ url_for(
+                'admin_dashboard',
+                today_page=today_pagination.page,
+                yesterday_page=yesterday_pagination.page,
+                older_page=page_number,
+                query=query,
+                status=status_filter,
+                date=date_filter
+            ) }}"
+            class="{% if page_number == older_pagination.page %}active{% endif %}"
+        >
+            {{ page_number }}
+        </a>
+
+        {% else %}
+
+        <span>…</span>
+
+        {% endif %}
+
+    {% endfor %}
+
+
+    {% if older_pagination.has_next %}
+
+    <a href="{{ url_for(
+        'admin_dashboard',
+        today_page=today_pagination.page,
+        yesterday_page=yesterday_pagination.page,
+        older_page=older_pagination.next_num,
+        query=query,
+        status=status_filter,
+        date=date_filter
+    ) }}">
+        Next →
+    </a>
+
+    {% endif %}
+
+</nav>
+
+{% endif %}

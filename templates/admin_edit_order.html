@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Edit Order {{ order.order_id }}</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f4f7fb;
+            color: #172033;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            width: min(1050px, 94%);
+            margin: 25px auto 80px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 27px;
+        }
+
+        .order-info {
+            margin-top: 7px;
+            color: #667085;
+        }
+
+        .back-btn {
+            padding: 11px 15px;
+            color: #344054;
+            background: white;
+            border: 1px solid #d0d5dd;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .card {
+            padding: 20px;
+            margin-bottom: 18px;
+            background: white;
+            border: 1px solid #e4e7ec;
+            border-radius: 17px;
+            box-shadow:
+                0 8px 24px rgba(16, 24, 40, 0.05);
+        }
+
+        .card h2 {
+            margin: 0 0 17px;
+            font-size: 20px;
+        }
+
+        .alert {
+            padding: 13px 15px;
+            margin-bottom: 15px;
+            border-radius: 11px;
+            font-weight: bold;
+        }
+
+        .alert-success {
+            color: #067647;
+            background: #dcfae6;
+            border: 1px solid #abefc6;
+        }
+
+        .alert-danger {
+            color: #b42318;
+            background: #fee4e2;
+            border: 1px solid #fecdca;
+        }
+
+        .customer-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .customer-box {
+            padding: 13px;
+            background: #f8fafc;
+            border: 1px solid #eaecf0;
+            border-radius: 12px;
+        }
+
+        .label {
+            margin-bottom: 5px;
+            color: #667085;
+            font-size: 12px;
+        }
+
+        .value {
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .item-heading,
+        .item-row {
+            display: grid;
+            grid-template-columns:
+                minmax(220px, 2fr)
+                100px
+                110px
+                110px
+                90px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .item-heading {
+            padding: 0 10px 8px;
+            color: #667085;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .item-row {
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #e4e7ec;
+            border-radius: 13px;
+        }
+
+        .item-row.removed {
+            opacity: 0.45;
+            background: #fff1f0;
+        }
+
+        .item-name {
+            font-weight: bold;
+        }
+
+        .item-subtitle {
+            display: block;
+            margin-top: 4px;
+            color: #667085;
+            font-size: 12px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #d0d5dd;
+            border-radius: 9px;
+            background: white;
+            font-size: 14px;
+        }
+
+        .remove-btn {
+            width: 100%;
+            padding: 10px;
+            color: #b42318;
+            background: #fff5f4;
+            border: 1px solid #fda29b;
+            border-radius: 9px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .remove-btn.active {
+            color: white;
+            background: #d92d20;
+        }
+
+        .new-item-row {
+            background: #f8fbff;
+            border-style: dashed;
+        }
+
+        .add-btn {
+            padding: 12px 16px;
+            color: white;
+            background: #1570ef;
+            border: 0;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .charges-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+            gap: 13px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            color: #475467;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .approval {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 13px;
+            background: #fff9e8;
+            border: 1px solid #f5d384;
+            border-radius: 11px;
+        }
+
+        .approval input {
+            width: 19px;
+            height: 19px;
+        }
+
+        .summary {
+            color: white;
+            background: #172033;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 7px 0;
+        }
+
+        .final-row {
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top:
+                1px solid rgba(255, 255, 255, 0.2);
+            font-size: 21px;
+            font-weight: bold;
+        }
+
+        .actions {
+            position: sticky;
+            bottom: 10px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid #e4e7ec;
+            border-radius: 14px;
+            box-shadow:
+                0 10px 25px rgba(16, 24, 40, 0.12);
+        }
+
+        .save-btn {
+            padding: 13px 18px;
+            color: white;
+            background: #12a150;
+            border: 0;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+
+        .menu-filter-box {
+            display: grid;
+            grid-template-columns: minmax(220px, 2fr) minmax(160px, 1fr);
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .menu-search-wrap {
+            position: relative;
+        }
+
+        .menu-search-wrap input {
+            padding-left: 42px;
+        }
+
+        .search-icon {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .menu-search-results {
+            display: none;
+            max-height: 320px;
+            margin-bottom: 16px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #e4e7ec;
+            border-radius: 13px;
+            box-shadow: 0 12px 30px rgba(16, 24, 40, 0.10);
+        }
+
+        .menu-search-results.show {
+            display: block;
+        }
+
+        .menu-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 15px;
+            border-bottom: 1px solid #eaecf0;
+            cursor: pointer;
+        }
+
+        .menu-result-item:last-child {
+            border-bottom: 0;
+        }
+
+        .menu-result-item:hover {
+            background: #f5f9ff;
+        }
+
+        .menu-result-name {
+            font-weight: 700;
+        }
+
+        .menu-result-category {
+            display: block;
+            margin-top: 4px;
+            color: #667085;
+            font-size: 12px;
+        }
+
+        .menu-result-price {
+            color: #1570ef;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .no-menu-results {
+            padding: 20px;
+            color: #667085;
+            text-align: center;
+        }
+
+        .confirmation-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .confirmation-modal.show {
+            display: flex;
+        }
+
+        .confirmation-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.60);
+            backdrop-filter: blur(4px);
+        }
+
+        .confirmation-card {
+            position: relative;
+            z-index: 1;
+            width: min(430px, 100%);
+            padding: 26px;
+            background: white;
+            border-radius: 22px;
+            text-align: center;
+            box-shadow: 0 25px 70px rgba(16, 24, 40, 0.30);
+            animation: modalPop 0.22s ease;
+        }
+
+        @keyframes modalPop {
+            from {
+                opacity: 0;
+                transform: scale(0.92) translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .confirmation-icon {
+            display: grid;
+            place-items: center;
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 14px;
+            background: #eff4ff;
+            border-radius: 50%;
+            font-size: 27px;
+        }
+
+        .confirmation-card h2 {
+            margin: 0 0 9px;
+            font-size: 23px;
+        }
+
+        .confirmation-card p {
+            margin: 0;
+            color: #667085;
+            line-height: 1.55;
+        }
+
+        .confirmation-total-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            color: white;
+            background: #172033;
+            border-radius: 13px;
+        }
+
+        .confirmation-total-box strong {
+            font-size: 21px;
+        }
+
+        .confirmation-actions {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 10px;
+        }
+
+        .modal-cancel-btn,
+        .modal-confirm-btn {
+            padding: 13px;
+            border-radius: 11px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .modal-cancel-btn {
+            color: #344054;
+            background: white;
+            border: 1px solid #d0d5dd;
+        }
+
+        .modal-confirm-btn {
+            color: white;
+            background: #12a150;
+            border: 1px solid #12a150;
+        }
+
+        .modal-confirm-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 760px) {
+
+            .customer-grid,
+            .charges-grid,
+            .menu-filter-box {
+                grid-template-columns: 1fr;
+            }
+
+            .item-heading {
+                display: none;
+            }
+
+            .item-row {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
+            .item-name,
+            .menu-select {
+                grid-column: 1 / -1;
+            }
+
+            .remove-btn {
+                grid-column: 1 / -1;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <div>
+
+            <h1>✏️ Edit Order</h1>
+
+            <div class="order-info">
+
+                Order:
+                <strong>{{ order.order_id }}</strong>
+
+                · Status:
+                <strong>{{ order.status }}</strong>
+
+            </div>
+
+        </div>
+
+        <a
+            href="{{ url_for('admin_dashboard') }}"
+            class="back-btn"
+        >
+            ← Admin Dashboard
+        </a>
+
+    </div>
+
+    {% with messages =
+        get_flashed_messages(with_categories=true)
+    %}
+
+        {% for category, message in messages %}
+
+            <div class="alert alert-{{ category }}">
+                {{ message }}
+            </div>
+
+        {% endfor %}
+
+    {% endwith %}
+
+    <div class="card">
+
+        <h2>Customer Details</h2>
+
+        <div class="customer-grid">
+
+            <div class="customer-box">
+
+                <div class="label">Customer</div>
+
+                <div class="value">
+                    {{ order.customer_name or "Customer" }}
+                </div>
+
+            </div>
+
+            <div class="customer-box">
+
+                <div class="label">Phone</div>
+
+                <div class="value">
+                    {{ order.phone or "-" }}
+                </div>
+
+            </div>
+
+            <div class="customer-box">
+
+                <div class="label">Payment</div>
+
+                <div class="value">
+
+                    {{ order.payment_type or "-" }}
+
+                    /
+
+                    {{ order.payment_status or "Pending" }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <form method="POST" id="editOrderForm">
+
+        <div class="card">
+
+            <h2>Existing Ordered Items</h2>
+
+            <div class="item-heading">
+
+                <div>Item</div>
+                <div>Quantity</div>
+                <div>Price</div>
+                <div>Total</div>
+                <div>Action</div>
+
+            </div>
+
+            {% for item in order.items %}
+
+                <div
+                    class="item-row existing-item"
+                >
+
+                    <div class="item-name">
+
+                        {{ item.item_name }}
+
+                        <span class="item-subtitle">
+                            {{ item.category or "Ordered item" }}
+                        </span>
+
+                    </div>
+
+                    <input
+                        type="number"
+                        name="quantity_{{ item.id }}"
+                        value="{{ item.quantity or 1 }}"
+                        min="1"
+                        class="quantity-input"
+                    >
+
+                    <div>
+                        ₹{{ "%.2f"|format(item.price or 0) }}
+                    </div>
+
+                    <div>
+
+                        ₹<span class="line-total">
+                            {{ "%.2f"|format(item.item_total()) }}
+                        </span>
+
+                    </div>
+
+                    <div>
+
+                        <input
+                            type="hidden"
+                            name="remove_item_{{ item.id }}"
+                            value="0"
+                            class="remove-value"
+                        >
+
+                        <button
+                            type="button"
+                            class="remove-btn"
+                            onclick="toggleExisting(this)"
+                        >
+                            Remove
+                        </button>
+
+                    </div>
+
+                    <input
+                        type="hidden"
+                        class="item-price"
+                        value="{{ item.price or 0 }}"
+                    >
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+        <div class="card">
+
+            <h2>Add Replacement or New Item</h2>
+
+            {% if menu_items %}
+
+                <div class="menu-filter-box">
+
+                    <div class="menu-search-wrap">
+
+                        <span class="search-icon">🔎</span>
+
+                        <input
+                            type="text"
+                            id="menuSearchInput"
+                            placeholder="Search item name..."
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+                    <select id="menuCategoryFilter">
+
+                        <option value="">
+                            All Categories
+                        </option>
+
+                        {% set categories = [] %}
+
+                        {% for menu_item in menu_items %}
+
+                            {% if menu_item.category
+                                and menu_item.category not in categories %}
+
+                                {% set _ = categories.append(menu_item.category) %}
+
+                                <option value="{{ menu_item.category|lower }}">
+                                    {{ menu_item.category }}
+                                </option>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div
+                    id="menuSearchResults"
+                    class="menu-search-results"
+                ></div>
+
+            {% endif %}
+
+            <div id="newItemsContainer"></div>
+
+            {% if menu_items %}
+
+                <button
+                    type="button"
+                    class="add-btn"
+                    onclick="addNewItem()"
+                >
+                    ＋ Select From Restaurant Menu
+                </button>
+
+            {% else %}
+
+                <p>
+                    No available menu items found for
+                    this restaurant.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+        <template id="newItemTemplate">
+
+            <div class="item-row new-item-row">
+
+                <select
+                    name="new_menu_item_id[]"
+                    class="menu-select"
+                    onchange="menuItemChanged(this)"
+                >
+
+                    <option value="">
+                        Select menu item
+                    </option>
+
+                    {% for menu_item in menu_items %}
+
+                        <option
+                            value="{{ menu_item.id }}"
+                            data-price="{{ menu_item.price or 0 }}"
+                            data-name="{{ menu_item.name|lower }}"
+                            data-category="{{ (menu_item.category or '')|lower }}"
+                        >
+
+                            {{ menu_item.name }}
+
+                            {% if menu_item.category %}
+                                · {{ menu_item.category }}
+                            {% endif %}
+
+                            — ₹{{
+                                "%.2f"|format(
+                                    menu_item.price or 0
+                                )
+                            }}
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <input
+                    type="number"
+                    name="new_item_quantity[]"
+                    value="1"
+                    min="1"
+                    class="quantity-input"
+                >
+
+                <div class="selected-price">
+                    ₹0.00
+                </div>
+
+                <div>
+                    ₹<span class="line-total">
+                        0.00
+                    </span>
+                </div>
+
+                <button
+                    type="button"
+                    class="remove-btn"
+                    onclick="removeNewItem(this)"
+                >
+                    Delete
+                </button>
+
+                <input
+                    type="hidden"
+                    class="item-price"
+                    value="0"
+                >
+
+            </div>
+
+        </template>
+
+        <div class="card">
+
+            <h2>Charges and Discounts</h2>
+
+            <div class="charges-grid">
+
+                <div class="field">
+
+                    <label>
+                        Delivery Charge
+                    </label>
+
+                    <input
+                        id="deliveryCharge"
+                        type="number"
+                        name="delivery_charge"
+                        min="0"
+                        step="0.01"
+                        value="{{
+                            '%.2f'|format(
+                                order.delivery_charge or 0
+                            )
+                        }}"
+                    >
+
+                </div>
+
+                <div class="field">
+
+                    <label>
+                        Extra Charge
+                    </label>
+
+                    <input
+                        id="extraCharge"
+                        type="number"
+                        name="extra_charge"
+                        min="0"
+                        step="0.01"
+                        value="{{
+                            '%.2f'|format(
+                                order.extra_charge or 0
+                            )
+                        }}"
+                    >
+
+                </div>
+
+                <div class="field">
+
+                    <label>
+                        Manual Discount
+                    </label>
+
+                    <input
+                        id="manualDiscount"
+                        type="number"
+                        name="manual_discount"
+                        min="0"
+                        step="0.01"
+                        value="{{
+                            '%.2f'|format(
+                                order.manual_discount or 0
+                            )
+                        }}"
+                    >
+
+                </div>
+
+            </div>
+
+            <label class="approval">
+
+                <input
+                    type="checkbox"
+                    name="customer_edit_approved"
+                    value="1"
+                    {% if order.customer_edit_approved %}
+                        checked
+                    {% endif %}
+                >
+
+                <span>
+
+                    Customer approved replacement items
+                    and updated amount.
+
+                </span>
+
+            </label>
+
+        </div>
+
+        <div class="card">
+
+            <h2>Reason for Editing</h2>
+
+            <textarea
+                name="edit_reason"
+                rows="4"
+                required
+                maxlength="500"
+                placeholder="Example: Item unavailable. Customer approved replacement."
+            >{{ order.order_edit_reason or "" }}</textarea>
+
+        </div>
+
+        <div class="card summary">
+
+            <h2>Updated Bill</h2>
+
+            <div class="summary-row">
+
+                <span>Items Total</span>
+
+                <strong>
+                    ₹<span id="itemsTotalPreview">
+                        {{ "%.2f"|format(order.items_total or 0) }}
+                    </span>
+                </strong>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>Delivery Charge</span>
+
+                <strong>
+                    ₹<span id="deliveryPreview">
+                        {{ "%.2f"|format(order.delivery_charge or 0) }}
+                    </span>
+                </strong>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>Extra Charge</span>
+
+                <strong>
+                    ₹<span id="extraPreview">
+                        {{ "%.2f"|format(order.extra_charge or 0) }}
+                    </span>
+                </strong>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>Coupon Discount</span>
+
+                <strong>
+                    − ₹<span id="couponDiscount">
+                        {{ "%.2f"|format(order.discount or 0) }}
+                    </span>
+                </strong>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>Restaurant Discount</span>
+
+                <strong>
+                    − ₹<span id="restaurantDiscount">
+                        {{
+                            "%.2f"|format(
+                                order.restaurant_offer_discount
+                                or 0
+                            )
+                        }}
+                    </span>
+                </strong>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>Coins Discount</span>
+
+                <strong>
+                    − ₹<span id="coinsDiscount">
+                        {{
+                            "%.2f"|format(
+                                order.coins_discount_amount
+                                or 0
+                            )
+                        }}
+                    </span>
+                </strong>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>Manual Discount</span>
+
+                <strong>
+                    − ₹<span id="manualPreview">
+                        {{
+                            "%.2f"|format(
+                                order.manual_discount or 0
+                            )
+                        }}
+                    </span>
+                </strong>
+
+            </div>
+
+            <div class="summary-row final-row">
+
+                <span>Final Total</span>
+
+                <span>
+                    ₹<span id="finalTotalPreview">
+                        {{
+                            "%.2f"|format(
+                                order.get_final_total()
+                            )
+                        }}
+                    </span>
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="actions">
+
+            <a
+                href="{{ url_for('admin_dashboard') }}"
+                class="back-btn"
+            >
+                Cancel
+            </a>
+
+            <button
+                type="submit"
+                class="save-btn"
+            >
+                Save Updated Order
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<div
+    id="saveConfirmationModal"
+    class="confirmation-modal"
+    aria-hidden="true"
+>
+
+    <div
+        class="confirmation-backdrop"
+        onclick="closeSaveConfirmation()"
+    ></div>
+
+    <div
+        class="confirmation-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmationTitle"
+    >
+
+        <div class="confirmation-icon">
+            ✏️
+        </div>
+
+        <h2 id="confirmationTitle">
+            Save Order Changes?
+        </h2>
+
+        <p>
+            The updated items and bill will immediately
+            appear wherever this order is displayed.
+        </p>
+
+        <div class="confirmation-total-box">
+
+            <span>Updated total</span>
+
+            <strong>
+                ₹<span id="modalFinalTotal">0.00</span>
+            </strong>
+
+        </div>
+
+        <div class="confirmation-actions">
+
+            <button
+                type="button"
+                class="modal-cancel-btn"
+                onclick="closeSaveConfirmation()"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="modal-confirm-btn"
+                id="confirmSaveButton"
+            >
+                Yes, Save Changes
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    const menuItemsData = [
+
+        {% for menu_item in menu_items %}
+
+        {
+            id: "{{ menu_item.id }}",
+            name: {{ menu_item.name|tojson }},
+            searchName: {{ menu_item.name|lower|tojson }},
+            category: {{ (menu_item.category or "Uncategorized")|tojson }},
+            searchCategory: {{ (menu_item.category or "")|lower|tojson }},
+            price: {{ menu_item.price or 0 }}
+        }{% if not loop.last %},{% endif %}
+
+        {% endfor %}
+
+    ];
+
+    let allowOrderFormSubmit = false;
+
+
+    function numberValue(value) {
+
+        const result = parseFloat(value);
+
+        return Number.isFinite(result)
+            ? result
+            : 0;
+    }
+
+
+    function toggleExisting(button) {
+
+        const row =
+            button.closest(".existing-item");
+
+        const removeInput =
+            row.querySelector(".remove-value");
+
+        const removing =
+            removeInput.value !== "1";
+
+        removeInput.value =
+            removing ? "1" : "0";
+
+        row.classList.toggle(
+            "removed",
+            removing
+        );
+
+        button.classList.toggle(
+            "active",
+            removing
+        );
+
+        button.textContent =
+            removing ? "Undo" : "Remove";
+
+        calculateTotal();
+    }
+
+
+    function addNewItem() {
+
+        const template =
+            document.getElementById(
+                "newItemTemplate"
+            );
+
+        const container =
+            document.getElementById(
+                "newItemsContainer"
+            );
+
+        const cloned =
+            template.content.cloneNode(true);
+
+        container.appendChild(cloned);
+
+        const rows =
+            container.querySelectorAll(
+                ".new-item-row"
+            );
+
+        const latestRow =
+            rows[rows.length - 1];
+
+        bindQuantity(latestRow);
+
+        calculateTotal();
+    }
+
+
+    function removeNewItem(button) {
+
+        button.closest(
+            ".new-item-row"
+        ).remove();
+
+        calculateTotal();
+    }
+
+
+    function menuItemChanged(select) {
+
+        const row =
+            select.closest(".new-item-row");
+
+        const selectedOption =
+            select.options[
+                select.selectedIndex
+            ];
+
+        const price = numberValue(
+            selectedOption.dataset.price
+        );
+
+        row.querySelector(
+            ".item-price"
+        ).value = price;
+
+        row.querySelector(
+            ".selected-price"
+        ).textContent =
+            `₹${price.toFixed(2)}`;
+
+        calculateTotal();
+    }
+
+
+    function bindQuantity(row) {
+
+        const input =
+            row.querySelector(
+                ".quantity-input"
+            );
+
+        if (input) {
+
+            input.addEventListener(
+                "input",
+                calculateTotal
+            );
+        }
+    }
+
+
+    function calculateTotal() {
+
+        let itemsTotal = 0;
+
+        document.querySelectorAll(
+            ".item-row"
+        ).forEach(row => {
+
+            const removeInput =
+                row.querySelector(
+                    ".remove-value"
+                );
+
+            if (
+                removeInput
+                && removeInput.value === "1"
+            ) {
+
+                const line =
+                    row.querySelector(
+                        ".line-total"
+                    );
+
+                if (line) {
+                    line.textContent = "0.00";
+                }
+
+                return;
+            }
+
+            const menuSelect =
+                row.querySelector(
+                    ".menu-select"
+                );
+
+            if (
+                menuSelect
+                && !menuSelect.value
+            ) {
+                return;
+            }
+
+            const quantityInput =
+                row.querySelector(
+                    ".quantity-input"
+                );
+
+            const priceInput =
+                row.querySelector(
+                    ".item-price"
+                );
+
+            if (
+                !quantityInput
+                || !priceInput
+            ) {
+                return;
+            }
+
+            const quantity = Math.max(
+                0,
+                numberValue(
+                    quantityInput.value
+                )
+            );
+
+            const price = Math.max(
+                0,
+                numberValue(
+                    priceInput.value
+                )
+            );
+
+            const rowTotal =
+                quantity * price;
+
+            const line =
+                row.querySelector(
+                    ".line-total"
+                );
+
+            if (line) {
+
+                line.textContent =
+                    rowTotal.toFixed(2);
+            }
+
+            itemsTotal += rowTotal;
+        });
+
+        const delivery = numberValue(
+            document.getElementById(
+                "deliveryCharge"
+            ).value
+        );
+
+        const extra = numberValue(
+            document.getElementById(
+                "extraCharge"
+            ).value
+        );
+
+        const manualDiscount = numberValue(
+            document.getElementById(
+                "manualDiscount"
+            ).value
+        );
+
+        const couponDiscount = numberValue(
+            document.getElementById(
+                "couponDiscount"
+            ).textContent
+        );
+
+        const restaurantDiscount = numberValue(
+            document.getElementById(
+                "restaurantDiscount"
+            ).textContent
+        );
+
+        const coinsDiscount = numberValue(
+            document.getElementById(
+                "coinsDiscount"
+            ).textContent
+        );
+
+        const finalTotal = Math.max(
+            0,
+            itemsTotal
+            + delivery
+            + extra
+            - couponDiscount
+            - restaurantDiscount
+            - coinsDiscount
+            - manualDiscount
+        );
+
+        document.getElementById(
+            "itemsTotalPreview"
+        ).textContent =
+            itemsTotal.toFixed(2);
+
+        document.getElementById(
+            "deliveryPreview"
+        ).textContent =
+            delivery.toFixed(2);
+
+        document.getElementById(
+            "extraPreview"
+        ).textContent =
+            extra.toFixed(2);
+
+        document.getElementById(
+            "manualPreview"
+        ).textContent =
+            manualDiscount.toFixed(2);
+
+        document.getElementById(
+            "finalTotalPreview"
+        ).textContent =
+            finalTotal.toFixed(2);
+    }
+
+
+    document.querySelectorAll(
+        ".item-row"
+    ).forEach(bindQuantity);
+
+
+    [
+        "deliveryCharge",
+        "extraCharge",
+        "manualDiscount"
+    ].forEach(id => {
+
+        document.getElementById(id)
+            .addEventListener(
+                "input",
+                calculateTotal
+            );
+    });
+
+
+    function escapeHtml(value) {
+
+        const element = document.createElement("div");
+
+        element.textContent = value ?? "";
+
+        return element.innerHTML;
+    }
+
+
+    function renderMenuSearchResults() {
+
+        const searchInput =
+            document.getElementById("menuSearchInput");
+
+        const categoryFilter =
+            document.getElementById("menuCategoryFilter");
+
+        const resultsBox =
+            document.getElementById("menuSearchResults");
+
+        if (!searchInput || !categoryFilter || !resultsBox) {
+            return;
+        }
+
+        const searchValue =
+            searchInput.value.trim().toLowerCase();
+
+        const categoryValue =
+            categoryFilter.value.trim().toLowerCase();
+
+        if (!searchValue && !categoryValue) {
+
+            resultsBox.innerHTML = "";
+
+            resultsBox.classList.remove("show");
+
+            return;
+        }
+
+        const filteredItems =
+            menuItemsData.filter(item => {
+
+                const matchesSearch =
+                    !searchValue
+                    || item.searchName.includes(searchValue);
+
+                const matchesCategory =
+                    !categoryValue
+                    || item.searchCategory === categoryValue;
+
+                return matchesSearch && matchesCategory;
+            });
+
+        resultsBox.innerHTML = "";
+
+        if (!filteredItems.length) {
+
+            resultsBox.innerHTML = `
+                <div class="no-menu-results">
+                    No menu items found.
+                </div>
+            `;
+
+            resultsBox.classList.add("show");
+
+            return;
+        }
+
+        filteredItems.forEach(item => {
+
+            const resultItem =
+                document.createElement("div");
+
+            resultItem.className =
+                "menu-result-item";
+
+            resultItem.innerHTML = `
+                <div>
+                    <span class="menu-result-name">
+                        ${escapeHtml(item.name)}
+                    </span>
+
+                    <span class="menu-result-category">
+                        ${escapeHtml(item.category)}
+                    </span>
+                </div>
+
+                <span class="menu-result-price">
+                    ₹${Number(item.price).toFixed(2)}
+                </span>
+            `;
+
+            resultItem.addEventListener(
+                "click",
+                function() {
+
+                    addSelectedMenuItem(item.id);
+
+                    searchInput.value = "";
+
+                    resultsBox.innerHTML = "";
+
+                    resultsBox.classList.remove("show");
+                }
+            );
+
+            resultsBox.appendChild(resultItem);
+        });
+
+        resultsBox.classList.add("show");
+    }
+
+
+    function addSelectedMenuItem(menuItemId) {
+
+        addNewItem();
+
+        const container =
+            document.getElementById(
+                "newItemsContainer"
+            );
+
+        const rows =
+            container.querySelectorAll(
+                ".new-item-row"
+            );
+
+        const latestRow =
+            rows[rows.length - 1];
+
+        if (!latestRow) {
+            return;
+        }
+
+        const select =
+            latestRow.querySelector(
+                ".menu-select"
+            );
+
+        select.value = String(menuItemId);
+
+        menuItemChanged(select);
+
+        latestRow.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+    }
+
+
+    function openSaveConfirmation() {
+
+        calculateTotal();
+
+        const modal =
+            document.getElementById(
+                "saveConfirmationModal"
+            );
+
+        const finalTotal =
+            document.getElementById(
+                "finalTotalPreview"
+            ).textContent;
+
+        document.getElementById(
+            "modalFinalTotal"
+        ).textContent = finalTotal;
+
+        modal.classList.add("show");
+
+        modal.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+        document.body.style.overflow =
+            "hidden";
+    }
+
+
+    function closeSaveConfirmation() {
+
+        const modal =
+            document.getElementById(
+                "saveConfirmationModal"
+            );
+
+        modal.classList.remove("show");
+
+        modal.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        document.body.style.overflow = "";
+    }
+
+
+    const menuSearchInput =
+        document.getElementById(
+            "menuSearchInput"
+        );
+
+    const menuCategoryFilter =
+        document.getElementById(
+            "menuCategoryFilter"
+        );
+
+    if (menuSearchInput) {
+
+        menuSearchInput.addEventListener(
+            "input",
+            renderMenuSearchResults
+        );
+    }
+
+    if (menuCategoryFilter) {
+
+        menuCategoryFilter.addEventListener(
+            "change",
+            renderMenuSearchResults
+        );
+    }
+
+
+    const editOrderForm =
+        document.getElementById(
+            "editOrderForm"
+        );
+
+    editOrderForm.addEventListener(
+        "submit",
+        function(event) {
+
+            if (allowOrderFormSubmit) {
+                return;
+            }
+
+            event.preventDefault();
+
+            if (!editOrderForm.reportValidity()) {
+                return;
+            }
+
+            openSaveConfirmation();
+        }
+    );
+
+
+    document.getElementById(
+        "confirmSaveButton"
+    ).addEventListener(
+        "click",
+        function() {
+
+            allowOrderFormSubmit = true;
+
+            this.disabled = true;
+
+            this.textContent =
+                "Saving Changes...";
+
+            closeSaveConfirmation();
+
+            editOrderForm.requestSubmit();
+        }
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        function(event) {
+
+            if (event.key === "Escape") {
+                closeSaveConfirmation();
+            }
+        }
+    );
+
+
+    calculateTotal();
+
+</script>
+
+</body>
+
+</html>

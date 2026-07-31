@@ -77,10 +77,11 @@ data-category-ids="{{ r.categories | map(attribute='id') | join(',') }}">
 {% endif %}
 
 <img
-src="/static/images/restaurants/{{ r.id }}.jpg"
+src="/static/images/restaurants/{{ r.id }}.webp"
 alt="{{ r.name }}"
 class="restaurant-img"
-onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';">
+loading="lazy"
+onerror="this.onerror=null;this.src='/static/images/restaurants/img1.webp';">
 
 <div class="tag-container">
 

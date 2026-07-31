@@ -24,9 +24,10 @@
                 <div class="mini-card-media">
 
                     <img
-                        src="/static/images/restaurants/{{ r.id }}.jpg"
+                        src="/static/images/restaurants/{{ r.id }}.webp"
                         alt="{{ r.name }}"
-                        onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';">
+                        loading="lazy"
+                        onerror="this.onerror=null;this.src='/static/images/restaurants/img1.webp';">
 
                     {% if is_new_restaurant(r) %}
                     <span class="corner-badge new-badge">NEW</span>
