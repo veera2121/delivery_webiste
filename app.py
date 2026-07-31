@@ -555,7 +555,8 @@ def make_whatsapp_link(order):
         "🚴 A delivery partner will be assigned shortly.\n\n"
 
         "📞 Support: 7207002650\n"
-        "🌐 Track your order on *RucHiGo Website/App*\n\n"
+        "📸 Instagram: https://instagram.com/ruchigo.in\n"
+        "🎉 Follow us for exciting offers, new restaurants & updates!\n\n"
 
         "Thank you for choosing *RucHiGo* 💙"
     )
