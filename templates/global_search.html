@@ -1849,6 +1849,77 @@ font-size:20px;
     }
 
 }
+
+.closed-restaurant-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+}
+
+.closed-popup-card {
+    width: 100%;
+    max-width: 360px;
+
+    padding: 24px 20px;
+
+    background: #ffffff;
+    border-radius: 22px;
+
+    text-align: center;
+
+    box-shadow:
+        0 22px 60px
+        rgba(15, 23, 42, 0.25);
+}
+
+.closed-popup-icon {
+    margin-bottom: 10px;
+    font-size: 42px;
+}
+
+.closed-popup-card h3 {
+    margin: 0 0 8px;
+
+    color: #172235;
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.closed-popup-card p {
+    margin: 0;
+
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.closed-popup-card strong {
+    color: #dc2626;
+}
+
+.closed-popup-button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px 16px;
+
+    color: #ffffff;
+    background: #2563eb;
+    border: none;
+    border-radius: 12px;
+
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+}
 </style>
 
 {% endblock %}
@@ -1949,7 +2020,31 @@ document.addEventListener(
                 ".search-chip"
             );
 
+document.addEventListener(
+    "click",
+    function (event) {
 
+        const closedCard =
+            event.target.closest(
+                '[data-closed-restaurant="true"]'
+            );
+
+        if (!closedCard) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const restaurantName =
+            closedCard.dataset.restaurantName
+            || "This restaurant";
+
+        showClosedRestaurantMessage(
+            restaurantName
+        );
+
+    }
+);
         /* =================================================
            REQUIRED ELEMENT CHECK
         ================================================= */
@@ -2591,22 +2686,31 @@ document.addEventListener(
 
 
                         return `
-
-                            <a
-                                href="${
-                                    escapeHtml(
-                                        menuUrl
-                                    )
-                                }"
-                                class="
-                                    restaurant-search-card
-                                    ${
-                                        isOpen
-                                            ? ""
-                                            : "restaurant-search-card-closed"
-                                    }
-                                "
-                            >
+ <a
+    href="${
+        isOpen
+            ? escapeHtml(menuUrl)
+            : "javascript:void(0)"
+    }"
+    class="
+        restaurant-search-card
+        ${
+            isOpen
+                ? ""
+                : "restaurant-search-card-closed"
+        }
+    "
+    ${
+        isOpen
+            ? ""
+            : `
+                data-closed-restaurant="true"
+                data-restaurant-name="${
+                    escapeHtml(name)
+                }"
+            `
+    }
+>
 
                                 <img
                                     src="${
@@ -3077,22 +3181,31 @@ function buildFoodImage(
 
             return `
 
-                <a
-                    href="${
-                        escapeHtml(
-                            menuUrl
-                        )
-                    }"
-                    class="
-                        global-search-card
-                        ${
-                            restaurantIsOpen
-                                ? ""
-                                : "global-search-card-closed"
-                        }
-                    "
-                >
-
+               <a
+    href="${
+        restaurantIsOpen
+            ? escapeHtml(menuUrl)
+            : "javascript:void(0)"
+    }"
+    class="
+        global-search-card
+        ${
+            restaurantIsOpen
+                ? ""
+                : "global-search-card-closed"
+        }
+    "
+    ${
+        restaurantIsOpen
+            ? ""
+            : `
+                data-closed-restaurant="true"
+                data-restaurant-name="${
+                    escapeHtml(restaurantName)
+                }"
+            `
+    }
+>
 <div
     class="
         global-search-card-image-wrapper
@@ -3721,7 +3834,81 @@ function buildFoodImage(
                 "0 items found";
 
         }
+function showClosedRestaurantMessage(
+    restaurantName
+) {
 
+    const existingPopup =
+        document.getElementById(
+            "closedRestaurantPopup"
+        );
+
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+
+    const popup =
+        document.createElement("div");
+
+    popup.id =
+        "closedRestaurantPopup";
+
+    popup.className =
+        "closed-restaurant-popup";
+
+    popup.innerHTML = `
+
+        <div class="closed-popup-card">
+
+            <div class="closed-popup-icon">
+                🕒
+            </div>
+
+            <h3>
+                Restaurant unavailable
+            </h3>
+
+            <p>
+                <strong>
+                    ${escapeHtml(restaurantName)}
+                </strong>
+                is currently closed or not accepting orders.
+            </p>
+
+            <button
+                type="button"
+                class="closed-popup-button"
+            >
+                Okay
+            </button>
+
+        </div>
+    `;
+
+    document.body.appendChild(
+        popup
+    );
+
+    popup.querySelector(
+        ".closed-popup-button"
+    ).addEventListener(
+        "click",
+        function () {
+            popup.remove();
+        }
+    );
+
+    popup.addEventListener(
+        "click",
+        function (event) {
+
+            if (event.target === popup) {
+                popup.remove();
+            }
+
+        }
+    );
+}
 
         /* =================================================
            PRICE FORMATTER
