@@ -52,6 +52,7 @@ body {
     min-height: 100vh;
 }
 
+
 /* Glass container */
 .glass {
     background: rgba(255, 255, 255, 0.15);
@@ -498,16 +499,18 @@ body {
    -------------------------------------------------------------------------- */
 :root{
 
-  /* =========================
-      BRAND COLORS
-  ========================== */
-
   --color-primary:#6D28D9;
   --color-primary-dark:#5B21B6;
   --color-primary-light:#A78BFA;
 
   --color-accent:#F97316;
   --color-accent-dark:#EA580C;
+
+  /* Delivery / Success */
+  --color-success:#16A34A;
+  --color-success-bg:#F0FDF4;
+  --color-success-border:#BBF7D0;
+
 
   /* =========================
       PAGE
@@ -1127,20 +1130,34 @@ body {
   color: var(--color-text-muted);
   line-height: 1.5;
 }
+.free-delivery{
+    color: var(--color-success);
+    background: var(--color-success-bg);
+    border: 1px solid var(--color-success-border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
 
-.free-delivery,
-.delivery-charge {
-  font-size: 12.5px;
-  font-weight: 600;
-  margin-top: 2px;
+.delivery-charge{
+    color:#6B7280;
+    font-size:13px;
+    margin-top:6px;
 }
 .free-delivery {
-  color: var(--color-accent-dark);
+    color: #16A34A !important;
+    background: #F0FDF4 !important;
+    border: 1px solid #BBF7D0 !important;
+    padding: 6px 10px;
+    border-radius: 8px;
 }
-.delivery-charge {
-  color: var(--color-text-muted);
+.free-delivery-test {
+    color: green;
+    background: #f0fdf4;
+    border: 1px solid #16a34a;
+    padding: 6px 10px;
 }
-
 /* --------------------------------------------------------------------------
    8. BUTTONS
    -------------------------------------------------------------------------- */
@@ -5830,6 +5847,355 @@ CONTENT
     padding:10px;
     opacity:.8;
 }
+/* =====================================================
+   RUCHIGO 3000 CELEBRATION — ISOLATED
+===================================================== */
+
+/* =====================================================
+   RUCHIGO 3000+ PREMIUM MILESTONE CARD
+===================================================== */
+
+.ruchi3000-premium {
+    position: relative;
+    width: calc(100% - 24px);
+    max-width: 650px;
+    margin: 18px auto;
+    padding: 28px 18px 24px;
+
+    box-sizing: border-box;
+    overflow: hidden;
+    isolation: isolate;
+
+    text-align: center;
+
+    border-radius: 24px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(245,250,255,.98),
+            rgba(255,255,255,1) 48%,
+            rgba(240,255,246,.98)
+        );
+
+    border: 1px solid rgba(0,0,0,.05);
+
+    box-shadow:
+        0 12px 35px rgba(0,0,0,.10),
+        inset 0 1px 0 rgba(255,255,255,.8);
+
+    animation: ruchi3000CardEnter .7s ease;
+}
+
+
+/* SOFT BACKGROUND GLOW */
+
+.ruchi3000-glow {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    filter: blur(45px);
+    opacity: .22;
+    z-index: 0;
+}
+
+.glow-left {
+    top: -60px;
+    left: -45px;
+    background: #208cff;
+}
+
+.glow-right {
+    right: -45px;
+    bottom: -60px;
+    background: #13b45b;
+}
+
+
+/* CONTENT */
+
+.ruchi3000-content {
+    position: relative;
+    z-index: 3;
+}
+
+
+/* BADGE */
+
+.ruchi3000-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 6px 13px;
+
+    border-radius: 999px;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1.1px;
+
+    color: #444;
+
+    background: rgba(255,255,255,.85);
+
+    border: 1px solid rgba(0,0,0,.06);
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,.06);
+}
+
+
+/* BIG NUMBER */
+
+.ruchi3000-number {
+    margin-top: 10px;
+
+    font-size: clamp(52px, 12vw, 74px);
+
+    line-height: .95;
+
+    font-weight: 950;
+
+    letter-spacing: -4px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #1687ff,
+            #0f6edf 45%,
+            #12a94e
+        );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+
+    -webkit-text-fill-color: transparent;
+
+    text-shadow:
+        0 10px 25px rgba(18,120,220,.08);
+
+    animation:
+        ruchi3000NumberPop .9s cubic-bezier(.2,.8,.25,1.25);
+}
+
+.ruchi3000-number span {
+    font-size: .52em;
+    vertical-align: top;
+    margin-left: 2px;
+}
+
+
+/* ORDERS TEXT */
+
+.ruchi3000-orders {
+    margin-top: 5px;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    letter-spacing: 3px;
+
+    text-transform: uppercase;
+
+    color: #333;
+}
+
+
+/* DIVIDER */
+
+.ruchi3000-divider {
+    width: 58px;
+    height: 4px;
+
+    margin: 15px auto 14px;
+
+    border-radius: 100px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #1687ff,
+            #16a957
+        );
+}
+
+
+/* THANK YOU */
+
+.ruchi3000-thanks {
+    font-size: 15px;
+    font-weight: 750;
+
+    color: #222;
+
+    line-height: 1.5;
+}
+
+.ruchi3000-sub {
+    max-width: 500px;
+
+    margin: 7px auto 0;
+
+    font-size: 12.5px;
+
+    line-height: 1.6;
+
+    color: #777;
+}
+
+
+/* BRAND */
+
+.ruchi3000-brand {
+    display: inline-block;
+
+    margin-top: 14px;
+
+    padding: 5px 12px;
+
+    border-radius: 9px;
+
+    font-size: 15px;
+    font-weight: 900;
+
+    color: #1687ff;
+
+    background: rgba(255,255,255,.8);
+
+    box-shadow:
+        0 3px 10px rgba(0,0,0,.05);
+}
+
+.ruchi3000-brand span {
+    color: #16a957;
+}
+
+
+/* PARTICLES */
+
+.ruchi3000-particles {
+    position: absolute;
+
+    inset: 0;
+
+    overflow: hidden;
+
+    pointer-events: none;
+
+    z-index: 2;
+}
+
+.ruchi3000-particle {
+    position: absolute;
+
+    left: 50%;
+    top: 44%;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    animation:
+        ruchi3000Burst 1.7s ease-out forwards;
+}
+
+
+/* ENTRY */
+
+@keyframes ruchi3000CardEnter {
+
+    from {
+        opacity: 0;
+        transform:
+            translateY(16px)
+            scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+
+/* NUMBER POP */
+
+@keyframes ruchi3000NumberPop {
+
+    0% {
+        opacity: 0;
+        transform: scale(.35);
+    }
+
+    65% {
+        opacity: 1;
+        transform: scale(1.10);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+
+/* PARTICLE BURST */
+
+@keyframes ruchi3000Burst {
+
+    0% {
+        opacity: 1;
+
+        transform:
+            translate(0,0)
+            scale(.4)
+            rotate(0deg);
+    }
+
+    75% {
+        opacity: .9;
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+            translate(
+                var(--ruchi-x),
+                var(--ruchi-y)
+            )
+            scale(1.15)
+            rotate(360deg);
+    }
+}
+
+
+/* MOBILE */
+
+@media (max-width: 480px) {
+
+    .ruchi3000-premium {
+        padding: 24px 14px 21px;
+        border-radius: 20px;
+    }
+
+    .ruchi3000-orders {
+        font-size: 11px;
+        letter-spacing: 2.4px;
+    }
+
+    .ruchi3000-thanks {
+        font-size: 14px;
+    }
+
+    .ruchi3000-sub {
+        font-size: 11.5px;
+    }
+}
 </style>
 
 <header class="app-header">
@@ -6089,17 +6455,44 @@ CONTENT
         <small id="orderStatus">Tracking live activity</small>
     </div>
 </section>  
-<div class="celebration-mini">
-    <div class="mini-overlay"></div>
+<div class="ruchi3000-premium">
 
-    <div class="mini-content">
-        <span class="mini-emoji">🎉</span>
+    <div class="ruchi3000-glow glow-left"></div>
+    <div class="ruchi3000-glow glow-right"></div>
 
-        <div class="mini-text">
-            <h3>2000+ Orders Received</h3>
-            <p>Thank you for trusting <strong>Ruchigo ❤️</strong></p>
+    <div class="ruchi3000-particles" id="ruchi3000Particles"></div>
+
+    <div class="ruchi3000-content">
+
+        <div class="ruchi3000-badge">
+            🎉 MILESTONE UNLOCKED
         </div>
+
+        <div class="ruchi3000-number">
+            3000<span>+</span>
+        </div>
+
+        <div class="ruchi3000-orders">
+            Orders Received
+        </div>
+
+        <div class="ruchi3000-divider"></div>
+
+        <div class="ruchi3000-thanks">
+            Thank you Malikipuram & surrounding areas ❤️
+        </div>
+
+        <div class="ruchi3000-sub">
+            Every order, every repeat customer, every recommendation
+            helped us reach this moment.
+        </div>
+
+        <div class="ruchi3000-brand">
+            RucHi<span>Go</span>
+        </div>
+
     </div>
+
 </div>
 <!-- 🚨 Emergency Banner
 <div id="orderAlert" class="alert-overlay">
@@ -7804,7 +8197,98 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script> 
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
+    const box = document.getElementById("ruchi3000Particles");
+
+    if (!box) return;
+
+    const icons = [
+        "✨",
+        "💫",
+        "⭐",
+        "🎉",
+        "🎊"
+    ];
+
+    function createParticleBurst(count = 8) {
+
+        for (let i = 0; i < count; i++) {
+
+            const particle = document.createElement("span");
+
+            particle.className = "ruchi3000-particle";
+
+            particle.textContent =
+                icons[Math.floor(Math.random() * icons.length)];
+
+            const angle =
+                Math.random() * Math.PI * 2;
+
+            const distanceX =
+                70 + Math.random() * 140;
+
+            const distanceY =
+                40 + Math.random() * 90;
+
+            const x =
+                Math.cos(angle) * distanceX;
+
+            const y =
+                Math.sin(angle) * distanceY;
+
+            particle.style.setProperty(
+                "--ruchi-x",
+                `${x}px`
+            );
+
+            particle.style.setProperty(
+                "--ruchi-y",
+                `${y}px`
+            );
+
+            particle.style.fontSize =
+                `${10 + Math.random() * 12}px`;
+
+            box.appendChild(particle);
+
+            /* Remove individual particle after animation */
+            setTimeout(() => {
+                particle.remove();
+            }, 2000);
+        }
+    }
+
+
+    /* BIG CELEBRATION WHEN PAGE OPENS */
+
+    createParticleBurst(25);
+
+
+    /* CONTINUOUS SPARKLES */
+
+    const sparkleInterval = setInterval(() => {
+
+        createParticleBurst(6);
+
+    }, 700);
+
+
+    /* STOP AFTER 10 SECONDS */
+
+    setTimeout(() => {
+
+        clearInterval(sparkleInterval);
+
+        setTimeout(() => {
+            box.innerHTML = "";
+        }, 2000);
+
+    }, 10000);
+
+});
+</script>
 <div id="locationPopup" class="location-popup hidden">
   <div class="popup-card">
     <span class="popup-arrow"></span>
