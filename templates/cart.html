@@ -157,20 +157,90 @@ color:rgba(255,255,255,.85);
 }
 
 
+/* ============================================================
+   YOUR ORDER HEADER
+============================================================ */
 
+.cart-items-section {
+    margin-bottom: 18px;
+}
+
+.cart-items-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding: 4px 2px 10px;
+    margin-bottom: 12px;
+
+    border-bottom: 1px solid #edf2f7;
+}
+
+.cart-items-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cart-items-icon {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background: #f5f7ff;
+
+    font-size: 19px;
+}
+
+.cart-items-header h2 {
+    margin: 0;
+
+    font-size: 17px;
+    font-weight: 700;
+
+    color: #111827;
+}
+
+.cart-items-header p {
+    margin: 2px 0 0;
+
+    font-size: 12px;
+
+    color: #6b7280;
+}
+
+.cart-item-count {
+    padding: 6px 10px;
+
+    border-radius: 999px;
+
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    color: #4b5563;
+
+    white-space: nowrap;
+}
 
 /* ITEMS */
 
-.cart-list{
+.cart-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 
-    display:flex;
-
-    flex-direction:column;
-
-    gap:16px;
-
-    margin-top:18px;
-
+    /* Header already provides spacing */
+    margin-top: 0;
 }
 
 
@@ -1089,6 +1159,7 @@ font-size:16px;
     padding:16px;
 
     margin-top:16px;
+    margin-bottom: 15px;
 
     border-radius:20px;
 
@@ -1506,18 +1577,18 @@ font-size:17px;
 
 font-weight:800;
 
-color:white;
+color:rgb(0, 0, 0);
 
 background:
 
 linear-gradient(
 135deg,
-#02c42c,
-hwb(118 25% 6%)
+#02c4a4,
+hwb(185 16% 6%)
 );
 
 box-shadow:
-0 12px 28px rgba(255,107,0,.25);
+0 12px 28px rgba(255, 0, 217, 0.25);
 
 transition:.25s;
 
@@ -1529,7 +1600,7 @@ transition:.25s;
 transform:translateY(-2px);
 
 box-shadow:
-0 18px 35px rgba(255,107,0,.35);
+0 18px 35px rgba(242, 0, 255, 0.35);
 
 }
 
@@ -3430,7 +3501,184 @@ box-shadow:
         font-size:13px;
     }
 }
+/* ============================================================
+   CART ITEMS SECTION
+============================================================ */
 
+.cart-items-section {
+    margin-bottom: 20px;
+}
+
+
+/* ============================================================
+   CART HEADER
+============================================================ */
+
+.cart-items-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 12px 14px;
+
+    margin-bottom: 12px;
+
+    background: #f8fafc;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 14px;
+}
+
+
+/* ============================================================
+   LEFT SIDE
+============================================================ */
+
+.cart-items-title {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    min-width: 0;
+}
+
+
+/* ============================================================
+   ICON
+============================================================ */
+
+.cart-items-icon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    background: #eef2ff;
+
+    font-size: 20px;
+}
+
+
+/* ============================================================
+   TITLE
+============================================================ */
+
+.cart-items-header h2 {
+    margin: 0;
+
+    font-size: 17px;
+    font-weight: 700;
+
+    color: #111827;
+
+    line-height: 1.2;
+}
+
+
+/* ============================================================
+   SUB TITLE
+============================================================ */
+
+.cart-items-header p {
+    margin: 3px 0 0;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    color: #6b7280;
+
+    line-height: 1.3;
+}
+
+
+/* ============================================================
+   ITEM COUNT
+============================================================ */
+
+.cart-item-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    min-width: 56px;
+
+    padding: 6px 10px;
+
+    border-radius: 999px;
+
+    background: #ffffff;
+
+    border: 1px solid #dbe3ee;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    color: #374151;
+
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   CART LIST
+============================================================ */
+
+.cart-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+
+    margin-top: 0;
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 480px) {
+
+    .cart-items-header {
+        padding: 11px 12px;
+    }
+
+    .cart-items-icon {
+        width: 38px;
+        height: 38px;
+
+        font-size: 18px;
+    }
+
+    .cart-items-header h2 {
+        font-size: 16px;
+    }
+
+    .cart-items-header p {
+        font-size: 11px;
+    }
+
+    .cart-item-count {
+        padding: 5px 8px;
+        min-width: 50px;
+    color: #002fff;
+        font-size: 15px;
+        
+    }
+
+}
 </style>
 </head>
 <body> 
@@ -3451,10 +3699,9 @@ box-shadow:
 
 
 <div class="conv-urgency">
-    ⏳ Almost there! Complete your order in <b>10 seconds</b><br>
-    🚀 Riders nearby • Delivery in <b>25–30 mins</b>
+    🛍️ <strong>Your order is almost ready!</strong><br>
+    📍 Please review your items, delivery location & payment method before confirming.
 </div>
-
 
 
 
@@ -3472,27 +3719,7 @@ box-shadow:
         <input type="hidden" name="customer_lat" id="customer_lat">
         <input type="hidden" name="customer_lng" id="customer_lng">
 
-<div class="location-section">
-    <div class="location-wrapper">
 
-        <button type="button" class="location-btn" onclick="handleLocationClick()">
-            📍 Click For Delivery Location
-        </button>
-
-        <!-- 👆 Hint Popup -->
-        <div class="location-hint" id="locationHint">
-            👆 Tap here to enable Delivery location
-        </div>
-
-        <!-- 📋 Steps -->
-        <ul class="location-steps">
-            <li>1️⃣ Click the button</li>
-            <li>2️⃣ Tap <b>Allow</b></li>
-            <li>3️⃣ Location auto-filled</li>
-        </ul>
-
-    </div>
-</div>
 {% with messages = get_flashed_messages() %}
   {% if messages %}
     <div class="alert alert-danger">
@@ -3502,31 +3729,408 @@ box-shadow:
     </div>
   {% endif %}
 {% endwith %}
-<!-- MAP -->
-<div id="map-box" style="position: relative;">
- <div id="center-marker">
-    📍
-</div>
-    <!-- MAP STATUS MESSAGE -->
-    <div id="location-status" class="location-status map-status"></div>
 
-    <!-- 🔵 LOCATION LOADER OVERLAY -->
-    <div id="map-loader" class="map-loader" style="display:none;">
-        <div class="gps-loader"></div>
-        <p>📍 Detecting your location...</p>
+<!-- =========================================================
+     DELIVERY LOCATION SUMMARY
+========================================================== -->
+
+<div
+    id="delivery-location-summary"
+    style="
+        padding:12px 13px;
+        border-radius:12px;
+        background:#ecfdf5;
+        border:1px solid #22c55e;
+        margin-bottom:10px;
+    ">
+
+    <!-- LOCATION STATUS -->
+    <div
+        style="
+            font-weight:700;
+            margin-bottom:4px;
+        ">
+        ✅ Delivery location selected
     </div>
 
-    <!-- Map -->
-    <div id="map" style="height: 300px;"></div>
 
-    <p class="text-danger mt-2">
-        Please select your delivery location
-    </p>
+    <div
+        style="
+            font-size:13px;
+            line-height:1.4;
+            color:#444;
+        ">
+        Your saved delivery location will be used for this order.
+    </div>
+
+
+    <!-- =====================================================
+         DISTANCE + ESTIMATED TIME
+    ====================================================== -->
+
+    <div
+        id="summary-distance-row"
+        style="
+            display:none;
+            margin-top:9px;
+            padding-top:9px;
+            border-top:1px solid #bbf7d0;
+        ">
+
+        <div
+            id="summary-distance-value"
+            style="
+                font-size:13px;
+                line-height:1.5;
+                color:#1f2937;
+            ">
+
+            ⏳ Calculating distance...
+
+        </div>
+
+    </div>
 
 </div>
+<!-- =========================================================
+     OPEN / HIDE MAP BUTTON
+========================================================== -->
+
+<button
+    type="button"
+    id="toggle-map-section-btn"
+    onclick="toggleDeliveryMapSection()"
+    style="
+        width:100%;
+        padding:12px;
+        border:1px solid #2563eb;
+        border-radius:12px;
+        background:white;
+        color:#2563eb;
+        font-size:14px;
+        font-weight:700;
+        cursor:pointer;
+        margin-bottom:10px;
+    ">
+
+    🗺️ View delivery map
+
+</button>
 
 
+<!-- =========================================================
+     COLLAPSIBLE MAP SECTION
+========================================================== -->
 
+<div
+    id="delivery-map-section"
+    style="
+        display:none;
+    ">
+
+
+    <!-- =====================================================
+         YOUR EXISTING MAP BOX STARTS HERE
+    ====================================================== -->
+
+    <div id="map-box" style="position:relative;">
+
+
+        <!-- STATUS MESSAGE -->
+        <div
+            id="location-status"
+            class="location-status map-status"
+            style="display:none;">
+        </div>
+
+
+        <!-- GPS LOADER -->
+        <div
+            id="map-loader"
+            class="map-loader"
+            style="display:none;">
+
+            <div class="gps-loader"></div>
+
+            <p>
+                📍 Detecting your current location...
+            </p>
+
+        </div>
+
+
+        <!-- MAP WRAPPER -->
+        <div
+            id="map-wrapper"
+            style="
+                position:relative;
+                width:100%;
+            ">
+
+
+            <!-- FIXED PIN -->
+            <div
+                id="center-marker"
+                style="
+                    position:absolute;
+                    left:50%;
+                    top:50%;
+                    transform:translate(-50%, -100%);
+                    z-index:15;
+                    font-size:36px;
+                    pointer-events:none;
+                ">
+
+                📍
+
+            </div>
+
+
+            <!-- GOOGLE MAP -->
+            <div
+                id="map"
+                style="
+                    height:300px;
+                    width:100%;
+                    border-radius:14px;
+                    overflow:hidden;
+                ">
+            </div>
+
+
+            <!-- FULLSCREEN -->
+            <button
+                type="button"
+                id="custom-map-fullscreen-btn"
+                onclick="toggleMapFullscreen()"
+                style="
+                    display:none;
+                    position:absolute;
+                    top:10px;
+                    right:10px;
+                    z-index:30;
+                    width:40px;
+                    height:40px;
+                    border:none;
+                    border-radius:8px;
+                    background:white;
+                    font-size:20px;
+                    cursor:pointer;
+                ">
+
+                ⛶
+
+            </button>
+
+
+            <!-- LOCKED MAP LAYER -->
+            <div
+                id="map-lock-layer"
+                onclick="showLockedMapMessage()"
+                style="
+                    position:absolute;
+                    inset:0;
+                    z-index:20;
+                    background:transparent;
+                    display:none;
+                ">
+            </div>
+
+
+            <!-- LOCK MESSAGE -->
+            <div
+                id="map-locked-message"
+                style="
+                    display:none;
+                    position:absolute;
+                    left:50%;
+                    bottom:16px;
+                    transform:translateX(-50%);
+                    z-index:40;
+                    width:90%;
+                    max-width:360px;
+                    padding:10px 12px;
+                    border-radius:10px;
+                    background:rgba(20,20,20,0.90);
+                    color:white;
+                    font-size:13px;
+                    text-align:center;
+                ">
+
+                📍 Delivery location already selected.
+                <br>
+
+                Tap <b>Change location</b>
+                to choose another address.
+
+            </div>
+
+        </div>
+
+
+        <!-- LOCATION INFORMATION -->
+        <div
+            id="location-help-box"
+            style="
+                margin-top:10px;
+                padding:12px;
+                border-radius:12px;
+                background:#f8fafc;
+                border:1px solid #e5e7eb;
+            ">
+
+            <div
+                id="location-help-title"
+                style="
+                    font-weight:700;
+                    margin-bottom:4px;
+                ">
+
+                📍 Delivery location
+
+            </div>
+
+            <div id="location-help-text">
+
+                Detecting your delivery location...
+
+            </div>
+
+        </div>
+
+
+        <!-- RESTAURANT DISTANCE -->
+        <div
+            id="restaurant-distance-box"
+            style="
+                display:none;
+                margin-top:8px;
+                padding:10px 12px;
+                border-radius:10px;
+                background:#eef7ff;
+                font-size:14px;
+                font-weight:600;
+            ">
+
+            🚚
+
+            <span id="restaurant-distance-text">
+                Calculating distance...
+            </span>
+
+        </div>
+
+
+        <!-- NORMAL LOCATION BUTTONS -->
+        <div
+            id="normal-location-controls"
+            style="
+                display:flex;
+                gap:8px;
+                margin-top:10px;
+            ">
+
+
+            <button
+                type="button"
+                onclick="getUserLocation(true)"
+                style="
+                    flex:1;
+                    padding:11px;
+                    border:none;
+                    border-radius:10px;
+                    font-weight:700;
+                    cursor:pointer;
+                ">
+
+                🎯 Use current location
+
+            </button>
+
+
+            <button
+                type="button"
+                id="change-location-btn"
+                onclick="enableManualLocationMode()"
+                style="
+                    flex:1;
+                    padding:11px;
+                    border:none;
+                    border-radius:10px;
+                    font-weight:700;
+                    cursor:pointer;
+                ">
+
+                🗺️ Change location
+
+            </button>
+
+        </div>
+
+
+        <!-- MANUAL MODE -->
+        <div
+            id="manual-location-controls"
+            style="
+                display:none;
+                margin-top:10px;
+            ">
+
+
+            <div
+                style="
+                    padding:10px 12px;
+                    margin-bottom:10px;
+                    background:#fff8e1;
+                    border-radius:10px;
+                ">
+
+                📍 Move the map and place the pin exactly on
+                your delivery address.
+
+            </div>
+
+
+            <button
+                type="button"
+                onclick="confirmManualLocation()"
+                style="
+                    width:100%;
+                    padding:13px;
+                    border:none;
+                    border-radius:10px;
+                    font-weight:700;
+                    margin-bottom:8px;
+                    cursor:pointer;
+                ">
+
+                ✅ Confirm this delivery location
+
+            </button>
+
+
+            <button
+                type="button"
+                onclick="cancelManualLocation()"
+                style="
+                    width:100%;
+                    padding:11px;
+                    border:1px solid #ccc;
+                    border-radius:10px;
+                    background:white;
+                    font-weight:600;
+                    cursor:pointer;
+                ">
+
+                ✕ Cancel location change
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
 <!-- SINGLE SOURCE OF TRUTH -->
 <input type="hidden" name="latitude" id="latitude">
 <input type="hidden" name="longitude" id="longitude">
@@ -3541,7 +4145,41 @@ box-shadow:
     <input type="hidden" name="apply_coupon" id="apply_coupon_input" value="false">
 
     <!-- Cart Items -->
-    <div id="cart-items" class="cart-list"></div>
+<!-- =========================================================
+     CART ITEMS SECTION
+========================================================== -->
+
+<section class="cart-items-section">
+
+    <div class="cart-items-header">
+
+        <div class="cart-items-title">
+
+            <span class="cart-items-icon">🛍️</span>
+
+            <div>
+                <h2>Your Order</h2>
+                <p>Review your items before checkout</p>
+            </div>
+
+        </div>
+
+        <span
+            id="cart-item-count"
+            class="cart-item-count">
+            0 items
+        </span>
+
+    </div>
+
+
+    <!-- CART ITEMS -->
+    <div
+        id="cart-items"
+        class="cart-list">
+    </div>
+
+</section>
 <section id="recommend-section" class="recommend-section" style="display:none;">
 
     <div class="recommend-header">
@@ -3638,37 +4276,314 @@ box-shadow:
         <strong>₹<span id="final-total">0</span></strong>
     </div>
 </div>
+<!-- =========================================================
+     SAVED DELIVERY DETAILS SUMMARY
+========================================================== -->
 
-       <!-- Customer Details -->
-<div class="address-card customer-card">
-    <h3>Customer Details</h3>
-    <input name="name" placeholder="Full Name" required>
-    <input name="email" placeholder="Email">
-    <input name="phone" placeholder="Phone Number" required>
-    <input name="alt_phone" placeholder="Alternate Phone">
-    <select name="address_type">
-        <option value="Home">Home</option>
-        <option value="Office">Office</option>
-    </select>
+<div
+    id="saved-address-summary"
+    style="
+        display:none;
+        padding:14px;
+        margin-bottom:10px;
+        border-radius:12px;
+        background:#ecfdf5;
+        border:1px solid #22c55e;
+    "
+>
 
+    <div style="
+        font-weight:700;
+        font-size:15px;
+        margin-bottom:7px;
+    ">
+        ✅ Delivery details ready
+    </div>
 
-<!-- Delivery Address -->
-<div class="address-card delivery-card">
-    <h3>Delivery Address</h3>
-    <input name="house_no" placeholder="House / Flat No" required>
-    <input name="landmark" placeholder="Landmark" required>
-    <input name="city" placeholder="City" required>
-    <input name="state" placeholder="State" required>
-    <input name="pincode" placeholder="Pincode" required>
-    <textarea name="delivery_note" placeholder="Delivery instructions (optional)"></textarea> 
+    <div
+        id="saved-customer-name"
+        style="
+            font-weight:600;
+            margin-bottom:4px;
+        ">
+    </div>
+
+    <div
+        id="saved-customer-phone"
+        style="
+            font-size:13px;
+            margin-bottom:4px;
+        ">
+    </div>
+
+    <div
+        id="saved-customer-address"
+        style="
+            font-size:13px;
+            line-height:1.5;
+        ">
+    </div>
+
 </div>
-    <!-- Save Address Option -->
-<label class="save-address">
-  <input type="checkbox" id="save-address">
-  <span>Save this address for future orders</span>
-</label>
 
 
+<!-- =========================================================
+     VIEW / EDIT BUTTON
+========================================================== -->
+
+<button
+    type="button"
+    id="toggle-address-btn"
+    onclick="openAddressSection()"
+    style="
+        display:none;
+        width:100%;
+        padding:12px;
+        margin-bottom:12px;
+        border:1px solid #2563eb;
+        border-radius:12px;
+        background:white;
+        color:#2563eb;
+        font-size:14px;
+        font-weight:700;
+        cursor:pointer;
+    "
+>
+    ✏️ View / Edit delivery details
+</button>
+
+
+<!-- =========================================================
+     CUSTOMER + ADDRESS FORM
+
+     IMPORTANT:
+     Starts hidden.
+     JavaScript decides whether to open it.
+========================================================== -->
+
+<div
+    id="customer-address-section"
+    style="display:none;"
+>
+
+
+    <!-- =====================================================
+         CUSTOMER DETAILS
+    ====================================================== -->
+
+    <div class="address-card customer-card">
+
+        <h3>Customer Details</h3>
+
+
+        <input
+            type="text"
+            id="customer_name"
+            name="name"
+            placeholder="Full Name"
+            autocomplete="name"
+            required
+        >
+
+
+        <input
+            type="email"
+            id="customer_email"
+            name="email"
+            placeholder="Email (optional)"
+            autocomplete="email"
+        >
+
+
+        <input
+            type="tel"
+            id="phone"
+            name="phone"
+            placeholder="Phone Number"
+            inputmode="tel"
+            autocomplete="tel"
+            required
+            oninput="formatIndianPhone(this)"
+        >
+
+
+        <div
+            id="phone-error"
+            style="
+                display:none;
+                color:#dc2626;
+                font-size:12px;
+                margin-bottom:8px;
+            "
+        >
+            Enter a valid 10-digit Indian mobile number.
+        </div>
+
+
+        <input
+            type="tel"
+            id="alt_phone"
+            name="alt_phone"
+            placeholder="Alternate Phone (optional)"
+            inputmode="tel"
+            oninput="formatIndianPhone(this)"
+        >
+
+
+        <div
+            id="alt-phone-error"
+            style="
+                display:none;
+                color:#dc2626;
+                font-size:12px;
+                margin-bottom:8px;
+            "
+        >
+            Enter a valid 10-digit alternate mobile number.
+        </div>
+
+
+        <select
+            id="address_type"
+            name="address_type"
+        >
+            <option value="Home">🏠 Home</option>
+            <option value="Office">🏢 Office</option>
+            <option value="Other">📍 Other</option>
+        </select>
+
+    </div>
+
+
+    <!-- =====================================================
+         DELIVERY ADDRESS
+    ====================================================== -->
+
+    <div class="address-card delivery-card">
+
+        <h3>Delivery Address</h3>
+
+
+        <input
+            type="text"
+            id="house_no"
+            name="house_no"
+            placeholder="House / Flat No"
+            required
+        >
+
+
+        <input
+            type="text"
+            id="landmark"
+            name="landmark"
+            placeholder="Landmark"
+            required
+        >
+
+
+        <input
+            type="text"
+            id="city"
+            name="city"
+            placeholder="City / Village"
+            required
+        >
+
+
+        <input
+            type="text"
+            id="state"
+            name="state"
+            placeholder="State"
+            required
+        >
+
+
+        <input
+            type="text"
+            id="pincode"
+            name="pincode"
+            placeholder="Pincode"
+            inputmode="numeric"
+            maxlength="6"
+            required
+            oninput="formatPincode(this)"
+        >
+
+
+        <div
+            id="pincode-error"
+            style="
+                display:none;
+                color:#dc2626;
+                font-size:12px;
+                margin-bottom:8px;
+            "
+        >
+            Enter a valid 6-digit pincode.
+        </div>
+
+
+        <textarea
+            id="delivery_note"
+            name="delivery_note"
+            placeholder="Delivery instructions (optional)"
+        ></textarea>
+
+    </div>
+
+
+    <!-- =====================================================
+         SAVE FOR FUTURE
+    ====================================================== -->
+
+    <label
+        style="
+            display:flex;
+            align-items:center;
+            gap:8px;
+            margin-top:10px;
+            cursor:pointer;
+        "
+    >
+
+        <input
+            type="checkbox"
+            id="save-address"
+        >
+
+        <span>
+            Save these details for future orders
+        </span>
+
+    </label>
+
+
+    <!-- =====================================================
+         CONFIRM BUTTON
+    ====================================================== -->
+
+    <button
+        type="button"
+        onclick="confirmCustomerAddress()"
+        style="
+            width:100%;
+            margin-top:12px;
+            padding:13px;
+            border:none;
+            border-radius:12px;
+            background:#16a34a;
+            color:white;
+            font-size:15px;
+            font-weight:700;
+            cursor:pointer;
+        "
+    >
+        ✅ Confirm delivery details
+    </button>
+
+</div>
 
 <div class="order-value-card">
 
@@ -3800,14 +4715,32 @@ or choose
 
 </div>
 {% if not restaurant.can_accept_orders %}
-<button type="button" class="conv-cta disabled" disabled
-        title="Orders are not accepted at this time">
+
+
+<button
+    type="button"
+    class="conv-cta disabled"
+    id="confirm-order-btn"
+    disabled
+    title="Orders are not accepted at this time">
+
     ⏰ Closed Now
+
 </button>
+
 {% else %}
-<button type="submit" class="conv-cta" onclick="lockOrderBtn(this)">
+
+<button
+    type="submit"
+    class="conv-cta"
+    id="confirm-order-btn"
+    onclick="lockOrderBtn(this)">
+
     🍔 Confirm Order
+
 </button>
+
+
 {% endif %}
 
 
@@ -3889,52 +4822,173 @@ let couponApplied = false;
 let couponDiscount = 0;
 let offerApplied = false;
 let offerDiscount = 0;
-
 /* ============================================================
    RENDER CART
 ============================================================ */
 function renderCart() {
-    const cartDiv = document.getElementById("cart-items");
+
+    const cartDiv =
+        document.getElementById(
+            "cart-items"
+        );
+
+    const cartCount =
+        document.getElementById(
+            "cart-item-count"
+        );
+
+
     cartDiv.innerHTML = "";
 
+
+    // ========================================================
+    // EMPTY CART
+    // ========================================================
+
     if (!cart.items.length) {
-        cartDiv.innerHTML = `<div class="empty-cart">Your cart is empty</div>`;
+
+        cartDiv.innerHTML =
+            `<div class="empty-cart">
+                Your cart is empty
+             </div>`;
+
+
+        // Update count
+        if (cartCount) {
+
+            cartCount.innerText =
+                "0 items";
+
+        }
+
+
         updateTotals();
+
         return;
+
     }
+
+
+    // ========================================================
+    // RENDER ITEMS
+    // ========================================================
 
     cart.items.forEach((item, i) => {
 
-        // ✅ SHOW NAME + WEIGHT (only if exists)
-        const displayName = item.weight
-            ? `${item.name} (${item.weight})`
-            : item.name;
+        // SHOW NAME + WEIGHT
+        const displayName =
+            item.weight
+                ? `${item.name} (${item.weight})`
+                : item.name;
+
 
         cartDiv.innerHTML += `
         <div class="cart-item">
 
             <div class="cart-info">
-                <strong>${displayName}</strong>
-                <span>₹${item.price}</span>
+
+                <strong>
+                    ${displayName}
+                </strong>
+
+                <span>
+                    ₹${item.price}
+                </span>
+
             </div>
+
 
             <div class="qty-controls">
-                <button type="button" onclick="changeQty(${i}, -1)">−</button>
-                <span>${item.quantity}</span>
-                <button type="button" onclick="changeQty(${i}, 1)">+</button>
+
+                <button
+                    type="button"
+                    onclick="changeQty(${i}, -1)">
+                    −
+                </button>
+
+                <span>
+                    ${item.quantity}
+                </span>
+
+                <button
+                    type="button"
+                    onclick="changeQty(${i}, 1)">
+                    +
+                </button>
+<button
+    type="button"
+    class="cart-delete-btn"
+    onclick="removeCartItem(${i})"
+    title="Remove item">
+    🗑️
+</button>
             </div>
 
-            <!-- ✅ IMPORTANT: send weight also to backend -->
-            <input type="hidden" name="item_name[]" value="${item.name}">
-            <input type="hidden" name="weight[]" value="${item.weight || ''}">
-            <input type="hidden" name="category[]" value="${item.category || ''}">
-            <input type="hidden" name="quantity[]" value="${item.quantity}">
-            <input type="hidden" name="price[]" value="${item.price}">
 
-        </div>`;
+            <!-- SEND ITEM DATA TO BACKEND -->
+
+            <input
+                type="hidden"
+                name="item_name[]"
+                value="${item.name}">
+
+            <input
+                type="hidden"
+                name="weight[]"
+                value="${item.weight || ''}">
+
+            <input
+                type="hidden"
+                name="category[]"
+                value="${item.category || ''}">
+
+            <input
+                type="hidden"
+                name="quantity[]"
+                value="${item.quantity}">
+
+            <input
+                type="hidden"
+                name="price[]"
+                value="${item.price}">
+
+        </div>
+        `;
+
     });
 
+
+    // ========================================================
+    // UPDATE CART ITEM COUNT
+    // ========================================================
+
+    if (cartCount) {
+
+        const totalQuantity =
+            cart.items.reduce(
+                (sum, item) =>
+                    sum +
+                    Number(
+                        item.quantity || 0
+                    ),
+                0
+            );
+
+
+        cartCount.innerText =
+            totalQuantity === 1
+                ? "1 item"
+                : `${totalQuantity} items`;
+
+    }
+
+
+    // ========================================================
+    // UPDATE TOTALS
+    // ========================================================
+
     updateTotals();
+
 }
 
 /* ============================================================
@@ -3950,146 +5004,477 @@ function changeQty(i, delta) {
     renderCart();
     
 } 
-
 /* ============================================================
-   DELIVERY FROM BACKEND (ONLY SOURCE)
+   DELETE CART ITEM
 ============================================================ */
+function removeCartItem(i) {
+
+    // Safety check
+    if (
+        i < 0 ||
+        i >= cart.items.length
+    ) {
+        return;
+    }
+
+
+    // Remove selected item
+    cart.items.splice(i, 1);
+
+
+    // Reset cart messages
+    messageLocked = false;
+
+
+    // Update this restaurant's cart
+    carts[RESTAURANT_ID] = cart;
+
+
+    // Save updated carts
+    localStorage.setItem(
+        "carts",
+        JSON.stringify(carts)
+    );
+
+
+    // Refresh cart UI
+    renderCart();
+}
+/* ============================================================
+   DELIVERY FROM BACKEND
+============================================================ */
+
 async function fetchDistanceDelivery(itemsTotal) {
-    const lat = document.getElementById("customer_lat").value;
-    const lng = document.getElementById("customer_lng").value;
 
-    if (!lat || !lng) return;
+    const latInput =
+        document.getElementById("customer_lat");
 
-    // ✅ Show waiting message
-    document.getElementById("delivery-msg").innerText =
-        "⏳ Please wait... calculating delivery charges";
+    const lngInput =
+        document.getElementById("customer_lng");
 
-    document.getElementById("delivery-charge").innerText = "...";
+
+    if (!latInput || !lngInput) {
+
+        console.error(
+            "customer_lat/customer_lng inputs not found"
+        );
+
+        return;
+    }
+
+
+    const lat =
+        parseFloat(latInput.value);
+
+    const lng =
+        parseFloat(lngInput.value);
+
+
+    console.log(
+        "DELIVERY LOCATION:",
+        lat,
+        lng
+    );
+
+
+    if (
+        isNaN(lat) ||
+        isNaN(lng)
+    ) {
+
+        console.log(
+            "Delivery calculation skipped - location missing"
+        );
+
+        return;
+    }
+
+
+    // ========================================================
+    // SHOW CALCULATING MESSAGE
+    // ========================================================
+
+    const deliveryMsg =
+        document.getElementById(
+            "delivery-msg"
+        );
+
+    const deliveryChargeElement =
+        document.getElementById(
+            "delivery-charge"
+        );
+
+
+    if (deliveryMsg) {
+
+        deliveryMsg.innerText =
+            "⏳ Calculating distance and delivery charge...";
+
+    }
+
+
+    if (deliveryChargeElement) {
+
+        deliveryChargeElement.innerText =
+            "...";
+
+    }
+
+
+    // Show separate distance box
+    if (
+        typeof showRestaurantDistanceLoading ===
+        "function"
+    ) {
+
+        showRestaurantDistanceLoading();
+
+    }
+
 
     try {
-        const res = await fetch("/calculate_delivery", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                restaurant_id: RESTAURANT_ID,
-                customer_lat: parseFloat(lat),
-                customer_lng: parseFloat(lng),
-                items_total: itemsTotal
-            })
-        });
 
-        const data = await res.json();
+        const res =
+            await fetch(
+                "/calculate_delivery",
+                {
 
-        currentDeliveryCharge = Number(data.delivery_charge);
+                    method: "POST",
 
-        document.getElementById("delivery-charge").innerText =
-            currentDeliveryCharge.toFixed(2);
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-        document.getElementById("delivery-msg").innerText =
-            `📍 ${data.distance_km} km · Delivery ₹${currentDeliveryCharge}`;
+                    body: JSON.stringify({
+
+                        restaurant_id:
+                            RESTAURANT_ID,
+
+                        customer_lat:
+                            lat,
+
+                        customer_lng:
+                            lng,
+
+                        items_total:
+                            itemsTotal
+
+                    })
+
+                }
+            );
+
+
+        const data =
+            await res.json();
+
+
+        console.log(
+            "DELIVERY RESPONSE:",
+            data
+        );
+
+
+        // ====================================================
+        // BACKEND ERROR
+        // ====================================================
+
+        if (
+            !res.ok ||
+            data.success === false
+        ) {
+
+            throw new Error(
+                data.error ||
+                "Unable to calculate delivery"
+            );
+
+        }
+
+
+        // ====================================================
+        // DISTANCE
+        // ====================================================
+
+        const distanceKm =
+            Number(data.distance_km);
+
+
+        if (
+            !isNaN(distanceKm)
+        ) {
+
+            // Main delivery line
+            if (deliveryMsg) {
+
+                deliveryMsg.innerText =
+                    `📍 ${distanceKm.toFixed(1)} km from restaurant`;
+
+            }
+
+
+            // Separate map distance message
+            if (
+                typeof showRestaurantDistance ===
+                "function"
+            ) {
+
+                showRestaurantDistance(
+                    distanceKm
+                );
+
+            }
+
+        }
+
+
+        // ====================================================
+        // DELIVERY CHARGE
+        // ====================================================
+
+        currentDeliveryCharge =
+            Number(
+                data.delivery_charge
+            );
+
+
+        if (
+            isNaN(
+                currentDeliveryCharge
+            )
+        ) {
+
+            currentDeliveryCharge =
+                0;
+
+        }
+
+
+        if (deliveryChargeElement) {
+
+            deliveryChargeElement.innerText =
+                currentDeliveryCharge.toFixed(
+                    2
+                );
+
+        }
+
+
+        // ====================================================
+        // FINAL MESSAGE
+        // ====================================================
+
+        if (
+            deliveryMsg &&
+            !isNaN(distanceKm)
+        ) {
+
+            deliveryMsg.innerText =
+                `📍 ${distanceKm.toFixed(1)} km · Delivery ₹${currentDeliveryCharge.toFixed(0)}`;
+
+        }
+
+
+        // ====================================================
+        // UPDATE TOTAL
+        // ====================================================
 
         updateTotals();
 
-    } catch (e) {
-        console.error("Delivery fetch failed", e);
 
-       
     }
+
+    catch (e) {
+
+        console.error(
+            "Delivery fetch failed:",
+            e
+        );
+
+
+        if (deliveryMsg) {
+
+            deliveryMsg.innerText =
+                "❌ Unable to calculate delivery charge. Please try again.";
+
+        }
+
+
+        if (
+            typeof showRestaurantDistanceError ===
+            "function"
+        ) {
+
+            showRestaurantDistanceError();
+
+        }
+
+    }
+
 }
+/* ============================================================
+   FORM SUBMIT LOCK
+============================================================ */
 
-function updateLocationInputs(lat, lng) {
-    document.getElementById("latitude").value = lat;
-    document.getElementById("longitude").value = lng;
-
-    locationSelected = true;
-
-    const itemsTotal = cart.items.reduce(
-        (sum, item) => sum + item.price * item.quantity, 0
-    );
-
-    fetchDistanceDelivery(itemsTotal);
-}
 let formSubmitting = false;
 
+
 document.querySelector("form").addEventListener(
-  "submit",
-  function (e) {
+    "submit",
+    function (e) {
 
-    if (formSubmitting) {
-      e.preventDefault();
-      return false;
-    }
+        if (formSubmitting) {
 
-    formSubmitting = true;
+            e.preventDefault();
 
-    console.log(
-      "FORM SUBMIT LAT:",
-      document.getElementById("latitude").value
-    );
+            return false;
 
-    console.log(
-      "FORM SUBMIT LNG:",
-      document.getElementById("longitude").value
-    );
+        }
 
-    const paymentType =
-      document.getElementById(
-        "payment_type"
-      ).value;
 
-    console.log(
-      "PAYMENT:",
-      paymentType
-    );
+        formSubmitting = true;
 
-    const btn =
-      this.querySelector(".conv-cta");
 
-    if (btn) {
+        console.log(
+            "FORM SUBMIT LAT:",
+            document.getElementById("latitude")?.value
+        );
 
-      if (paymentType === "Online") {
+        console.log(
+            "FORM SUBMIT LNG:",
+            document.getElementById("longitude")?.value
+        );
 
-        btn.innerHTML =
-          "💳 Redirecting to Payment...";
 
-        btn.style.opacity = "0.8";
+        const paymentType =
+            document.getElementById(
+                "payment_type"
+            )?.value || "COD";
 
-      } else {
+
+        console.log(
+            "PAYMENT:",
+            paymentType
+        );
+
+
+        const btn =
+            document.getElementById(
+                "confirm-order-btn"
+            );
+
+
+        if (!btn) {
+            return;
+        }
+
+
+        // ====================================================
+        // LOCK BUTTON
+        // ====================================================
 
         btn.disabled = true;
 
-        btn.innerHTML =
-          "⏳ Placing Order...";
 
-        btn.style.opacity = "0.6";
+        // ====================================================
+        // ONLINE PAYMENT
+        // ====================================================
 
-      }
+        if (paymentType === "Online") {
+
+            btn.innerHTML =
+                "💳 Redirecting to Payment...";
+
+            btn.style.opacity =
+                "0.8";
+
+        }
+
+
+        // ====================================================
+        // CASH ON DELIVERY
+        // ====================================================
+
+        else {
+
+            btn.innerHTML =
+                "⏳ Placing Order...";
+
+            btn.style.opacity =
+                "0.6";
+
+        }
+
     }
-
-  }
 );
 
+
+/* ============================================================
+   RESTORE BUTTON WHEN USER RETURNS TO PAGE
+============================================================ */
+
 window.addEventListener(
-  "pageshow",
-  function () {
+    "pageshow",
+    function () {
 
-    formSubmitting = false;
+        formSubmitting = false;
 
-    const btn =
-      document.querySelector(".conv-cta");
 
-    if (btn) {
+        const btn =
+            document.getElementById(
+                "confirm-order-btn"
+            );
 
-      btn.disabled = false;
+        const paymentType =
+            document.getElementById(
+                "payment_type"
+            )?.value || "COD";
 
-      btn.innerHTML =
-        "🍔 Confirm Order";
 
-      btn.style.opacity = "1";
+        if (!btn) {
+            return;
+        }
+
+
+        // Don't unlock restaurant closed button
+        if (
+            btn.classList.contains(
+                "disabled"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        btn.disabled =
+            false;
+
+        btn.style.opacity =
+            "1";
+
+
+        // ====================================================
+        // RESTORE TEXT BASED ON PAYMENT METHOD
+        // ====================================================
+
+        if (paymentType === "Online") {
+
+            btn.innerHTML =
+                "🔒 Proceed to Payment ➜";
+
+        }
+
+        else {
+
+            btn.innerHTML =
+                "🍔 Confirm Order";
+
+        }
 
     }
-
-  }
 );
 /* ============================================================
    TOTALS
@@ -4146,27 +5531,52 @@ document.getElementById("delivery_charge_input").value = deliveryCharge;
 
 
     // ================= 5️⃣ DELIVERY / COUPON / OFFER MESSAGE
-    const msg = document.getElementById("delivery-msg");
-    if (!msg) return;
+// ============================================================
+// 5️⃣ DELIVERY / OFFER MESSAGE
+// ============================================================
+const msg =
+    document.getElementById(
+        "delivery-msg"
+    );
 
-    // ✅ Only overwrite if no coupon or offer message locked
-    if (!couponMsgLocked && !offerMsgLocked) {
-        
-        if (freeDeliveryReason === "offer") {
-            msg.innerText = "🎉 Free delivery via offer";
-            msg.className = "soft-success";
-        } else if (deliveryCharge === 0) {
-            msg.innerText = "wait";
-            msg.className = "soft-success";
-        } else if (FREE_DELIVERY_LIMIT > 0 && itemsTotal < FREE_DELIVERY_LIMIT) {
-            msg.innerText =
-                `Add ₹${(FREE_DELIVERY_LIMIT - itemsTotal).toFixed(0)} more for free delivery`;
-            msg.className = "soft-info";
-        } else {
-            msg.innerText = `📍 Delivery ₹${deliveryCharge}`;
-            msg.className = "";
-        }
+if (!msg) return;
+
+
+// Only update when coupon/offer message is not locked
+if (!couponMsgLocked && !offerMsgLocked) {
+
+    // ========================================================
+    // FREE DELIVERY OFFER
+    // ========================================================
+
+    if (
+        freeDeliveryReason === "offer" &&
+        deliveryCharge === 0
+    ) {
+
+        msg.innerText =
+            "🎉 Free delivery offer applied";
+
+        msg.className =
+            "soft-success";
+
     }
+
+    // ========================================================
+    // NORMAL DELIVERY
+    // ========================================================
+
+    else {
+
+        msg.innerText =
+            "📍 Delivery charges calculated based on your selected location";
+
+        msg.className =
+            "soft-info";
+
+    }
+
+}
 }
 
 let couponMsgLocked = false; // add at top
@@ -4277,257 +5687,2346 @@ async function applyRestaurantOffer() {
     msg.className = "soft-success";
     updateTotals();
 }
-
 /* ============================================================
-   MAP + LOCATION
+   GOOGLE MAP + DELIVERY LOCATION
 ============================================================ */
 
-// Create map
-var map = L.map('map').setView([16.4113, 81.8043], 13);
+let map;
 
-// OpenStreetMap layer
-L.tileLayer(
-    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-).addTo(map);
+let manualLocationMode = false;
+
+let pendingManualLat = null;
+let pendingManualLng = null;
+
+let confirmedLat = null;
+let confirmedLng = null;
+
+let lockedMapMessageTimer = null;
 
 
-// ============================================================
-// UPDATE LOCATION
-// ============================================================
+// Default map location
+const DEFAULT_LAT = 16.4113;
+const DEFAULT_LNG = 81.8043;
 
-function updateLocationInputs(lat, lng) {
 
-    // Save hidden inputs
-    document.getElementById("customer_lat").value = lat;
-    document.getElementById("customer_lng").value = lng;
+/* ============================================================
+   INITIALIZE MAP
+============================================================ */
 
-    // Save in localStorage
-    localStorage.setItem("user_lat", lat);
-    localStorage.setItem("user_lng", lng);
+function initMap() {
 
-    locationSelected = true;
+    const savedLat =
+        parseFloat(localStorage.getItem("delivery_lat"));
 
-    // Show success message
-    const status = document.getElementById("location-status");
+    const savedLng =
+        parseFloat(localStorage.getItem("delivery_lng"));
 
-    status.style.display = "block";
-    status.className = "location-status success";
-    status.innerHTML =
-        "✅ Delivery location selected successfully";
 
-    // Auto hide
-    setTimeout(() => {
-        status.style.display = "none";
-    }, 2000);
+    const hasSavedLocation =
+        !isNaN(savedLat) &&
+        !isNaN(savedLng);
 
-    // Fetch delivery charge
-    const itemsTotal = cart.items.reduce(
-        (s, i) => s + i.price * i.quantity,
-        0
+setupDeliveryMapVisibility(
+    hasSavedLocation
+);
+    let startLocation = {
+        lat: DEFAULT_LAT,
+        lng: DEFAULT_LNG
+    };
+
+    let startZoom = 13;
+
+
+    // ========================================================
+    // SAVED LOCATION EXISTS
+    // ========================================================
+
+    if (hasSavedLocation) {
+
+        startLocation = {
+            lat: savedLat,
+            lng: savedLng
+        };
+
+        startZoom = 17;
+
+        confirmedLat = savedLat;
+        confirmedLng = savedLng;
+
+    }
+
+
+    // ========================================================
+    // CREATE GOOGLE MAP
+    // ========================================================
+
+    map = new google.maps.Map(
+        document.getElementById("map"),
+        {
+
+            center: startLocation,
+
+            zoom: startZoom,
+
+            mapTypeControl: false,
+
+            streetViewControl: false,
+
+            // Native Google fullscreen OFF
+            // We use our own fullscreen
+            fullscreenControl: false,
+
+            zoomControl: true,
+
+            // Start locked
+            draggable: false,
+
+            gestureHandling: "none",
+
+            scrollwheel: false,
+
+            disableDoubleClickZoom: true
+
+        }
     );
 
-    fetchDistanceDelivery(itemsTotal);
+
+    // ========================================================
+    // DRAG START
+    // ========================================================
+
+    map.addListener(
+        "dragstart",
+        function () {
+
+            if (!manualLocationMode) {
+                return;
+            }
+
+
+            const pin =
+                document.getElementById(
+                    "center-marker"
+                );
+
+
+            if (pin) {
+
+                pin.style.transform =
+                    "translate(-50%, -120%)";
+
+            }
+
+        }
+    );
+
+
+    // ========================================================
+    // DRAG END
+    // ========================================================
+
+    map.addListener(
+        "dragend",
+        function () {
+
+            if (!manualLocationMode) {
+                return;
+            }
+
+
+            const center =
+                map.getCenter();
+
+
+            if (!center) {
+                return;
+            }
+
+
+            pendingManualLat =
+                center.lat();
+
+            pendingManualLng =
+                center.lng();
+
+
+            const pin =
+                document.getElementById(
+                    "center-marker"
+                );
+
+
+            if (pin) {
+
+                pin.style.transform =
+                    "translate(-50%, -100%)";
+
+            }
+
+
+            showLocationMessage(
+                "📍 New location selected. Tap “Confirm this delivery location” below.",
+                "info",
+                false
+            );
+
+        }
+    );
+
+
+    // ========================================================
+    // SAVED LOCATION
+    // ========================================================
+
+    if (hasSavedLocation) {
+
+        setLocationInputsOnly(
+            savedLat,
+            savedLng
+        );
+
+
+        confirmedLat =
+            savedLat;
+
+        confirmedLng =
+            savedLng;
+
+
+        locationSelected =
+            true;
+
+
+        lockDeliveryMap();
+
+
+        const helpTitle =
+            document.getElementById(
+                "location-help-title"
+            );
+
+        const helpText =
+            document.getElementById(
+                "location-help-text"
+            );
+
+        const helpBox =
+            document.getElementById(
+                "location-help-box"
+            );
+
+
+        if (helpTitle) {
+
+            helpTitle.innerHTML =
+                "✅ Saved delivery location selected";
+
+        }
+
+
+        if (helpText) {
+
+            helpText.innerHTML =
+                `
+                <strong>Your saved delivery location is ready for this order.</strong>
+                <br>
+                We will calculate delivery distance and charges using this location.
+                <br>
+                To choose another address, tap
+                <strong>Change location</strong>.
+                `;
+
+        }
+
+
+        if (helpBox) {
+
+            helpBox.style.background =
+                "#ecfdf5";
+
+            helpBox.style.border =
+                "1px solid #22c55e";
+
+        }
+
+
+        showLocationMessage(
+            "✅ Saved delivery location loaded",
+            "success"
+        );
+
+
+        setTimeout(
+            function () {
+
+                calculateDeliveryForCurrentLocation();
+
+            },
+            500
+        );
+
+    }
+
+
+    // ========================================================
+    // FIRST TIME CUSTOMER
+    // ========================================================
+
+    else {
+
+        setTimeout(
+            function () {
+
+                getUserLocation(false);
+
+            },
+            500
+        );
+
+    }
+
 }
 
 
-// ============================================================
-// WHEN USER MOVES MAP
-// ============================================================
+/* ============================================================
+   LOCK DELIVERY MAP
+============================================================ */
 
-map.on("moveend", function () {
+function lockDeliveryMap() {
 
-    const center = map.getCenter();
-
-    const lat = center.lat;
-    const lng = center.lng;
-
-    updateLocationInputs(lat, lng);
-
-});
-
-
-// ============================================================
-// PIN ANIMATION
-// ============================================================
-
-map.on("movestart", function () {
-
-    const pin = document.getElementById("center-marker");
-
-    if (pin) {
-        pin.style.transform =
-            "translate(-50%, -120%)";
+    if (!map) {
+        return;
     }
 
-});
 
-map.on("moveend", function () {
+    manualLocationMode = false;
 
-    const pin = document.getElementById("center-marker");
 
-    if (pin) {
-        pin.style.transform =
-            "translate(-50%, -100%)";
+    map.setOptions({
+
+        draggable: false,
+
+        gestureHandling: "none",
+
+        scrollwheel: false,
+
+        disableDoubleClickZoom: true
+
+    });
+
+
+    // ========================================================
+    // SHOW LOCKED TOUCH LAYER
+    // ========================================================
+
+    const lockLayer =
+        document.getElementById(
+            "map-lock-layer"
+        );
+
+
+    if (lockLayer) {
+
+        lockLayer.style.display =
+            "block";
+
     }
 
-});
+
+    // ========================================================
+    // HIDE FULLSCREEN BUTTON
+    // ========================================================
+
+    const fullscreenButton =
+        document.getElementById(
+            "custom-map-fullscreen-btn"
+        );
 
 
-// ============================================================
-// LOAD SAVED LOCATION
-// ============================================================
+    if (fullscreenButton) {
 
-const savedLat = localStorage.getItem("user_lat");
-const savedLng = localStorage.getItem("user_lng");
+        fullscreenButton.style.display =
+            "none";
 
-if (savedLat && savedLng) {
+    }
 
-    map.setView(
-        [parseFloat(savedLat), parseFloat(savedLng)],
-        16
-    );
-
-    updateLocationInputs(
-        parseFloat(savedLat),
-        parseFloat(savedLng)
-    );
 }
 
 
-// ============================================================
-// GET LIVE LOCATION
-// ============================================================
+/* ============================================================
+   UNLOCK DELIVERY MAP
+============================================================ */
 
-function getUserLocation() {
+function unlockDeliveryMap() {
+
+    if (!map) {
+        return;
+    }
+
+
+    map.setOptions({
+
+        draggable: true,
+
+        /*
+         * Better mobile behaviour:
+         * 1 finger = page scroll
+         * 2 fingers = move map
+         */
+        gestureHandling: "cooperative",
+
+        scrollwheel: false,
+
+        disableDoubleClickZoom: false
+
+    });
+
+
+    // ========================================================
+    // REMOVE LOCK LAYER
+    // ========================================================
+
+    const lockLayer =
+        document.getElementById(
+            "map-lock-layer"
+        );
+
+
+    if (lockLayer) {
+
+        lockLayer.style.display =
+            "none";
+
+    }
+
+
+    // ========================================================
+    // HIDE LOCKED MESSAGE
+    // ========================================================
+
+    const lockedMessage =
+        document.getElementById(
+            "map-locked-message"
+        );
+
+
+    if (lockedMessage) {
+
+        lockedMessage.style.display =
+            "none";
+
+    }
+
+
+    // ========================================================
+    // SHOW FULLSCREEN BUTTON
+    // ONLY WHILE CHANGING LOCATION
+    // ========================================================
+
+    const fullscreenButton =
+        document.getElementById(
+            "custom-map-fullscreen-btn"
+        );
+
+
+    if (fullscreenButton) {
+
+        fullscreenButton.style.display =
+            "block";
+
+    }
+
+}
+
+
+/* ============================================================
+   LOCKED MAP MESSAGE
+============================================================ */
+
+function showLockedMapMessage() {
+
+    if (manualLocationMode) {
+        return;
+    }
+
+
+    const message =
+        document.getElementById(
+            "map-locked-message"
+        );
+
+
+    if (!message) {
+        return;
+    }
+
+
+    message.style.display =
+        "block";
+
+
+    if (lockedMapMessageTimer) {
+
+        clearTimeout(
+            lockedMapMessageTimer
+        );
+
+    }
+
+
+    lockedMapMessageTimer =
+        setTimeout(
+            function () {
+
+                message.style.display =
+                    "none";
+
+            },
+            2800
+        );
+
+}
+
+
+/* ============================================================
+   CUSTOM FULLSCREEN
+============================================================ */
+
+function toggleMapFullscreen() {
+
+    // Fullscreen allowed ONLY
+    // while customer changes location
+
+    if (!manualLocationMode) {
+
+        showLockedMapMessage();
+
+        return;
+
+    }
+
+
+    const wrapper =
+        document.getElementById(
+            "map-wrapper"
+        );
+
+
+    if (!wrapper) {
+        return;
+    }
+
+
+    // ENTER FULLSCREEN
+    if (!document.fullscreenElement) {
+
+        if (wrapper.requestFullscreen) {
+
+            wrapper.requestFullscreen();
+
+        }
+
+    }
+
+
+    // EXIT FULLSCREEN
+    else {
+
+        if (document.exitFullscreen) {
+
+            document.exitFullscreen();
+
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+   EXIT FULLSCREEN HELPER
+============================================================ */
+
+function exitMapFullscreen() {
+
+    if (
+        document.fullscreenElement &&
+        document.exitFullscreen
+    ) {
+
+        document
+            .exitFullscreen()
+            .catch(function (error) {
+
+                console.log(
+                    "Fullscreen exit:",
+                    error
+                );
+
+            });
+
+    }
+
+}
+
+
+/* ============================================================
+   FULLSCREEN CHANGE
+============================================================ */
+
+document.addEventListener(
+    "fullscreenchange",
+    function () {
+
+        const wrapper =
+            document.getElementById(
+                "map-wrapper"
+            );
+
+        const mapElement =
+            document.getElementById(
+                "map"
+            );
+
+        const fullscreenButton =
+            document.getElementById(
+                "custom-map-fullscreen-btn"
+            );
+
+
+        if (
+            !wrapper ||
+            !mapElement
+        ) {
+
+            return;
+
+        }
+
+
+        // ====================================================
+        // FULLSCREEN ACTIVE
+        // ====================================================
+
+        if (
+            document.fullscreenElement ===
+            wrapper
+        ) {
+
+            wrapper.style.background =
+                "#ffffff";
+
+            wrapper.style.width =
+                "100%";
+
+            wrapper.style.height =
+                "100%";
+
+
+            mapElement.style.width =
+                "100%";
+
+            mapElement.style.height =
+                "100%";
+
+
+            if (fullscreenButton) {
+
+                fullscreenButton.innerHTML =
+                    "✕";
+
+            }
+
+        }
+
+
+        // ====================================================
+        // EXIT FULLSCREEN
+        // ====================================================
+
+        else {
+
+            wrapper.style.height =
+                "";
+
+            mapElement.style.width =
+                "100%";
+
+
+            if (manualLocationMode) {
+
+                mapElement.style.height =
+                    "55vh";
+
+            }
+
+            else {
+
+                mapElement.style.height =
+                    "300px";
+
+            }
+
+
+            if (fullscreenButton) {
+
+                fullscreenButton.innerHTML =
+                    "⛶";
+
+            }
+
+        }
+
+
+        // ====================================================
+        // GOOGLE MAP RESIZE
+        // ====================================================
+
+        setTimeout(
+            function () {
+
+                if (!map) {
+                    return;
+                }
+
+
+                google.maps.event.trigger(
+                    map,
+                    "resize"
+                );
+
+
+                // Keep current manual center
+                if (
+                    manualLocationMode &&
+                    pendingManualLat !== null &&
+                    pendingManualLng !== null
+                ) {
+
+                    map.panTo({
+
+                        lat:
+                            pendingManualLat,
+
+                        lng:
+                            pendingManualLng
+
+                    });
+
+                }
+
+
+                // Otherwise confirmed location
+                else if (
+                    confirmedLat !== null &&
+                    confirmedLng !== null
+                ) {
+
+                    map.panTo({
+
+                        lat:
+                            confirmedLat,
+
+                        lng:
+                            confirmedLng
+
+                    });
+
+                }
+
+            },
+            150
+        );
+
+    }
+);
+
+
+/* ============================================================
+   LOCATION MESSAGE
+============================================================ */
+
+function showLocationMessage(
+    message,
+    type = "success",
+    autoHide = true
+) {
 
     const status =
-        document.getElementById("location-status");
+        document.getElementById(
+            "location-status"
+        );
 
-    const loader =
-        document.getElementById("map-loader");
 
-    if (!navigator.geolocation) {
+    if (!status) {
+        return;
+    }
 
-        status.style.display = "block";
+
+    status.style.display =
+        "block";
+
+
+    if (type === "success") {
+
+        status.className =
+            "location-status success";
+
+    }
+
+    else if (type === "error") {
 
         status.className =
             "location-status error";
 
-        status.innerHTML =
-            "❌ Geolocation not supported";
-
-        return;
     }
 
-    liveLocationClicked = true;
+    else {
 
-    // Show loader
-    loader.style.display = "flex";
+        status.className =
+            "location-status map-status";
 
-    status.style.display = "none";
+    }
+
+
+    status.innerHTML =
+        message;
+
+
+    if (autoHide) {
+
+        setTimeout(
+            function () {
+
+                status.style.display =
+                    "none";
+
+            },
+            3500
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   SET CHECKOUT LOCATION INPUTS
+============================================================ */
+
+function setLocationInputsOnly(
+    lat,
+    lng
+) {
+
+    const latInput =
+        document.getElementById(
+            "customer_lat"
+        );
+
+    const lngInput =
+        document.getElementById(
+            "customer_lng"
+        );
+
+
+    if (latInput) {
+
+        latInput.value =
+            lat;
+
+    }
+
+
+    if (lngInput) {
+
+        lngInput.value =
+            lng;
+
+    }
+
+}
+
+
+/* ============================================================
+   SAVE DELIVERY LOCATION FOR FUTURE ORDERS
+============================================================ */
+
+function saveDeliveryLocation(
+    lat,
+    lng,
+    source = "manual"
+) {
+
+    // Main saved location
+    localStorage.setItem(
+        "delivery_lat",
+        lat
+    );
+
+    localStorage.setItem(
+        "delivery_lng",
+        lng
+    );
+
+
+    // Location type
+    localStorage.setItem(
+        "delivery_location_source",
+        source
+    );
+
+
+    // Save time
+    localStorage.setItem(
+        "delivery_location_saved_at",
+        Date.now()
+    );
+
+
+    // Keep old keys for compatibility
+    localStorage.setItem(
+        "user_lat",
+        lat
+    );
+
+    localStorage.setItem(
+        "user_lng",
+        lng
+    );
+
+}
+
+
+/* ============================================================
+   GET CURRENT GPS LOCATION
+============================================================ */
+
+function getUserLocation(
+    userRequested = false
+) {
+
+    // Leave manual mode
+    manualLocationMode =
+        false;
+
+
+    // If currently fullscreen,
+    // close it before GPS detection
+    exitMapFullscreen();
+
+
+    lockDeliveryMap();
+
+
+    const loader =
+        document.getElementById(
+            "map-loader"
+        );
+
+
+    if (!navigator.geolocation) {
+
+        showLocationMessage(
+            "❌ Automatic location is not supported. Tap Change location to select manually.",
+            "error",
+            false
+        );
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // SHOW GPS LOADER
+    // ========================================================
+
+    if (loader) {
+
+        loader.style.display =
+            "flex";
+
+    }
+
+
+    showLocationMessage(
+        "📍 Detecting your current delivery location...",
+        "info",
+        false
+    );
+
 
     navigator.geolocation.getCurrentPosition(
 
-        pos => {
+        // ====================================================
+        // GPS SUCCESS
+        // ====================================================
 
-            // Hide loader
-            loader.style.display = "none";
+        function (position) {
+
+            if (loader) {
+
+                loader.style.display =
+                    "none";
+
+            }
+
 
             const latitude =
-                pos.coords.latitude;
+                position.coords.latitude;
 
             const longitude =
-                pos.coords.longitude;
+                position.coords.longitude;
 
-            // Move map to user location
-            map.setView(
-                [latitude, longitude],
-                16
+            const accuracy =
+                position.coords.accuracy;
+
+
+            console.log(
+                "GPS Latitude:",
+                latitude
             );
 
-            updateLocationInputs(
+            console.log(
+                "GPS Longitude:",
+                longitude
+            );
+
+            console.log(
+                "GPS Accuracy:",
+                accuracy,
+                "meters"
+            );
+
+
+            // =================================================
+            // MOVE MAP
+            // =================================================
+
+            map.panTo({
+                lat: latitude,
+                lng: longitude
+            });
+
+
+            map.setZoom(18);
+
+
+            // =================================================
+            // CONFIRM GPS LOCATION
+            // =================================================
+
+            confirmedLat =
+                latitude;
+
+            confirmedLng =
+                longitude;
+
+
+            pendingManualLat =
+                latitude;
+
+            pendingManualLng =
+                longitude;
+
+
+            liveLocationClicked =
+                true;
+
+            locationSelected =
+                true;
+
+
+            setLocationInputsOnly(
                 latitude,
                 longitude
             );
 
-            // Success message
-            status.style.display = "block";
 
-            status.className =
-                "location-status success";
+            // =================================================
+            // SAVE FOR FUTURE ORDERS
+            // =================================================
 
-            status.innerHTML =
-                "✅ Location detected successfully";
+            saveDeliveryLocation(
+                latitude,
+                longitude,
+                "gps"
+            );
 
-            setTimeout(() => {
 
-                status.style.display = "none";
+            // =================================================
+            // LOCK MAP
+            // =================================================
 
-            }, 2000);
+            lockDeliveryMap();
+
+
+            // =================================================
+            // STRONG PERMANENT MESSAGE
+            // =================================================
+
+            const helpTitle =
+                document.getElementById(
+                    "location-help-title"
+                );
+
+            const helpText =
+                document.getElementById(
+                    "location-help-text"
+                );
+
+            const helpBox =
+                document.getElementById(
+                    "location-help-box"
+                );
+
+
+            // =================================================
+            // GOOD GPS
+            // =================================================
+
+            if (accuracy <= 50) {
+
+                if (helpTitle) {
+
+                    helpTitle.innerHTML =
+                        "✅ Delivery location detected & confirmed";
+
+                }
+
+
+                if (helpText) {
+
+                    helpText.innerHTML =
+                        `
+                        <strong>Your current location was detected successfully.</strong>
+                        <br>
+                        Your order will be delivered to this selected location.
+                        <br>
+                        💾 This location is saved for your future orders too.
+                        <br>
+                        Please check the 📍 map pin once before placing your order.
+                        <br>
+                        Wrong location?
+                        Tap <strong>Change location</strong>.
+                        `;
+
+                }
+
+
+                if (helpBox) {
+
+                    helpBox.style.background =
+                        "#ecfdf5";
+
+                    helpBox.style.border =
+                        "2px solid #22c55e";
+
+                }
+
+
+                showLocationMessage(
+                    "✅ Delivery location detected, confirmed and saved successfully",
+                    "success"
+                );
+
+            }
+
+
+            // =================================================
+            // LOW GPS ACCURACY
+            // =================================================
+
+            else {
+
+                if (helpTitle) {
+
+                    helpTitle.innerHTML =
+                        "⚠️ Location detected — please check the pin";
+
+                }
+
+
+                if (helpText) {
+
+                    helpText.innerHTML =
+                        `
+                        <strong>
+                            Your location was detected, but GPS accuracy is about
+                            ${Math.round(accuracy)} meters.
+                        </strong>
+                        <br>
+                        Please check the 📍 pin carefully before placing your order.
+                        <br>
+                        If the pin is not correct,
+                        tap <strong>Change location</strong>.
+                        `;
+
+                }
+
+
+                if (helpBox) {
+
+                    helpBox.style.background =
+                        "#fff8e1";
+
+                    helpBox.style.border =
+                        "2px solid #f59e0b";
+
+                }
+
+
+                showLocationMessage(
+                    "⚠️ Location detected. Please verify the map pin.",
+                    "info"
+                );
+
+            }
+
+
+            // =================================================
+            // DISTANCE + DELIVERY CHARGE
+            // =================================================
+
+// =================================================
+// DISTANCE + DELIVERY CHARGE
+// =================================================
+
+calculateDeliveryForCurrentLocation();
+
+
+// =================================================
+// FIRST-TIME CUSTOMER LOCATION SETUP
+// =================================================
+
+if (isFirstLocationSetup) {
+
+    // Keep the map visible for a few seconds
+    // so the customer can see the detected pin.
+    // Then the map will automatically collapse.
+
+    firstLocationSetupCompleted();
+
+    // Prevent this from happening again
+    // if "Use current location" is clicked later.
+    isFirstLocationSetup = false;
+
+}
+
+},
+
+
+        // ====================================================
+        // GPS ERROR
+        // ====================================================
+
+        function (error) {
+
+            if (loader) {
+
+                loader.style.display =
+                    "none";
+
+            }
+
+
+            if (
+                error.code ===
+                error.PERMISSION_DENIED
+            ) {
+
+                showLocationMessage(
+                    "❌ Location permission denied. Tap Change location to choose manually.",
+                    "error",
+                    false
+                );
+
+            }
+
+            else if (
+                error.code ===
+                error.POSITION_UNAVAILABLE
+            ) {
+
+                showLocationMessage(
+                    "❌ Current location unavailable. Tap Change location to choose manually.",
+                    "error",
+                    false
+                );
+
+            }
+
+            else if (
+                error.code ===
+                error.TIMEOUT
+            ) {
+
+                showLocationMessage(
+                    "⚠️ Location detection timed out. Tap Change location to choose manually.",
+                    "error",
+                    false
+                );
+
+            }
+
+            else {
+
+                showLocationMessage(
+                    "❌ Unable to detect your current location.",
+                    "error",
+                    false
+                );
+
+            }
 
         },
 
-        err => {
-
-            // Hide loader
-            loader.style.display = "none";
-
-            // Error message
-            status.style.display = "block";
-
-            status.className =
-                "location-status error";
-
-            status.innerHTML =
-                "❌ Location permission denied. Please move the map and select your delivery location manually.";
-
-        },
 
         {
             enableHighAccuracy: true,
-            timeout: 10000
+
+            timeout: 20000,
+
+            maximumAge: 0
         }
 
     );
+
 }
-document.addEventListener("DOMContentLoaded", function () {
-    // Small delay ensures map loads properly
-    setTimeout(() => {
-        getUserLocation();
-    }, 800);
-});
-document.addEventListener("DOMContentLoaded", function () {
 
-    // Only detect once per session
-    if (!sessionStorage.getItem("locationDetected")) {
 
-        setTimeout(() => {
-            getUserLocation();
-            sessionStorage.setItem("locationDetected", "true");
-        }, 800);
-
-    }
-
-});
 /* ============================================================
-   VALIDATION
+   CHANGE DELIVERY LOCATION
 ============================================================ */
-function validateCart() {
-    if (!cart.items.length) {
-        alert("Your cart is empty");
-        return false;
+
+function enableManualLocationMode() {
+
+    manualLocationMode =
+        true;
+
+
+    // ========================================================
+    // UNLOCK MAP
+    // ========================================================
+
+    unlockDeliveryMap();
+
+
+    const mapElement =
+        document.getElementById(
+            "map"
+        );
+
+    const manualControls =
+        document.getElementById(
+            "manual-location-controls"
+        );
+
+    const normalControls =
+        document.getElementById(
+            "normal-location-controls"
+        );
+
+    const helpTitle =
+        document.getElementById(
+            "location-help-title"
+        );
+
+    const helpText =
+        document.getElementById(
+            "location-help-text"
+        );
+
+    const helpBox =
+        document.getElementById(
+            "location-help-box"
+        );
+
+    const loader =
+        document.getElementById(
+            "map-loader"
+        );
+
+
+    if (loader) {
+
+        loader.style.display =
+            "none";
+
     }
-    if (!liveLocationClicked) {
-        alert("📍 Please use live location");
-        return false;
+
+
+    // ========================================================
+    // MAKE MAP MODERATELY LARGE
+    // ========================================================
+
+    if (mapElement) {
+
+        mapElement.style.height =
+            "55vh";
+
     }
-    if (!locationSelected) {
-        alert("🗺️ Please select delivery location");
-        return false;
+
+
+    // ========================================================
+    // CONTROLS
+    // ========================================================
+
+    if (manualControls) {
+
+        manualControls.style.display =
+            "block";
+
     }
-    return true;
+
+
+    if (normalControls) {
+
+        normalControls.style.display =
+            "none";
+
+    }
+
+
+    // ========================================================
+    // MANUAL MODE MESSAGE
+    // ========================================================
+
+    if (helpTitle) {
+
+        helpTitle.innerHTML =
+            "🗺️ Choose your delivery location";
+
+    }
+
+
+    if (helpText) {
+
+        helpText.innerHTML =
+            `
+            <strong>Move the map to your delivery address.</strong>
+            <br>
+            Place the 📍 pin exactly where the order should be delivered.
+            <br>
+            When ready, tap
+            <strong>Confirm this delivery location</strong>.
+            `;
+
+    }
+
+
+    if (helpBox) {
+
+        helpBox.style.background =
+            "#fff8e1";
+
+        helpBox.style.border =
+            "1px solid #f59e0b";
+
+    }
+
+
+    // ========================================================
+    // INITIAL CENTER
+    // ========================================================
+
+    if (map) {
+
+        const center =
+            map.getCenter();
+
+
+        if (center) {
+
+            pendingManualLat =
+                center.lat();
+
+            pendingManualLng =
+                center.lng();
+
+        }
+
+
+        google.maps.event.trigger(
+            map,
+            "resize"
+        );
+
+    }
+
+
+    showLocationMessage(
+        "📍 Location change mode enabled. Move the map and confirm your new delivery location.",
+        "info",
+        false
+    );
+
 }
 
+
+/* ============================================================
+   CONFIRM MANUAL LOCATION
+============================================================ */
+
+function confirmManualLocation() {
+
+    if (!map) {
+        return;
+    }
+
+
+    const center =
+        map.getCenter();
+
+
+    if (!center) {
+
+        alert(
+            "Please choose your delivery location."
+        );
+
+        return;
+
+    }
+
+
+    // IMPORTANT:
+    // Capture center BEFORE exiting fullscreen
+
+    const latitude =
+        center.lat();
+
+    const longitude =
+        center.lng();
+
+
+    // ========================================================
+    // CONFIRM LOCATION
+    // ========================================================
+
+    confirmedLat =
+        latitude;
+
+    confirmedLng =
+        longitude;
+
+
+    pendingManualLat =
+        latitude;
+
+    pendingManualLng =
+        longitude;
+
+
+    locationSelected =
+        true;
+
+
+    // Manual selection is valid
+    liveLocationClicked =
+        false;
+
+
+    setLocationInputsOnly(
+        latitude,
+        longitude
+    );
+
+
+    // ========================================================
+    // SAVE FOR FUTURE ORDERS
+    // ========================================================
+
+    saveDeliveryLocation(
+        latitude,
+        longitude,
+        "manual"
+    );
+
+
+    // ========================================================
+    // EXIT FULLSCREEN
+    // ========================================================
+
+    exitMapFullscreen();
+
+
+    manualLocationMode =
+        false;
+
+
+    // ========================================================
+    // LOCK MAP
+    // ========================================================
+
+    lockDeliveryMap();
+
+
+    restoreNormalMapView();
+
+
+    // ========================================================
+    // STRONG CONFIRMATION
+    // ========================================================
+
+    const helpTitle =
+        document.getElementById(
+            "location-help-title"
+        );
+
+    const helpText =
+        document.getElementById(
+            "location-help-text"
+        );
+
+    const helpBox =
+        document.getElementById(
+            "location-help-box"
+        );
+
+
+    if (helpTitle) {
+
+        helpTitle.innerHTML =
+            "✅ Delivery location confirmed & saved";
+
+    }
+
+
+    if (helpText) {
+
+        helpText.innerHTML =
+            `
+            <strong>Your order will be delivered to this selected location.</strong>
+            <br>
+            💾 This location is saved for your future orders too.
+            <br>
+            Please check the 📍 pin once before placing your order.
+            <br>
+            To choose another address,
+            tap <strong>Change location</strong>.
+            `;
+
+    }
+
+
+    if (helpBox) {
+
+        helpBox.style.background =
+            "#ecfdf5";
+
+        helpBox.style.border =
+            "2px solid #22c55e";
+
+    }
+
+
+    showLocationMessage(
+        "✅ New delivery location confirmed and saved successfully",
+        "success"
+    );
+
+
+    // ========================================================
+    // RECALCULATE DISTANCE
+    // ========================================================
+
+    calculateDeliveryForCurrentLocation();
+
+}
+
+
+/* ============================================================
+   CANCEL MANUAL LOCATION
+============================================================ */
+
+function cancelManualLocation() {
+
+    // ========================================================
+    // EXIT FULLSCREEN
+    // ========================================================
+
+    exitMapFullscreen();
+
+
+    manualLocationMode =
+        false;
+
+
+    // ========================================================
+    // RESTORE PREVIOUS LOCATION
+    // ========================================================
+
+    if (
+        confirmedLat !== null &&
+        confirmedLng !== null
+    ) {
+
+        map.panTo({
+
+            lat:
+                confirmedLat,
+
+            lng:
+                confirmedLng
+
+        });
+
+
+        map.setZoom(17);
+
+    }
+
+
+    // ========================================================
+    // LOCK MAP
+    // ========================================================
+
+    lockDeliveryMap();
+
+
+    restoreNormalMapView();
+
+
+    const helpTitle =
+        document.getElementById(
+            "location-help-title"
+        );
+
+    const helpText =
+        document.getElementById(
+            "location-help-text"
+        );
+
+    const helpBox =
+        document.getElementById(
+            "location-help-box"
+        );
+
+
+    // ========================================================
+    // STRONG PERMANENT MESSAGE
+    // ========================================================
+
+    if (helpTitle) {
+
+        helpTitle.innerHTML =
+            "✅ Delivery location unchanged";
+
+    }
+
+
+    if (helpText) {
+
+        helpText.innerHTML =
+            `
+            <strong>Your previous delivery location is still selected.</strong>
+            <br>
+            No location changes were made.
+            <br>
+            This saved location will be used for this order and future orders.
+            <br>
+            Tap <strong>Change location</strong>
+            anytime if you want another address.
+            `;
+
+    }
+
+
+    if (helpBox) {
+
+        helpBox.style.background =
+            "#ecfdf5";
+
+        helpBox.style.border =
+            "2px solid #22c55e";
+
+    }
+
+
+    showLocationMessage(
+        "✅ Location change cancelled. Previous delivery location kept.",
+        "success"
+    );
+
+
+    // ========================================================
+    // RECALCULATE PREVIOUS DISTANCE
+    // ========================================================
+
+    if (
+        confirmedLat !== null &&
+        confirmedLng !== null
+    ) {
+
+        calculateDeliveryForCurrentLocation();
+
+    }
+
+}
+
+
+/* ============================================================
+   RESTORE NORMAL MAP VIEW
+============================================================ */
+
+function restoreNormalMapView() {
+
+    const mapElement =
+        document.getElementById(
+            "map"
+        );
+
+    const manualControls =
+        document.getElementById(
+            "manual-location-controls"
+        );
+
+    const normalControls =
+        document.getElementById(
+            "normal-location-controls"
+        );
+
+    const fullscreenButton =
+        document.getElementById(
+            "custom-map-fullscreen-btn"
+        );
+
+
+    if (mapElement) {
+
+        mapElement.style.height =
+            "300px";
+
+    }
+
+
+    if (manualControls) {
+
+        manualControls.style.display =
+            "none";
+
+    }
+
+
+    if (normalControls) {
+
+        normalControls.style.display =
+            "flex";
+
+    }
+
+
+    // Fullscreen not available
+    // after location confirmed
+    if (fullscreenButton) {
+
+        fullscreenButton.style.display =
+            "none";
+
+    }
+
+
+    setTimeout(
+        function () {
+
+            if (!map) {
+                return;
+            }
+
+
+            google.maps.event.trigger(
+                map,
+                "resize"
+            );
+
+
+            if (
+                confirmedLat !== null &&
+                confirmedLng !== null
+            ) {
+
+                map.panTo({
+
+                    lat:
+                        confirmedLat,
+
+                    lng:
+                        confirmedLng
+
+                });
+
+            }
+
+        },
+        150
+    );
+
+}
+
+
+/* ============================================================
+   CALCULATE DELIVERY FOR CURRENT RESTAURANT
+============================================================ */
+
+function calculateDeliveryForCurrentLocation() {
+
+    if (
+        confirmedLat === null ||
+        confirmedLng === null
+    ) {
+
+        return;
+
+    }
+
+
+    setLocationInputsOnly(
+        confirmedLat,
+        confirmedLng
+    );
+
+
+    if (
+        typeof cart === "undefined" ||
+        !cart.items
+    ) {
+
+        return;
+
+    }
+
+
+    const itemsTotal =
+        cart.items.reduce(
+
+            function (
+                sum,
+                item
+            ) {
+
+                return (
+                    sum +
+                    item.price *
+                    item.quantity
+                );
+
+            },
+
+            0
+        );
+
+
+    if (
+        typeof fetchDistanceDelivery ===
+        "function"
+    ) {
+
+        showRestaurantDistanceLoading();
+
+
+        fetchDistanceDelivery(
+            itemsTotal
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   RESTAURANT DISTANCE LOADING
+============================================================ */
+
+function showRestaurantDistanceLoading() {
+
+    const box =
+        document.getElementById(
+            "restaurant-distance-box"
+        );
+
+    const text =
+        document.getElementById(
+            "restaurant-distance-text"
+        );
+
+
+    if (box) {
+
+        box.style.display =
+            "block";
+
+    }
+
+
+    if (text) {
+
+        text.innerHTML =
+            "Calculating distance from restaurant...";
+
+    }
+
+}
+
+
+/* ============================================================
+   SHOW RESTAURANT DISTANCE
+============================================================ */
+
+/* ============================================================
+   SHOW RESTAURANT DISTANCE + ESTIMATED DELIVERY TIME
+============================================================ */
+
+function showRestaurantDistance(distanceKm) {
+
+    // Map section
+    const box =
+        document.getElementById(
+            "restaurant-distance-box"
+        );
+
+    const text =
+        document.getElementById(
+            "restaurant-distance-text"
+        );
+
+
+    // Top summary section
+    const summaryRow =
+        document.getElementById(
+            "summary-distance-row"
+        );
+
+    const summaryValue =
+        document.getElementById(
+            "summary-distance-value"
+        );
+
+
+    // ========================================================
+    // INVALID DISTANCE
+    // ========================================================
+
+    if (
+        distanceKm === null ||
+        distanceKm === undefined ||
+        isNaN(distanceKm)
+    ) {
+
+        if (box) {
+            box.style.display = "none";
+        }
+
+        if (summaryRow) {
+            summaryRow.style.display = "none";
+        }
+
+        return;
+    }
+
+
+    const distance =
+        Number(distanceKm);
+
+
+    // ========================================================
+    // ESTIMATED DELIVERY TIME
+    // ========================================================
+
+    let estimatedTime;
+
+
+    if (distance <= 4) {
+
+        estimatedTime =
+            "Around 20 mins";
+
+    }
+
+    else if (distance <= 6) {
+
+        estimatedTime =
+            "Around 30 mins";
+
+    }
+
+    else if (distance <= 8) {
+
+        estimatedTime =
+            "Around 40 mins";
+
+    }
+
+    else {
+
+        estimatedTime =
+            "Around 40–50 mins";
+
+    }
+
+
+    // ========================================================
+    // MAP SECTION
+    // ========================================================
+
+    if (box) {
+
+        box.style.display =
+            "block";
+
+    }
+
+
+    if (text) {
+
+        text.innerHTML = `
+
+            <div>
+                Restaurant is
+                <strong>
+                    ${distance.toFixed(1)} km
+                </strong>
+                from your delivery location.
+            </div>
+
+
+            <div style="
+                margin-top:6px;
+                font-size:14px;
+                font-weight:700;
+            ">
+
+                🕒 Estimated delivery:
+                <strong>
+                    ${estimatedTime}
+                </strong>
+
+            </div>
+
+
+            <div style="
+                margin-top:5px;
+                font-size:11px;
+                line-height:1.4;
+                font-weight:400;
+                color:#6b7280;
+            ">
+
+                Estimated time may vary depending on item preparation,
+                restaurant busy time and delivery conditions.
+
+            </div>
+
+        `;
+
+    }
+
+
+    // ========================================================
+    // ALWAYS-VISIBLE DELIVERY SUMMARY
+    // ========================================================
+
+    if (summaryRow) {
+
+        summaryRow.style.display =
+            "block";
+
+    }
+
+
+if (summaryValue) {
+
+    summaryValue.innerHTML = `
+
+        <div style="
+            font-size:13px;
+            font-weight:700;
+            color:#1f2937;
+        ">
+            🚚 Restaurant is
+            <strong>${distance.toFixed(1)} km</strong>
+            from your delivery location.
+        </div>
+
+
+        <div style="
+            margin-top:5px;
+            font-size:13px;
+            font-weight:700;
+            color:#1f2937;
+        ">
+            🕒 Estimated delivery:
+            <strong>${estimatedTime}</strong>
+        </div>
+
+
+        <div style="
+            margin-top:3px;
+            font-size:11px;
+            line-height:1.4;
+            font-weight:400;
+            color:#6b7280;
+        ">
+            Estimated time may vary based on item preparation,
+            restaurant busy time and delivery conditions.
+        </div>
+
+    `;
+
+}
+
+}
+
+/* ============================================================
+   DISTANCE CALCULATION LOADING
+============================================================ */
+
+function showRestaurantDistanceLoading() {
+
+    const box =
+        document.getElementById(
+            "restaurant-distance-box"
+        );
+
+    const text =
+        document.getElementById(
+            "restaurant-distance-text"
+        );
+
+    const summaryRow =
+        document.getElementById(
+            "summary-distance-row"
+        );
+
+    const summaryValue =
+        document.getElementById(
+            "summary-distance-value"
+        );
+
+
+    if (box) {
+
+        box.style.display =
+            "block";
+
+    }
+
+
+    if (text) {
+
+        text.innerHTML =
+            "⏳ Calculating distance & estimated delivery time...";
+
+    }
+
+
+    if (summaryRow) {
+
+        summaryRow.style.display =
+            "block";
+
+    }
+
+
+    if (summaryValue) {
+
+        summaryValue.innerHTML = `
+            <span style="
+                font-weight:600;
+                color:#6b7280;
+            ">
+                ⏳ Calculating distance & estimated delivery time...
+            </span>
+        `;
+
+    }
+
+}
+
+/* ============================================================
+   DISTANCE ERROR
+============================================================ */
+
+function showRestaurantDistanceError() {
+
+    const box =
+        document.getElementById(
+            "restaurant-distance-box"
+        );
+
+    const text =
+        document.getElementById(
+            "restaurant-distance-text"
+        );
+
+
+    if (box) {
+
+        box.style.display =
+            "block";
+
+    }
+
+
+    if (text) {
+
+        text.innerHTML =
+            "Unable to calculate restaurant distance. Please try again.";
+
+    }
+
+}
+/* ============================================================
+   VALIDATE CART
+============================================================ */
+/* ============================================================
+   VALIDATE CART
+============================================================ */
+
+function validateCart() {
+
+    // CART
+    if (!cart.items.length) {
+
+        alert(
+            "Your cart is empty"
+        );
+
+        return false;
+
+    }
+
+
+    // LOCATION
+    if (!locationSelected) {
+
+        alert(
+            "📍 Please select your delivery location"
+        );
+
+        return false;
+
+    }
+
+
+    // CUSTOMER + ADDRESS
+    if (!validateCustomerAddress()) {
+
+        openAddressSection();
+
+        return false;
+
+    }
+
+
+    customerAddressConfirmed =
+        true;
+
+
+    return true;
+
+}
 /* ============================================================
    EVENTS & INIT
 ============================================================ */
@@ -4560,123 +8059,144 @@ function syncTotals() {
     document.getElementById("cta-total").innerText = miniTotal;
 }
 </script>
-<script>
-// ------------------ ADDRESS SAVE/LOAD ------------------
 
-// Save address (session + optional permanent)
-function saveAddress() {
-    const addressData = {};
-    document.querySelectorAll('.address-card input, .address-card select, .address-card textarea').forEach(el => {
-        addressData[el.name] = el.value;
-    });
-
-    // Save temporarily for current session
-    sessionStorage.setItem("savedAddress", JSON.stringify(addressData));
-
-    // Save permanently if checkbox is checked
-    const saveCheckbox = document.getElementById("save-address");
-    if (saveCheckbox && saveCheckbox.checked) {
-        localStorage.setItem("savedAddressPermanent", JSON.stringify(addressData));
-    }
-}
-
-// Load saved address on page load
-function loadSavedAddress() {
-    let saved = JSON.parse(localStorage.getItem("savedAddressPermanent")) || 
-                JSON.parse(sessionStorage.getItem("savedAddress"));
-
-    if (!saved) return;
-
-    for (const key in saved) {
-        const field = document.querySelector(`[name="${key}"]`);
-        if (field) field.value = saved[key];
-    }
-}
-
-window.addEventListener('DOMContentLoaded', loadSavedAddress);
-
-// Clear address after order (clears session + inputs)
-function clearAddressAfterOrder() {
-    // Remove session storage
-    sessionStorage.removeItem("savedAddress");
-
-    // Clear input fields
-    document.querySelectorAll('.address-card input, .address-card select, .address-card textarea')
-        .forEach(el => {
-            if (el.tagName === "SELECT") el.selectedIndex = 0;
-            else el.value = "";
-        });
-
-    // Uncheck "save address" checkbox
-    const saveCheckbox = document.getElementById("save-address");
-    if (saveCheckbox) saveCheckbox.checked = false;
-}
-
-// Attach input listeners to auto-save
-document.querySelectorAll('.address-card input, .address-card select, .address-card textarea')
-.forEach(el => el.addEventListener('input', saveAddress));
-
-// ------------------ EXAMPLE USAGE ------------------
-// Call this **after order is successfully placed**
-function placeOrderSuccess() {
-    // 1️⃣ Clear address
-    clearAddressAfterOrder();
-
-    // 2️⃣ Optionally show success message
-    alert("✅ Order placed successfully!");
-} 
-
-
-
-
-</script>
 <script>
 
-function selectPayment(type){
+/* ============================================================
+   SELECT PAYMENT METHOD
+============================================================ */
 
-    document.getElementById(
-        "payment_type"
-    ).value = type;
+function selectPayment(type) {
 
-    document.getElementById(
-        "onlineCard"
-    ).classList.remove(
-        "active"
-    );
+    const paymentInput =
+        document.getElementById(
+            "payment_type"
+        );
 
-    document.getElementById(
-        "codCard"
-    ).classList.remove(
-        "active"
-    );
-
-    if(type === "Online"){
-
+    const onlineCard =
         document.getElementById(
             "onlineCard"
-        ).classList.add(
+        );
+
+    const codCard =
+        document.getElementById(
+            "codCard"
+        );
+
+    const confirmBtn =
+        document.getElementById(
+            "confirm-order-btn"
+        );
+
+
+    // ========================================================
+    // SAVE SELECTED PAYMENT METHOD
+    // ========================================================
+
+    if (paymentInput) {
+
+        paymentInput.value =
+            type;
+
+    }
+
+
+    // ========================================================
+    // REMOVE OLD ACTIVE STATE
+    // ========================================================
+
+    if (onlineCard) {
+
+        onlineCard.classList.remove(
             "active"
         );
 
     }
-    else{
 
-        document.getElementById(
-            "codCard"
-        ).classList.add(
+
+    if (codCard) {
+
+        codCard.classList.remove(
             "active"
         );
+
+    }
+
+
+    // ========================================================
+    // ONLINE PAYMENT
+    // ========================================================
+
+    if (type === "Online") {
+
+        if (onlineCard) {
+
+            onlineCard.classList.add(
+                "active"
+            );
+
+        }
+
+
+        // Change order button
+        if (
+            confirmBtn &&
+            !confirmBtn.disabled
+        ) {
+
+            confirmBtn.innerHTML =
+                "🔒 Proceed to Payment ➜";
+
+        }
+
+    }
+
+
+    // ========================================================
+    // CASH ON DELIVERY
+    // ========================================================
+
+    else {
+
+        if (codCard) {
+
+            codCard.classList.add(
+                "active"
+            );
+
+        }
+
+
+        // Change order button
+        if (
+            confirmBtn &&
+            !confirmBtn.disabled
+        ) {
+
+            confirmBtn.innerHTML =
+                "🍔 Confirm Order";
+
+        }
 
     }
 
 }
 
 
-window.onload = function(){
+/* ============================================================
+   DEFAULT PAYMENT METHOD
+============================================================ */
 
-    selectPayment("COD");
+window.addEventListener(
+    "load",
+    function () {
 
-};
+        selectPayment(
+            "COD"
+        );
+
+    }
+);
 
 </script>
 <script>
@@ -4951,7 +8471,1661 @@ function showAddedAnimation(text) {
 }
 
 </script>
+<script>
 
+/* ============================================================
+   TOGGLE DELIVERY MAP
+============================================================ */
+
+function toggleDeliveryMapSection() {
+
+    const section =
+        document.getElementById(
+            "delivery-map-section"
+        );
+
+    const button =
+        document.getElementById(
+            "toggle-map-section-btn"
+        );
+
+
+    if (!section) {
+        return;
+    }
+
+
+    const isHidden =
+        window.getComputedStyle(section).display === "none";
+
+
+    // ========================================================
+    // MAP IS HIDDEN → OPEN IT
+    // ========================================================
+
+    if (isHidden) {
+
+        openDeliveryMap(true);
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // MAP IS OPEN → TRY TO HIDE IT
+    // ========================================================
+
+    if (manualLocationMode) {
+
+        showLocationMessage(
+            "📍 Please confirm or cancel your location change before hiding the map.",
+            "info",
+            false
+        );
+
+        return;
+
+    }
+
+
+    collapseDeliveryMap(false);
+
+}
+
+
+
+/* ============================================================
+   OPEN DELIVERY MAP
+============================================================ */
+
+function openDeliveryMap(
+    scrollToMap = false
+) {
+
+    const section =
+        document.getElementById(
+            "delivery-map-section"
+        );
+
+    const button =
+        document.getElementById(
+            "toggle-map-section-btn"
+        );
+
+
+    if (!section) {
+        return;
+    }
+
+
+    // ========================================================
+    // SHOW MAP SECTION
+    // ========================================================
+
+    section.style.display =
+        "block";
+
+
+    // ========================================================
+    // UPDATE BUTTON
+    // ========================================================
+
+    if (button) {
+
+        button.style.display =
+            "block";
+
+        button.innerHTML =
+            "▲ Hide delivery map";
+
+    }
+
+
+    // ========================================================
+    // GOOGLE MAP RESIZE
+    // ========================================================
+
+    setTimeout(
+        function () {
+
+            if (!map) {
+                return;
+            }
+
+
+            google.maps.event.trigger(
+                map,
+                "resize"
+            );
+
+
+            // =================================================
+            // KEEP SELECTED LOCATION CENTERED
+            // =================================================
+
+            if (
+                confirmedLat !== null &&
+                confirmedLng !== null
+            ) {
+
+                map.panTo({
+
+                    lat:
+                        confirmedLat,
+
+                    lng:
+                        confirmedLng
+
+                });
+
+            }
+
+
+            // =================================================
+            // OPTIONAL SCROLL
+            // =================================================
+
+            if (scrollToMap) {
+
+                section.scrollIntoView({
+
+                    behavior:
+                        "smooth",
+
+                    block:
+                        "nearest"
+
+                });
+
+            }
+
+        },
+        180
+    );
+
+}
+
+
+
+/* ============================================================
+   COLLAPSE / HIDE DELIVERY MAP
+============================================================ */
+
+function collapseDeliveryMap(
+    scrollToSummary = false
+) {
+
+    // ========================================================
+    // DON'T HIDE WHILE CUSTOMER IS CHANGING LOCATION
+    // ========================================================
+
+    if (manualLocationMode) {
+
+        showLocationMessage(
+            "📍 Please confirm or cancel your location change first.",
+            "info",
+            false
+        );
+
+        return;
+
+    }
+
+
+    const section =
+        document.getElementById(
+            "delivery-map-section"
+        );
+
+    const button =
+        document.getElementById(
+            "toggle-map-section-btn"
+        );
+
+
+    // ========================================================
+    // HIDE MAP
+    // ========================================================
+
+    if (section) {
+
+        section.style.display =
+            "none";
+
+    }
+
+
+    // ========================================================
+    // UPDATE BUTTON
+    // ========================================================
+
+    if (button) {
+
+        button.style.display =
+            "block";
+
+        button.innerHTML =
+            "🗺️ View / Change delivery location";
+
+    }
+
+
+    // ========================================================
+    // HIDE OLD LOCKED-MAP MESSAGE
+    // ========================================================
+
+    const lockedMessage =
+        document.getElementById(
+            "map-locked-message"
+        );
+
+
+    if (lockedMessage) {
+
+        lockedMessage.style.display =
+            "none";
+
+    }
+
+
+    // ========================================================
+    // OPTIONAL SCROLL TO SUMMARY
+    // ========================================================
+
+    if (scrollToSummary) {
+
+        const summary =
+            document.getElementById(
+                "delivery-location-summary"
+            );
+
+
+        if (summary) {
+
+            summary.scrollIntoView({
+
+                behavior:
+                    "smooth",
+
+                block:
+                    "nearest"
+
+            });
+
+        }
+
+    }
+
+}
+
+
+
+/* ============================================================
+   SET INITIAL MAP VISIBILITY
+============================================================ */
+
+function setupDeliveryMapVisibility(
+    hasSavedLocation
+) {
+
+    const section =
+        document.getElementById(
+            "delivery-map-section"
+        );
+
+    const button =
+        document.getElementById(
+            "toggle-map-section-btn"
+        );
+
+
+    if (!section) {
+        return;
+    }
+
+
+    // ========================================================
+    // RETURNING CUSTOMER
+    // SAVED LOCATION ALREADY EXISTS
+    // ========================================================
+
+    if (hasSavedLocation) {
+
+        // Map hidden immediately
+        section.style.display =
+            "none";
+
+
+        if (button) {
+
+            button.style.display =
+                "block";
+
+            button.innerHTML =
+                "🗺️ View / Change delivery location";
+
+        }
+
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // NEW CUSTOMER
+    // NO SAVED LOCATION
+    // ========================================================
+
+    // Show map immediately
+    section.style.display =
+        "block";
+
+
+    // No need for View Map button yet
+    // because map is already visible
+    if (button) {
+
+        button.style.display =
+            "none";
+
+    }
+
+}
+
+
+
+/* ============================================================
+   FIRST LOCATION SUCCESS
+   CALLED AFTER NEW CUSTOMER GPS IS DETECTED
+============================================================ */
+
+function firstLocationSetupCompleted() {
+
+    const button =
+        document.getElementById(
+            "toggle-map-section-btn"
+        );
+
+
+    /*
+       Customer should see the detected
+       map pin for a few seconds.
+
+       After that we collapse the map.
+    */
+
+    setTimeout(
+        function () {
+
+            // Don't collapse if customer
+            // started changing location
+            if (manualLocationMode) {
+                return;
+            }
+
+
+            collapseDeliveryMap(false);
+
+
+            if (button) {
+
+                button.style.display =
+                    "block";
+
+                button.innerHTML =
+                    "🗺️ View / Change delivery location";
+
+            }
+
+        },
+        3500
+    );
+
+}
+
+</script>
+<script>
+  
+
+/* ============================================================
+   CUSTOMER ADDRESS SYSTEM
+============================================================ */
+
+let customerAddressConfirmed = false;
+
+const CUSTOMER_ADDRESS_KEY =
+    "saved_customer_address";
+
+
+/* ============================================================
+   GET ELEMENT HELPER
+============================================================ */
+
+function addressEl(id) {
+
+    return document.getElementById(id);
+
+}
+
+
+/* ============================================================
+   PHONE INPUT FORMAT
+============================================================ */
+
+function formatIndianPhone(input) {
+
+    let value =
+        input.value.trim();
+
+
+    // User entered +91 format
+    if (value.startsWith("+")) {
+
+        let digits =
+            value.replace(/\D/g, "");
+
+
+        // Only Indian +91
+        if (!digits.startsWith("91")) {
+
+            input.value =
+                "+91";
+
+            return;
+
+        }
+
+
+        // 91 + maximum 10 digits
+        digits =
+            digits.substring(0, 12);
+
+
+        input.value =
+            "+" + digits;
+
+
+        return;
+
+    }
+
+
+    // Normal number
+    let digits =
+        value.replace(/\D/g, "");
+
+
+    // If user enters:
+    // 919876543210
+    // convert to:
+    // +919876543210
+
+    if (
+        digits.startsWith("91") &&
+        digits.length > 10
+    ) {
+
+        digits =
+            digits.substring(0, 12);
+
+        input.value =
+            "+" + digits;
+
+        return;
+
+    }
+
+
+    // Normal number maximum 10 digits
+    input.value =
+        digits.substring(0, 10);
+
+}
+
+
+/* ============================================================
+   PHONE VALIDATION
+============================================================ */
+
+function isValidIndianPhone(value) {
+
+    if (!value) {
+        return false;
+    }
+
+
+    value =
+        value.trim();
+
+
+    // Accepted:
+    //
+    // 9876543210
+    // +919876543210
+
+    return /^(?:\+91)?[6-9]\d{9}$/.test(
+        value
+    );
+
+}
+
+
+/* ============================================================
+   PINCODE INPUT
+============================================================ */
+
+function formatPincode(input) {
+
+    input.value =
+        input.value
+            .replace(/\D/g, "")
+            .substring(0, 6);
+
+}
+
+
+/* ============================================================
+   READ CURRENT FORM
+============================================================ */
+
+function getCustomerAddressData() {
+
+    return {
+
+        name:
+            addressEl("customer_name")
+                .value.trim(),
+
+        email:
+            addressEl("customer_email")
+                .value.trim(),
+
+        phone:
+            addressEl("phone")
+                .value.trim(),
+
+        alt_phone:
+            addressEl("alt_phone")
+                .value.trim(),
+
+        address_type:
+            addressEl("address_type")
+                .value,
+
+        house_no:
+            addressEl("house_no")
+                .value.trim(),
+
+        landmark:
+            addressEl("landmark")
+                .value.trim(),
+
+        city:
+            addressEl("city")
+                .value.trim(),
+
+        state:
+            addressEl("state")
+                .value.trim(),
+
+        pincode:
+            addressEl("pincode")
+                .value.trim(),
+
+        delivery_note:
+            addressEl("delivery_note")
+                .value.trim()
+
+    };
+
+}
+
+
+/* ============================================================
+   CHECK IF ADDRESS DATA IS VALID
+============================================================ */
+
+function isCustomerAddressDataValid(data) {
+
+    if (!data) {
+        return false;
+    }
+
+
+    if (
+        !data.name ||
+        data.name.length < 2
+    ) {
+        return false;
+    }
+
+
+    if (
+        !isValidIndianPhone(
+            data.phone
+        )
+    ) {
+        return false;
+    }
+
+
+    // Alternate phone optional
+    if (
+        data.alt_phone &&
+        !isValidIndianPhone(
+            data.alt_phone
+        )
+    ) {
+        return false;
+    }
+
+
+    if (!data.house_no) {
+        return false;
+    }
+
+
+    if (!data.landmark) {
+        return false;
+    }
+
+
+    if (!data.city) {
+        return false;
+    }
+
+
+    if (!data.state) {
+        return false;
+    }
+
+
+    if (
+        !/^[1-9][0-9]{5}$/.test(
+            data.pincode
+        )
+    ) {
+        return false;
+    }
+
+
+    return true;
+
+}
+
+
+/* ============================================================
+   VALIDATE FORM + SHOW ERROR
+============================================================ */
+
+function validateCustomerAddress() {
+
+    const data =
+        getCustomerAddressData();
+
+
+    const phoneError =
+        addressEl("phone-error");
+
+    const altError =
+        addressEl("alt-phone-error");
+
+    const pinError =
+        addressEl("pincode-error");
+
+
+    // Reset old errors
+    if (phoneError) {
+        phoneError.style.display = "none";
+    }
+
+
+    if (altError) {
+        altError.style.display = "none";
+    }
+
+
+    if (pinError) {
+        pinError.style.display = "none";
+    }
+
+
+    // NAME
+    if (
+        !data.name ||
+        data.name.length < 2
+    ) {
+
+        alert(
+            "👤 Please enter your full name."
+        );
+
+        addressEl(
+            "customer_name"
+        ).focus();
+
+        return false;
+
+    }
+
+
+    // PHONE
+    if (
+        !isValidIndianPhone(
+            data.phone
+        )
+    ) {
+
+        if (phoneError) {
+            phoneError.style.display =
+                "block";
+        }
+
+
+        addressEl(
+            "phone"
+        ).focus();
+
+
+        return false;
+
+    }
+
+
+    // ALTERNATE PHONE
+    if (
+        data.alt_phone &&
+        !isValidIndianPhone(
+            data.alt_phone
+        )
+    ) {
+
+        if (altError) {
+            altError.style.display =
+                "block";
+        }
+
+
+        addressEl(
+            "alt_phone"
+        ).focus();
+
+
+        return false;
+
+    }
+
+
+    // HOUSE
+    if (!data.house_no) {
+
+        alert(
+            "🏠 Please enter House / Flat No."
+        );
+
+
+        addressEl(
+            "house_no"
+        ).focus();
+
+
+        return false;
+
+    }
+
+
+    // LANDMARK
+    if (!data.landmark) {
+
+        alert(
+            "📍 Please enter a landmark."
+        );
+
+
+        addressEl(
+            "landmark"
+        ).focus();
+
+
+        return false;
+
+    }
+
+
+    // CITY
+    if (!data.city) {
+
+        alert(
+            "🏙️ Please enter City / Village."
+        );
+
+
+        addressEl(
+            "city"
+        ).focus();
+
+
+        return false;
+
+    }
+
+
+    // STATE
+    if (!data.state) {
+
+        alert(
+            "Please enter your state."
+        );
+
+
+        addressEl(
+            "state"
+        ).focus();
+
+
+        return false;
+
+    }
+
+
+    // PINCODE
+    if (
+        !/^[1-9][0-9]{5}$/.test(
+            data.pincode
+        )
+    ) {
+
+        if (pinError) {
+            pinError.style.display =
+                "block";
+        }
+
+
+        addressEl(
+            "pincode"
+        ).focus();
+
+
+        return false;
+
+    }
+
+
+    return true;
+
+}
+
+
+/* ============================================================
+   SAVE ADDRESS PERMANENTLY
+============================================================ */
+
+function saveCustomerAddress(data) {
+
+    try {
+
+        localStorage.setItem(
+            CUSTOMER_ADDRESS_KEY,
+            JSON.stringify(data)
+        );
+
+
+        console.log(
+            "Customer address saved"
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Could not save address:",
+            error
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   REMOVE SAVED ADDRESS
+============================================================ */
+
+function removeSavedCustomerAddress() {
+
+    localStorage.removeItem(
+        CUSTOMER_ADDRESS_KEY
+    );
+
+}
+
+
+/* ============================================================
+   FILL FORM WITH SAVED DATA
+============================================================ */
+
+function fillCustomerAddressForm(data) {
+
+    addressEl("customer_name").value =
+        data.name || "";
+
+    addressEl("customer_email").value =
+        data.email || "";
+
+    addressEl("phone").value =
+        data.phone || "";
+
+    addressEl("alt_phone").value =
+        data.alt_phone || "";
+
+    addressEl("address_type").value =
+        data.address_type || "Home";
+
+    addressEl("house_no").value =
+        data.house_no || "";
+
+    addressEl("landmark").value =
+        data.landmark || "";
+
+    addressEl("city").value =
+        data.city || "";
+
+    addressEl("state").value =
+        data.state || "";
+
+    addressEl("pincode").value =
+        data.pincode || "";
+
+    addressEl("delivery_note").value =
+        data.delivery_note || "";
+
+}
+
+
+/* ============================================================
+   SAFE TEXT
+============================================================ */
+
+function safeAddressText(value) {
+
+    const div =
+        document.createElement("div");
+
+
+    div.textContent =
+        value || "";
+
+
+    return div.innerHTML;
+
+}
+
+
+/* ============================================================
+   UPDATE COMPACT SUMMARY
+============================================================ */
+
+function updateSavedAddressSummary(
+    data = null
+) {
+
+    if (!data) {
+
+        data =
+            getCustomerAddressData();
+
+    }
+
+
+    const summary =
+        addressEl(
+            "saved-address-summary"
+        );
+
+
+    if (!summary) {
+        return;
+    }
+
+
+    addressEl(
+        "saved-customer-name"
+    ).innerHTML =
+        "👤 " +
+        safeAddressText(
+            data.name
+        );
+
+
+    addressEl(
+        "saved-customer-phone"
+    ).innerHTML =
+        "📞 " +
+        safeAddressText(
+            data.phone
+        );
+
+
+    addressEl(
+        "saved-customer-address"
+    ).innerHTML =
+        `
+        🏠 <strong>
+        ${safeAddressText(
+            data.address_type || "Home"
+        )}
+        </strong>
+
+        <br>
+
+        ${safeAddressText(
+            data.house_no
+        )},
+
+        ${safeAddressText(
+            data.landmark
+        )},
+
+        ${safeAddressText(
+            data.city
+        )},
+
+        ${safeAddressText(
+            data.state
+        )} -
+
+        ${safeAddressText(
+            data.pincode
+        )}
+        `;
+
+
+    summary.style.display =
+        "block";
+
+}
+
+
+/* ============================================================
+   OPEN ADDRESS FORM
+============================================================ */
+
+function openAddressSection() {
+
+    const section =
+        addressEl(
+            "customer-address-section"
+        );
+
+    const summary =
+        addressEl(
+            "saved-address-summary"
+        );
+
+    const button =
+        addressEl(
+            "toggle-address-btn"
+        );
+
+
+    if (section) {
+
+        section.style.display =
+            "block";
+
+    }
+
+
+    // Hide compact summary while editing
+    if (summary) {
+
+        summary.style.display =
+            "none";
+
+    }
+
+
+    if (button) {
+
+        button.style.display =
+            "none";
+
+    }
+
+
+    setTimeout(
+        function () {
+
+            if (section) {
+
+                section.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest"
+                });
+
+            }
+
+        },
+        100
+    );
+
+}
+
+
+/* ============================================================
+   COLLAPSE ADDRESS FORM
+============================================================ */
+
+function collapseAddressSection() {
+
+    const section =
+        addressEl(
+            "customer-address-section"
+        );
+
+    const button =
+        addressEl(
+            "toggle-address-btn"
+        );
+
+
+    if (section) {
+
+        section.style.display =
+            "none";
+
+    }
+
+
+    if (button) {
+
+        button.style.display =
+            "block";
+
+        button.innerHTML =
+            "✏️ View / Edit delivery details";
+
+    }
+
+
+    updateSavedAddressSummary();
+
+}
+
+
+/* ============================================================
+   CONFIRM ADDRESS
+============================================================ */
+
+function confirmCustomerAddress() {
+
+    // Validate first
+    if (!validateCustomerAddress()) {
+
+        return;
+
+    }
+
+
+    const data =
+        getCustomerAddressData();
+
+
+    customerAddressConfirmed =
+        true;
+
+
+    const checkbox =
+        addressEl(
+            "save-address"
+        );
+
+
+    // ========================================================
+    // CUSTOMER WANTS TO SAVE FOR FUTURE
+    // ========================================================
+
+    if (
+        checkbox &&
+        checkbox.checked
+    ) {
+
+        saveCustomerAddress(
+            data
+        );
+
+    }
+
+
+    // ========================================================
+    // CUSTOMER DOES NOT WANT PERMANENT SAVE
+    // ========================================================
+
+    else {
+
+        /*
+        IMPORTANT:
+
+        Do NOT remove an already-saved address
+        simply because checkbox is currently unchecked.
+
+        This allows a returning customer to edit
+        this order without accidentally deleting
+        their permanent address.
+        */
+
+    }
+
+
+    // Show compact summary
+    updateSavedAddressSummary(
+        data
+    );
+
+
+    // Hide full form
+    collapseAddressSection();
+
+
+    // Small visual message instead of another big form
+    console.log(
+        "Delivery details confirmed"
+    );
+
+}
+
+
+/* ============================================================
+   LOAD SAVED ADDRESS
+============================================================ */
+/* ============================================================
+   LOAD SAVED CUSTOMER ADDRESS
+   SUPPORTS OLD + NEW VERSION
+============================================================ */
+
+function loadSavedCustomerAddress() {
+
+    let saved = null;
+
+
+    // ========================================================
+    // 1. TRY NEW VERSION FIRST
+    // ========================================================
+
+    try {
+
+        const newSavedRaw =
+            localStorage.getItem(
+                CUSTOMER_ADDRESS_KEY
+            );
+
+
+        if (newSavedRaw) {
+
+            saved =
+                JSON.parse(
+                    newSavedRaw
+                );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "New saved address is invalid:",
+            error
+        );
+
+
+        removeSavedCustomerAddress();
+
+
+        saved = null;
+
+    }
+
+
+    // ========================================================
+    // 2. IF NEW ADDRESS NOT FOUND,
+    //    TRY OLD PERMANENT ADDRESS
+    // ========================================================
+
+    if (!saved) {
+
+        try {
+
+            const oldRaw =
+                localStorage.getItem(
+                    "savedAddressPermanent"
+                );
+
+
+            if (oldRaw) {
+
+                const oldSaved =
+                    JSON.parse(
+                        oldRaw
+                    );
+
+
+                if (oldSaved) {
+
+                    console.log(
+                        "Old saved address found"
+                    );
+
+
+                    // =========================================
+                    // CONVERT OLD DATA TO NEW FORMAT
+                    // =========================================
+
+                    const migratedData = {
+
+                        name:
+                            oldSaved.name || "",
+
+                        email:
+                            oldSaved.email || "",
+
+                        phone:
+                            oldSaved.phone || "",
+
+                        alt_phone:
+                            oldSaved.alt_phone || "",
+
+                        address_type:
+                            oldSaved.address_type || "Home",
+
+                        house_no:
+                            oldSaved.house_no || "",
+
+                        landmark:
+                            oldSaved.landmark || "",
+
+                        city:
+                            oldSaved.city || "",
+
+                        state:
+                            oldSaved.state || "",
+
+                        pincode:
+                            oldSaved.pincode || "",
+
+                        delivery_note:
+                            oldSaved.delivery_note || ""
+
+                    };
+
+
+                    // =========================================
+                    // OLD DATA IS VALID
+                    // =========================================
+
+                    if (
+                        isCustomerAddressDataValid(
+                            migratedData
+                        )
+                    ) {
+
+                        // Save in NEW format
+                        saveCustomerAddress(
+                            migratedData
+                        );
+
+
+                        saved =
+                            migratedData;
+
+
+                        console.log(
+                            "✅ Old address migrated successfully"
+                        );
+
+
+                        // Remove old key after successful migration
+                        localStorage.removeItem(
+                            "savedAddressPermanent"
+                        );
+
+                    }
+
+                    else {
+
+                        console.log(
+                            "Old saved address is incomplete or invalid"
+                        );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Old saved address migration failed:",
+                error
+            );
+
+        }
+
+    }
+
+
+    // ========================================================
+    // 3. OPTIONAL:
+    //    TRY OLD SESSION ADDRESS
+    // ========================================================
+
+    if (!saved) {
+
+        try {
+
+            const oldSessionRaw =
+                sessionStorage.getItem(
+                    "savedAddress"
+                );
+
+
+            if (oldSessionRaw) {
+
+                const oldSession =
+                    JSON.parse(
+                        oldSessionRaw
+                    );
+
+
+                if (oldSession) {
+
+                    const migratedSessionData = {
+
+                        name:
+                            oldSession.name || "",
+
+                        email:
+                            oldSession.email || "",
+
+                        phone:
+                            oldSession.phone || "",
+
+                        alt_phone:
+                            oldSession.alt_phone || "",
+
+                        address_type:
+                            oldSession.address_type || "Home",
+
+                        house_no:
+                            oldSession.house_no || "",
+
+                        landmark:
+                            oldSession.landmark || "",
+
+                        city:
+                            oldSession.city || "",
+
+                        state:
+                            oldSession.state || "",
+
+                        pincode:
+                            oldSession.pincode || "",
+
+                        delivery_note:
+                            oldSession.delivery_note || ""
+
+                    };
+
+
+                    if (
+                        isCustomerAddressDataValid(
+                            migratedSessionData
+                        )
+                    ) {
+
+                        saved =
+                            migratedSessionData;
+
+
+                        console.log(
+                            "✅ Old session address loaded"
+                        );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Old session address load failed:",
+                error
+            );
+
+        }
+
+    }
+
+
+    // ========================================================
+    // 4. NEW CUSTOMER
+    // NO VALID SAVED ADDRESS
+    // ========================================================
+
+    if (
+        !saved ||
+        !isCustomerAddressDataValid(
+            saved
+        )
+    ) {
+
+        customerAddressConfirmed =
+            false;
+
+
+        // Show full form
+        openAddressSection();
+
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // 5. RETURNING CUSTOMER
+    // VALID ADDRESS EXISTS
+    // ========================================================
+
+    fillCustomerAddressForm(
+        saved
+    );
+
+
+    customerAddressConfirmed =
+        true;
+
+
+    // ========================================================
+    // KEEP FORM HIDDEN
+    // ========================================================
+
+    const section =
+        addressEl(
+            "customer-address-section"
+        );
+
+
+    if (section) {
+
+        section.style.display =
+            "none";
+
+    }
+
+
+    // ========================================================
+    // SHOW COMPACT SUMMARY
+    // ========================================================
+
+    updateSavedAddressSummary(
+        saved
+    );
+
+
+    // ========================================================
+    // SHOW EDIT BUTTON
+    // ========================================================
+
+    const button =
+        addressEl(
+            "toggle-address-btn"
+        );
+
+
+    if (button) {
+
+        button.style.display =
+            "block";
+
+        button.innerHTML =
+            "✏️ View / Edit delivery details";
+
+    }
+
+}
+
+
+/* ============================================================
+   INITIALIZE
+============================================================ */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        loadSavedCustomerAddress();
+
+    }
+);
+</script>
+
+
+<script
+         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAY3Jpm4Oct5HAcTTuhgr9g-yuYdyNMVx0&callback=initMap"
+    async
+    defer>
+</script>
 {% endblock %}
 
 
