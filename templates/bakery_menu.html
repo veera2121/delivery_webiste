@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ restaurant.name }} Bakery{% endblock %}
+{% block title %}{{ restaurant.name }} - Menu{% endblock %}
 {% block content %}
 
 <style>
@@ -419,17 +419,2072 @@ body{
 .bakery-card {
     position: relative; /* REQUIRED */
 }
+
+/* =====================================================================
+   RUCHIGO BAKERY — 2026 TRENDING MENU UI
+   UI OVERRIDE ONLY: preserves existing Jinja + JavaScript hooks
+   ===================================================================== */
+
+:root{
+    --bk-brand:#f43f5e;
+    --bk-brand-dark:#e11d48;
+    --bk-pink-soft:#fff1f4;
+    --bk-green:#16a34a;
+    --bk-text:#18181b;
+    --bk-muted:#71717a;
+    --bk-border:#ececee;
+    --bk-bg:#f7f7f8;
+    --bk-white:#fff;
+    --bk-shadow:0 8px 28px rgba(15,23,42,.08);
+    --bk-shadow-soft:0 3px 14px rgba(15,23,42,.06);
+}
+
+body{
+    background:var(--bk-bg) !important;
+    color:var(--bk-text);
+    padding-bottom:145px !important;
+}
+
+/* HEADER */
+.bakery-header{
+    position:sticky;
+    top:0;
+    z-index:1400;
+
+    height:64px;
+    box-sizing:border-box;
+
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+
+    padding:0 16px !important;
+    margin:0 !important;
+
+    text-align:left !important;
+    font-size:19px !important;
+    font-weight:850 !important;
+    letter-spacing:-.25px;
+
+    color:#18181b !important;
+    background:rgba(255,255,255,.95) !important;
+
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+
+    border-radius:0 !important;
+    border-bottom:1px solid rgba(15,23,42,.06);
+
+    box-shadow:0 4px 18px rgba(15,23,42,.05) !important;
+}
+
+.bakery-header::before{
+    content:"🧁";
+    width:38px;
+    height:38px;
+    margin-right:10px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:12px;
+    background:linear-gradient(135deg,#fff1f4,#ffe4e9);
+
+    font-size:19px;
+}
+
+/* INCENTIVE */
+.menu-incentive{
+    position:sticky !important;
+    top:64px !important;
+    z-index:1320 !important;
+
+    margin:0 !important;
+    padding:9px 14px !important;
+
+    background:rgba(255,255,255,.97) !important;
+    color:#334155 !important;
+
+    border-radius:0 !important;
+    border-bottom:1px solid #e8f5eb;
+
+    box-shadow:0 5px 16px rgba(15,23,42,.05) !important;
+}
+
+.menu-total{
+    font-size:13px !important;
+    font-weight:800 !important;
+}
+
+.menu-total span{
+    color:#15803d;
+    font-size:16px;
+}
+
+.menu-message{
+    font-size:11px !important;
+    margin:4px 0 6px !important;
+    color:#64748b;
+}
+
+.progress-bar{
+    height:4px !important;
+    background:#e5e7eb !important;
+}
+
+.progress-fill{
+    background:linear-gradient(90deg,#16a34a,#4ade80) !important;
+}
+
+/* CATEGORY SELECTOR */
+.category-selector{
+    position:sticky !important;
+    top:calc(64px + var(--bakery-incentive-height, 0px)) !important;
+    z-index:1280 !important;
+
+    gap:8px !important;
+    padding:10px 12px !important;
+
+    background:rgba(247,247,248,.96) !important;
+    backdrop-filter:blur(16px) !important;
+    -webkit-backdrop-filter:blur(16px) !important;
+
+    border-bottom:1px solid rgba(15,23,42,.05) !important;
+    box-shadow:none !important;
+}
+
+.category-btn{
+    padding:8px 13px !important;
+
+    border:1px solid #e5e7eb !important;
+    border-radius:12px !important;
+
+    background:#fff !important;
+    color:#4b5563 !important;
+
+    font-size:12.5px !important;
+    font-weight:750 !important;
+
+    box-shadow:0 2px 8px rgba(15,23,42,.035) !important;
+
+    transform:none !important;
+}
+
+.category-btn:hover{
+    transform:none !important;
+    background:#fff4f6 !important;
+    border-color:#fecdd3 !important;
+    color:#e11d48 !important;
+}
+
+.category-btn.active{
+    background:#18181b !important;
+    color:#fff !important;
+    border-color:#18181b !important;
+    box-shadow:0 4px 12px rgba(24,24,27,.12) !important;
+    transform:none !important;
+}
+
+/* CATEGORY TITLES */
+.category-section{
+    scroll-margin-top:155px;
+}
+
+.category-title{
+    max-width:920px;
+    margin:28px auto 10px !important;
+    padding:0 14px;
+
+    font-size:20px !important;
+    font-weight:850 !important;
+    letter-spacing:-.3px;
+
+    color:#18181b !important;
+}
+
+.category-title::after{
+    content:"";
+    display:block;
+    width:30px;
+    height:3px;
+    margin-top:7px;
+
+    border-radius:999px;
+    background:var(--bk-brand);
+}
+
+/* BAKERY CARD */
+.bakery-card{
+    position:relative !important;
+
+    width:calc(100% - 24px);
+    max-width:920px;
+    min-height:150px;
+
+    box-sizing:border-box;
+
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 124px;
+    gap:14px !important;
+    align-items:start;
+
+    margin:10px auto !important;
+    padding:15px !important;
+
+    background:#fff !important;
+
+    border:1px solid var(--bk-border);
+    border-radius:22px !important;
+
+    box-shadow:var(--bk-shadow-soft) !important;
+
+    transition:transform .18s ease, box-shadow .18s ease !important;
+}
+
+.bakery-card:hover{
+    transform:translateY(-1px);
+    box-shadow:var(--bk-shadow) !important;
+}
+
+.bakery-card:active{
+    transform:scale(.995) !important;
+}
+
+/* LEFT CONTENT */
+.card-left{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+}
+
+.card-left h3{
+    margin:2px 0 3px !important;
+
+    font-size:15.5px !important;
+    line-height:1.35;
+    font-weight:850 !important;
+
+    color:#18181b;
+    letter-spacing:-.15px;
+}
+
+.card-left p{
+    margin:0 0 5px !important;
+
+    max-width:98%;
+
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+
+    font-size:11.5px !important;
+    line-height:1.45;
+    color:#777b83 !important;
+}
+
+/* TYPE BADGES */
+.type-badge{
+    padding:4px 7px !important;
+    margin-bottom:3px !important;
+
+    border-radius:8px !important;
+
+    font-size:9px !important;
+    line-height:1.1;
+    font-weight:850 !important;
+    text-transform:capitalize;
+
+    box-shadow:none !important;
+}
+
+.type-badge.cool{
+    background:#eff6ff !important;
+    color:#2563eb !important;
+}
+
+.type-badge.custom{
+    background:#fff7ed !important;
+    color:#ea580c !important;
+}
+
+.type-badge.ordinary{
+    background:#ecfdf5 !important;
+    color:#15803d !important;
+}
+
+.type-badge.cake{
+    background:#f5f3ff !important;
+    color:#7c3aed !important;
+}
+
+/* PRICE */
+.price{
+    margin:5px 0 !important;
+
+    font-size:15.5px !important;
+    font-weight:850 !important;
+
+    color:#18181b !important;
+}
+
+/* IMAGE */
+.card-right{
+    width:124px;
+    height:124px;
+}
+
+.card-right img{
+    width:124px !important;
+    height:124px !important;
+
+    display:block;
+
+    object-fit:cover;
+    border-radius:18px !important;
+
+    background:#f1f2f4;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.045);
+
+    transition:transform .3s ease;
+}
+
+.bakery-card:hover .card-right img{
+    transform:scale(1.02);
+}
+
+/* WEIGHT PILLS */
+.weight-wrap{
+    gap:5px !important;
+    margin:4px 0 !important;
+}
+
+.weight-pill{
+    padding:5px 9px !important;
+
+    border:1px solid #e5e7eb;
+    border-radius:9px !important;
+
+    background:#fafafa !important;
+    color:#52525b !important;
+
+    font-size:10.5px !important;
+    font-weight:750 !important;
+
+    transition:.15s ease;
+}
+
+.weight-pill:hover{
+    background:#fff4f6 !important;
+    border-color:#fecdd3;
+    color:#e11d48 !important;
+}
+
+.weight-pill.active{
+    background:#18181b !important;
+    color:#fff !important;
+    border-color:#18181b !important;
+}
+
+/* QTY */
+.qty-wrap{
+    gap:6px !important;
+    margin:5px 0 !important;
+}
+
+.qty-btn{
+    width:27px !important;
+    height:27px !important;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border:1px solid #e5e7eb !important;
+    border-radius:9px !important;
+
+    background:#fafafa !important;
+    color:#3f3f46 !important;
+
+    font-size:15px !important;
+    font-weight:750 !important;
+}
+
+.qty{
+    min-width:22px;
+    text-align:center;
+
+    font-size:12.5px !important;
+    font-weight:850 !important;
+    color:#27272a;
+}
+
+/* ADD BUTTON */
+.add-btn{
+    width:auto !important;
+    min-width:96px;
+
+    margin-top:3px !important;
+    padding:8px 13px !important;
+
+    border:1.5px solid #fecdd3 !important;
+    border-radius:11px !important;
+
+    background:#fff !important;
+    color:#e11d48 !important;
+
+    font-size:12px !important;
+    font-weight:850 !important;
+
+    box-shadow:0 3px 10px rgba(225,29,72,.09);
+
+    transition:.15s ease;
+}
+
+.add-btn:hover{
+    background:#fff4f6 !important;
+    border-color:#fda4af !important;
+}
+
+.add-btn:active{
+    transform:scale(.97);
+}
+
+/* OUT OF STOCK */
+.out{
+    display:inline-flex;
+
+    margin-top:5px;
+    padding:5px 8px;
+
+    border-radius:8px;
+
+    background:#fff1f2;
+    color:#be123c !important;
+
+    font-size:10px;
+    font-weight:800 !important;
+}
+
+/* REORDER */
+.reorder-badge{
+    top:8px !important;
+    right:8px !important;
+    left:auto !important;
+
+    padding:4px 8px !important;
+
+    border:1px solid #fed7aa;
+    border-radius:9px !important;
+
+    background:rgba(255,255,255,.94) !important;
+    color:#ea580c !important;
+
+    font-size:9px !important;
+    font-weight:850 !important;
+
+    box-shadow:0 3px 10px rgba(15,23,42,.09) !important;
+}
+
+.reorder-badge::before{
+    content:"↻ ";
+}
+
+.reorder-progress{
+    top:34px !important;
+    right:11px !important;
+    left:auto !important;
+
+    width:42px !important;
+    height:3px !important;
+
+    background:#f1f1f2 !important;
+}
+
+.reorder-fill{
+    background:#f59e0b !important;
+}
+
+/* FLOATING CART */
+.floating-cart{
+    left:50% !important;
+    right:auto !important;
+    bottom:70px !important;
+
+    transform:translateX(-50%) !important;
+
+    width:calc(100% - 24px);
+    max-width:520px;
+
+    min-height:56px;
+    box-sizing:border-box;
+
+    justify-content:center;
+
+    padding:10px 16px !important;
+
+    border-radius:18px !important;
+
+    background:linear-gradient(135deg,#177b3e,#16a34a) !important;
+    color:#fff !important;
+
+    font-size:13px;
+    font-weight:850 !important;
+
+    box-shadow:0 16px 34px rgba(22,163,74,.28) !important;
+}
+
+.floating-cart #cart-count{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    min-width:25px;
+    height:25px;
+    padding:0 6px;
+
+    border-radius:999px;
+    background:rgba(255,255,255,.16);
+
+    font-size:13px;
+}
+
+.cart-text{
+    color:#fff;
+}
+
+/* REPLACE CART MODAL */
+.cart-modal{
+    background:rgba(17,24,39,.56) !important;
+    backdrop-filter:blur(5px) !important;
+}
+
+.cart-modal-box{
+    max-width:350px !important;
+    padding:22px 18px 18px !important;
+
+    border-radius:22px !important;
+
+    box-shadow:0 24px 60px rgba(0,0,0,.25) !important;
+}
+
+.cart-modal-box h3{
+    font-size:18px !important;
+    font-weight:850 !important;
+}
+
+.cart-modal-box p{
+    font-size:13px !important;
+}
+
+.cart-modal-actions button{
+    border-radius:12px !important;
+    font-weight:750 !important;
+}
+
+/* URGENCY MODAL */
+.urgency-overlay{
+    background:rgba(17,24,39,.48) !important;
+    backdrop-filter:blur(4px);
+}
+
+.urgency-modal-center{
+    max-width:350px !important;
+
+    border-radius:22px !important;
+    background:#fff !important;
+
+    box-shadow:0 24px 60px rgba(0,0,0,.25) !important;
+}
+
+.conv-urgency{
+    color:#4a2b21 !important;
+    font-size:13px !important;
+}
+
+/* FLASH */
+#flash-msg-container{
+    z-index:99999 !important;
+}
+
+/* TABLET */
+@media(min-width:700px){
+    .bakery-card{
+        width:calc(100% - 40px);
+        grid-template-columns:minmax(0,1fr) 142px;
+    }
+
+    .card-right,
+    .card-right img{
+        width:142px !important;
+        height:142px !important;
+    }
+
+    .card-left h3{
+        font-size:17px !important;
+    }
+
+    .card-left p{
+        font-size:12.5px !important;
+    }
+}
+
+/* MOBILE */
+@media(max-width:600px){
+
+    body{
+        padding-bottom:140px !important;
+    }
+
+    .bakery-header{
+        height:60px !important;
+        padding:0 12px !important;
+        font-size:16px !important;
+    }
+
+    .bakery-header::before{
+        width:34px;
+        height:34px;
+        margin-right:8px;
+        border-radius:11px;
+        font-size:17px;
+    }
+
+    .menu-incentive{
+        top:60px !important;
+    }
+
+    .category-selector{
+        top:calc(60px + var(--bakery-incentive-height, 0px)) !important;
+        padding:8px 9px !important;
+    }
+
+    .category-btn{
+        padding:7px 10px !important;
+        border-radius:10px !important;
+        font-size:11.5px !important;
+    }
+
+    .category-section{
+        scroll-margin-top:145px;
+    }
+
+    .category-title{
+        margin:23px auto 9px !important;
+        padding:0 12px;
+        font-size:18px !important;
+    }
+
+    .bakery-card{
+        width:calc(100% - 16px);
+        min-height:132px;
+
+        grid-template-columns:minmax(0,1fr) 104px;
+        gap:11px !important;
+
+        margin:9px auto !important;
+        padding:12px !important;
+
+        border-radius:18px !important;
+    }
+
+    .card-right,
+    .card-right img{
+        width:104px !important;
+        height:104px !important;
+    }
+
+    .card-right img{
+        border-radius:15px !important;
+    }
+
+    .card-left h3{
+        font-size:14px !important;
+        line-height:1.3;
+    }
+
+    .card-left p{
+        font-size:10.5px !important;
+        line-height:1.35;
+    }
+
+    .type-badge{
+        font-size:8px !important;
+        padding:3px 6px !important;
+    }
+
+    .weight-pill{
+        padding:4px 7px !important;
+        font-size:9.5px !important;
+    }
+
+    .price{
+        font-size:14px !important;
+    }
+
+    .qty-btn{
+        width:25px !important;
+        height:25px !important;
+        font-size:14px !important;
+    }
+
+    .qty{
+        font-size:11.5px !important;
+    }
+
+    .add-btn{
+        min-width:78px;
+        padding:6px 9px !important;
+        border-radius:9px !important;
+        font-size:10.5px !important;
+    }
+
+    .reorder-badge{
+        top:6px !important;
+        right:6px !important;
+        font-size:8px !important;
+        padding:3px 6px !important;
+    }
+
+    .reorder-progress{
+        top:29px !important;
+        right:8px !important;
+        width:35px !important;
+    }
+
+    .floating-cart{
+        bottom:66px !important;
+        width:calc(100% - 18px);
+        min-height:54px;
+        border-radius:16px !important;
+    }
+}
+
+/* VERY SMALL PHONES */
+@media(max-width:380px){
+    .bakery-card{
+        grid-template-columns:minmax(0,1fr) 92px;
+        gap:9px !important;
+        padding:10px !important;
+    }
+
+    .card-right,
+    .card-right img{
+        width:92px !important;
+        height:92px !important;
+    }
+
+    .card-left h3{
+        font-size:13px !important;
+    }
+
+    .card-left p{
+        -webkit-line-clamp:1;
+    }
+
+    .add-btn{
+        min-width:68px;
+        padding:5px 7px !important;
+    }
+}
+
+
+/* =====================================================================
+   RUCHIGO BAKERY — PREMIUM TRENDING EXPERIENCE V2
+   Rich bakery/snacks discovery UI — presentation only
+   ===================================================================== */
+
+:root{
+    --bx-ink:#191716;
+    --bx-muted:#776f6b;
+    --bx-bg:#fbf8f6;
+    --bx-card:#ffffff;
+    --bx-line:#eee7e3;
+
+    --bx-rose:#ee4965;
+    --bx-rose-dark:#d92f4e;
+    --bx-peach:#ff8a65;
+    --bx-cocoa:#6a4136;
+    --bx-cream:#fff6ef;
+
+    --bx-green:#16864b;
+    --bx-green-dark:#0f703d;
+
+    --bx-shadow:0 12px 34px rgba(78,51,43,.09);
+    --bx-shadow-hover:0 18px 46px rgba(78,51,43,.13);
+}
+
+/* ---------- PAGE ATMOSPHERE ---------- */
+body{
+    background:
+        radial-gradient(circle at 8% 2%, rgba(255,216,201,.38), transparent 23rem),
+        radial-gradient(circle at 96% 20%, rgba(255,226,235,.46), transparent 25rem),
+        linear-gradient(180deg,#fffaf7 0,#fbf8f6 38%,#f8f7f6 100%) !important;
+    color:var(--bx-ink) !important;
+}
+
+/* ---------- HEADER ---------- */
+.bakery-header{
+    height:62px !important;
+    padding:0 14px !important;
+    background:rgba(255,252,250,.93) !important;
+    border-bottom:1px solid rgba(104,70,59,.07) !important;
+    box-shadow:0 6px 24px rgba(67,43,35,.055) !important;
+    font-size:17px !important;
+    font-weight:900 !important;
+}
+
+.bakery-header::before{
+    content:"";
+    width:36px !important;
+    height:36px !important;
+    background:
+        radial-gradient(circle at 37% 35%,#fff 0 7%,transparent 8%),
+        linear-gradient(145deg,#f76d87,#ff9d80) !important;
+    box-shadow:0 5px 14px rgba(238,73,101,.22);
+    position:relative;
+}
+
+.bakery-header::after{
+    content:"Order Online";
+    margin-left:auto;
+    padding:6px 9px;
+    border:1px solid #f3dfd7;
+    border-radius:999px;
+    background:#fff7f3;
+    color:#9a5d4e;
+    font-size:9.5px;
+    font-weight:850;
+    letter-spacing:.02em;
+}
+
+/* ---------- HERO ---------- */
+.bakery-experience-hero{
+    width:calc(100% - 24px);
+    max-width:920px;
+    min-height:164px;
+
+    box-sizing:border-box;
+    margin:14px auto 10px;
+    padding:22px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+
+    overflow:hidden;
+    position:relative;
+    isolation:isolate;
+
+    border:1px solid rgba(150,92,71,.08);
+    border-radius:28px;
+
+    background:
+        radial-gradient(circle at 88% 25%,rgba(255,255,255,.9),transparent 7rem),
+        linear-gradient(125deg,#fff3e9 0%,#ffeef2 52%,#fff7f0 100%);
+
+    box-shadow:
+        0 16px 40px rgba(106,65,54,.09),
+        inset 0 1px 0 rgba(255,255,255,.85);
+}
+
+.bakery-experience-hero::before{
+    content:"";
+    position:absolute;
+    width:190px;
+    height:190px;
+    right:-55px;
+    bottom:-105px;
+    border-radius:50%;
+    background:rgba(238,73,101,.09);
+    z-index:-1;
+}
+
+.bakery-experience-hero::after{
+    content:"";
+    position:absolute;
+    width:110px;
+    height:110px;
+    right:85px;
+    top:-55px;
+    border-radius:50%;
+    background:rgba(255,157,128,.13);
+    z-index:-1;
+}
+
+.bakery-hero-copy{
+    min-width:0;
+    max-width:580px;
+}
+
+.bakery-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    margin-bottom:8px;
+
+    font-size:10px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.07em;
+    color:#ad5c50;
+}
+
+.live-dot{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#22c55e;
+    box-shadow:0 0 0 4px rgba(34,197,94,.11);
+}
+
+.bakery-hero-copy h1{
+    margin:0;
+    max-width:440px;
+    font-size:clamp(24px,5vw,34px);
+    line-height:1.04;
+    font-weight:950;
+    letter-spacing:-1.1px;
+    color:#34231f;
+}
+
+.bakery-hero-copy p{
+    max-width:500px;
+    margin:9px 0 12px;
+    font-size:12px;
+    line-height:1.5;
+    color:#75645e;
+}
+
+.bakery-trust-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+}
+
+.bakery-trust-row span{
+    padding:6px 8px;
+    border:1px solid rgba(137,85,68,.09);
+    border-radius:999px;
+    background:rgba(255,255,255,.62);
+    color:#6c5148;
+    font-size:9px;
+    font-weight:800;
+}
+
+.bakery-hero-visual{
+    width:150px;
+    height:120px;
+    flex:0 0 150px;
+    position:relative;
+}
+
+.hero-food{
+    position:absolute;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid rgba(255,255,255,.75);
+    background:rgba(255,255,255,.66);
+    backdrop-filter:blur(8px);
+    box-shadow:0 13px 24px rgba(95,62,51,.11);
+}
+
+.hero-food-a{
+    width:72px;
+    height:72px;
+    right:43px;
+    top:8px;
+    border-radius:25px;
+    font-size:38px;
+    transform:rotate(-7deg);
+}
+
+.hero-food-b{
+    width:58px;
+    height:58px;
+    right:0;
+    bottom:4px;
+    border-radius:20px;
+    font-size:30px;
+    transform:rotate(7deg);
+}
+
+.hero-food-c{
+    width:51px;
+    height:51px;
+    left:4px;
+    bottom:0;
+    border-radius:18px;
+    font-size:27px;
+    transform:rotate(-5deg);
+}
+
+/* ---------- DISCOVERY STRIP ---------- */
+.bakery-quick-strip{
+    width:calc(100% - 24px);
+    max-width:920px;
+    box-sizing:border-box;
+
+    margin:0 auto 7px;
+    padding:9px 12px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+    gap:8px;
+
+    border:1px solid #eee5e0;
+    border-radius:18px;
+    background:rgba(255,255,255,.78);
+    backdrop-filter:blur(10px);
+
+    box-shadow:0 5px 18px rgba(84,57,48,.045);
+}
+
+.quick-strip-item{
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:7px;
+}
+
+.quick-icon{
+    width:27px;
+    height:27px;
+    flex:0 0 27px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:9px;
+    background:#fff4ee;
+    font-size:13px;
+}
+
+.quick-strip-item span:last-child{
+    display:flex;
+    min-width:0;
+    flex-direction:column;
+}
+
+.quick-strip-item b{
+    font-size:9.5px;
+    line-height:1.2;
+    color:#47332d;
+    white-space:nowrap;
+}
+
+.quick-strip-item small{
+    margin-top:1px;
+    font-size:7.5px;
+    color:#9a8983;
+    white-space:nowrap;
+}
+
+.quick-strip-divider{
+    width:1px;
+    height:24px;
+    flex:0 0 1px;
+    background:#eee5e0;
+}
+
+/* ---------- INCENTIVE SUMMARY ---------- */
+.menu-incentive{
+    top:62px !important;
+    padding:8px 13px !important;
+    background:rgba(255,255,255,.95) !important;
+    border-bottom-color:#e4eee7 !important;
+}
+
+.menu-total{
+    color:#65534c !important;
+}
+
+.menu-total span{
+    color:var(--bx-green) !important;
+}
+
+/* ---------- CATEGORY NAV ---------- */
+.category-selector{
+    top:calc(62px + var(--bakery-incentive-height,0px)) !important;
+    padding:9px 12px 10px !important;
+    gap:7px !important;
+
+    background:rgba(251,248,246,.94) !important;
+    border-bottom:1px solid rgba(105,78,68,.055) !important;
+}
+
+.category-btn{
+    position:relative;
+    padding:8px 12px !important;
+
+    border:1px solid #ebe3df !important;
+    border-radius:999px !important;
+
+    background:rgba(255,255,255,.94) !important;
+    color:#68564f !important;
+
+    font-size:11px !important;
+    font-weight:850 !important;
+
+    box-shadow:0 3px 10px rgba(76,51,43,.035) !important;
+}
+
+.category-btn.active{
+    color:#fff !important;
+    border-color:transparent !important;
+    background:linear-gradient(135deg,#ef4967,#f97069) !important;
+    box-shadow:0 7px 17px rgba(238,73,101,.21) !important;
+}
+
+/* ---------- CATEGORY TITLE ---------- */
+.category-title{
+    margin:30px auto 11px !important;
+    color:#332724 !important;
+    font-size:19px !important;
+    font-weight:950 !important;
+}
+
+.category-title::after{
+    width:24px !important;
+    height:3px !important;
+    margin-top:6px !important;
+    background:linear-gradient(90deg,var(--bx-rose),var(--bx-peach)) !important;
+}
+
+/* ---------- PRODUCT CARD ---------- */
+.bakery-card{
+    grid-template-columns:minmax(0,1fr) 132px !important;
+    min-height:158px !important;
+
+    margin:11px auto !important;
+    padding:13px !important;
+    gap:14px !important;
+
+    border:1px solid #eee7e3 !important;
+    border-radius:24px !important;
+
+    background:
+        linear-gradient(180deg,rgba(255,255,255,1),rgba(255,255,255,.97)) !important;
+
+    box-shadow:var(--bx-shadow) !important;
+}
+
+.bakery-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    pointer-events:none;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+.bakery-card:hover{
+    transform:translateY(-2px) !important;
+    box-shadow:var(--bx-shadow-hover) !important;
+}
+
+/* ---------- PRODUCT IMAGE ---------- */
+.card-right{
+    width:132px !important;
+    height:132px !important;
+    align-self:center;
+    position:relative;
+}
+
+.card-right::before{
+    content:"";
+    position:absolute;
+    inset:7px -4px -5px 8px;
+    z-index:0;
+    border-radius:23px;
+    background:linear-gradient(145deg,#ffe8df,#ffe7ef);
+    transform:rotate(3deg);
+}
+
+.card-right img{
+    position:relative;
+    z-index:1;
+
+    width:132px !important;
+    height:132px !important;
+
+    border-radius:21px !important;
+    object-fit:cover !important;
+
+    border:1px solid rgba(91,61,52,.05);
+    box-shadow:0 9px 23px rgba(74,48,41,.11) !important;
+}
+
+.bakery-card:hover .card-right img{
+    transform:scale(1.025) rotate(-.3deg) !important;
+}
+
+/* ---------- PRODUCT CONTENT ---------- */
+.card-left{
+    justify-content:center;
+}
+
+.card-left h3{
+    margin:3px 0 4px !important;
+    color:#2d2320 !important;
+    font-size:15px !important;
+    line-height:1.28 !important;
+    font-weight:950 !important;
+    letter-spacing:-.25px !important;
+}
+
+.card-left p{
+    margin:0 0 6px !important;
+    color:#84746e !important;
+    font-size:10.5px !important;
+    line-height:1.4 !important;
+}
+
+.type-badge{
+    margin:0 0 2px !important;
+    padding:4px 7px !important;
+    border:1px solid transparent !important;
+    border-radius:999px !important;
+    font-size:8px !important;
+    font-weight:900 !important;
+}
+
+.type-badge.cool{
+    border-color:#cfe2ff !important;
+    background:#f2f7ff !important;
+    color:#2d66bd !important;
+}
+
+.type-badge.custom{
+    border-color:#f9dfb3 !important;
+    background:#fff8e9 !important;
+    color:#b86a09 !important;
+}
+
+.type-badge.ordinary{
+    border-color:#ccebd9 !important;
+    background:#f0faf4 !important;
+    color:#157742 !important;
+}
+
+.type-badge.cake{
+    border-color:#e5d9ff !important;
+    background:#f8f4ff !important;
+    color:#7650bb !important;
+}
+
+/* ---------- VARIANT / WEIGHT SELECTOR ---------- */
+.weight-wrap{
+    margin:5px 0 3px !important;
+    gap:5px !important;
+}
+
+.weight-pill{
+    padding:5px 8px !important;
+    border:1px solid #eadfd9 !important;
+    border-radius:9px !important;
+
+    background:#fffaf7 !important;
+    color:#725b52 !important;
+
+    font-size:9.5px !important;
+    font-weight:850 !important;
+}
+
+.weight-pill.active{
+    border-color:#f2a08e !important;
+    background:linear-gradient(135deg,#fff0e9,#ffeef1) !important;
+    color:#cb4058 !important;
+    box-shadow:0 3px 9px rgba(238,73,101,.09);
+}
+
+/* ---------- PRICE ---------- */
+.price{
+    display:inline-flex;
+    align-items:center;
+    min-height:25px;
+
+    margin:4px 0 3px !important;
+
+    color:#2e2522 !important;
+    font-size:15px !important;
+    font-weight:950 !important;
+    letter-spacing:-.2px;
+}
+
+.price::before{
+    content:"Best price";
+    margin-right:7px;
+    padding:3px 5px;
+    border-radius:6px;
+    background:#eff9f2;
+    color:#19804a;
+    font-size:7.5px;
+    font-weight:900;
+    letter-spacing:0;
+}
+
+/* ---------- QTY ---------- */
+.qty-wrap{
+    margin:5px 0 3px !important;
+    gap:5px !important;
+
+    padding:3px;
+    border:1px solid #ede5e1;
+    border-radius:11px;
+    background:#fcfaf9;
+}
+
+.qty-btn{
+    width:25px !important;
+    height:25px !important;
+    border:0 !important;
+    border-radius:8px !important;
+    background:#fff !important;
+    color:#513f39 !important;
+    box-shadow:0 2px 5px rgba(70,48,40,.055);
+}
+
+.qty{
+    min-width:20px !important;
+    color:#372b27 !important;
+    font-size:11px !important;
+}
+
+/* ---------- ADD BUTTON ---------- */
+.add-btn{
+    min-width:94px !important;
+    margin-top:4px !important;
+    padding:8px 12px !important;
+
+    border:0 !important;
+    border-radius:11px !important;
+
+    background:linear-gradient(135deg,#ee4965,#f36f69) !important;
+    color:#fff !important;
+
+    font-size:10.5px !important;
+    font-weight:900 !important;
+    letter-spacing:.01em;
+
+    box-shadow:0 7px 15px rgba(238,73,101,.2) !important;
+}
+
+.add-btn::after{
+    content:"  +";
+    font-size:12px;
+}
+
+.add-btn:hover{
+    border:0 !important;
+    background:linear-gradient(135deg,#df3958,#ec615c) !important;
+    transform:translateY(-1px);
+    box-shadow:0 9px 18px rgba(238,73,101,.25) !important;
+}
+
+/* ---------- REORDER ---------- */
+.reorder-badge{
+    top:9px !important;
+    right:9px !important;
+    padding:4px 7px !important;
+
+    border:1px solid #f8d4b6 !important;
+    border-radius:999px !important;
+
+    background:rgba(255,250,245,.95) !important;
+    color:#c56a20 !important;
+
+    font-size:7.5px !important;
+    font-weight:900 !important;
+    box-shadow:0 4px 10px rgba(96,62,48,.08) !important;
+}
+
+.reorder-progress{
+    top:32px !important;
+    right:13px !important;
+    width:34px !important;
+    height:2px !important;
+}
+
+/* ---------- OUT OF STOCK ---------- */
+.out{
+    margin-top:4px !important;
+    border:1px solid #f7d5db;
+    background:#fff5f6 !important;
+    color:#b93450 !important;
+    font-size:8.5px !important;
+}
+
+/* ---------- CART BAR ---------- */
+.floating-cart{
+    min-height:58px !important;
+    bottom:68px !important;
+
+    justify-content:space-between !important;
+    padding:9px 11px 9px 13px !important;
+
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:19px !important;
+
+    background:linear-gradient(135deg,#126f42,#168d4e) !important;
+    box-shadow:
+        0 16px 35px rgba(20,128,72,.25),
+        inset 0 1px 0 rgba(255,255,255,.11) !important;
+}
+
+.floating-cart::before{
+    content:"🛍️";
+    width:36px;
+    height:36px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:12px;
+    background:rgba(255,255,255,.13);
+    font-size:17px;
+}
+
+.floating-cart #cart-count{
+    margin-left:-4px;
+    min-width:auto !important;
+    height:auto !important;
+    padding:0 !important;
+    background:transparent !important;
+
+    font-size:14px !important;
+    font-weight:950 !important;
+}
+
+.floating-cart #cart-count::after{
+    content:" items";
+    margin-left:3px;
+    font-size:9px;
+    font-weight:700;
+    opacity:.82;
+}
+
+.cart-text{
+    margin-left:auto;
+    padding:9px 11px;
+    border-radius:11px;
+    background:rgba(255,255,255,.14);
+    font-size:0;
+}
+
+.cart-text::after{
+    content:"View Cart  ›";
+    font-size:10.5px;
+    font-weight:900;
+}
+
+/* ---------- MODALS ---------- */
+.cart-modal-box,
+.urgency-modal-center{
+    border:1px solid rgba(110,76,65,.08) !important;
+    border-radius:24px !important;
+    box-shadow:0 28px 70px rgba(54,35,29,.25) !important;
+}
+
+.btn-confirm{
+    background:linear-gradient(135deg,#158248,#1b9b57) !important;
+}
+
+.urgency-cta{
+    background:linear-gradient(135deg,#ee4965,#f36f69) !important;
+}
+
+/* ---------- MOBILE ---------- */
+@media(max-width:600px){
+    .bakery-header{
+        height:58px !important;
+        font-size:15px !important;
+    }
+
+    .bakery-header::after{
+        font-size:8px;
+        padding:5px 7px;
+    }
+
+    .bakery-experience-hero{
+        width:calc(100% - 16px);
+        min-height:142px;
+        margin:10px auto 8px;
+        padding:17px 15px;
+        border-radius:23px;
+    }
+
+    .bakery-hero-copy{
+        max-width:72%;
+    }
+
+    .bakery-hero-copy h1{
+        font-size:22px;
+        letter-spacing:-.75px;
+    }
+
+    .bakery-hero-copy p{
+        margin:7px 0 10px;
+        font-size:9.5px;
+        line-height:1.45;
+    }
+
+    .bakery-eyebrow{
+        margin-bottom:6px;
+        font-size:8px;
+    }
+
+    .bakery-trust-row{
+        gap:4px;
+    }
+
+    .bakery-trust-row span{
+        padding:4px 6px;
+        font-size:7px;
+    }
+
+    .bakery-hero-visual{
+        position:absolute;
+        right:3px;
+        width:105px;
+        height:110px;
+    }
+
+    .hero-food-a{
+        width:58px;
+        height:58px;
+        right:28px;
+        top:10px;
+        border-radius:19px;
+        font-size:29px;
+    }
+
+    .hero-food-b{
+        width:45px;
+        height:45px;
+        right:0;
+        bottom:6px;
+        border-radius:15px;
+        font-size:23px;
+    }
+
+    .hero-food-c{
+        display:none;
+    }
+
+    .bakery-quick-strip{
+        width:calc(100% - 16px);
+        padding:8px 7px;
+        border-radius:15px;
+    }
+
+    .quick-icon{
+        width:23px;
+        height:23px;
+        flex-basis:23px;
+        font-size:11px;
+        border-radius:7px;
+    }
+
+    .quick-strip-item{
+        gap:4px;
+    }
+
+    .quick-strip-item b{
+        font-size:7.5px;
+    }
+
+    .quick-strip-item small{
+        display:none;
+    }
+
+    .menu-incentive{
+        top:58px !important;
+    }
+
+    .category-selector{
+        top:calc(58px + var(--bakery-incentive-height,0px)) !important;
+        padding:8px 8px 9px !important;
+    }
+
+    .category-btn{
+        padding:7px 10px !important;
+        font-size:9.5px !important;
+    }
+
+    .category-title{
+        margin:24px auto 9px !important;
+        padding:0 11px !important;
+        font-size:17px !important;
+    }
+
+    .bakery-card{
+        width:calc(100% - 16px) !important;
+        grid-template-columns:minmax(0,1fr) 108px !important;
+        min-height:136px !important;
+
+        padding:11px !important;
+        gap:10px !important;
+        margin:9px auto !important;
+
+        border-radius:20px !important;
+    }
+
+    .card-right,
+    .card-right img{
+        width:108px !important;
+        height:108px !important;
+    }
+
+    .card-right img{
+        border-radius:17px !important;
+    }
+
+    .card-right::before{
+        inset:6px -3px -4px 7px;
+        border-radius:18px;
+    }
+
+    .card-left h3{
+        margin:2px 0 3px !important;
+        font-size:13px !important;
+    }
+
+    .card-left p{
+        margin-bottom:4px !important;
+        font-size:8.7px !important;
+        -webkit-line-clamp:2;
+    }
+
+    .weight-wrap{
+        gap:3px !important;
+        margin:3px 0 2px !important;
+    }
+
+    .weight-pill{
+        padding:4px 6px !important;
+        font-size:7.8px !important;
+        border-radius:7px !important;
+    }
+
+    .price{
+        margin:3px 0 2px !important;
+        min-height:20px;
+        font-size:12.5px !important;
+    }
+
+    .price::before{
+        margin-right:5px;
+        padding:2px 4px;
+        font-size:6px;
+    }
+
+    .qty-wrap{
+        margin:3px 0 2px !important;
+        padding:2px;
+    }
+
+    .qty-btn{
+        width:22px !important;
+        height:22px !important;
+        font-size:12px !important;
+    }
+
+    .qty{
+        min-width:17px !important;
+        font-size:9px !important;
+    }
+
+    .add-btn{
+        min-width:73px !important;
+        padding:6px 8px !important;
+        border-radius:9px !important;
+        font-size:8.5px !important;
+    }
+
+    .add-btn::after{
+        font-size:9px;
+    }
+
+    .type-badge{
+        padding:3px 5px !important;
+        font-size:6.8px !important;
+    }
+
+    .floating-cart{
+        width:calc(100% - 18px) !important;
+        min-height:54px !important;
+        bottom:65px !important;
+        border-radius:17px !important;
+    }
+
+    .floating-cart::before{
+        width:33px;
+        height:33px;
+        border-radius:10px;
+        font-size:15px;
+    }
+
+    .cart-text{
+        padding:8px 9px;
+    }
+
+    .cart-text::after{
+        font-size:9.5px;
+    }
+}
+
+@media(max-width:380px){
+    .bakery-hero-copy h1{
+        font-size:20px;
+    }
+
+    .bakery-hero-copy p{
+        max-width:92%;
+    }
+
+    .bakery-card{
+        grid-template-columns:minmax(0,1fr) 94px !important;
+        padding:10px !important;
+        gap:8px !important;
+    }
+
+    .card-right,
+    .card-right img{
+        width:94px !important;
+        height:94px !important;
+    }
+
+    .card-left p{
+        -webkit-line-clamp:1;
+    }
+}
+
+
+/* =====================================================================
+   FINAL POLISH — DYNAMIC SHOP BANNER + CART LAYER FIX
+   ===================================================================== */
+
+.hero-shop-name{
+    color:var(--bx-rose-dark);
+}
+
+
+
+
+/* =====================================================================
+   STICKY CART ITEM ROW
+   Shows added items directly under the cart total with × remove option
+   ===================================================================== */
+
+.menu-incentive{
+    overflow:visible !important;
+}
+
+.menu-cart-top{
+    max-width:920px;
+    margin:0 auto;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+}
+
+.menu-cart-mini-count{
+    flex-shrink:0;
+
+    padding:4px 8px;
+    border-radius:999px;
+
+    background:#eff8f1;
+    color:#187543;
+
+    font-size:9px;
+    font-weight:850;
+}
+
+.menu-cart-mini-count #menu-cart-qty{
+    font-size:11px;
+    font-weight:950;
+}
+
+.bakery-cart-items{
+    max-width:920px;
+    margin:7px auto 1px;
+
+    display:flex;
+    align-items:center;
+    gap:6px;
+
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+    scrollbar-width:none;
+
+    padding-bottom:2px;
+}
+
+.bakery-cart-items::-webkit-scrollbar{
+    display:none;
+}
+
+.bakery-cart-chip{
+    flex:0 0 auto;
+
+    max-width:220px;
+
+    display:flex;
+    align-items:center;
+    gap:6px;
+
+    padding:5px 5px 5px 9px;
+
+    border:1px solid #dfeee4;
+    border-radius:999px;
+
+    background:#f3fbf5;
+    color:#315c40;
+
+    box-shadow:0 2px 6px rgba(40,105,65,.035);
+}
+
+.bakery-cart-chip-info{
+    min-width:0;
+
+    display:flex;
+    align-items:center;
+    gap:4px;
+
+    font-size:9px;
+    font-weight:800;
+}
+
+.bakery-cart-chip-qty{
+    color:#178348;
+    font-weight:950;
+}
+
+.bakery-cart-chip-name{
+    max-width:125px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.bakery-cart-chip-weight{
+    color:#8a756e;
+    font-size:7.5px;
+    font-weight:750;
+}
+
+.bakery-cart-remove{
+    width:19px;
+    height:19px;
+    flex:0 0 19px;
+
+    padding:0;
+    border:0;
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:#fff;
+    color:#d74558;
+
+    box-shadow:0 1px 4px rgba(80,47,45,.08);
+
+    font-size:13px;
+    font-weight:900;
+    line-height:1;
+
+    cursor:pointer;
+
+    transition:
+        transform .12s ease,
+        background .12s ease;
+}
+
+.bakery-cart-remove:hover{
+    background:#fff0f2;
+}
+
+.bakery-cart-remove:active{
+    transform:scale(.88);
+}
+
+/* Universal banner wording — suitable for any shop type */
+.bakery-eyebrow{
+    color:#8a5f50 !important;
+}
+
+.hero-shop-name{
+    color:var(--bx-rose-dark) !important;
+}
+
+/* Cart layer fix: always above food cards/images while scrolling */
+.floating-cart,
+#cartBtn{
+    z-index:9000 !important;
+    position:fixed !important;
+}
+
+.bakery-card{
+    z-index:1 !important;
+}
+
+.card-right,
+.card-right img{
+    z-index:1 !important;
+}
+
+@media(max-width:600px){
+
+    .menu-cart-top{
+        gap:7px;
+    }
+
+    .menu-cart-mini-count{
+        padding:3px 6px;
+        font-size:8px;
+    }
+
+    .bakery-cart-items{
+        margin-top:5px;
+        gap:5px;
+    }
+
+    .bakery-cart-chip{
+        max-width:175px;
+        padding:4px 4px 4px 7px;
+        gap:4px;
+    }
+
+    .bakery-cart-chip-info{
+        font-size:8px;
+    }
+
+    .bakery-cart-chip-name{
+        max-width:96px;
+    }
+
+    .bakery-cart-remove{
+        width:18px;
+        height:18px;
+        flex-basis:18px;
+        font-size:12px;
+    }
+}
+
 </style>
 <div class="bakery-header">{{ restaurant.name }} </div>
+
+<!-- ============================================================
+     UNIVERSAL SHOP EXPERIENCE BANNER
+     Works for bakery, snacks, restaurant, chicken, chocolate & mixed shops
+============================================================ -->
+<section class="bakery-experience-hero" id="shopExperienceBanner">
+
+    <div class="bakery-hero-copy">
+
+        <div class="bakery-eyebrow">
+            <span class="live-dot"></span>
+            Popular picks near you
+        </div>
+
+        <h1>
+            Order your favourites from
+            <span class="hero-shop-name">{{ restaurant.name }}</span>
+        </h1>
+
+        <p>
+            Explore the menu from {{ restaurant.name }},
+            pick what you love and add it to your cart in seconds.
+        </p>
+
+        <div class="bakery-trust-row">
+            <span>🔥 Popular picks</span>
+            <span>⚡ Quick ordering</span>
+            <span>🛍️ Easy checkout</span>
+        </div>
+
+    </div>
+
+    <div class="bakery-hero-visual" aria-hidden="true">
+        <span class="hero-food hero-food-a">🍽️</span>
+        <span class="hero-food hero-food-b">🍗</span>
+        <span class="hero-food hero-food-c">🍫</span>
+    </div>
+
+</section>
+
+<div class="bakery-quick-strip" id="bakeryQuickStrip">
+
+    <div class="quick-strip-item">
+        <span class="quick-icon">🔥</span>
+        <span>
+            <b>Popular</b>
+            <small>Customer favourites</small>
+        </span>
+    </div>
+
+    <div class="quick-strip-divider"></div>
+
+    <div class="quick-strip-item">
+        <span class="quick-icon">🍽️</span>
+        <span>
+            <b>Explore</b>
+            <small>More menu choices</small>
+        </span>
+    </div>
+
+    <div class="quick-strip-divider"></div>
+
+    <div class="quick-strip-item">
+        <span class="quick-icon">🛍️</span>
+        <span>
+            <b>Easy order</b>
+            <small>Pick & add</small>
+        </span>
+    </div>
+
+</div>
+
 
 <!-- CATEGORY SELECTOR -->
 
 
 <!-- MENU INCENTIVE CARD -->
 <div id="menu-incentive" class="menu-incentive hidden">
-  <div class="menu-total">🛒 Items Total: ₹<span id="menu-total-amount">0</span></div>
+
+  <div class="menu-cart-top">
+      <div class="menu-total">
+          🛒 Cart Total:
+          ₹<span id="menu-total-amount">0</span>
+      </div>
+
+      <div class="menu-cart-mini-count">
+          <span id="menu-cart-qty">0</span> items
+      </div>
+  </div>
+
+  <!-- ADDED ITEMS — shown directly below cart header -->
+  <div id="bakeryCartItems" class="bakery-cart-items"></div>
+
   <div class="menu-message" id="menu-message"></div>
-  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+  <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+  </div>
+
 </div>
 <div id="category-selector" class="category-selector">
     {% for category in menu_by_category.keys() %}
@@ -643,6 +2698,180 @@ document.querySelectorAll(".add-btn").forEach(btn => {
         addFn();
     });
 });
+
+/* ============================================================
+   STICKY CART ITEM CHIPS
+   Shows current added items below the sticky cart header.
+   × removes that exact cart line (including selected weight).
+============================================================ */
+
+function renderBakeryCartItems() {
+
+    const container =
+        document.getElementById("bakeryCartItems");
+
+    if (!container) return;
+
+    const cart =
+        carts[RESTAURANT_ID] || {
+            items: []
+        };
+
+    const items =
+        cart.items || [];
+
+    container.innerHTML = "";
+
+    items.forEach((item, index) => {
+
+        const chip =
+            document.createElement("div");
+
+        chip.className =
+            "bakery-cart-chip";
+
+
+        const info =
+            document.createElement("div");
+
+        info.className =
+            "bakery-cart-chip-info";
+
+
+        const qty =
+            document.createElement("span");
+
+        qty.className =
+            "bakery-cart-chip-qty";
+
+        qty.textContent =
+            `${item.quantity || 1}×`;
+
+
+        const name =
+            document.createElement("span");
+
+        name.className =
+            "bakery-cart-chip-name";
+
+        name.textContent =
+            item.name || "Item";
+
+
+        info.appendChild(qty);
+        info.appendChild(name);
+
+
+        if (item.weight) {
+
+            const weight =
+                document.createElement("span");
+
+            weight.className =
+                "bakery-cart-chip-weight";
+
+            weight.textContent =
+                `• ${item.weight}`;
+
+            info.appendChild(weight);
+        }
+
+
+        const remove =
+            document.createElement("button");
+
+        remove.type =
+            "button";
+
+        remove.className =
+            "bakery-cart-remove";
+
+        remove.innerHTML =
+            "×";
+
+        remove.setAttribute(
+            "aria-label",
+            `Remove ${item.name || "item"}`
+        );
+
+
+        remove.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                removeBakeryCartItem(
+                    index
+                );
+            }
+        );
+
+
+        chip.appendChild(info);
+        chip.appendChild(remove);
+
+        container.appendChild(chip);
+
+    });
+}
+
+
+function removeBakeryCartItem(index) {
+
+    const cart =
+        carts[RESTAURANT_ID];
+
+    if (
+        !cart ||
+        !Array.isArray(cart.items)
+    ) {
+        return;
+    }
+
+
+    cart.items.splice(
+        index,
+        1
+    );
+
+
+    if (cart.items.length === 0) {
+
+        delete carts[
+            RESTAURANT_ID
+        ];
+
+    } else {
+
+        carts[
+            RESTAURANT_ID
+        ] = cart;
+    }
+
+
+    localStorage.setItem(
+        "carts",
+        JSON.stringify(carts)
+    );
+
+
+    updateCartCount();
+    updateMenuIncentive();
+
+
+    if (
+        typeof showAddedAnimation ===
+        "function"
+    ) {
+
+        showAddedAnimation(
+            "Item removed"
+        );
+    }
+}
+
 /* ================= FLOATING CART ================= */
 const floatingCart = document.getElementById("cartBtn");
 
@@ -679,8 +2908,28 @@ if (total < 60) {
 
 /* ================= CART COUNT ================= */
 function updateCartCount(){
+
     const cart = carts[RESTAURANT_ID] || { items: [] };
-    document.getElementById("cart-count").innerText = cart.items.reduce((s,i)=>s+i.quantity,0);
+    const items = cart.items || [];
+
+    const totalQty = items.reduce(
+        (sum, item) => sum + (parseInt(item.quantity) || 0),
+        0
+    );
+
+    const cartCount = document.getElementById("cart-count");
+
+    if (cartCount) {
+        cartCount.innerText = totalQty;
+    }
+
+    const miniQty = document.getElementById("menu-cart-qty");
+
+    if (miniQty) {
+        miniQty.innerText = totalQty;
+    }
+
+    renderBakeryCartItems();
 }
 updateCartCount();
 
@@ -954,5 +3203,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const incentiveCard = document.getElementById("menu-incentive");
+
+    function syncBakeryStickyOffset() {
+        const isVisible =
+            incentiveCard &&
+            !incentiveCard.classList.contains("hidden") &&
+            incentiveCard.offsetHeight > 0;
+
+        document.documentElement.style.setProperty(
+            "--bakery-incentive-height",
+            isVisible ? incentiveCard.offsetHeight + "px" : "0px"
+        );
+    }
+
+    syncBakeryStickyOffset();
+
+    if (incentiveCard && "MutationObserver" in window) {
+        new MutationObserver(syncBakeryStickyOffset).observe(
+            incentiveCard,
+            {
+                attributes:true,
+                childList:true,
+                subtree:true,
+                attributeFilter:["class","style"]
+            }
+        );
+    }
+
+    window.addEventListener("resize", syncBakeryStickyOffset);
+});
+</script>
+
+
+
 
 {% endblock %}

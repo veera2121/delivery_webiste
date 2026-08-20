@@ -21,10 +21,14 @@ body {
     overflow-x: hidden;
 }
 /* ================= PREMIUM NON-STICKY HEADER ================= */
-
 .header {
-    position: relative;   /* ✅ scrolls with page */
-    z-index: 1;
+    /* ==============================
+       STICKY RESTAURANT HEADER
+    ============================== */
+
+    position: sticky;
+    top: 0;
+    z-index: 1200;
 
     height: 68px;
     padding: 0 22px;
@@ -33,6 +37,8 @@ body {
     align-items: center;
     justify-content: center;
 
+    box-sizing: border-box;
+
     font-size: 22px;
     font-weight: 700;
     letter-spacing: 0.4px;
@@ -40,19 +46,21 @@ body {
     color: #0f172a;
 
     /* Luxury glass feel */
-    background: rgba(255, 255, 255, 0.88);
+    background: rgba(255, 255, 255, 0.96);
+
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
 
-    border-bottom: 1px solid rgba(0,0,0,0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 
     box-shadow:
         0 1px 0 rgba(255,255,255,0.6),
-        0 10px 30px rgba(0,0,0,0.08);
+        0 8px 24px rgba(0,0,0,0.08);
 
-    transition: all 0.3s ease;
+    transition:
+        box-shadow 0.3s ease,
+        background 0.3s ease;
 }
-
 /* Gold accent line */
 .header::after {
     content: "";
@@ -93,19 +101,41 @@ body {
    CATEGORY + FILTER BAR
 ========================= */
 .top-cat-wrapper {
+    /* =========================================
+       STICKY CATEGORY BAR
+    ========================================= */
+
     position: sticky;
-    top: var(--incentive-height, 78px);
-    z-index: 999;
+
+    /* 68px header + dynamic cart summary height */
+    top: calc(
+        65px + var(--incentive-height, 0px)
+    );
+
+    z-index: 1000;
 
     display: flex;
     align-items: center;
     gap: 12px;
 
     padding: 10px 14px;
-    background: #ffffff;
 
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    background: rgba(255, 255, 255, 0.97);
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    border-bottom:
+        1px solid rgba(0, 0, 0, 0.06);
+
+    box-shadow:
+        0 4px 14px rgba(0, 0, 0, 0.08);
+
+    box-sizing: border-box;
+
+    transition:
+        top 0.25s ease,
+        box-shadow 0.25s ease;
 }
 
 /* =========================
@@ -652,36 +682,123 @@ box-shadow:
   outline: 2px solid var(--menu-ink);
   outline-offset: 2px;
 }
-/* FLOATING CART */
-.floating-cart {
-    position: fixed;
-    bottom: 50px;
-    right: 20px;
-    background: #0a5c40;
-    color: rgb(0, 0, 0);
-    font-size: 20px;
-    padding: 15px 20px;
-    border-radius: 50px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-    text-decoration: none;
-    font-weight: 700;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    z-index: 3000;
-    transition: 0.3s;
+.floating-cart{
+
+    position:fixed;
+
+    left:50%;
+    bottom:18px;
+
+    transform:translateX(-50%);
+
+    width:min(92%,460px);
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:14px 18px;
+
+    border-radius:18px;
+
+    background:linear-gradient(135deg,#18a558,#0b8f47);
+
+    color:#fff;
+    text-decoration:none;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.25);
+
+    z-index:9999;
+
+    transition:.25s;
 }
-.floating-cart:hover {
-    background: #d10000;
-    transform: scale(1.1);
+
+.floating-cart:hover{
+
+    transform:translateX(-50%) translateY(-2px);
+
+    box-shadow:
+        0 15px 35px rgba(0,0,0,.35);
+
 }
-#cart-count {
-    background: white;
-    color: #ff2b2b;
-    padding: 4px 8px;
-    border-radius: 20px;
-    font-size: 16px;
-    font-weight: 700;
+
+.cart-left{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+}
+
+.cart-icon{
+
+    width:46px;
+    height:46px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.18);
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:22px;
+
+}
+
+.cart-info{
+
+    display:flex;
+    flex-direction:column;
+
+}
+
+.cart-items{
+
+    font-size:15px;
+
+    font-weight:700;
+
+}
+
+.cart-total{
+
+    font-size:13px;
+
+    opacity:.9;
+
+}
+
+.cart-right{
+
+    font-size:16px;
+
+    font-weight:700;
+
+    white-space:nowrap;
+
+}
+
+@media(max-width:480px){
+
+    .floating-cart{
+
+        width:94%;
+
+        padding:13px 15px;
+
+        border-radius:16px;
+
+    }
+
+    .cart-right{
+
+        font-size:15px;
+
+    }
+
 }
 /* ================= REPLACE CART MODAL ================= */
 
@@ -1321,6 +1438,1660 @@ box-shadow:
     -webkit-box-orient:vertical;
 
 }
+
+.item-price {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.original-price {
+    color: #8a8a8a;
+    text-decoration: line-through;
+    font-size: 13px;
+}
+
+.discounted-price {
+    font-size: 17px;
+    font-weight: 700;
+    color: #111;
+}
+
+.item-offer-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #16883b;
+    background: #eaf8ef;
+    padding: 3px 6px;
+    border-radius: 5px;
+}
+
+/* =========================================================
+   RESTAURANT FLOATING CART
+========================================================= */
+
+.restaurant-floating-cart{
+    position:fixed;
+
+    left:50%;
+    bottom:72px;
+
+    transform:translateX(-50%);
+
+    width:calc(100% - 24px);
+    max-width:520px;
+
+    min-height:58px;
+
+    z-index:1300;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    gap:10px;
+
+    box-sizing:border-box;
+
+    padding:10px 12px;
+
+    background:linear-gradient(
+        135deg,
+        #15803d,
+        #16a34a
+    );
+
+    color:#fff;
+
+    border-radius:16px;
+
+    text-decoration:none;
+
+    box-shadow:
+        0 10px 30px
+        rgba(22,163,74,.35);
+
+    transition:
+        transform .2s ease,
+        opacity .2s ease;
+}
+
+
+.restaurant-floating-cart .floating-cart-left{
+    min-width:0;
+
+    display:flex;
+    align-items:center;
+
+    gap:10px;
+}
+
+
+.restaurant-floating-cart .floating-cart-icon{
+    width:38px;
+    height:38px;
+
+    flex-shrink:0;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:12px;
+
+    background:
+        rgba(255,255,255,.18);
+
+    font-size:20px;
+}
+
+
+.restaurant-floating-cart .floating-cart-info{
+    min-width:0;
+
+    display:flex;
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    gap:1px;
+}
+
+
+.restaurant-cart-count-row{
+    display:flex;
+    align-items:baseline;
+
+    gap:4px;
+
+    font-size:12px;
+
+    color:
+        rgba(255,255,255,.88);
+}
+
+
+.restaurant-floating-cart #cart-count{
+    font-size:16px;
+
+    font-weight:900;
+
+    color:#fff;
+}
+
+
+.restaurant-cart-total{
+    font-size:15px;
+
+    font-weight:900;
+
+    color:#fff;
+}
+
+
+.restaurant-floating-cart .floating-cart-right{
+    flex-shrink:0;
+
+    display:flex;
+    align-items:center;
+
+    gap:6px;
+
+    font-size:13px;
+
+    font-weight:800;
+
+    color:#fff;
+}
+
+
+.restaurant-floating-cart .cart-arrow{
+    font-size:23px;
+
+    line-height:1;
+
+    transition:
+        transform .2s ease;
+}
+
+
+.restaurant-floating-cart:hover
+.cart-arrow{
+    transform:translateX(3px);
+}
+
+
+.restaurant-floating-cart:active{
+    transform:
+        translateX(-50%)
+        scale(.98);
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:600px){
+
+    .restaurant-floating-cart{
+        bottom:68px;
+
+        width:calc(100% - 20px);
+
+        min-height:54px;
+
+        padding:9px 10px;
+
+        border-radius:14px;
+    }
+
+
+    .restaurant-floating-cart
+    .floating-cart-icon{
+        width:36px;
+        height:36px;
+
+        font-size:18px;
+    }
+
+
+    .restaurant-floating-cart
+    .floating-cart-right{
+        font-size:12px;
+    }
+
+
+    .restaurant-cart-total{
+        font-size:14px;
+    }
+}
+/* =========================================================
+   RESTAURANT CART SUMMARY
+========================================================= */
+
+.menu-incentive{
+    position:sticky;
+
+    /*
+       Adjust this if your restaurant
+       header height is different.
+    */
+    top:58px;
+
+    z-index:1100;
+
+    box-sizing:border-box;
+
+    padding:
+        10px
+        14px;
+
+    background:
+        rgba(255,255,255,.98);
+
+    backdrop-filter:
+        blur(12px);
+
+    -webkit-backdrop-filter:
+        blur(12px);
+
+    border-bottom:
+        1px solid #dcfce7;
+
+    box-shadow:
+        0 4px 15px
+        rgba(0,0,0,.07);
+}
+
+
+/* TOP ROW */
+
+.restaurant-summary-top{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:
+        space-between;
+
+    gap:10px;
+}
+
+
+.restaurant-summary-count{
+    font-size:13px;
+
+    font-weight:800;
+
+    color:#374151;
+}
+
+
+.restaurant-summary-dot{
+    margin:
+        0
+        4px;
+
+    color:#9ca3af;
+}
+
+
+.restaurant-summary-total{
+    flex-shrink:0;
+
+    font-size:17px;
+
+    font-weight:900;
+
+    color:#15803d;
+}
+
+
+/* =========================================================
+   ADDED ITEM CHIPS
+========================================================= */
+
+.restaurant-summary-items{
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    overflow-x:auto;
+
+    margin-top:7px;
+
+    padding-bottom:2px;
+
+    scrollbar-width:none;
+}
+
+
+.restaurant-summary-items::-webkit-scrollbar{
+    display:none;
+}
+
+
+.restaurant-summary-chip{
+    flex-shrink:0;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:5px;
+
+    padding:
+        5px
+        5px
+        5px
+        9px;
+
+    border:
+        1px solid #bbf7d0;
+
+    border-radius:999px;
+
+    background:#dcfce7;
+
+    color:#166534;
+
+    font-size:10px;
+
+    font-weight:700;
+}
+
+
+.restaurant-summary-remove{
+    width:18px;
+    height:18px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:0;
+
+    border:0;
+
+    border-radius:50%;
+
+    background:#fff;
+
+    color:#dc2626;
+
+    font-size:14px;
+
+    font-weight:900;
+
+    cursor:pointer;
+}
+
+
+.restaurant-summary-remove:active{
+    transform:scale(.86);
+}
+
+
+/* EXISTING OFFER MESSAGE */
+
+.menu-message{
+    margin-top:5px;
+
+    font-size:11px;
+
+    color:#64748b;
+}
+
+
+/* =========================================================
+   FLOATING CART
+========================================================= */
+
+.restaurant-floating-cart{
+    position:fixed;
+
+    left:50%;
+    bottom:72px;
+
+    transform:
+        translateX(-50%);
+
+    width:
+        calc(100% - 24px);
+
+    max-width:520px;
+
+    min-height:58px;
+
+    z-index:1300;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:
+        space-between;
+
+    gap:10px;
+
+    box-sizing:border-box;
+
+    padding:
+        10px
+        12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #15803d,
+            #16a34a
+        );
+
+    color:#fff;
+
+    border-radius:16px;
+
+    text-decoration:none;
+
+    box-shadow:
+        0 10px 30px
+        rgba(22,163,74,.35);
+}
+
+
+.restaurant-floating-cart
+.floating-cart-left{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+}
+
+
+.restaurant-floating-cart
+.floating-cart-icon{
+    width:38px;
+    height:38px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex-shrink:0;
+
+    border-radius:12px;
+
+    background:
+        rgba(255,255,255,.18);
+
+    font-size:20px;
+}
+
+
+.restaurant-floating-cart
+.floating-cart-info{
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:flex-start;
+}
+
+
+.restaurant-cart-count-row{
+    display:flex;
+
+    align-items:baseline;
+
+    gap:4px;
+
+    font-size:12px;
+
+    color:
+        rgba(255,255,255,.88);
+}
+
+
+.restaurant-floating-cart
+#cart-count{
+    font-size:16px;
+
+    font-weight:900;
+
+    color:#fff;
+}
+
+
+.restaurant-cart-total{
+    font-size:15px;
+
+    font-weight:900;
+
+    color:#fff;
+}
+
+
+.restaurant-floating-cart
+.floating-cart-right{
+    display:flex;
+
+    align-items:center;
+
+    gap:5px;
+
+    font-size:13px;
+
+    font-weight:800;
+}
+
+
+.restaurant-floating-cart
+.cart-arrow{
+    font-size:23px;
+
+    line-height:1;
+}
+
+
+/* IMPORTANT:
+   prevents last restaurant item
+   being covered by cart
+*/
+
+.menu-grid:last-of-type{
+    margin-bottom:170px;
+}
+
+
+@media(max-width:600px){
+
+    .restaurant-floating-cart{
+        bottom:68px;
+
+        width:
+            calc(100% - 20px);
+
+        min-height:54px;
+
+        border-radius:14px;
+
+        padding:
+            9px
+            10px;
+    }
+
+}
+
+/* =====================================================================
+   RUCHIGO — 2026 TRENDING RESTAURANT MENU UI
+   ---------------------------------------------------------------------
+   UI-ONLY OVERRIDE.
+   IMPORTANT: Existing Jinja, IDs, classes, data-* attributes and JS logic
+   are intentionally preserved. This block only modernizes presentation.
+   ===================================================================== */
+
+:root{
+    --rg-brand:#ff4d3d;
+    --rg-brand-dark:#e8382b;
+    --rg-green:#16a34a;
+    --rg-green-dark:#13813d;
+    --rg-text:#171717;
+    --rg-muted:#6b7280;
+    --rg-soft:#f7f7f8;
+    --rg-line:#ececee;
+    --rg-white:#ffffff;
+    --rg-shadow:0 8px 28px rgba(15,23,42,.08);
+    --rg-shadow-soft:0 3px 14px rgba(15,23,42,.06);
+    --rg-radius:22px;
+}
+
+/* ---------- PAGE ---------- */
+body{
+    background:#f6f7f8 !important;
+    color:var(--rg-text);
+    padding-bottom:145px !important;
+}
+
+/* ---------- RESTAURANT HEADER ---------- */
+.header{
+    position:sticky !important;
+    top:0 !important;
+    z-index:1200 !important;
+    height:64px !important;
+    padding:0 16px !important;
+    justify-content:flex-start !important;
+
+    background:rgba(255,255,255,.94) !important;
+    backdrop-filter:blur(18px) !important;
+    -webkit-backdrop-filter:blur(18px) !important;
+
+    border-bottom:1px solid rgba(15,23,42,.06) !important;
+    box-shadow:0 4px 18px rgba(15,23,42,.05) !important;
+
+    font-size:19px !important;
+    font-weight:800 !important;
+    letter-spacing:-.25px !important;
+    color:#111827 !important;
+}
+
+.header::before{
+    content:"🍽️";
+    width:38px;
+    height:38px;
+    margin-right:10px;
+    border-radius:12px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg,#fff1ef,#ffe5e1);
+    font-size:19px;
+}
+
+.header::after{
+    display:none !important;
+}
+
+/* ---------- CART SUMMARY UNDER HEADER ---------- */
+.menu-incentive{
+    top:64px !important;
+    z-index:1120 !important;
+    margin:0 !important;
+    padding:9px 14px !important;
+
+    background:rgba(255,255,255,.96) !important;
+    border-bottom:1px solid #e8f5eb !important;
+    box-shadow:0 5px 16px rgba(15,23,42,.05) !important;
+}
+
+.restaurant-summary-top{
+    max-width:920px;
+    margin:0 auto;
+}
+
+.restaurant-summary-count{
+    font-size:12px !important;
+    color:#64748b !important;
+}
+
+.restaurant-summary-total{
+    font-size:17px !important;
+    color:#15803d !important;
+}
+
+.restaurant-summary-items{
+    max-width:920px;
+    margin:6px auto 0 !important;
+}
+
+.restaurant-summary-chip{
+    background:#effcf2 !important;
+    border:1px solid #d7f4df !important;
+    color:#14743a !important;
+    font-size:10.5px !important;
+    padding:5px 6px 5px 9px !important;
+}
+
+/* ---------- CATEGORY + FILTER BAR ---------- */
+.top-cat-wrapper{
+    top:calc(64px + var(--incentive-height, 0px)) !important;
+    z-index:1050 !important;
+
+    gap:8px !important;
+    padding:10px 12px !important;
+
+    background:rgba(246,247,248,.96) !important;
+    backdrop-filter:blur(16px) !important;
+    -webkit-backdrop-filter:blur(16px) !important;
+
+    border-bottom:1px solid rgba(15,23,42,.05) !important;
+    box-shadow:none !important;
+}
+
+.category-scroll{
+    gap:8px !important;
+    scroll-behavior:smooth;
+}
+
+.filter-section{
+    gap:8px !important;
+}
+
+.top-cat{
+    padding:8px 13px !important;
+    border-radius:12px !important;
+
+    border:1px solid #e6e7ea !important;
+    background:#fff !important;
+    color:#3f4650 !important;
+
+    font-size:12.5px !important;
+    font-weight:700 !important;
+
+    box-shadow:0 2px 8px rgba(15,23,42,.035);
+    transition:.2s ease !important;
+}
+
+.top-cat:hover{
+    background:#fff1ef !important;
+    border-color:#ffd4cf !important;
+    color:var(--rg-brand-dark) !important;
+    transform:none !important;
+}
+
+.active-filter{
+    background:#111827 !important;
+    border-color:#111827 !important;
+    color:#fff !important;
+}
+
+/* ---------- CATEGORY HEADING ---------- */
+.category-title{
+    max-width:920px;
+    margin:30px auto 10px !important;
+    padding:0 14px !important;
+
+    border-left:0 !important;
+    color:#171717 !important;
+
+    font-size:20px !important;
+    font-weight:850 !important;
+    letter-spacing:-.35px;
+
+    scroll-margin-top:155px !important;
+}
+
+.category-title::after{
+    content:"";
+    display:block;
+    width:30px;
+    height:3px;
+    margin-top:7px;
+    border-radius:999px;
+    background:var(--rg-brand);
+}
+
+/* ---------- MENU LIST CONTAINER ---------- */
+.menu-grid{
+    width:calc(100% - 24px) !important;
+    max-width:920px !important;
+    margin:0 auto !important;
+
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+
+    padding:0 !important;
+    border:0 !important;
+    border-radius:0 !important;
+
+    background:transparent !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    isolation:auto !important;
+}
+
+.menu-grid::before{
+    display:none !important;
+}
+
+/* ---------- MODERN MENU CARD ---------- */
+.menu-card-accent{
+    position:relative !important;
+    min-height:150px;
+
+    display:flex !important;
+    overflow:visible !important;
+
+    border:1px solid #ededee !important;
+    border-radius:var(--rg-radius) !important;
+    background:#fff !important;
+
+    box-shadow:var(--rg-shadow-soft) !important;
+    transition:transform .18s ease, box-shadow .18s ease !important;
+}
+
+.menu-card-accent:hover{
+    transform:translateY(-1px) !important;
+    box-shadow:var(--rg-shadow) !important;
+}
+
+.card-left{
+    display:none !important;
+}
+
+.card-body-accent{
+    width:100% !important;
+    min-width:0;
+    padding:15px !important;
+
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 124px !important;
+    grid-template-areas:"info image" !important;
+    align-items:start !important;
+    gap:14px !important;
+}
+
+/* ---------- FOOD IMAGE ON RIGHT ---------- */
+.menu-image{
+    grid-area:image;
+    position:relative !important;
+
+    width:124px !important;
+    height:124px !important;
+    margin-left:0 !important;
+
+    flex-shrink:0 !important;
+    overflow:hidden !important;
+
+    border-radius:18px !important;
+    background:#f1f2f4 !important;
+    box-shadow:none !important;
+}
+
+.menu-image::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:4;
+    pointer-events:none;
+    border-radius:inherit;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.045);
+}
+
+.menu-img-real{
+    border-radius:18px;
+}
+
+.menu-card-accent:hover .menu-img-real:not(.img-failed),
+.menu-card-accent:hover .menu-image img{
+    transform:scale(1.025) !important;
+}
+
+/* ---------- FALLBACK IMAGE ---------- */
+.menu-placeholder{
+    border:0 !important;
+    border-radius:18px !important;
+}
+
+.placeholder-icon{
+    font-size:25px !important;
+}
+
+.placeholder-name{
+    font-size:12px !important;
+    font-weight:800 !important;
+    line-height:1.2 !important;
+    padding:0 8px !important;
+}
+
+/* ---------- ITEM CONTENT ---------- */
+.card-info{
+    grid-area:info;
+    min-width:0 !important;
+    gap:5px !important;
+    padding:1px 0 0 !important;
+}
+
+.item-header{
+    align-items:flex-start !important;
+    gap:7px !important;
+    margin-top:0 !important;
+    padding-right:2px;
+}
+
+.food-dot{
+    width:12px !important;
+    height:12px !important;
+    margin-top:3px;
+    border-radius:3px !important;
+}
+
+.item-name{
+    font-size:15.5px !important;
+    line-height:1.35 !important;
+    font-weight:800 !important;
+    letter-spacing:-.15px;
+    color:#18181b !important;
+}
+
+.item-price{
+    margin-top:2px !important;
+    gap:6px !important;
+    font-size:14.5px !important;
+    font-weight:800 !important;
+    color:#18181b !important;
+}
+
+.original-price{
+    font-size:12px !important;
+    color:#9ca3af !important;
+}
+
+.discounted-price{
+    font-size:15.5px !important;
+    color:#171717 !important;
+    font-weight:850 !important;
+}
+
+.item-offer-badge{
+    padding:3px 6px !important;
+    border-radius:7px !important;
+    background:#edf9ef !important;
+    color:#16803a !important;
+    font-size:9.5px !important;
+    font-weight:800 !important;
+}
+
+.item-desc{
+    margin-top:1px;
+    max-width:98%;
+    font-size:11.5px !important;
+    line-height:1.45 !important;
+    color:#777b83 !important;
+    -webkit-line-clamp:2 !important;
+}
+
+/* ---------- SOCIAL / AVAILABILITY BADGES ---------- */
+.reorder-badge-top{
+    top:8px !important;
+    right:8px !important;
+    z-index:8 !important;
+
+    padding:4px 8px !important;
+    border-radius:9px !important;
+
+    background:rgba(255,255,255,.94) !important;
+    color:#ea580c !important;
+    border:1px solid #fed7aa !important;
+
+    box-shadow:0 3px 10px rgba(15,23,42,.09) !important;
+
+    font-size:9px !important;
+    font-weight:850 !important;
+    letter-spacing:0 !important;
+}
+
+.reorder-badge-top::before{
+    content:"↻ ";
+}
+
+.reorder-progress{
+    width:46px !important;
+    height:3px !important;
+    margin:0 0 2px !important;
+    background:#f1f1f2 !important;
+}
+
+.reorder-fill{
+    background:#f59e0b !important;
+}
+
+.limited-badge{
+    align-self:flex-start !important;
+    margin:0 0 1px !important;
+    padding:4px 7px !important;
+
+    border:0 !important;
+    border-radius:8px !important;
+
+    background:#fff3e8 !important;
+    color:#c2410c !important;
+
+    font-size:9.5px !important;
+    font-weight:850 !important;
+    letter-spacing:0 !important;
+    text-transform:none !important;
+    line-height:1.1 !important;
+
+    box-shadow:none !important;
+}
+
+/* ---------- ADD / QUANTITY AREA ---------- */
+.add-section{
+    margin-top:auto !important;
+    padding-top:5px;
+
+    display:flex !important;
+    align-items:center !important;
+    gap:6px !important;
+}
+
+.qty-btn{
+    width:28px !important;
+    height:28px !important;
+
+    padding:0 !important;
+    border:1px solid #e5e7eb !important;
+    border-radius:9px !important;
+
+    background:#fafafa !important;
+    color:#363a40 !important;
+
+    font-size:16px !important;
+    font-weight:700 !important;
+    box-shadow:none !important;
+}
+
+.qty-btn:hover{
+    background:#f2f3f5 !important;
+}
+
+.qty-box{
+    width:31px !important;
+    height:28px !important;
+
+    padding:0 !important;
+    border:0 !important;
+    background:transparent !important;
+
+    font-size:13px !important;
+    font-weight:800 !important;
+    color:#202124 !important;
+}
+
+.add-btn{
+    margin-left:4px !important;
+    min-width:72px;
+
+    padding:8px 14px !important;
+    border:1.5px solid #ffd1cc !important;
+    border-radius:11px !important;
+
+    background:#fff !important;
+    color:var(--rg-brand-dark) !important;
+
+    font-size:12.5px !important;
+    font-weight:850 !important;
+
+    box-shadow:0 3px 10px rgba(232,56,43,.10) !important;
+}
+
+.add-btn:hover{
+    transform:none !important;
+    background:#fff5f4 !important;
+    border-color:#ffaaa1 !important;
+    box-shadow:0 4px 12px rgba(232,56,43,.13) !important;
+}
+
+.add-btn:active{
+    transform:scale(.97) !important;
+}
+
+.out-stock{
+    display:inline-flex;
+    width:max-content;
+    margin:7px 0 0 !important;
+    padding:5px 8px;
+    border-radius:8px;
+    background:#fff1f2;
+    color:#be123c !important;
+    font-size:10px !important;
+}
+
+/* ---------- FLOATING CART ---------- */
+.restaurant-floating-cart{
+    left:50% !important;
+    bottom:70px !important;
+
+    width:calc(100% - 24px) !important;
+    max-width:520px !important;
+    min-height:58px !important;
+
+    padding:9px 10px !important;
+
+    border:1px solid rgba(255,255,255,.14) !important;
+    border-radius:18px !important;
+
+    background:linear-gradient(135deg,#177b3e,#16a34a) !important;
+    box-shadow:0 16px 34px rgba(22,163,74,.28) !important;
+}
+
+.restaurant-floating-cart .floating-cart-icon{
+    width:39px !important;
+    height:39px !important;
+    border-radius:13px !important;
+    background:rgba(255,255,255,.16) !important;
+}
+
+.restaurant-floating-cart #cart-count{
+    font-size:15px !important;
+}
+
+.restaurant-cart-total{
+    font-size:14px !important;
+}
+
+.restaurant-floating-cart .floating-cart-right{
+    padding:8px 10px;
+    border-radius:11px;
+    background:rgba(255,255,255,.13);
+    font-size:12px !important;
+}
+
+/* ---------- REPLACE CART MODAL ---------- */
+.cart-modal{
+    background:rgba(17,24,39,.56) !important;
+    backdrop-filter:blur(5px) !important;
+}
+
+.cart-modal-box{
+    max-width:350px !important;
+    border-radius:22px !important;
+    padding:22px 18px 18px !important;
+    box-shadow:0 24px 60px rgba(0,0,0,.25) !important;
+}
+
+.cart-modal-box h3{
+    font-size:18px !important;
+    font-weight:850 !important;
+}
+
+.btn-cancel,
+.btn-confirm{
+    border-radius:12px !important;
+    font-weight:750 !important;
+}
+
+/* ---------- PRICE FILTER MODAL ---------- */
+.price-modal{
+    background:rgba(17,24,39,.55) !important;
+    backdrop-filter:blur(5px);
+}
+
+.price-card{
+    width:calc(100% - 34px) !important;
+    max-width:390px !important;
+
+    padding:20px !important;
+    border-radius:22px !important;
+
+    background:#fff !important;
+    color:#18181b !important;
+
+    box-shadow:0 24px 60px rgba(0,0,0,.24);
+}
+
+.price-card h3{
+    margin:0 0 15px !important;
+    font-size:18px !important;
+    font-weight:850 !important;
+}
+
+.price-ranges{
+    gap:9px !important;
+}
+
+.price-ranges button{
+    padding:10px 8px !important;
+    border:1px solid #e6e7ea !important;
+    border-radius:11px !important;
+    background:#fafafa !important;
+    color:#30343a !important;
+    font-weight:700;
+}
+
+.price-ranges button:hover{
+    background:#fff1ef !important;
+    border-color:#ffc8c2 !important;
+    color:var(--rg-brand-dark) !important;
+}
+
+.price-close{
+    margin-top:14px !important;
+    border-radius:11px !important;
+    background:#18181b !important;
+    color:#fff !important;
+    font-weight:800;
+}
+
+/* ---------- URGENCY POPUP ---------- */
+.urgency-overlay{
+    background:rgba(17,24,39,.48) !important;
+    backdrop-filter:blur(4px);
+}
+
+.urgency-modal-center{
+    max-width:350px !important;
+    border-radius:22px !important;
+    background:#fff !important;
+    box-shadow:0 24px 60px rgba(0,0,0,.25) !important;
+}
+
+.conv-urgency{
+    color:#4a2b21 !important;
+    font-size:13px !important;
+}
+
+/* ---------- TABLET ---------- */
+@media (min-width:700px){
+    .menu-grid{
+        width:calc(100% - 40px) !important;
+    }
+
+    .category-title{
+        padding-left:20px !important;
+        padding-right:20px !important;
+    }
+
+    .card-body-accent{
+        grid-template-columns:minmax(0,1fr) 142px !important;
+    }
+
+    .menu-image{
+        width:142px !important;
+        height:142px !important;
+    }
+
+    .menu-card-accent{
+        min-height:170px;
+    }
+
+    .item-name{
+        font-size:17px !important;
+    }
+
+    .item-desc{
+        font-size:12.5px !important;
+    }
+}
+
+/* ---------- MOBILE ---------- */
+@media (max-width:600px){
+    body{
+        padding-bottom:140px !important;
+    }
+
+    .header{
+        height:60px !important;
+        padding:0 12px !important;
+        font-size:16px !important;
+    }
+
+    .header::before{
+        width:34px;
+        height:34px;
+        border-radius:11px;
+        font-size:17px;
+        margin-right:8px;
+    }
+
+    .menu-incentive{
+        top:60px !important;
+    }
+
+    .top-cat-wrapper{
+        top:calc(60px + var(--incentive-height, 0px)) !important;
+        padding:8px 9px !important;
+    }
+
+    .top-cat{
+        padding:7px 10px !important;
+        border-radius:10px !important;
+        font-size:11.5px !important;
+    }
+
+    .category-title{
+        margin:24px auto 9px !important;
+        padding:0 13px !important;
+        font-size:18px !important;
+        scroll-margin-top:145px !important;
+    }
+
+    .menu-grid{
+        width:calc(100% - 16px) !important;
+        gap:9px !important;
+    }
+
+    .menu-card-accent{
+        min-height:132px;
+        border-radius:18px !important;
+    }
+
+    .card-body-accent{
+        padding:12px !important;
+        grid-template-columns:minmax(0,1fr) 104px !important;
+        gap:11px !important;
+    }
+
+    .menu-image{
+        width:104px !important;
+        height:104px !important;
+        border-radius:15px !important;
+    }
+
+    .menu-img-real,
+    .menu-placeholder{
+        border-radius:15px !important;
+    }
+
+    .item-name{
+        font-size:14px !important;
+        line-height:1.3 !important;
+    }
+
+    .item-price{
+        font-size:13px !important;
+    }
+
+    .discounted-price{
+        font-size:14px !important;
+    }
+
+    .item-desc{
+        font-size:10.5px !important;
+        line-height:1.35 !important;
+        -webkit-line-clamp:2 !important;
+    }
+
+    .add-section{
+        gap:4px !important;
+        padding-top:4px;
+    }
+
+    .qty-btn{
+        width:25px !important;
+        height:25px !important;
+        border-radius:8px !important;
+        font-size:14px !important;
+    }
+
+    .qty-box{
+        width:24px !important;
+        height:25px !important;
+        font-size:12px !important;
+    }
+
+    .add-btn{
+        min-width:58px;
+        padding:6px 9px !important;
+        border-radius:9px !important;
+        font-size:11px !important;
+    }
+
+    .reorder-badge-top{
+        top:6px !important;
+        right:6px !important;
+        font-size:8px !important;
+        padding:3px 6px !important;
+    }
+
+    .limited-badge{
+        font-size:8.5px !important;
+        padding:3px 6px !important;
+    }
+
+    .restaurant-floating-cart{
+        bottom:66px !important;
+        width:calc(100% - 18px) !important;
+        min-height:54px !important;
+        border-radius:16px !important;
+    }
+}
+
+/* ---------- VERY SMALL PHONES ---------- */
+@media (max-width:380px){
+    .card-body-accent{
+        grid-template-columns:minmax(0,1fr) 92px !important;
+        gap:9px !important;
+        padding:10px !important;
+    }
+
+    .menu-image{
+        width:92px !important;
+        height:92px !important;
+    }
+
+    .item-name{
+        font-size:13px !important;
+    }
+
+    .item-desc{
+        -webkit-line-clamp:1 !important;
+    }
+
+    .qty-btn{
+        width:23px !important;
+        height:23px !important;
+    }
+
+    .qty-box{
+        width:20px !important;
+        height:23px !important;
+    }
+
+    .add-btn{
+        min-width:50px;
+        padding:5px 7px !important;
+    }
+}
+
+
+/* =========================================================
+   UNIVERSAL RESTAURANT MENU BANNER
+   Works for biryani, chicken, tiffins, fast food, meals,
+   bakery-style food, mixed restaurants and other menus.
+========================================================= */
+.restaurant-menu-banner{
+    position:relative;
+    max-width:920px;
+    margin:12px auto 4px;
+    padding:18px 18px;
+    overflow:hidden;
+    box-sizing:border-box;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+
+    border:1px solid rgba(255,77,61,.10);
+    border-radius:22px;
+
+    background:
+        radial-gradient(circle at 92% 18%, rgba(255,186,73,.22), transparent 28%),
+        radial-gradient(circle at 78% 100%, rgba(255,77,61,.12), transparent 34%),
+        linear-gradient(135deg,#fffaf7 0%,#fff 55%,#fff7ed 100%);
+
+    box-shadow:0 8px 26px rgba(15,23,42,.06);
+}
+
+.restaurant-menu-banner-copy{
+    position:relative;
+    z-index:2;
+    min-width:0;
+    flex:1;
+}
+
+.restaurant-menu-banner-label{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+
+    margin-bottom:7px;
+    padding:5px 9px;
+
+    border-radius:999px;
+    background:#fff0ed;
+    color:#d93b2f;
+
+    font-size:10px;
+    font-weight:850;
+    letter-spacing:.02em;
+}
+
+.restaurant-menu-banner-dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#22c55e;
+    box-shadow:0 0 0 3px rgba(34,197,94,.12);
+}
+
+.restaurant-menu-banner h2{
+    margin:0;
+    max-width:590px;
+
+    color:#171717;
+    font-size:clamp(19px,4.6vw,27px);
+    line-height:1.13;
+    letter-spacing:-.55px;
+    font-weight:900;
+}
+
+.restaurant-menu-banner h2 span{
+    color:#e63f32;
+}
+
+.restaurant-menu-banner p{
+    margin:7px 0 0;
+    max-width:590px;
+
+    color:#6b7280;
+    font-size:12px;
+    line-height:1.5;
+    font-weight:500;
+}
+
+.restaurant-menu-banner-tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:11px;
+}
+
+.restaurant-menu-banner-tags span{
+    padding:5px 8px;
+    border:1px solid #ece7e3;
+    border-radius:999px;
+    background:rgba(255,255,255,.82);
+    color:#555b64;
+    font-size:9px;
+    font-weight:750;
+}
+
+.restaurant-menu-banner-visual{
+    position:relative;
+    z-index:2;
+
+    width:104px;
+    height:104px;
+    flex:0 0 104px;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:28px;
+    background:rgba(255,255,255,.64);
+    border:1px solid rgba(255,255,255,.9);
+    box-shadow:0 10px 25px rgba(153,84,45,.09);
+
+    font-size:39px;
+}
+
+.restaurant-menu-banner-visual::before,
+.restaurant-menu-banner-visual::after{
+    position:absolute;
+    content:"";
+    display:grid;
+    place-items:center;
+
+    width:39px;
+    height:39px;
+    border-radius:13px;
+
+    background:#fff;
+    box-shadow:0 5px 14px rgba(15,23,42,.08);
+
+    font-size:19px;
+}
+
+.restaurant-menu-banner-visual::before{
+    content:"🍗";
+    left:-15px;
+    bottom:7px;
+    transform:rotate(-7deg);
+}
+
+.restaurant-menu-banner-visual::after{
+    content:"🥘";
+    right:-9px;
+    top:-9px;
+    transform:rotate(7deg);
+}
+
+@media(max-width:600px){
+    .restaurant-menu-banner{
+        margin:9px 10px 3px;
+        padding:14px 13px;
+        border-radius:18px;
+        gap:8px;
+    }
+
+    .restaurant-menu-banner-label{
+        margin-bottom:5px;
+        padding:4px 7px;
+        font-size:8.5px;
+    }
+
+    .restaurant-menu-banner h2{
+        font-size:18px;
+        line-height:1.17;
+        letter-spacing:-.3px;
+    }
+
+    .restaurant-menu-banner p{
+        margin-top:5px;
+        font-size:10px;
+        line-height:1.4;
+    }
+
+    .restaurant-menu-banner-tags{
+        gap:4px;
+        margin-top:8px;
+    }
+
+    .restaurant-menu-banner-tags span{
+        padding:4px 6px;
+        font-size:7.5px;
+    }
+
+    .restaurant-menu-banner-visual{
+        width:70px;
+        height:70px;
+        flex-basis:70px;
+        border-radius:20px;
+        font-size:28px;
+    }
+
+    .restaurant-menu-banner-visual::before,
+    .restaurant-menu-banner-visual::after{
+        width:29px;
+        height:29px;
+        border-radius:10px;
+        font-size:14px;
+    }
+
+    .restaurant-menu-banner-visual::before{
+        left:-8px;
+        bottom:2px;
+    }
+
+    .restaurant-menu-banner-visual::after{
+        right:-5px;
+        top:-6px;
+    }
+}
+
 </style>
 
 
@@ -1342,17 +3113,107 @@ box-shadow:
     {{ restaurant.name }} - Menu
 </div>
 
-<!-- MENU INCENTIVE CARD (sticky) -->
-<div id="menu-incentive" class="menu-incentive hidden">
-    <div class="menu-total">
-        🛒 Items Total: ₹<span id="menu-total-amount">0</span>
+<!-- UNIVERSAL RESTAURANT MENU BANNER -->
+<section class="restaurant-menu-banner">
+
+    <div class="restaurant-menu-banner-copy">
+
+        <div class="restaurant-menu-banner-label">
+            <span class="restaurant-menu-banner-dot"></span>
+            Explore the menu
+        </div>
+
+        <h2>
+            What are you craving from
+            <span>{{ restaurant.name }}</span>?
+        </h2>
+
+        <p>
+            Browse the menu, discover your favourites and add what you love to your cart.
+        </p>
+
+        <div class="restaurant-menu-banner-tags">
+            <span>🔥 Popular picks</span>
+            <span>🍽️ More choices</span>
+            <span>🛍️ Easy ordering</span>
+        </div>
+
     </div>
 
-    <div class="menu-message" id="menu-message"></div>
+    <div class="restaurant-menu-banner-visual" aria-hidden="true">
+        🍽️
+    </div>
+
+</section>
+
+<!-- MENU INCENTIVE CARD (sticky) -->
+ <!-- =====================================================
+     RESTAURANT CART SUMMARY
+     STICKY UNDER RESTAURANT NAME
+===================================================== -->
+
+<div
+    id="menu-incentive"
+    class="menu-incentive hidden"
+>
+
+    <div class="restaurant-summary-top">
+
+        <div class="restaurant-summary-count">
+
+            <span id="restaurantSummaryItemCount">
+                0 items
+            </span>
+
+            <span class="restaurant-summary-dot">
+                •
+            </span>
+
+            <span id="restaurantSummaryQtyCount">
+                0 qty
+            </span>
+
+        </div>
+
+
+        <div class="restaurant-summary-total">
+
+            ₹<span id="menu-total-amount">
+                0
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- ADDED ITEM NAMES -->
+
+    <div
+        id="restaurantSummaryItems"
+        class="restaurant-summary-items"
+    ></div>
+
+
+    <!-- KEEP THIS FOR YOUR OFFER/FREE DELIVERY SYSTEM -->
+
+    <div
+        class="menu-message"
+        id="menu-message"
+    ></div>
+
 
     <div class="progress-bar">
-       <!-----<div class="progress-fill" id="progress-fill"></div> -->
+
+        <!--
+        <div
+            class="progress-fill"
+            id="progress-fill"
+        ></div>
+        -->
+
     </div>
+
 </div>
 
 <!-- CONFETTI -->
@@ -1450,7 +3311,8 @@ box-shadow:
     {% set p_icon = '🍽️' %}{% set p_grad = fallback_gradients[loop.index0 % 6] %}
 {% endif %}
 
-<div class="menu-card-accent" data-price="{{ item['price'] }}">
+<div class="menu-card-accent"
+     data-price="{% if item.offer_price is defined and item.offer_price is not none %}{{ item.offer_price }}{% else %}{{ item['price'] }}{% endif %}">
 
     <!-- 🔥 REORDER TAG -->
     {% if item.reorder_count is defined and item.reorder_count >= 2 %}
@@ -1527,9 +3389,31 @@ box-shadow:
 
             </div>
 
-            <div class="item-price">
-                ₹{{ item['price'] }}
-            </div>
+<div class="item-price">
+
+    {% if item.offer_price is defined and item.offer_price is not none %}
+
+        <span class="original-price">
+            ₹{{ "%.0f"|format(item['price']) }}
+        </span>
+
+        <span class="discounted-price">
+            ₹{{ "%.0f"|format(item.offer_price) }}
+        </span>
+
+        {% if item.offer_percent is defined and item.offer_percent %}
+            <span class="item-offer-badge">
+                {{ "%.0f"|format(item.offer_percent) }}% OFF
+            </span>
+        {% endif %}
+
+    {% else %}
+
+        ₹{{ item['price'] }}
+
+    {% endif %}
+
+</div>
 
             <div class="item-desc">
                 {{ item['description'] }}
@@ -1557,7 +3441,7 @@ box-shadow:
                 <button class="add-btn"
                         data-id="{{ item.id }}"
                         data-name="{{ item['name'] }}"
-                        data-price="{{ item['price'] }}"
+                        data-price="{% if item.offer_price is defined and item.offer_price is not none %}{{ item.offer_price }}{% else %}{{ item['price'] }}{% endif %}"
                         data-category="{{ item.category }}">
 
                     Add +
@@ -1585,13 +3469,42 @@ box-shadow:
 </div>
 {% endif %}
 {% endfor %}
+<a
+    href="{{ url_for('cart_page', restaurant_id=restaurant.id) }}"
+    class="floating-cart restaurant-floating-cart"
+    id="cartBtn"
+>
 
-<a href="{{ url_for('cart_page', restaurant_id=restaurant.id) }}"
-   class="floating-cart"
-   id="cartBtn">
-    🛒 <span id="cart-count">0</span> | View Items
+    <div class="floating-cart-left">
+
+        <div class="floating-cart-icon">
+            🛒
+        </div>
+
+        <div class="floating-cart-info">
+
+            <div class="restaurant-cart-count-row">
+                <span id="cart-count">0</span>
+                <span id="cart-count-text">items</span>
+            </div>
+
+            <div
+                class="restaurant-cart-total"
+                id="cart-total"
+            >
+                ₹0
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="floating-cart-right">
+        <span>View Cart</span>
+        <span class="cart-arrow">›</span>
+    </div>
+
 </a>
-
 <script>
 document.getElementById("cartBtn").addEventListener("click", function (e) {
     if (!RESTAURANT_IS_OPEN) {+++
@@ -1619,15 +3532,339 @@ let carts = JSON.parse(localStorage.getItem("carts")) || {};
 function saveCarts() {
     localStorage.setItem("carts", JSON.stringify(carts));
 }
+/* =====================================================
+   UPDATE RESTAURANT CART UI
+===================================================== */
 
-/* ================= CART COUNT ================= */
 function updateCartCount() {
-    const cart = carts[RESTAURANT_ID] || { items: [] };
-    const totalQty = cart.items.reduce((s, i) => s + i.quantity, 0);
-    const badge = document.getElementById("cart-count");
-    if (badge) badge.innerText = totalQty;
-}
 
+    const cart =
+        carts[RESTAURANT_ID] || {
+            items: []
+        };
+
+
+    const items =
+        cart.items || [];
+
+
+    /* =============================================
+       ELEMENTS
+    ============================================= */
+
+    const cartBtn =
+        document.getElementById(
+            "cartBtn"
+        );
+
+    const cartCount =
+        document.getElementById(
+            "cart-count"
+        );
+
+    const cartCountText =
+        document.getElementById(
+            "cart-count-text"
+        );
+
+    const cartTotal =
+        document.getElementById(
+            "cart-total"
+        );
+
+
+    const summary =
+        document.getElementById(
+            "menu-incentive"
+        );
+
+    const summaryItemCount =
+        document.getElementById(
+            "restaurantSummaryItemCount"
+        );
+
+    const summaryQtyCount =
+        document.getElementById(
+            "restaurantSummaryQtyCount"
+        );
+
+    const summaryItems =
+        document.getElementById(
+            "restaurantSummaryItems"
+        );
+
+
+    /* =============================================
+       TOTALS
+    ============================================= */
+
+    const uniqueItems =
+        items.length;
+
+
+    const totalQty =
+        items.reduce(
+            (sum, item) =>
+                sum +
+                (
+                    parseInt(
+                        item.quantity
+                    ) || 0
+                ),
+            0
+        );
+
+
+    const totalPrice =
+        items.reduce(
+            (sum, item) => {
+
+                const qty =
+                    parseInt(
+                        item.quantity
+                    ) || 0;
+
+                const price =
+                    parseFloat(
+                        item.price
+                    ) || 0;
+
+                return (
+                    sum +
+                    price * qty
+                );
+
+            },
+            0
+        );
+
+
+    /* =============================================
+       EMPTY CART
+    ============================================= */
+
+    if (totalQty <= 0) {
+
+        if (cartBtn) {
+
+            cartBtn.style.display =
+                "none";
+        }
+
+
+        if (summary) {
+
+            summary.classList.add(
+                "hidden"
+            );
+        }
+
+
+        if (cartCount) {
+
+            cartCount.innerText =
+                "0";
+        }
+
+
+        if (cartTotal) {
+
+            cartTotal.innerText =
+                "₹0";
+        }
+
+
+        if (summaryItems) {
+
+            summaryItems.innerHTML =
+                "";
+        }
+
+
+        return;
+    }
+
+
+    /* =============================================
+       SHOW FLOATING CART
+    ============================================= */
+
+    if (cartBtn) {
+
+        cartBtn.style.display =
+            "flex";
+    }
+
+
+    /* =============================================
+       SHOW SUMMARY
+    ============================================= */
+
+    if (summary) {
+
+        summary.classList.remove(
+            "hidden"
+        );
+    }
+
+
+    /* =============================================
+       FLOATING CART COUNT
+    ============================================= */
+
+    if (cartCount) {
+
+        cartCount.innerText =
+            totalQty;
+    }
+
+
+    if (cartCountText) {
+
+        cartCountText.innerText =
+            totalQty === 1
+                ? "item"
+                : "items";
+    }
+
+
+    /* =============================================
+       FLOATING CART TOTAL
+    ============================================= */
+
+    if (cartTotal) {
+
+        cartTotal.innerText =
+            `₹${Math.round(totalPrice)}`;
+    }
+
+
+    /* =============================================
+       SUMMARY HEADER
+    ============================================= */
+
+    if (summaryItemCount) {
+
+        summaryItemCount.innerText =
+            `${uniqueItems} ${
+                uniqueItems === 1
+                    ? "item"
+                    : "items"
+            }`;
+    }
+
+
+    if (summaryQtyCount) {
+
+        summaryQtyCount.innerText =
+            `${totalQty} qty`;
+    }
+
+
+    /* =============================================
+       SUMMARY ITEM CHIPS
+    ============================================= */
+
+    if (summaryItems) {
+
+        summaryItems.innerHTML =
+            "";
+
+
+        items.forEach(item => {
+
+            const chip =
+                document.createElement(
+                    "div"
+                );
+
+
+            chip.className =
+                "restaurant-summary-chip";
+
+
+            const text =
+                document.createElement(
+                    "span"
+                );
+
+
+            text.innerText =
+                `${item.name} ×${item.quantity}`;
+
+
+            const removeBtn =
+                document.createElement(
+                    "button"
+                );
+
+
+            removeBtn.type =
+                "button";
+
+
+            removeBtn.className =
+                "restaurant-summary-remove";
+
+
+            removeBtn.innerHTML =
+                "×";
+
+
+            removeBtn.setAttribute(
+                "aria-label",
+                `Remove ${item.name}`
+            );
+
+
+            removeBtn.addEventListener(
+                "click",
+                function () {
+
+                    removeRestaurantSummaryItem(
+                        item.id
+                    );
+
+                }
+            );
+
+
+            chip.appendChild(
+                text
+            );
+
+            chip.appendChild(
+                removeBtn
+            );
+
+
+            summaryItems.appendChild(
+                chip
+            );
+
+        });
+    }
+
+
+    /* =============================================
+       MENU TOTAL
+       Used by incentive system
+    ============================================= */
+
+    const menuTotal =
+        document.getElementById(
+            "menu-total-amount"
+        );
+
+
+    if (menuTotal) {
+
+        menuTotal.innerText =
+            Math.round(
+                totalPrice
+            );
+    }
+}
 /* ================= ADD ANIMATION ================= */
 function showAddedAnimation(text) {
     const anim = document.createElement("div");
@@ -1772,7 +4009,79 @@ if (floatingCart) {
 updateCartCount();
 updateMenuIncentive();
 
+/* =====================================================
+   REMOVE ITEM FROM RESTAURANT SUMMARY
+===================================================== */
 
+function removeRestaurantSummaryItem(
+    itemId
+) {
+
+    const cart =
+        carts[RESTAURANT_ID];
+
+
+    if (
+        !cart ||
+        !cart.items
+    ) {
+
+        return;
+    }
+
+
+    cart.items =
+        cart.items.filter(
+            item =>
+                String(item.id) !==
+                String(itemId)
+        );
+
+
+    /* REMOVE EMPTY RESTAURANT CART */
+
+    if (
+        cart.items.length === 0
+    ) {
+
+        delete carts[
+            RESTAURANT_ID
+        ];
+
+    } else {
+
+        carts[
+            RESTAURANT_ID
+        ] = cart;
+    }
+
+
+    /* SAVE */
+
+    saveCarts();
+
+
+    /* UPDATE UI */
+
+    updateCartCount();
+
+    updateMenuIncentive();
+
+
+    if (
+        window.refreshCartButton
+    ) {
+
+        window.refreshCartButton();
+    }
+
+
+    window.dispatchEvent(
+        new Event(
+            "cartUpdated"
+        )
+    );
+}
 /* ================= OPTIONAL: CUSTOM REPLACE MODAL ================= */
 function openReplaceCartModal(oldRestaurant, newRestaurant, item) {
     const modal = document.getElementById("replaceCartModal");
@@ -1796,7 +4105,11 @@ function openReplaceCartModal(oldRestaurant, newRestaurant, item) {
         updateCartCount();
         if (window.refreshCartButton) window.refreshCartButton();
     };
+updateMenuIncentive();
 
+window.dispatchEvent(
+    new Event("cartUpdated")
+);
     document.getElementById("replace-no").onclick = () => {
         modal.classList.remove("active");
     };
@@ -2055,28 +4368,184 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <script>
-function updateIncentiveHeight() {
-    const incentive = document.getElementById("menu-incentive");
-    if (!incentive) return;
 
-    const height = incentive.offsetHeight;
+/* =====================================================
+   DYNAMIC STICKY HEIGHTS
+===================================================== */
+
+function updateRestaurantStickyHeights() {
+
+    const header =
+        document.querySelector(".header");
+
+    const incentive =
+        document.getElementById("menu-incentive");
+
+    const categoryBar =
+        document.querySelector(".top-cat-wrapper");
+
+
+    /* =========================
+       HEADER HEIGHT
+    ========================= */
+
+    const headerHeight =
+        header
+            ? header.getBoundingClientRect().height
+            : 0;
+
+
+    document.documentElement.style.setProperty(
+        "--restaurant-header-height",
+        `${headerHeight}px`
+    );
+
+
+    /* =========================
+       INCENTIVE HEIGHT
+    ========================= */
+
+    let incentiveHeight = 0;
+
+    if (
+        incentive &&
+        !incentive.classList.contains("hidden")
+    ) {
+
+        incentiveHeight =
+            incentive
+                .getBoundingClientRect()
+                .height;
+    }
+
+
     document.documentElement.style.setProperty(
         "--incentive-height",
-        height + "px"
+        `${incentiveHeight}px`
+    );
+
+
+    /* =========================
+       CATEGORY BAR HEIGHT
+    ========================= */
+
+    const categoryHeight =
+        categoryBar
+            ? categoryBar
+                .getBoundingClientRect()
+                .height
+            : 0;
+
+
+    document.documentElement.style.setProperty(
+        "--category-bar-height",
+        `${categoryHeight}px`
     );
 }
 
-// run on load
-window.addEventListener("load", updateIncentiveHeight);
 
-// run when incentive content changes (free delivery, cart updates)
-const observer = new MutationObserver(updateIncentiveHeight);
-observer.observe(document.getElementById("menu-incentive"), {
-    childList: true,
-    subtree: true,
-    characterData: true
-});
+/* =====================================================
+   INITIAL LOAD
+===================================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        requestAnimationFrame(
+            updateRestaurantStickyHeights
+        );
+
+    }
+);
+
+
+/* =====================================================
+   FULL PAGE LOAD
+===================================================== */
+
+window.addEventListener(
+    "load",
+    function () {
+
+        requestAnimationFrame(
+            updateRestaurantStickyHeights
+        );
+
+    }
+);
+
+
+/* =====================================================
+   BACK / FORWARD CACHE
+===================================================== */
+
+window.addEventListener(
+    "pageshow",
+    function () {
+
+        requestAnimationFrame(
+            updateRestaurantStickyHeights
+        );
+
+    }
+);
+
+
+/* =====================================================
+   SCREEN RESIZE
+===================================================== */
+
+window.addEventListener(
+    "resize",
+    function () {
+
+        updateRestaurantStickyHeights();
+
+    }
+);
+
+
+/* =====================================================
+   WATCH INCENTIVE CHANGES
+===================================================== */
+
+const incentiveObserverTarget =
+    document.getElementById(
+        "menu-incentive"
+    );
+
+
+if (incentiveObserverTarget) {
+
+    const observer =
+        new MutationObserver(
+            function () {
+
+                requestAnimationFrame(
+                    updateRestaurantStickyHeights
+                );
+
+            }
+        );
+
+
+    observer.observe(
+        incentiveObserverTarget,
+        {
+            childList: true,
+            subtree: true,
+            characterData: true,
+            attributes: true,
+            attributeFilter: [
+                "class",
+                "style"
+            ]
+        }
+    );
+}
 </script>
+
 
 <script>
 const openFilter = document.getElementById("openPriceFilter");
@@ -2097,17 +4566,7 @@ removeFilter.addEventListener("click", (e) => {
 });
 </script>
 <!-- Exit Confirmation Modal -->
-<div id="exitModal" class="modal">
-  <div class="modal-box">
-      <h3>Leave this page?</h3>
-      <p>Your selected items will remain in cart.</p>
 
-      <div class="modal-actions">
-          <button id="leaveBtn" class="btn-secondary">Leave</button>
-          <button id="continueBtn" class="btn-primary">Add Address</button>
-      </div>
-  </div>
-</div>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -2179,7 +4638,128 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
+<script>
+    /* =====================================================
+   UPDATE RESTAURANT FLOATING CART
+===================================================== */
 
+function updateRestaurantCartButton() {
+
+    const cartBtn =
+        document.getElementById("cartBtn");
+
+    const cartCount =
+        document.getElementById("cart-count");
+
+    const cartCountText =
+        document.getElementById("cart-count-text");
+
+    const cartTotal =
+        document.getElementById("cart-total");
+
+
+    if (!cartBtn) {
+        return;
+    }
+
+
+    /* =========================================
+       CURRENT RESTAURANT
+    ========================================= */
+
+    const restaurantId =
+        String(RESTAURANT_ID);
+
+
+    /* =========================================
+       GET CART
+    ========================================= */
+
+    const restaurantCart =
+        carts[restaurantId];
+
+    const items =
+        restaurantCart?.items || [];
+
+
+    let totalQty = 0;
+    let totalPrice = 0;
+
+
+    /* =========================================
+       CALCULATE CART
+    ========================================= */
+
+    items.forEach(item => {
+
+        const qty =
+            parseInt(
+                item.quantity
+            ) || 0;
+
+        const price =
+            parseFloat(
+                item.price
+            ) || 0;
+
+
+        totalQty += qty;
+
+        totalPrice +=
+            price * qty;
+    });
+
+
+    /* =========================================
+       UPDATE COUNT
+    ========================================= */
+
+    if (cartCount) {
+
+        cartCount.textContent =
+            totalQty;
+    }
+
+
+    if (cartCountText) {
+
+        cartCountText.textContent =
+            totalQty === 1
+                ? "item"
+                : "items";
+    }
+
+
+    /* =========================================
+       UPDATE TOTAL
+    ========================================= */
+
+    if (cartTotal) {
+
+        cartTotal.textContent =
+            "₹" +
+            Math.round(
+                totalPrice
+            );
+    }
+
+
+    /* =========================================
+       SHOW / HIDE BUTTON
+    ========================================= */
+
+    if (totalQty > 0) {
+
+        cartBtn.style.display =
+            "flex";
+
+    } else {
+
+        cartBtn.style.display =
+            "none";
+    }
+}
+</script>
 <!-- Overlay -->
 <div id="urgencyOverlay" class="urgency-overlay" onclick="closeUrgency()"></div>
 
