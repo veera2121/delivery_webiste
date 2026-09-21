@@ -48,7 +48,7 @@ from functools import wraps
 import firebase_admin
 from firebase_admin import credentials
 
-W#from dispatch_service import haversine 
+#from dispatch_service import haversine 
 from dispatch_service import assign_delivery_to_order,assign_waiting_order_to_rider,find_nearest_rider_excluding
 # ================= LOCAL IMPORTS =================
 from push import send_push
