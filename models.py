@@ -2,7 +2,7 @@
 
 from datetime import datetime, date, time
 import pytz
-
+import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import relationship
 from sqlalchemy import CheckConstraint
@@ -184,6 +184,33 @@ class Restaurant(db.Model):
     @property
     def display_item(self):
         return self.limited_item_name if self.is_limited_drop else self.popular_items
+    # =========================================================
+    # CREATE RESTAURANT PICKUP QR
+    # =========================================================
+
+    def create_restaurant_pickup_qr(restaurant_id):
+
+        # Check whether this restaurant already has a QR
+        existing_qr = RestaurantPickupQR.query.filter_by(
+            restaurant_id=restaurant_id
+        ).first()
+
+        if existing_qr:
+            return existing_qr
+
+        # Generate secure random token
+        qr_token = secrets.token_urlsafe(32)
+
+        qr = RestaurantPickupQR(
+            restaurant_id=restaurant_id,
+            qr_token=qr_token,
+            is_active=True
+        )
+
+        db.session.add(qr)
+        db.session.commit()
+
+        return qr
 
 # ----------------- Restaurant Admin User -----------------
 class RestaurantUser(db.Model):
@@ -212,33 +239,72 @@ class MenuItem(db.Model):
         nullable=False
     )
 
-    # Common fields
-    name = db.Column(db.String(200), nullable=False)
+    # =========================
+    # COMMON FIELDS
+    # =========================
+    name = db.Column(
+        db.String(200),
+        nullable=False
+    )
 
     description = db.Column(db.Text)
 
-    category = db.Column(db.String(100))
+    category = db.Column(
+        db.String(100)
+    )
 
-    price = db.Column(db.Float, default=0)
+    price = db.Column(
+        db.Float,
+        default=0
+    )
 
-    image_url = db.Column(db.String(500))
+    # =========================
+    # GROCERY FIELDS
+    # =========================
+    mrp = db.Column(
+        db.Float,
+        default=0
+    )
 
+    unit = db.Column(
+        db.String(50)
+    )
+
+    # =========================
+    # IMAGE
+    # =========================
+    image_url = db.Column(
+        db.String(500)
+    )
+
+    # =========================
+    # STOCK / AVAILABILITY
+    # =========================
     availability = db.Column(
         db.String(10),
         default="yes"
     )
 
-    # bakery / restaurant / grocery
+    # restaurant / bakery / grocery
     item_type = db.Column(
         db.String(50),
         nullable=False
     )
 
-    # Flexible attributes
+    # =========================
+    # FLEXIBLE DATA
+    # =========================
     extra_data = db.Column(
         JSONB,
         default=dict
     )
+
+    # Example extra_data:
+    #
+    # {
+    #     "weight_options": "500ml,1L",
+    #     "brand": "Amul"
+    # }
 
     created_at = db.Column(
         db.DateTime,
@@ -250,7 +316,6 @@ class MenuItem(db.Model):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-
 
 # ----------------- Delivery Person -----------------
 class DeliveryPerson(db.Model):
@@ -281,6 +346,218 @@ class DeliveryPerson(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+
+class RiderApplication(db.Model):
+    __tablename__ = "rider_application"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    application_code = db.Column(
+        db.String(40),
+        unique=True,
+        nullable=False,
+        index=True
+    )
+
+    full_name = db.Column(
+        db.String(120),
+        nullable=False
+    )
+
+    phone = db.Column(
+        db.String(15),
+        nullable=False,
+        index=True
+    )
+
+    dob = db.Column(
+        db.Date,
+        nullable=True
+    )
+
+    address = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    city = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    pincode = db.Column(
+        db.String(10),
+        nullable=False
+    )
+
+    vehicle_type = db.Column(
+        db.String(40),
+        nullable=True
+    )
+
+    vehicle_number = db.Column(
+        db.String(40),
+        nullable=True
+    )
+
+    aadhaar_front_path = db.Column(
+        db.String(500),
+        nullable=False
+    )
+
+    aadhaar_back_path = db.Column(
+        db.String(500),
+        nullable=False
+    )
+
+    pan_photo_path = db.Column(
+        db.String(500),
+        nullable=False
+    )
+
+    selfie_photo_path = db.Column(
+        db.String(500),
+        nullable=False
+    )
+
+    driving_license_path = db.Column(
+        db.String(500),
+        nullable=True
+    )
+
+    status = db.Column(
+        db.String(30),
+        nullable=False,
+        default="Pending",
+        index=True
+    )
+
+    rejection_reason = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    review_note = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    rider_id = db.Column(
+        db.Integer,
+        db.ForeignKey("delivery_person.id"),
+        nullable=True,
+        index=True
+    )
+
+    submitted_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    reviewed_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    reviewed_by = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+
+class RiderAuthAccount(db.Model):
+    __tablename__ = "rider_auth_account"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    rider_id = db.Column(
+        db.Integer,
+        db.ForeignKey("delivery_person.id"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    phone = db.Column(
+        db.String(15),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    password_hash = db.Column(
+        db.String(255),
+        nullable=True
+    )
+
+    is_active = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False
+    )
+
+    password_is_set = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False
+    )
+
+    activation_token_hash = db.Column(
+        db.String(255),
+        nullable=True
+    )
+
+    activation_expires_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    last_login_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+class RiderPasswordResetRequest(db.Model):
+    __tablename__ = "rider_password_reset_requests"
+
+    id = db.Column(db.Integer, primary_key=True)
+    rider_id = db.Column(db.Integer, db.ForeignKey("delivery_person.id"), nullable=False, index=True)
+    phone = db.Column(db.String(20), nullable=False, index=True)
+    otp_code = db.Column(db.String(6), nullable=False)
+    otp_hash = db.Column(db.String(64), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False, index=True)
+    requested_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    used = db.Column(db.Boolean, nullable=False, default=False, index=True)
 class Order(db.Model):
    
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -523,6 +800,54 @@ class Order(db.Model):
         nullable=True,
         default="Pending"
     )
+    # =========================================================
+    # PICKUP VERIFICATION
+    # =========================================================
+
+    pickup_status = db.Column(
+        db.String(30),
+        default="waiting",
+        nullable=False
+    )
+    # waiting
+    # verification_started
+    # qr_verified
+    # restaurant_confirmed
+    # picked_up
+    # rejected
+    # expired
+    # cancelled
+
+
+    pickup_verification_started_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+
+    pickup_qr_scanned_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+
+    pickup_verified_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+
+    pickup_restaurant_confirmed_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+
+    pickup_verified_by = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant_user.id"),
+        nullable=True
+    )
         
     # ---------------- HELPER FUNCTION ----------------
     def get_final_total(self):
@@ -685,19 +1010,65 @@ class CouponUsage(db.Model):
 
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+# ==========================
+# Association Table (NEW)
+# ==========================
+
+offer_menu_items = db.Table(
+    "offer_menu_items",
+
+    db.Column(
+        "offer_id",
+        db.Integer,
+        db.ForeignKey("restaurant_offer.id"),
+        primary_key=True
+    ),
+
+    db.Column(
+        "menu_item_id",
+        db.Integer,
+        db.ForeignKey("menu_items.id"),
+        primary_key=True
+    )
+)
+
 class RestaurantOffer(db.Model):
     __tablename__ = "restaurant_offer"
 
     id = db.Column(db.Integer, primary_key=True)
-    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurant.id"))
+    restaurant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant.id")
+    )
+
     title = db.Column(db.String(200))
     description = db.Column(db.String(300))
+
     offer_type = db.Column(db.String(50))
     offer_value = db.Column(db.Float)
+
     min_order_amount = db.Column(db.Float, default=0.0)
+
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
+
     is_active = db.Column(db.Boolean, default=True)
+
+    # Which menu items this offer applies to
+    offer_scope = db.Column(
+        db.String(20),
+        nullable=False,
+        default="all_items"
+
+    )
+        # NEW
+    selected_items = db.relationship(
+        "MenuItem",
+        secondary=offer_menu_items,
+        backref="restaurant_offers"
+    )
 class PlatformOffer(db.Model):
     __tablename__ = "platform_offer"
 
@@ -966,6 +1337,7 @@ class RewardBadge(db.Model):
     required_coins = db.Column(db.Integer, nullable=False)
     benefits = db.Column(db.Text)
     active = db.Column(db.Boolean, default=True)
+    
 class FCMToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
@@ -1189,4 +1561,332 @@ class OrderEditHistory(db.Model):
             lazy=True,
             cascade="all, delete-orphan"
         )
+    )
+
+
+
+class RiderSettlement(db.Model):
+
+    __tablename__ = "rider_settlements"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    rider_id = db.Column(
+        db.Integer,
+        db.ForeignKey("delivery_person.id"),
+        nullable=False
+    )
+
+    settlement_date = db.Column(
+        db.Date,
+        nullable=False
+    )
+
+    # Batch number for the same day
+    batch_no = db.Column(
+        db.Integer,
+        default=1,
+        nullable=False
+    )
+
+    # ==========================================================
+    # ORDER COUNTS
+    # ==========================================================
+
+    total_deliveries = db.Column(
+        db.Integer,
+        default=0
+    )
+
+    cod_orders = db.Column(
+        db.Integer,
+        default=0
+    )
+
+    online_orders = db.Column(
+        db.Integer,
+        default=0
+    )
+
+    # ==========================================================
+    # MONEY
+    # ==========================================================
+
+    cash_collected = db.Column(
+        db.Float,
+        default=0
+    )
+
+    online_amount = db.Column(
+        db.Float,
+        default=0
+    )
+
+    total_order_value = db.Column(
+        db.Float,
+        default=0
+    )
+
+    rider_earnings = db.Column(
+        db.Float,
+        default=0
+    )
+
+    cash_to_submit = db.Column(
+        db.Float,
+        default=0
+    )
+
+    platform_to_pay = db.Column(
+        db.Float,
+        default=0
+    )
+
+    # ==========================================================
+    # STATUS
+    # ==========================================================
+
+    status = db.Column(
+        db.String(30),
+        default="Pending"
+    )
+
+    submitted_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    verified_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    rider = db.relationship(
+        "DeliveryPerson",
+        backref="settlements"
+    )
+
+    # Allow multiple batches per day,
+    # but batch numbers must be unique.
+    __table_args__ = (
+        db.UniqueConstraint(
+            "rider_id",
+            "settlement_date",
+            "batch_no",
+            name="uq_rider_settlement_batch"
+        ),
+    )
+
+    # =========================================================
+# RESTAURANT UNIVERSAL PICKUP QR
+# =========================================================
+
+class RestaurantPickupQR(db.Model):
+
+    __tablename__ = "restaurant_pickup_qr"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    restaurant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant.id"),
+        nullable=False,
+        unique=True
+    )
+
+    qr_token = db.Column(
+        db.String(255),
+        unique=True,
+        nullable=False,
+        index=True
+    )
+
+    is_active = db.Column(
+        db.Boolean,
+        default=True,
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    restaurant = db.relationship(
+        "Restaurant",
+        backref=db.backref(
+            "pickup_qr",
+            uselist=False
+        )
+    )
+    # =========================================================
+# ORDER PICKUP VERIFICATION
+# =========================================================
+
+class OrderPickupVerification(db.Model):
+
+    __tablename__ = "order_pickup_verification"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    # =====================================================
+    # ORDER
+    # =====================================================
+
+    order_id = db.Column(
+        db.Integer,
+        db.ForeignKey("order.id"),
+        nullable=False,
+        unique=True
+    )
+
+    # =====================================================
+    # RESTAURANT
+    # =====================================================
+
+    restaurant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant.id"),
+        nullable=False
+    )
+
+    # =====================================================
+    # DELIVERY BOY
+    # =====================================================
+
+    delivery_person_id = db.Column(
+        db.Integer,
+        db.ForeignKey("delivery_person.id"),
+        nullable=False
+    )
+
+    # =====================================================
+    # VERIFICATION STATUS
+    # =====================================================
+
+    status = db.Column(
+        db.String(30),
+        default="pending",
+        nullable=False
+    )
+
+    # pending
+    # qr_scanned
+    # restaurant_confirmed
+    # pickup_success
+    # rejected
+    # expired
+    # cancelled
+
+    # =====================================================
+    # QR SCAN
+    # =====================================================
+
+    qr_scanned_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    # =====================================================
+    # TEMPORARY VERIFICATION TOKEN
+    # =====================================================
+
+    verification_token = db.Column(
+        db.String(255),
+        unique=True,
+        nullable=True
+    )
+
+    token_expires_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    # =====================================================
+    # RESTAURANT CONFIRMATION
+    # =====================================================
+
+    restaurant_confirmed_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    restaurant_confirmed_by = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant_user.id"),
+        nullable=True
+    )
+
+    # =====================================================
+    # FINAL PICKUP
+    # =====================================================
+
+    pickup_verified_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    # =====================================================
+    # TIMESTAMPS
+    # =====================================================
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # =====================================================
+    # RELATIONSHIPS
+    # =====================================================
+
+    order = db.relationship(
+        "Order",
+        backref=db.backref(
+            "pickup_verification",
+            uselist=False
+        )
+    )
+
+    restaurant = db.relationship(
+        "Restaurant"
+    )
+
+    delivery_person = db.relationship(
+        "DeliveryPerson"
+    )
+
+    restaurant_user = db.relationship(
+        "RestaurantUser"
     )
