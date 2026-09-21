@@ -5,6 +5,7 @@ Revises: 62f6f6c200d1
 Create Date: 2026-09-22 01:49:34.766665
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -18,7 +19,18 @@ depends_on = None
 def upgrade():
     with op.batch_alter_table('restaurant_offer', schema=None) as batch_op:
         batch_op.add_column(
-            sa.Column('offer_scope', sa.String(length=20), nullable=False)
+            sa.Column(
+                'offer_scope',
+                sa.String(length=20),
+                nullable=False,
+                server_default='restaurant'
+            )
+        )
+
+    with op.batch_alter_table('restaurant_offer', schema=None) as batch_op:
+        batch_op.alter_column(
+            'offer_scope',
+            server_default=None
         )
 
 
