@@ -6494,52 +6494,55 @@ CONTENT
     </div>
 
 </div>
-<!-- 🚨 Emergency Banner --> 
-<!-- 🚨 Vinayaka Chavithi Notice 
+<!-- 🌧️ Rain Emergency Notice -->
 
 <div id="orderAlert" class="alert-overlay">
 
+    <div class="alert-box">
 
-<div class="alert-box">
+        <div class="alert-icon">🌧️🙏</div>
 
-    <div class="alert-icon">🙏🐘</div>
+        <h2>Orders Closed Today</h2>
 
-    <h2>Happy Vinayaka Chavithi!</h2>
+        <p>
+            Due to <strong>heavy rain and weather conditions</strong>,
+            we are not accepting orders today,
+            <strong>22nd September 2026.</strong>
+            <br><br>
+            For the safety of our customers, restaurant partners,
+            and delivery partners, orders will remain closed today.
+            <br><br>
+            <strong>Orders will be available again from tomorrow,
+            23rd September 2026.</strong>
+        </p>
 
-    <p>
-        Wishing you and your family a very
-        <strong>Happy & Blessed Vinayaka Chavithi!</strong>
-        <br><br>
-        <strong>We are not accepting orders today, 14th September 2026.</strong>
-        <br>
-        Orders will be available again from
-        <strong>tomorrow, 15th September 2026.</strong>
-    </p>
+        <p class="telugu">
 
-    <p class="telugu">
+            భారీ వర్షాలు మరియు వాతావరణ పరిస్థితుల కారణంగా
+            <strong>ఈరోజు, 22 సెప్టెంబర్ 2026న ఆర్డర్లు స్వీకరించబడవు.</strong>
 
-        మీకు మరియు మీ కుటుంబ సభ్యులందరికీ
-        <strong>వినాయక చవితి శుభాకాంక్షలు!</strong>
+            <br><br>
 
-        <br><br>
+            మా కస్టమర్లు, రెస్టారెంట్ భాగస్వాములు మరియు
+            డెలివరీ భాగస్వాముల భద్రత దృష్ట్యా
+            ఈరోజు ఆర్డర్లు నిలిపివేయబడ్డాయి.
 
-        <strong>ఈరోజు, 14 సెప్టెంబర్ 2026న ఆర్డర్లు స్వీకరించబడవు.</strong>
+            <br><br>
 
-        <br>
+            <strong>
+                రేపు, 23 సెప్టెంబర్ 2026 నుండి
+                ఆర్డర్లు మళ్లీ అందుబాటులో ఉంటాయి.
+            </strong>
 
-        <strong>రేపు, 15 సెప్టెంబర్ 2026 నుండి ఆర్డర్లు మళ్లీ అందుబాటులో ఉంటాయి.</strong>
+        </p>
 
-    </p>
+        <button onclick="closeAlert()">
+            OK, Got it
+        </button>
 
-    <button onclick="closeAlert()">
-        OK, Got it
-    </button>
+    </div>
 
 </div>
-
-
-</div>-->
-
 
 <!-- 🎉 Your Ugadi Banner --> 
 
@@ -6590,12 +6593,27 @@ CONTENT
 </div>
 
 
-        {% for cat in categories %}
-        <div class="fc-mini-card" data-category-id="{{ cat.id }}">
-            <img src="{{ url_for('static', filename=cat.image) }}">
-            <span>{{ cat.name }}</span>
-        </div>
-        {% endfor %}
+{% for cat in categories %}
+<div class="fc-mini-card" data-category-id="{{ cat.id }}">
+
+    {% if cat.image and cat.image|string|trim %}
+        <img
+            src="{{ url_for('static', filename=cat.image|string|trim) }}"
+            alt="{{ cat.name }}"
+            loading="lazy"
+        >
+    {% else %}
+        <img
+            src="{{ url_for('static', filename='images/default-category.jpg') }}"
+            alt="{{ cat.name }}"
+            loading="lazy"
+        >
+    {% endif %}
+
+    <span>{{ cat.name }}</span>
+
+</div>
+{% endfor %}
 
     </div>
 
