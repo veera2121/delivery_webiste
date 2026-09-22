@@ -40,7 +40,7 @@ from sqlalchemy import or_, case
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, current_user
-
+from time import perf_counter
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from push import VAPID_PUBLIC_KEY, register_subscription, send_push, subscriptions
@@ -3440,9 +3440,21 @@ def home():
 #   Restaurant, Category, MenuItem, Order, OrderItem,
 #   RewardBadge, FoodItem
 # ============================================================
-
 @app.route("/api/app/home", methods=["GET"])
 def api_app_home():
+    """
+    RucHiGo Native App Home API
+
+    Optimizations:
+    - No Razorpay reconciliation inside Home request.
+    - Avoids duplicate grocery-category queries.
+    - Avoids per-item MenuItem query for bakery popular items.
+    - Avoids lazy-loading FoodItem.restaurant for trending items.
+    - Keeps the same JSON fields expected by Flutter.
+    - Adds lightweight timing logs so slow sections can be identified.
+    """
+
+    home_started = perf_counter()
 
     ist = pytz.timezone("Asia/Kolkata")
     now = datetime.now(ist).time()
@@ -3459,10 +3471,10 @@ def api_app_home():
     if selected_location:
         session["selected_location"] = selected_location
     else:
-        selected_location = session.get(
-            "selected_location",
-            ""
-        )
+        selected_location = (
+            session.get("selected_location", "")
+            or ""
+        ).strip()
 
     lat_arg = request.args.get("lat")
     lng_arg = request.args.get("lng")
@@ -3477,9 +3489,15 @@ def api_app_home():
 
             session["user_lat"] = user_lat
             session["user_lng"] = user_lng
+
         else:
-            user_lat = session.get("user_lat")
-            user_lng = session.get("user_lng")
+            saved_lat = session.get("user_lat")
+            saved_lng = session.get("user_lng")
+
+            if saved_lat is not None and saved_lng is not None:
+                user_lat = float(saved_lat)
+                user_lng = float(saved_lng)
+
     except (TypeError, ValueError):
         user_lat = None
         user_lng = None
@@ -3491,15 +3509,22 @@ def api_app_home():
 
     # --------------------------------------------------------
     # REWARDS
+    # Keep reward functionality, but only commit when needed.
     # --------------------------------------------------------
-
-    badge_counts = get_badge_counts()
 
     rewards = None
 
     if current_user.is_authenticated:
+        rewards_started = perf_counter()
 
         customer = current_user
+
+        old_badge_id = getattr(
+            customer,
+            "badge_id",
+            None,
+        )
+
         earned_coins = 0
 
         update_customer_badge(customer)
@@ -3514,7 +3539,10 @@ def api_app_home():
             customer.last_reward_coins
             and customer.last_reward_coins > 0
         ):
-            earned_coins = customer.last_reward_coins
+            earned_coins = (
+                customer.last_reward_coins
+            )
+
             customer.last_reward_coins = 0
 
         badges = (
@@ -3528,8 +3556,12 @@ def api_app_home():
 
         next_badge = None
 
+        customer_coins = (
+            customer.coins or 0
+        )
+
         for b in badges:
-            if customer.coins < b.required_coins:
+            if customer_coins < b.required_coins:
                 next_badge = b
                 break
 
@@ -3537,7 +3569,6 @@ def api_app_home():
         coins_to_next_badge = 0
 
         if next_badge:
-
             current_min = (
                 customer.badge.required_coins
                 if customer.badge
@@ -3553,7 +3584,7 @@ def api_app_home():
                 progress_percent = int(
                     (
                         (
-                            customer.coins
+                            customer_coins
                             - current_min
                         )
                         / span
@@ -3563,50 +3594,87 @@ def api_app_home():
 
             progress_percent = max(
                 0,
-                min(progress_percent, 100)
+                min(
+                    progress_percent,
+                    100,
+                ),
             )
 
             coins_to_next_badge = max(
                 0,
                 next_badge.required_coins
-                - customer.coins
+                - customer_coins,
             )
 
-        db.session.commit()
+        badge_changed = (
+            getattr(
+                customer,
+                "badge_id",
+                None,
+            )
+            != old_badge_id
+        )
+
+        if earned_coins > 0 or badge_changed:
+            db.session.commit()
+
+        badge_counts = get_badge_counts()
 
         rewards = {
-            "coins": customer.coins or 0,
+            "coins": customer_coins,
+
             "badge": badge,
+
             "earned_coins": earned_coins,
+
             "next_badge": (
                 next_badge.name
                 if next_badge
                 else None
             ),
+
             "coins_to_next_badge":
                 coins_to_next_badge,
+
             "progress_percent":
                 progress_percent,
+
             "badge_counts": {
-                "silver": badge_counts["silver"],
-                "gold": badge_counts["gold"],
+                "silver":
+                    badge_counts["silver"],
+
+                "gold":
+                    badge_counts["gold"],
+
                 "platinum":
                     badge_counts["platinum"],
             },
         }
 
+        print(
+            "HOME rewards: "
+            f"{(perf_counter() - rewards_started) * 1000:.0f} ms"
+        )
+
     # --------------------------------------------------------
     # RESTAURANTS + BAKERIES
     # --------------------------------------------------------
 
+    restaurants_started = perf_counter()
+
     restaurant_query = (
         Restaurant.query
         .options(
-            joinedload(Restaurant.categories)
+            joinedload(
+                Restaurant.categories
+            )
         )
         .filter(
             Restaurant.category_type.in_(
-                ["restaurant", "bakery"]
+                [
+                    "restaurant",
+                    "bakery",
+                ]
             )
         )
     )
@@ -3620,21 +3688,32 @@ def api_app_home():
             )
         )
 
-    restaurants = restaurant_query.all()
+    restaurants = (
+        restaurant_query
+        .all()
+    )
+
+    print(
+        "HOME restaurants query: "
+        f"{(perf_counter() - restaurants_started) * 1000:.0f} ms "
+        f"({len(restaurants)} stores)"
+    )
 
     # --------------------------------------------------------
     # GROCERY
     # --------------------------------------------------------
 
+    grocery_started = perf_counter()
+
     grocery_shops = []
 
     if selected_location:
-
         grocery_shops = (
             Restaurant.query
             .filter(
                 Restaurant.location
                 == selected_location,
+
                 Restaurant.category_type
                 == "grocery",
             )
@@ -3653,7 +3732,6 @@ def api_app_home():
         )
 
         for g in all_grocery:
-
             if (
                 g.latitude is None
                 or g.longitude is None
@@ -3668,17 +3746,27 @@ def api_app_home():
                 float(g.longitude),
             )
 
-            if dist <= g.delivery_radius_km:
+            if (
+                dist
+                <= float(g.delivery_radius_km)
+            ):
                 grocery_shops.append(g)
+
+    print(
+        "HOME grocery: "
+        f"{(perf_counter() - grocery_started) * 1000:.0f} ms "
+        f"({len(grocery_shops)} stores)"
+    )
 
     # --------------------------------------------------------
     # PROCESS STORE STATE
     # --------------------------------------------------------
 
+    process_started = perf_counter()
+
     limited_restaurants = []
 
     for r in restaurants:
-
         process_store(
             r,
             user_lat,
@@ -3694,7 +3782,6 @@ def api_app_home():
             limited_restaurants.append(r)
 
     for g in grocery_shops:
-
         process_store(
             g,
             user_lat,
@@ -3703,53 +3790,101 @@ def api_app_home():
             now,
         )
 
+    print(
+        "HOME process_store: "
+        f"{(perf_counter() - process_started) * 1000:.0f} ms"
+    )
+
+    # --------------------------------------------------------
+    # LOOKUPS
+    # --------------------------------------------------------
+
+    restaurant_lookup = {
+        r.id: r
+        for r in restaurants
+    }
+
+    grocery_shop_ids = [
+        g.id
+        for g in grocery_shops
+    ]
+
     # --------------------------------------------------------
     # SERIALIZERS
     # --------------------------------------------------------
 
     def category_json(category):
-
         return {
             "id": category.id,
+
             "name": (
-                getattr(category, "name", None)
-                or getattr(category, "category_name", None)
+                getattr(
+                    category,
+                    "name",
+                    None,
+                )
+                or getattr(
+                    category,
+                    "category_name",
+                    None,
+                )
                 or str(category)
             ),
         }
 
     def restaurant_json(r):
-
         return {
             "id": r.id,
-            "name": r.name or "",
-            "location": r.location or "",
+
+            "name":
+                r.name or "",
+
+            "location":
+                r.location or "",
+
             "category_type":
-                r.category_type or "restaurant",
+                r.category_type
+                or "restaurant",
+
             "delivery_charge":
-                float(r.delivery_charge or 0),
+                float(
+                    r.delivery_charge
+                    or 0
+                ),
+
             "free_delivery_limit":
                 float(
                     r.free_delivery_limit
                     or 0
                 ),
-            "is_open": bool(
-                getattr(r, "is_open", False)
-            ),
-            "can_accept_orders": bool(
-                getattr(
-                    r,
-                    "can_accept_orders",
-                    True,
-                )
-            ),
-            "deliverable": bool(
-                getattr(
-                    r,
-                    "deliverable",
-                    True,
-                )
-            ),
+
+            "is_open":
+                bool(
+                    getattr(
+                        r,
+                        "is_open",
+                        False,
+                    )
+                ),
+
+            "can_accept_orders":
+                bool(
+                    getattr(
+                        r,
+                        "can_accept_orders",
+                        True,
+                    )
+                ),
+
+            "deliverable":
+                bool(
+                    getattr(
+                        r,
+                        "deliverable",
+                        True,
+                    )
+                ),
+
             "distance": (
                 float(r.distance)
                 if getattr(
@@ -3759,20 +3894,34 @@ def api_app_home():
                 ) is not None
                 else None
             ),
+
             "image_url": (
-                getattr(r, "image_url", None)
-                or getattr(r, "image", None)
-            ),
-            "is_limited_drop": bool(
                 getattr(
                     r,
-                    "is_limited_drop",
-                    False,
+                    "image_url",
+                    None,
+                )
+                or getattr(
+                    r,
+                    "image",
+                    None,
                 )
             ),
-            "is_new": bool(
-                is_new_restaurant(r)
-            ),
+
+            "is_limited_drop":
+                bool(
+                    getattr(
+                        r,
+                        "is_limited_drop",
+                        False,
+                    )
+                ),
+
+            "is_new":
+                bool(
+                    is_new_restaurant(r)
+                ),
+
             "categories": [
                 category_json(c)
                 for c in (
@@ -3790,12 +3939,18 @@ def api_app_home():
     # CATEGORIES
     # --------------------------------------------------------
 
-    categories = Category.query.all()
+    categories_started = perf_counter()
 
-    # Grocery categories only from visible grocery stores.
+    categories = (
+        Category.query
+        .all()
+    )
+
+    # One combined query for grocery categories.
     grocery_category_query = (
         db.session.query(
-            MenuItem.category
+            MenuItem.restaurant_id,
+            MenuItem.category,
         )
         .join(
             Restaurant,
@@ -3805,10 +3960,13 @@ def api_app_home():
         .filter(
             Restaurant.category_type
             == "grocery",
+
             MenuItem.item_type
             == "grocery",
+
             MenuItem.availability
             == "yes",
+
             MenuItem.category.isnot(None),
         )
     )
@@ -3821,11 +3979,6 @@ def api_app_home():
                 == selected_location
             )
         )
-
-    grocery_shop_ids = [
-        g.id
-        for g in grocery_shops
-    ]
 
     if grocery_shop_ids:
         grocery_category_query = (
@@ -3840,108 +3993,119 @@ def api_app_home():
     grocery_category_rows = (
         grocery_category_query
         .distinct()
-        .order_by(
-            MenuItem.category.asc()
-        )
         .all()
     )
 
-    grocery_categories = [
-        row[0].strip()
-        for row in grocery_category_rows
-        if row[0] and row[0].strip()
-    ]
+    grocery_categories_set = set()
 
-    # Which categories each grocery store contains.
     grocery_store_categories = {}
 
-    if grocery_shop_ids:
+    for store_id, category in (
+        grocery_category_rows
+    ):
+        if not category:
+            continue
 
-        rows = (
-            db.session.query(
-                MenuItem.restaurant_id,
-                MenuItem.category,
-            )
-            .filter(
-                MenuItem.restaurant_id.in_(
-                    grocery_shop_ids
-                ),
-                MenuItem.item_type
-                == "grocery",
-                MenuItem.availability
-                == "yes",
-                MenuItem.category.isnot(None),
-            )
-            .distinct()
-            .all()
+        clean_category = (
+            category.strip()
         )
 
-        for store_id, category in rows:
+        if not clean_category:
+            continue
 
-            if not category:
-                continue
+        grocery_categories_set.add(
+            clean_category
+        )
 
+        if (
+            not grocery_shop_ids
+            or store_id in grocery_shop_ids
+        ):
             grocery_store_categories.setdefault(
                 str(store_id),
                 [],
             )
 
-            grocery_store_categories[
-                str(store_id)
-            ].append(category.strip())
+            if clean_category not in (
+                grocery_store_categories[
+                    str(store_id)
+                ]
+            ):
+                grocery_store_categories[
+                    str(store_id)
+                ].append(
+                    clean_category
+                )
+
+    grocery_categories = sorted(
+        grocery_categories_set,
+        key=lambda x: x.lower(),
+    )
+
+    print(
+        "HOME categories: "
+        f"{(perf_counter() - categories_started) * 1000:.0f} ms"
+    )
 
     # --------------------------------------------------------
     # POPULAR ITEMS
     # --------------------------------------------------------
 
-    restaurant_lookup = {
-        r.id: r
-        for r in restaurants
-    }
+    popular_started = perf_counter()
 
     popular_items_raw = (
         db.session.query(
             Restaurant.id.label(
                 "restaurant_id"
             ),
+
             Restaurant.name.label(
                 "restaurant_name"
             ),
+
             Restaurant.category_type.label(
                 "source_type"
             ),
+
             OrderItem.item_name,
+
             func.sum(
                 OrderItem.quantity
             ).label(
                 "total_orders"
             ),
+
             func.max(
                 MenuItem.price
             ).label(
                 "current_price"
             ),
+
             func.max(
                 MenuItem.image_url
             ).label(
                 "item_image"
             ),
         )
+
         .join(
             Order,
             Order.id
             == OrderItem.order_id,
         )
+
         .join(
             Restaurant,
             Restaurant.id
             == Order.restaurant_id,
         )
+
         .outerjoin(
             MenuItem,
             db.and_(
                 MenuItem.restaurant_id
                 == Restaurant.id,
+
                 MenuItem.name
                 == OrderItem.item_name,
             ),
@@ -3977,39 +4141,104 @@ def api_app_home():
         .all()
     )
 
+    # --------------------------------------------------------
+    # Preload bakery fallback menu items in ONE query.
+    # Prevents N+1 MenuItem queries.
+    # --------------------------------------------------------
+
+    bakery_pairs = []
+
+    for row in popular_items_raw:
+        price = row.current_price or 0
+
+        if (
+            row.source_type == "bakery"
+            and price == 0
+        ):
+            bakery_pairs.append(
+                (
+                    row.restaurant_id,
+                    row.item_name,
+                )
+            )
+
+    bakery_menu_lookup = {}
+
+    if bakery_pairs:
+
+        conditions = [
+            db.and_(
+                MenuItem.restaurant_id
+                == restaurant_id,
+
+                MenuItem.name
+                == item_name,
+            )
+
+            for restaurant_id, item_name
+            in bakery_pairs
+        ]
+
+        fallback_menus = (
+            MenuItem.query
+            .filter(
+                db.or_(*conditions)
+            )
+            .all()
+        )
+
+        bakery_menu_lookup = {
+            (
+                menu.restaurant_id,
+                menu.name,
+            ): menu
+            for menu in fallback_menus
+        }
+
     popular_items = []
 
-    for item in popular_items_raw:
+    for row in popular_items_raw:
 
         restaurant = restaurant_lookup.get(
-            item.restaurant_id
+            row.restaurant_id
         )
 
         if not restaurant:
             continue
 
-        price = item.current_price or 0
+        price = (
+            row.current_price
+            or 0
+        )
 
         if (
-            item.source_type == "bakery"
+            row.source_type == "bakery"
             and price == 0
         ):
 
-            menu = (
-                MenuItem.query
-                .filter_by(
-                    restaurant_id=
-                        item.restaurant_id,
-                    name=item.item_name,
+            menu = bakery_menu_lookup.get(
+                (
+                    row.restaurant_id,
+                    row.item_name,
                 )
-                .first()
             )
 
             if menu:
-                extra = menu.extra_data or {}
-                weight_prices = extra.get(
-                    "weight_prices",
-                    "",
+                extra = (
+                    menu.extra_data
+                    or {}
+                )
+
+                weight_prices = (
+                    extra.get(
+                        "weight_prices",
+                        "",
+                    )
+                    if isinstance(
+                        extra,
+                        dict,
+                    )
+                    else ""
                 )
 
                 if weight_prices:
@@ -4037,21 +4266,34 @@ def api_app_home():
 
         popular_items.append({
             "restaurant_id":
-                item.restaurant_id,
+                row.restaurant_id,
+
             "restaurant_name":
-                item.restaurant_name,
+                row.restaurant_name,
+
             "source_type":
-                item.source_type,
+                row.source_type,
+
             "item_name":
-                item.item_name,
+                row.item_name,
+
             "total_orders":
-                int(item.total_orders or 0),
+                int(
+                    row.total_orders
+                    or 0
+                ),
+
             "price":
                 float(price or 0),
+
             "item_image":
-                item.item_image,
+                row.item_image,
+
             "restaurant":
-                restaurant_json(restaurant),
+                restaurant_json(
+                    restaurant
+                ),
+
             "can_order":
                 can_order,
         })
@@ -4063,28 +4305,40 @@ def api_app_home():
         )
     )
 
-    popular_items = popular_items[:25]
+    popular_items = (
+        popular_items[:25]
+    )
+
+    print(
+        "HOME popular items: "
+        f"{(perf_counter() - popular_started) * 1000:.0f} ms"
+    )
 
     # --------------------------------------------------------
     # BUDGET ITEMS
     # --------------------------------------------------------
+
+    budget_started = perf_counter()
 
     restaurant_ids = [
         r.id
         for r in restaurants
     ]
 
-    budget_rows = []
+    budget_items = []
 
     if restaurant_ids:
+
         budget_rows = (
             MenuItem.query
             .filter(
                 MenuItem.restaurant_id.in_(
                     restaurant_ids
                 ),
+
                 MenuItem.availability
                 == "yes",
+
                 MenuItem.price.between(
                     69,
                     159,
@@ -4093,63 +4347,88 @@ def api_app_home():
             .all()
         )
 
-    grouped = {}
+        grouped = {}
 
-    for item in budget_rows:
+        for item in budget_rows:
 
-        restaurant = restaurant_lookup.get(
-            item.restaurant_id
-        )
-
-        if not restaurant:
-            continue
-
-        can_order = bool(
-            restaurant.can_accept_orders
-            and restaurant.is_open
-            and restaurant.deliverable
-        )
-
-        grouped.setdefault(
-            item.restaurant_id,
-            [],
-        )
-
-        grouped[
-            item.restaurant_id
-        ].append({
-            "id": item.id,
-            "name": item.name,
-            "restaurant_id":
-                item.restaurant_id,
-            "restaurant_name":
-                restaurant.name,
-            "price":
-                float(item.price or 0),
-            "image_url":
-                item.image_url,
-            "can_order":
-                can_order,
-            "restaurant":
-                restaurant_json(restaurant),
-        })
-
-    budget_items = []
-
-    for rows in grouped.values():
-        rows.sort(
-            key=lambda x: (
-                not x["can_order"],
-                x["price"],
+            restaurant = restaurant_lookup.get(
+                item.restaurant_id
             )
-        )
-        budget_items.extend(rows[:3])
 
-    budget_items = budget_items[:27]
+            if not restaurant:
+                continue
+
+            can_order = bool(
+                restaurant.can_accept_orders
+                and restaurant.is_open
+                and restaurant.deliverable
+            )
+
+            grouped.setdefault(
+                item.restaurant_id,
+                [],
+            )
+
+            grouped[
+                item.restaurant_id
+            ].append({
+                "id":
+                    item.id,
+
+                "name":
+                    item.name,
+
+                "restaurant_id":
+                    item.restaurant_id,
+
+                "restaurant_name":
+                    restaurant.name,
+
+                "price":
+                    float(
+                        item.price
+                        or 0
+                    ),
+
+                "image_url":
+                    item.image_url,
+
+                "can_order":
+                    can_order,
+
+                "restaurant":
+                    restaurant_json(
+                        restaurant
+                    ),
+            })
+
+        for rows in grouped.values():
+
+            rows.sort(
+                key=lambda x: (
+                    not x["can_order"],
+                    x["price"],
+                )
+            )
+
+            budget_items.extend(
+                rows[:3]
+            )
+
+        budget_items = (
+            budget_items[:27]
+        )
+
+    print(
+        "HOME budget items: "
+        f"{(perf_counter() - budget_started) * 1000:.0f} ms"
+    )
 
     # --------------------------------------------------------
     # WEEKLY / FALLBACK TOP RESTAURANTS
     # --------------------------------------------------------
+
+    top_started = perf_counter()
 
     one_week_ago = (
         datetime.utcnow()
@@ -4159,20 +4438,24 @@ def api_app_home():
     top_query = (
         db.session.query(
             Restaurant,
+
             func.count(
                 Order.id
             ).label(
                 "orders_count"
             ),
         )
+
         .join(
             Order,
             Restaurant.id
             == Order.restaurant_id,
         )
+
         .filter(
             Order.created_at
             >= one_week_ago,
+
             Order.status
             == "Delivered",
         )
@@ -4205,20 +4488,23 @@ def api_app_home():
 
     if not top_rows:
 
-        fallback = (
+        fallback_query = (
             db.session.query(
                 Restaurant,
+
                 func.count(
                     Order.id
                 ).label(
                     "orders_count"
                 ),
             )
+
             .join(
                 Order,
                 Restaurant.id
                 == Order.restaurant_id,
             )
+
             .filter(
                 Order.status
                 == "Delivered"
@@ -4226,8 +4512,8 @@ def api_app_home():
         )
 
         if selected_location:
-            fallback = (
-                fallback
+            fallback_query = (
+                fallback_query
                 .filter(
                     Restaurant.location
                     == selected_location
@@ -4235,7 +4521,7 @@ def api_app_home():
             )
 
         top_rows = (
-            fallback
+            fallback_query
             .group_by(Restaurant.id)
             .order_by(
                 func.count(
@@ -4260,6 +4546,7 @@ def api_app_home():
 
         if processed:
             restaurant = processed
+
         else:
             process_store(
                 restaurant,
@@ -4271,7 +4558,10 @@ def api_app_home():
 
         top_restaurants.append({
             "restaurant":
-                restaurant_json(restaurant),
+                restaurant_json(
+                    restaurant
+                ),
+
             "orders_count":
                 int(count or 0),
         })
@@ -4279,68 +4569,108 @@ def api_app_home():
     top_restaurants.sort(
         key=lambda x: (
             not (
-                x["restaurant"]["can_accept_orders"]
-                and x["restaurant"]["is_open"]
-                and x["restaurant"]["deliverable"]
+                x["restaurant"][
+                    "can_accept_orders"
+                ]
+                and x["restaurant"][
+                    "is_open"
+                ]
+                and x["restaurant"][
+                    "deliverable"
+                ]
             ),
+
             -x["orders_count"],
         )
     )
 
-    top_restaurants = top_restaurants[:10]
+    top_restaurants = (
+        top_restaurants[:10]
+    )
+
+    print(
+        "HOME top restaurants: "
+        f"{(perf_counter() - top_started) * 1000:.0f} ms"
+    )
 
     # --------------------------------------------------------
     # TRENDING ITEMS
     # --------------------------------------------------------
+
+    trending_started = perf_counter()
 
     trending_items = []
 
     if selected_location:
 
         rows = (
-            db.session.query(FoodItem)
-            .join(Restaurant)
+            db.session.query(
+                FoodItem
+            )
+
+            .join(
+                Restaurant,
+                Restaurant.id
+                == FoodItem.restaurant_id,
+            )
+
             .filter(
                 Restaurant.location
                 == selected_location,
-                FoodItem.order_count > 0,
+
+                FoodItem.order_count
+                > 0,
             )
+
             .order_by(
                 FoodItem.order_count.desc()
             )
+
             .limit(8)
+
             .all()
         )
 
         for item in rows:
 
-            restaurant = getattr(
-                item,
-                "restaurant",
-                None,
+            restaurant = restaurant_lookup.get(
+                getattr(
+                    item,
+                    "restaurant_id",
+                    None,
+                )
             )
 
             trending_items.append({
-                "id": item.id,
-                "name": item.name,
-                "price": float(
-                    getattr(
-                        item,
-                        "price",
-                        0,
-                    )
-                    or 0
-                ),
-                "image_url": (
+                "id":
+                    item.id,
+
+                "name":
+                    item.name,
+
+                "price":
+                    float(
+                        getattr(
+                            item,
+                            "price",
+                            0,
+                        )
+                        or 0
+                    ),
+
+                "image_url":
                     getattr(
                         item,
                         "image_url",
                         None,
-                    )
-                ),
-                "order_count": int(
-                    item.order_count or 0
-                ),
+                    ),
+
+                "order_count":
+                    int(
+                        item.order_count
+                        or 0
+                    ),
+
                 "restaurant_id": (
                     restaurant.id
                     if restaurant
@@ -4350,16 +4680,21 @@ def api_app_home():
                         None,
                     )
                 ),
+
                 "restaurant_name": (
                     restaurant.name
                     if restaurant
                     else ""
                 ),
+
                 "restaurant": (
-                    restaurant_json(restaurant)
+                    restaurant_json(
+                        restaurant
+                    )
                     if restaurant
                     else None
                 ),
+
                 "can_order": bool(
                     restaurant
                     and restaurant.can_accept_orders
@@ -4368,10 +4703,22 @@ def api_app_home():
                 ),
             })
 
+    print(
+        "HOME trending: "
+        f"{(perf_counter() - trending_started) * 1000:.0f} ms"
+    )
+
     # --------------------------------------------------------
     # PENDING ONLINE PAYMENT
-    # App API only returns the logged-in customer's own order.
+    #
+    # IMPORTANT:
+    # Do NOT call Razorpay from Home.
+    #
+    # Flutter already performs payment recovery separately.
+    # Home only performs the lightweight DB lookup.
     # --------------------------------------------------------
+
+    pending_started = perf_counter()
 
     pending_payment_order = None
 
@@ -4393,15 +4740,20 @@ def api_app_home():
             .filter(
                 Order.payment_type
                 == "Online",
+
                 Order.payment_status
                 == "Pending",
+
                 Order.status
                 == "Pending Payment",
+
                 db.or_(
                     Order.customer_id
                     == current_user.id,
+
                     Order.phone
                     == mobile,
+
                     Order.phone
                     == mobile10,
                 ),
@@ -4414,97 +4766,92 @@ def api_app_home():
 
         if pending:
 
-            if pending.payment_order_id:
+            pending_payment_order = {
+                "id":
+                    pending.id,
 
-                if reconcile_razorpay_payment(
-                    pending
-                ):
-                    pending = None
+                "order_id":
+                    pending.order_id,
 
-            if pending:
-
-                pending_payment_order = {
-                    "id": pending.id,
-                    "order_id":
-                        pending.order_id,
-                    "final_total":
-                        float(
-                            pending.get_final_total()
-                            if hasattr(
-                                pending,
-                                "get_final_total",
-                            )
-                            else pending.final_total
+                "final_total":
+                    float(
+                        pending.get_final_total()
+                        if hasattr(
+                            pending,
+                            "get_final_total",
+                        )
+                        else (
+                            pending.final_total
                             or 0
-                        ),
-                    "payment_status":
-                        pending.payment_status,
-                }
+                        )
+                    ),
+
+                "payment_status":
+                    pending.payment_status,
+            }
+
+    print(
+        "HOME pending payment: "
+        f"{(perf_counter() - pending_started) * 1000:.0f} ms"
+    )
 
     # --------------------------------------------------------
-    # SORT STORES LIKE WEB HOME
+    # SORT STORES
     # --------------------------------------------------------
+
+    def store_sort_key(r):
+        if (
+            is_new_restaurant(r)
+            and r.deliverable
+            and r.is_open
+            and r.can_accept_orders
+        ):
+            priority = 0
+
+        elif (
+            r.deliverable
+            and r.is_open
+            and r.can_accept_orders
+        ):
+            priority = 1
+
+        else:
+            priority = 2
+
+        created_timestamp = (
+            r.created_at.timestamp()
+            if r.created_at
+            else 0
+        )
+
+        return (
+            priority,
+            -created_timestamp,
+        )
 
     restaurants.sort(
-        key=lambda r: (
-            0
-            if (
-                is_new_restaurant(r)
-                and r.deliverable
-                and r.is_open
-                and r.can_accept_orders
-            )
-            else 1
-            if (
-                r.deliverable
-                and r.is_open
-                and r.can_accept_orders
-            )
-            else 2,
-            -(
-                r.created_at.timestamp()
-                if r.created_at
-                else 0
-            ),
-        )
+        key=store_sort_key
     )
 
     grocery_shops.sort(
-        key=lambda g: (
-            0
-            if (
-                is_new_restaurant(g)
-                and g.deliverable
-                and g.is_open
-                and g.can_accept_orders
-            )
-            else 1
-            if (
-                g.deliverable
-                and g.is_open
-                and g.can_accept_orders
-            )
-            else 2,
-            -(
-                g.created_at.timestamp()
-                if g.created_at
-                else 0
-            ),
-        )
+        key=store_sort_key
     )
 
     # --------------------------------------------------------
-    # RESPONSE
-    # SEO + HTML AJAX are intentionally excluded because they
-    # are web-only concerns, not native-app Home UI features.
+    # BUILD RESPONSE DATA ONCE
     # --------------------------------------------------------
 
-    return jsonify({
+    response_started = perf_counter()
+
+    response_data = {
         "success": True,
+
         "selected_location":
             selected_location,
+
         "user_location_set":
             user_location_set,
+
         "all_locations":
             get_all_locations(),
 
@@ -4554,8 +4901,66 @@ def api_app_home():
 
         "pending_payment_order":
             pending_payment_order,
-    }), 200
+    }
 
+    result = jsonify(
+        response_data
+    )
+
+    print(
+        "HOME response build: "
+        f"{(perf_counter() - response_started) * 1000:.0f} ms"
+    )
+
+    print(
+        "================================================"
+    )
+
+    print(
+        "HOME TOTAL: "
+        f"{(perf_counter() - home_started) * 1000:.0f} ms"
+    )
+
+    print(
+        "HOME LOCATION:",
+        selected_location or "(none)",
+    )
+
+    print(
+        "HOME RESTAURANTS:",
+        len(restaurants),
+    )
+
+    print(
+        "HOME GROCERY:",
+        len(grocery_shops),
+    )
+
+    print(
+        "HOME POPULAR:",
+        len(popular_items),
+    )
+
+    print(
+        "HOME BUDGET:",
+        len(budget_items),
+    )
+
+    print(
+        "HOME TOP:",
+        len(top_restaurants),
+    )
+
+    print(
+        "HOME TRENDING:",
+        len(trending_items),
+    )
+
+    print(
+        "================================================"
+    )
+
+    return result, 200
 from flask import jsonify, request
 from datetime import datetime
 @app.route("/api/city/<city_slug>")
