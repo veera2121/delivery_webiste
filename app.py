@@ -86,7 +86,10 @@ from models import (
     RiderAuthAccount,
     RiderPasswordResetRequest,    
     RestaurantPickupQR,
-    OrderPickupVerification
+    OrderPickupVerification,
+    CategoryLocation,
+    HomeAnnouncement,
+    HomeAnnouncementTarget
 )
 import os
 import secrets
@@ -1908,6 +1911,28 @@ def process_store(
 
 
     return store
+
+
+
+import time
+from flask import request
+
+@app.before_request
+def start_timer():
+    request.start_time = time.perf_counter()
+
+
+@app.after_request
+def log_request_time(response):
+    elapsed = (time.perf_counter() - request.start_time) * 1000
+
+    print(
+        f"[API TIME] {request.method} "
+        f"{request.path} → {response.status_code} "
+        f"{elapsed:.2f} ms"
+    )
+
+    return response
 total = time.time()
 from datetime import datetime 
 from zoneinfo import ZoneInfo
@@ -1925,10 +1950,21 @@ from sqlalchemy import or_
 # HOME PAGE
 # ============================================================
 
+
 @app.route("/")
 def home():
 
-    start = time.time()
+    # ========================================================
+    # PERFORMANCE TIMER
+    # ========================================================
+
+    start = time.perf_counter()
+
+    def checkpoint(name):
+        elapsed = (time.perf_counter() - start) * 1000
+        print(f"[HOME PERF] {name}: {elapsed:.2f} ms")
+
+    checkpoint("START")
 
     # ========================================================
     # CURRENT INDIA TIME
@@ -1937,6 +1973,7 @@ def home():
     ist = pytz.timezone("Asia/Kolkata")
     now = datetime.now(ist).time()
 
+    checkpoint("CURRENT_TIME")
 
     # ========================================================
     # SELECTED LOCATION
@@ -1948,14 +1985,9 @@ def home():
         type=str
     ).strip()
 
-
     # Save selected location in session
     if location_from_url:
-
-        session["selected_location"] = (
-            location_from_url
-        )
-
+        session["selected_location"] = location_from_url
 
     # Keep selected location when customer
     # returns from Search / Profile / etc.
@@ -1964,6 +1996,43 @@ def home():
         ""
     )
 
+    checkpoint("LOCATION")
+
+    # ========================================================
+    # SELECTED SERVICE
+    # ========================================================
+
+    service_from_url = request.args.get(
+        "service",
+        "",
+        type=str
+    ).strip().lower()
+
+    # Website names → database names
+    service_map = {
+        "food": "restaurant",
+        "restaurant": "restaurant",
+        "bakery": "bakery",
+        "grocery": "grocery",
+    }
+
+    if service_from_url in service_map:
+        selected_service = service_map[service_from_url]
+        session["selected_service"] = selected_service
+    else:
+        selected_service = session.get(
+            "selected_service",
+            "restaurant"
+        )
+
+    if selected_service not in (
+        "restaurant",
+        "bakery",
+        "grocery"
+    ):
+        selected_service = "restaurant"
+
+    checkpoint("SERVICE")
 
     # ========================================================
     # BADGE COUNTS
@@ -1976,6 +2045,7 @@ def home():
     gold_count = badge_counts["gold"]
     platinum_count = badge_counts["platinum"]
 
+    checkpoint("BADGE_COUNTS")
 
     # ========================================================
     # CUSTOMER DATA
@@ -1994,29 +2064,23 @@ def home():
 
     progress_percent = 0
 
-
     if current_user.is_authenticated:
 
         customer = current_user
 
         coins = customer.coins or 0
 
-
         # ----------------------------------------------------
         # KEEP BADGE UPDATED
         # ----------------------------------------------------
 
-        update_customer_badge(
-            customer
-        )
-
+        update_customer_badge(customer)
 
         badge = (
             customer.badge.name
             if customer.badge
             else "No Badge"
         )
-
 
         # ----------------------------------------------------
         # ONE-TIME COINS ANIMATION
@@ -2027,16 +2091,12 @@ def home():
             and customer.last_reward_coins > 0
         ):
 
-            earned_coins = (
-                customer.last_reward_coins
-            )
+            earned_coins = customer.last_reward_coins
 
             customer.last_reward_coins = 0
 
-
         # Commit badge/reward changes together
         db.session.commit()
-
 
         # ----------------------------------------------------
         # BADGE PROGRESS
@@ -2051,18 +2111,13 @@ def home():
             .all()
         )
 
-
         for b in badges:
 
-            if (
-                customer.coins
-                < b.required_coins
-            ):
+            if customer.coins < b.required_coins:
 
                 next_badge = b
 
                 break
-
 
         if next_badge:
 
@@ -2072,12 +2127,10 @@ def home():
                 else 0
             )
 
-
             span = (
                 next_badge.required_coins
                 - current_min
             )
-
 
             if span > 0:
 
@@ -2092,7 +2145,6 @@ def home():
                     * 100
                 )
 
-
             progress_percent = max(
                 0,
                 min(
@@ -2100,7 +2152,6 @@ def home():
                     100
                 )
             )
-
 
             coins_to_next_badge = max(
                 0,
@@ -2110,32 +2161,28 @@ def home():
                 )
             )
 
-
         else:
 
             progress_percent = 100
 
             coins_to_next_badge = 0
 
+    checkpoint("CUSTOMER_DATA")
 
     # ========================================================
     # USER GPS LOCATION
     # ========================================================
 
-    user_lat = session.get(
-        "user_lat"
-    )
+    user_lat = session.get("user_lat")
 
-    user_lng = session.get(
-        "user_lng"
-    )
-
+    user_lng = session.get("user_lng")
 
     user_location_set = (
         user_lat is not None
         and user_lng is not None
     )
 
+    checkpoint("GPS")
 
     # ========================================================
     # FETCH RESTAURANTS + BAKERIES
@@ -2158,7 +2205,6 @@ def home():
         )
     )
 
-
     if selected_location:
 
         restaurant_query = (
@@ -2169,18 +2215,19 @@ def home():
             )
         )
 
-
     restaurants = (
         restaurant_query.all()
     )
 
+    checkpoint(
+        f"RESTAURANTS_QUERY ({len(restaurants)} restaurants)"
+    )
 
     # ========================================================
     # FETCH GROCERY SHOPS
     # ========================================================
 
     grocery_shops = []
-
 
     # --------------------------------------------------------
     # LOCATION MANUALLY SELECTED
@@ -2199,7 +2246,6 @@ def home():
             .all()
         )
 
-
     # --------------------------------------------------------
     # NO LOCATION FILTER
     # ONLY SHOW NEARBY GROCERY USING GPS
@@ -2216,7 +2262,6 @@ def home():
             .all()
         )
 
-
         for g in all_grocery:
 
             if (
@@ -2224,9 +2269,7 @@ def home():
                 or g.longitude is None
                 or not g.delivery_radius_km
             ):
-
                 continue
-
 
             dist = haversine(
                 float(user_lat),
@@ -2235,16 +2278,13 @@ def home():
                 float(g.longitude)
             )
 
+            if dist <= g.delivery_radius_km:
 
-            if (
-                dist
-                <= g.delivery_radius_km
-            ):
+                grocery_shops.append(g)
 
-                grocery_shops.append(
-                    g
-                )
-
+    checkpoint(
+        f"GROCERY_SHOPS_QUERY ({len(grocery_shops)} shops)"
+    )
 
     # ========================================================
     # CATEGORIES
@@ -2252,8 +2292,13 @@ def home():
 
     categories = (
         Category.query.all()
-        )
-        # ========================================================
+    )
+
+    checkpoint(
+        f"CATEGORIES_QUERY ({len(categories)} categories)"
+    )
+
+    # ========================================================
     # GROCERY ITEM CATEGORIES
     # ========================================================
 
@@ -2275,10 +2320,12 @@ def home():
 
     # Same selected-location filtering as grocery shops
     if selected_location:
+
         grocery_category_query = (
             grocery_category_query
             .filter(
-                Restaurant.location == selected_location
+                Restaurant.location
+                == selected_location
             )
         )
 
@@ -2303,7 +2350,6 @@ def home():
 
         grocery_shop_ids = []
 
-
     grocery_category_rows = (
         grocery_category_query
         .distinct()
@@ -2313,13 +2359,15 @@ def home():
         .all()
     )
 
-
     grocery_categories = [
         row[0].strip()
         for row in grocery_category_rows
         if row[0] and row[0].strip()
     ]
 
+    checkpoint(
+        f"GROCERY_CATEGORIES_QUERY ({len(grocery_categories)} categories)"
+    )
 
     # ========================================================
     # WHICH CATEGORIES EACH GROCERY SHOP HAS
@@ -2356,31 +2404,23 @@ def home():
             grocery_store_categories.setdefault(
                 store_id,
                 []
-            )
-
-            grocery_store_categories[
-                store_id
-            ].append(
+            ).append(
                 category
             )
+
+    checkpoint("GROCERY_STORE_CATEGORIES")
 
     # ========================================================
     # POPULAR ITEMS
     # ========================================================
 
     restaurant_lookup = {
-
         r.id: r
-
         for r in restaurants
-
     }
 
-
     popular_items_raw = (
-
         db.session.query(
-
             Restaurant.id.label(
                 "restaurant_id"
             ),
@@ -2412,37 +2452,28 @@ def home():
             ).label(
                 "item_image"
             )
-
         )
-
         .join(
             Order,
             Order.id
             == OrderItem.order_id
         )
-
         .join(
             Restaurant,
             Restaurant.id
             == Order.restaurant_id
         )
-
         .outerjoin(
             MenuItem,
-
             db.and_(
-
                 MenuItem.restaurant_id
                 == Restaurant.id,
 
                 MenuItem.name
                 == OrderItem.item_name
-
             )
         )
-
     )
-
 
     # Only restaurants currently shown
     if restaurant_lookup:
@@ -2458,40 +2489,28 @@ def home():
             )
         )
 
-
     popular_items_raw = (
-
         popular_items_raw
-
         .group_by(
-
             Restaurant.id,
-
             Restaurant.name,
-
             Restaurant.category_type,
-
             OrderItem.item_name
-
         )
-
         .order_by(
-
             func.sum(
                 OrderItem.quantity
             ).desc()
-
         )
-
         .limit(30)
-
         .all()
-
     )
 
+    checkpoint(
+        f"POPULAR_ITEMS_QUERY ({len(popular_items_raw)} rows)"
+    )
 
     popular_sorted = []
-
 
     for item in popular_items_raw:
 
@@ -2501,17 +2520,13 @@ def home():
             )
         )
 
-
         if not restaurant:
-
             continue
-
 
         price = (
             item.current_price
             or 0
         )
-
 
         # ----------------------------------------------------
         # BAKERY WEIGHT PRICE FALLBACK
@@ -2533,14 +2548,12 @@ def home():
                 .first()
             )
 
-
             if menu:
 
                 extra = (
                     menu.extra_data
                     or {}
                 )
-
 
                 weight_prices = (
                     extra.get(
@@ -2549,17 +2562,14 @@ def home():
                     )
                 )
 
-
                 if weight_prices:
 
                     try:
 
                         price = float(
-
                             weight_prices
                             .split(",")[0]
                             .split(":")[1]
-
                         )
 
                     except (
@@ -2570,12 +2580,9 @@ def home():
 
                         pass
 
-
         # Don't show tiny addon items
         if price < 30:
-
             continue
-
 
         popular_sorted.append({
 
@@ -2607,50 +2614,49 @@ def home():
 
         })
 
+    checkpoint("POPULAR_ITEMS_PROCESSING")
+
+    announcements = get_active_home_announcements(
+        location=selected_location,
+        service=selected_service
+    )
+
+    checkpoint("ANNOUNCEMENTS")
 
     # ========================================================
     # BUDGET ITEMS
     # ========================================================
 
     restaurant_ids = [
-
         r.id
-
         for r in restaurants
-
     ]
-
 
     if restaurant_ids:
 
         budget_items = (
-
             MenuItem.query
-
             .filter(
-
                 MenuItem.restaurant_id.in_(
                     restaurant_ids
                 ),
-
                 MenuItem.availability
                 == "yes",
-
                 MenuItem.price.between(
                     69,
                     159
                 )
-
             )
-
             .all()
-
         )
 
     else:
 
         budget_items = []
 
+    checkpoint(
+        f"BUDGET_ITEMS_QUERY ({len(budget_items)} items)"
+    )
 
     # ========================================================
     # WEEKLY TOP RESTAURANTS
@@ -2661,36 +2667,27 @@ def home():
         - timedelta(days=7)
     )
 
-
     top_query = (
-
         db.session.query(
-
             Restaurant,
-
             func.count(
                 Order.id
             ).label(
                 "orders_count"
             )
-
         )
-
         .join(
             Order,
             Restaurant.id
             == Order.restaurant_id
         )
-
         .filter(
             Order.created_at
             >= one_week_ago,
             Order.status
             == "Delivered"
         )
-
     )
-
 
     if selected_location:
 
@@ -2702,30 +2699,25 @@ def home():
             )
         )
 
-
     top_restaurants_raw = (
-
         top_query
-
         .group_by(
             Restaurant.id
         )
-
         .order_by(
             func.count(
                 Order.id
             ).desc()
         )
-
         .limit(20)
-
         .all()
-
     )
 
+    checkpoint(
+        f"TOP_RESTAURANTS_QUERY ({len(top_restaurants_raw)} rows)"
+    )
 
     top_restaurants = []
-
 
     for restaurant, count in top_restaurants_raw:
 
@@ -2736,11 +2728,9 @@ def home():
             )
         )
 
-
     section_title = (
         "🔥 This Week's Most Ordered"
     )
-
 
     # ========================================================
     # FALLBACK TOP RESTAURANTS
@@ -2749,32 +2739,24 @@ def home():
     if not top_restaurants:
 
         fallback_query = (
-
             db.session.query(
-
                 Restaurant,
-
                 func.count(
                     Order.id
                 ).label(
                     "orders_count"
                 )
-
             )
-
             .join(
                 Order,
                 Restaurant.id
                 == Order.restaurant_id
             )
-
             .filter(
                 Order.status
                 == "Delivered"
             )
-
         )
-
 
         if selected_location:
 
@@ -2786,45 +2768,34 @@ def home():
                 )
             )
 
-
         fallback_restaurants = (
-
             fallback_query
-
             .group_by(
                 Restaurant.id
             )
-
             .order_by(
                 func.count(
                     Order.id
                 ).desc()
             )
-
             .limit(20)
-
             .all()
-
         )
 
-
         top_restaurants = [
-
             (
                 restaurant,
                 count
             )
-
             for restaurant, count
             in fallback_restaurants
-
         ]
-
 
         section_title = (
             "🏆 Most Ordered Restaurants"
         )
 
+    checkpoint("TOP_RESTAURANTS_PROCESSING")
 
     # ========================================================
     # LOCATION DROPDOWN
@@ -2834,7 +2805,8 @@ def home():
         get_all_locations()
     )
 
-    
+    checkpoint("LOCATIONS")
+
     # ==========================================
     # FIND PENDING ONLINE PAYMENT
     # ==========================================
@@ -2846,10 +2818,13 @@ def home():
             Order.payment_status == "Pending",
             Order.status == "Pending Payment"
         )
-        .order_by(Order.created_at.desc())
+        .order_by(
+            Order.created_at.desc()
+        )
         .first()
     )
 
+    checkpoint("PENDING_PAYMENT_QUERY")
 
     # ==========================================
     # CHECK RAZORPAY BEFORE SHOWING BUTTON
@@ -2864,8 +2839,15 @@ def home():
 
         if pending_payment_order.payment_order_id:
 
+            razorpay_start = time.perf_counter()
+
             paid = reconcile_razorpay_payment(
                 pending_payment_order
+            )
+
+            print(
+                "[HOME PERF] RAZORPAY_RECONCILE:",
+                f"{(time.perf_counter() - razorpay_start) * 1000:.2f} ms"
             )
 
             if paid:
@@ -2876,6 +2858,9 @@ def home():
 
                 # Don't show Complete Payment button
                 pending_payment_order = None
+
+    checkpoint("PAYMENT_CHECK")
+
     # ========================================================
     # TRENDING ITEMS
     # ========================================================
@@ -2883,38 +2868,32 @@ def home():
     if selected_location:
 
         trending_items = (
-
             db.session.query(
                 FoodItem
             )
-
             .join(
                 Restaurant
             )
-
             .filter(
-
                 Restaurant.location
                 == selected_location,
 
                 FoodItem.order_count > 0
-
             )
-
             .order_by(
                 FoodItem.order_count.desc()
             )
-
             .limit(8)
-
             .all()
-
         )
 
     else:
 
         trending_items = []
 
+    checkpoint(
+        f"TRENDING_ITEMS_QUERY ({len(trending_items)} items)"
+    )
 
     # ========================================================
     # PROCESS RESTAURANTS
@@ -2922,6 +2901,7 @@ def home():
 
     limited_restaurants = []
 
+    process_start = time.perf_counter()
 
     for r in restaurants:
 
@@ -2933,7 +2913,6 @@ def home():
             now
         )
 
-
         if (
             r.is_limited_drop
             and r.can_accept_orders
@@ -2943,11 +2922,17 @@ def home():
                 r
             )
 
+    print(
+        "[HOME PERF] PROCESS_RESTAURANTS:",
+        f"{(time.perf_counter() - process_start) * 1000:.2f} ms"
+    )
 
     # ========================================================
     # PROCESS GROCERY SHOPS
     # SAME STATUS / DELIVERY LOGIC
     # ========================================================
+
+    process_start = time.perf_counter()
 
     for g in grocery_shops:
 
@@ -2959,11 +2944,17 @@ def home():
             now
         )
 
+    print(
+        "[HOME PERF] PROCESS_GROCERY:",
+        f"{(time.perf_counter() - process_start) * 1000:.2f} ms"
+    )
 
     # ========================================================
     # POPULAR ITEM AVAILABILITY
     # Now restaurant state has been processed
     # ========================================================
+
+    availability_start = time.perf_counter()
 
     for item in popular_sorted:
 
@@ -2971,39 +2962,33 @@ def home():
             item["restaurant"]
         )
 
-
         item["can_order"] = (
-
             restaurant.can_accept_orders
-
             and restaurant.is_open
-
             and restaurant.deliverable
-
         )
-
 
     popular_sorted.sort(
-
         key=lambda x: (
-
             not x["can_order"],
-
             -x["total_orders"]
-
         )
-
     )
-
 
     popular_items = (
         popular_sorted[:25]
     )
 
+    print(
+        "[HOME PERF] POPULAR_AVAILABILITY:",
+        f"{(time.perf_counter() - availability_start) * 1000:.2f} ms"
+    )
 
     # ========================================================
     # BUDGET ITEM AVAILABILITY
     # ========================================================
+
+    budget_start = time.perf_counter()
 
     for item in budget_items:
 
@@ -3013,36 +2998,22 @@ def home():
             )
         )
 
-
         item.can_order = bool(
-
             restaurant
-
             and restaurant.can_accept_orders
-
             and restaurant.is_open
-
             and restaurant.deliverable
-
         )
-
 
     budget_items.sort(
-
         key=lambda x: (
-
             not x.can_order,
-
             x.price
-
         )
-
     )
-
 
     # Max 3 budget items per restaurant
     restaurant_items = {}
-
 
     for item in budget_items:
 
@@ -3053,9 +3024,7 @@ def home():
             item
         )
 
-
     final_budget_items = []
-
 
     for items in (
         restaurant_items.values()
@@ -3065,11 +3034,14 @@ def home():
             items[:3]
         )
 
-
     budget_items = (
         final_budget_items[:27]
     )
 
+    print(
+        "[HOME PERF] BUDGET_PROCESSING:",
+        f"{(time.perf_counter() - budget_start) * 1000:.2f} ms"
+    )
 
     # ========================================================
     # SORT RESTAURANTS
@@ -3077,7 +3049,6 @@ def home():
     # ========================================================
 
     restaurants.sort(
-
         key=lambda r: (
 
             0
@@ -3104,16 +3075,13 @@ def home():
             )
 
         )
-
     )
-
 
     # ========================================================
     # SORT GROCERY
     # ========================================================
 
     grocery_shops.sort(
-
         key=lambda g: (
 
             0
@@ -3140,9 +3108,7 @@ def home():
             )
 
         )
-
     )
-
 
     # ========================================================
     # SORT TOP RESTAURANTS
@@ -3150,16 +3116,11 @@ def home():
     # ========================================================
 
     processed_restaurants = {
-
         r.id: r
-
         for r in restaurants
-
     }
 
-
     cleaned_top_restaurants = []
-
 
     for restaurant, count in top_restaurants:
 
@@ -3168,7 +3129,6 @@ def home():
                 restaurant.id
             )
         )
-
 
         if processed:
 
@@ -3184,17 +3144,11 @@ def home():
                 now
             )
 
-
         restaurant.is_open_now = (
-
             restaurant.can_accept_orders
-
             and restaurant.is_open
-
             and restaurant.deliverable
-
         )
-
 
         cleaned_top_restaurants.append(
             (
@@ -3203,24 +3157,18 @@ def home():
             )
         )
 
-
     cleaned_top_restaurants.sort(
-
         key=lambda x: (
-
             not x[0].is_open_now,
-
             -x[1]
-
         )
-
     )
-
 
     top_restaurants = (
         cleaned_top_restaurants[:10]
     )
 
+    checkpoint("FINAL_PROCESSING")
 
     # ========================================================
     # SEO
@@ -3233,22 +3181,16 @@ def home():
             f"{selected_location} | RuchiGo"
         )
 
-
         seo_description = (
-
             "Order food online from nearby "
             "restaurants and bakeries in "
             f"{selected_location}. "
             "Fast local delivery."
-
         )
 
-
         seo_keywords = (
-
             f"{selected_location} "
             "food delivery, bakery, RuchiGo"
-
         )
 
     else:
@@ -3257,21 +3199,16 @@ def home():
             "Online Food Delivery | RuchiGo"
         )
 
-
         seo_description = (
-
             "Order food online from trusted "
             "local restaurants and bakeries. "
             "Fast delivery, fresh food."
-
         )
-
 
         seo_keywords = (
             "food delivery, "
             "bakery delivery, RuchiGo"
         )
-
 
     # ========================================================
     # AJAX RESTAURANT REFRESH
@@ -3284,142 +3221,204 @@ def home():
         == "XMLHttpRequest"
     ):
 
-        return render_template(
+        checkpoint("AJAX_BEFORE_RENDER")
 
+        response = render_template(
             "_restaurants.html",
-
-            restaurants=
-                restaurants,
-
-            trending_items=
-                trending_items,
-
-            now=
-                now
-
+            restaurants=restaurants,
+            trending_items=trending_items,
+            now=now
         )
 
+        checkpoint("AJAX_AFTER_RENDER")
+
+        return response
 
     # ========================================================
     # PERFORMANCE DEBUG
     # ========================================================
 
-    print(
-        "HOME LOAD:",
-        round(
-            time.time() - start,
-            2
-        ),
-        "seconds"
-    )
-
+    checkpoint("BEFORE_FULL_RENDER")
 
     # ========================================================
     # FULL PAGE
     # ========================================================
 
-    return render_template(
-
-        "index.html",
-
+    response = render_template(
+        "sameindex.html",
 
         # Stores
-        restaurants=
-            restaurants,
+        restaurants=restaurants,
 
-        grocery_shops=
-            grocery_shops,
+        grocery_shops=grocery_shops,
 
-        limited_restaurants=
-            limited_restaurants,
-            
+        limited_restaurants=limited_restaurants,
+
         # Grocery category system
         grocery_categories=grocery_categories,
         grocery_store_categories=grocery_store_categories,
 
         # Location
-        all_locations=
-            all_locations,
+        all_locations=all_locations,
 
-        selected_location=
-            selected_location,
+        selected_location=selected_location,
 
-        user_location_set=
-            user_location_set,
-
+        user_location_set=user_location_set,
 
         # Discovery sections
-        trending_items=
-            trending_items,
+        trending_items=trending_items,
 
-        popular_items=
-            popular_items,
+        popular_items=popular_items,
 
-        budget_items=
-            budget_items,
+        budget_items=budget_items,
 
-        top_restaurants=
-            top_restaurants,
+        top_restaurants=top_restaurants,
 
-        section_title=
-            section_title,
-
+        section_title=section_title,
 
         # Current time
-        now=
-            now,
-
+        now=now,
 
         # SEO
-        seo_title=
-            seo_title,
+        seo_title=seo_title,
 
-        seo_description=
-            seo_description,
+        seo_description=seo_description,
 
-        seo_keywords=
-            seo_keywords,
-
+        seo_keywords=seo_keywords,
 
         # Customer rewards
-        coins=
-            coins,
+        coins=coins,
 
-        customer=
-            customer,
+        customer=customer,
 
-        badge=
-            badge,
+        badge=badge,
 
-        earned_coins=
-            earned_coins,
+        earned_coins=earned_coins,
 
-        next_badge=
-            next_badge,
+        next_badge=next_badge,
 
-        coins_to_next_badge=
-            coins_to_next_badge,
+        coins_to_next_badge=coins_to_next_badge,
 
-        silver_count=
-            silver_count,
+        silver_count=silver_count,
 
-        gold_count=
-            gold_count,
+        gold_count=gold_count,
 
-        platinum_count=
-            platinum_count,
+        platinum_count=platinum_count,
 
-        progress_percent=
-            progress_percent,
+        progress_percent=progress_percent,
 
         pending_payment_order=pending_payment_order,
 
-
         # Categories
-        categories=
-            categories
+        categories=categories,
+
+        announcements=announcements,
+
+        selected_service=selected_service,
 
     )
+
+    checkpoint("AFTER_FULL_RENDER")
+
+    return response
+
+
+
+def get_active_home_announcements(
+    location=None,
+    service=None
+):
+    now = datetime.utcnow()
+
+    query = HomeAnnouncement.query.filter(
+        HomeAnnouncement.is_enabled.is_(True),
+        HomeAnnouncement.show_on_home.is_(True)
+    )
+
+    query = query.filter(
+        db.or_(
+            HomeAnnouncement.starts_at.is_(None),
+            HomeAnnouncement.starts_at <= now
+        )
+    )
+
+    query = query.filter(
+        db.or_(
+            HomeAnnouncement.ends_at.is_(None),
+            HomeAnnouncement.ends_at >= now
+        )
+    )
+
+    announcements = query.order_by(
+        db.case(
+            (HomeAnnouncement.priority == 'emergency', 0),
+            (HomeAnnouncement.priority == 'high', 1),
+            (HomeAnnouncement.priority == 'normal', 2),
+            else_=3
+        ),
+        HomeAnnouncement.created_at.desc()
+    ).all()
+
+    result = []
+
+    for announcement in announcements:
+
+        # Service filtering
+        if (
+            announcement.service != 'all'
+            and announcement.service != service
+        ):
+            continue
+
+        targets = announcement.targets
+
+        if not targets:
+            continue
+
+        visible = False
+
+        for target in targets:
+
+            if target.target_type == 'all':
+                visible = True
+                break
+
+            if (
+                target.target_type == 'location'
+                and location
+                and target.target_value.lower()
+                == location.lower()
+            ):
+                visible = True
+                break
+
+            if (
+                target.target_type == 'service'
+                and service
+                and target.target_value.lower()
+                == service.lower()
+            ):
+                visible = True
+                break
+
+        if not visible:
+            continue
+
+        result.append({
+            'id': announcement.id,
+            'title': announcement.title,
+            'message': announcement.message,
+            'content': announcement.content,
+            'type': announcement.announcement_type,
+            'priority': announcement.priority,
+            'icon': announcement.icon,
+            'image_url': announcement.image_url,
+            'button_text': announcement.button_text,
+            'button_action': announcement.button_action,
+            'dismissible': announcement.dismissible,
+        })
+
+    return result
 # ============================================================
 # RUCHIGO FLUTTER - FULL HOME API
 #
@@ -3440,18 +3439,34 @@ def home():
 #   Restaurant, Category, MenuItem, Order, OrderItem,
 #   RewardBadge, FoodItem
 # ============================================================
+
 @app.route("/api/app/home", methods=["GET"])
 def api_app_home():
     """
     RucHiGo Native App Home API
 
-    Optimizations:
+    Category system:
+    - Categories are assigned to locations through CategoryLocation.
+    - Categories are separated by section.
+    - Food / Snacks / Beverages / Desserts are returned separately.
+    - Existing "categories" field is retained for backward compatibility.
+
+    Other existing Home API functionality is preserved:
+    - Restaurants
+    - Grocery shops
+    - Limited restaurants
+    - Grocery categories
+    - Grocery store categories
+    - Popular items
+    - Budget items
+    - Top restaurants
+    - Trending items
+    - Rewards
+    - Pending online payment
+    - Lightweight timing logs
+
+    IMPORTANT:
     - No Razorpay reconciliation inside Home request.
-    - Avoids duplicate grocery-category queries.
-    - Avoids per-item MenuItem query for bakery popular items.
-    - Avoids lazy-loading FoodItem.restaurant for trending items.
-    - Keeps the same JSON fields expected by Flutter.
-    - Adds lightweight timing logs so slow sections can be identified.
     """
 
     home_started = perf_counter()
@@ -3509,12 +3524,12 @@ def api_app_home():
 
     # --------------------------------------------------------
     # REWARDS
-    # Keep reward functionality, but only commit when needed.
     # --------------------------------------------------------
 
     rewards = None
 
     if current_user.is_authenticated:
+
         rewards_started = perf_counter()
 
         customer = current_user
@@ -3522,7 +3537,7 @@ def api_app_home():
         old_badge_id = getattr(
             customer,
             "badge_id",
-            None,
+            None
         )
 
         earned_coins = 0
@@ -3569,6 +3584,7 @@ def api_app_home():
         coins_to_next_badge = 0
 
         if next_badge:
+
             current_min = (
                 customer.badge.required_coins
                 if customer.badge
@@ -3596,21 +3612,21 @@ def api_app_home():
                 0,
                 min(
                     progress_percent,
-                    100,
-                ),
+                    100
+                )
             )
 
             coins_to_next_badge = max(
                 0,
                 next_badge.required_coins
-                - customer_coins,
+                - customer_coins
             )
 
         badge_changed = (
             getattr(
                 customer,
                 "badge_id",
-                None,
+                None
             )
             != old_badge_id
         )
@@ -3680,6 +3696,7 @@ def api_app_home():
     )
 
     if selected_location:
+
         restaurant_query = (
             restaurant_query
             .filter(
@@ -3708,6 +3725,7 @@ def api_app_home():
     grocery_shops = []
 
     if selected_location:
+
         grocery_shops = (
             Restaurant.query
             .filter(
@@ -3732,6 +3750,7 @@ def api_app_home():
         )
 
         for g in all_grocery:
+
             if (
                 g.latitude is None
                 or g.longitude is None
@@ -3748,7 +3767,9 @@ def api_app_home():
 
             if (
                 dist
-                <= float(g.delivery_radius_km)
+                <= float(
+                    g.delivery_radius_km
+                )
             ):
                 grocery_shops.append(g)
 
@@ -3767,6 +3788,7 @@ def api_app_home():
     limited_restaurants = []
 
     for r in restaurants:
+
         process_store(
             r,
             user_lat,
@@ -3782,6 +3804,7 @@ def api_app_home():
             limited_restaurants.append(r)
 
     for g in grocery_shops:
+
         process_store(
             g,
             user_lat,
@@ -3814,6 +3837,17 @@ def api_app_home():
     # --------------------------------------------------------
 
     def category_json(category):
+
+        image_url = None
+
+        if getattr(category, "image", None):
+
+            image_url = url_for(
+                "static",
+                filename=category.image,
+                _external=False
+            )
+
         return {
             "id": category.id,
 
@@ -3830,9 +3864,44 @@ def api_app_home():
                 )
                 or str(category)
             ),
+
+            "image_url": image_url,
+
+            "section": (
+                getattr(
+                    category,
+                    "section",
+                    None,
+                )
+                or "food"
+            ),
+
+            "parent_id": getattr(
+                category,
+                "parent_id",
+                None
+            ),
+
+            "display_order": int(
+                getattr(
+                    category,
+                    "display_order",
+                    0
+                )
+                or 0
+            ),
+
+            "is_active": bool(
+                getattr(
+                    category,
+                    "is_active",
+                    True
+                )
+            ),
         }
 
     def restaurant_json(r):
+
         return {
             "id": r.id,
 
@@ -3936,17 +4005,116 @@ def api_app_home():
         }
 
     # --------------------------------------------------------
-    # CATEGORIES
+    # LOCATION-SPECIFIC MASTER CATEGORIES
     # --------------------------------------------------------
 
     categories_started = perf_counter()
 
-    categories = (
+    location_category_query = (
         Category.query
+        .join(
+            CategoryLocation,
+            CategoryLocation.category_id
+            == Category.id
+        )
+        .filter(
+            Category.is_active.is_(True)
+        )
+    )
+
+    if selected_location:
+
+        location_category_query = (
+            location_category_query
+            .filter(
+                CategoryLocation.location
+                == selected_location
+            )
+        )
+
+    else:
+        # No selected location:
+        # keep categories available across locations.
+        location_category_query = (
+            location_category_query
+        )
+
+    home_categories = (
+        location_category_query
+        .order_by(
+            Category.display_order.asc(),
+            Category.name.asc(),
+            Category.id.asc()
+        )
+        .distinct()
         .all()
     )
 
-    # One combined query for grocery categories.
+    category_data = [
+        category_json(c)
+        for c in home_categories
+    ]
+
+    # --------------------------------------------------------
+    # SEPARATE HOME SECTIONS
+    # --------------------------------------------------------
+
+    food_categories = [
+        c
+        for c in category_data
+        if c["section"].strip().lower()
+        == "food"
+    ]
+
+    snacks_categories = [
+        c
+        for c in category_data
+        if c["section"].strip().lower()
+        == "snacks"
+    ]
+
+    beverage_categories = [
+        c
+        for c in category_data
+        if c["section"].strip().lower()
+        == "beverages"
+    ]
+
+    dessert_categories = [
+        c
+        for c in category_data
+        if c["section"].strip().lower()
+        == "desserts"
+    ]
+
+    bakery_categories = [
+        c
+        for c in category_data
+        if c["section"].strip().lower()
+        == "bakery"
+    ]
+
+    grocery_category_master = [
+        c
+        for c in category_data
+        if c["section"].strip().lower()
+        == "grocery"
+    ]
+
+    print(
+        "HOME master categories: "
+        f"{(perf_counter() - categories_started) * 1000:.0f} ms "
+        f"total={len(category_data)} "
+        f"food={len(food_categories)} "
+        f"snacks={len(snacks_categories)}"
+    )
+
+    # --------------------------------------------------------
+    # GROCERY CATEGORY ITEMS
+    # --------------------------------------------------------
+
+    grocery_category_started = perf_counter()
+
     grocery_category_query = (
         db.session.query(
             MenuItem.restaurant_id,
@@ -3972,6 +4140,7 @@ def api_app_home():
     )
 
     if selected_location:
+
         grocery_category_query = (
             grocery_category_query
             .filter(
@@ -3981,6 +4150,7 @@ def api_app_home():
         )
 
     if grocery_shop_ids:
+
         grocery_category_query = (
             grocery_category_query
             .filter(
@@ -4003,6 +4173,7 @@ def api_app_home():
     for store_id, category in (
         grocery_category_rows
     ):
+
         if not category:
             continue
 
@@ -4019,8 +4190,10 @@ def api_app_home():
 
         if (
             not grocery_shop_ids
-            or store_id in grocery_shop_ids
+            or store_id
+            in grocery_shop_ids
         ):
+
             grocery_store_categories.setdefault(
                 str(store_id),
                 [],
@@ -4031,6 +4204,7 @@ def api_app_home():
                     str(store_id)
                 ]
             ):
+
                 grocery_store_categories[
                     str(store_id)
                 ].append(
@@ -4043,8 +4217,8 @@ def api_app_home():
     )
 
     print(
-        "HOME categories: "
-        f"{(perf_counter() - categories_started) * 1000:.0f} ms"
+        "HOME grocery categories: "
+        f"{(perf_counter() - grocery_category_started) * 1000:.0f} ms"
     )
 
     # --------------------------------------------------------
@@ -4113,6 +4287,7 @@ def api_app_home():
     )
 
     if restaurant_lookup:
+
         popular_items_raw = (
             popular_items_raw
             .filter(
@@ -4142,19 +4317,25 @@ def api_app_home():
     )
 
     # --------------------------------------------------------
-    # Preload bakery fallback menu items in ONE query.
-    # Prevents N+1 MenuItem queries.
+    # PRELOAD BAKERY FALLBACK ITEMS
     # --------------------------------------------------------
 
     bakery_pairs = []
 
     for row in popular_items_raw:
-        price = row.current_price or 0
+
+        price = (
+            row.current_price
+            or 0
+        )
 
         if (
-            row.source_type == "bakery"
+            row.source_type
+            == "bakery"
+
             and price == 0
         ):
+
             bakery_pairs.append(
                 (
                     row.restaurant_id,
@@ -4175,7 +4356,10 @@ def api_app_home():
                 == item_name,
             )
 
-            for restaurant_id, item_name
+            for (
+                restaurant_id,
+                item_name
+            )
             in bakery_pairs
         ]
 
@@ -4212,7 +4396,9 @@ def api_app_home():
         )
 
         if (
-            row.source_type == "bakery"
+            row.source_type
+            == "bakery"
+
             and price == 0
         ):
 
@@ -4224,6 +4410,7 @@ def api_app_home():
             )
 
             if menu:
+
                 extra = (
                     menu.extra_data
                     or {}
@@ -4242,12 +4429,15 @@ def api_app_home():
                 )
 
                 if weight_prices:
+
                     try:
+
                         price = float(
                             weight_prices
                             .split(",")[0]
                             .split(":")[1]
                         )
+
                     except (
                         ValueError,
                         IndexError,
@@ -4265,6 +4455,7 @@ def api_app_home():
         )
 
         popular_items.append({
+
             "restaurant_id":
                 row.restaurant_id,
 
@@ -4284,7 +4475,10 @@ def api_app_home():
                 ),
 
             "price":
-                float(price or 0),
+                float(
+                    price
+                    or 0
+                ),
 
             "item_image":
                 row.item_image,
@@ -4372,6 +4566,7 @@ def api_app_home():
             grouped[
                 item.restaurant_id
             ].append({
+
                 "id":
                     item.id,
 
@@ -4462,6 +4657,7 @@ def api_app_home():
     )
 
     if selected_location:
+
         top_query = (
             top_query
             .filter(
@@ -4472,7 +4668,9 @@ def api_app_home():
 
     top_rows = (
         top_query
-        .group_by(Restaurant.id)
+        .group_by(
+            Restaurant.id
+        )
         .order_by(
             func.count(
                 Order.id
@@ -4512,6 +4710,7 @@ def api_app_home():
         )
 
         if selected_location:
+
             fallback_query = (
                 fallback_query
                 .filter(
@@ -4522,7 +4721,9 @@ def api_app_home():
 
         top_rows = (
             fallback_query
-            .group_by(Restaurant.id)
+            .group_by(
+                Restaurant.id
+            )
             .order_by(
                 func.count(
                     Order.id
@@ -4545,9 +4746,11 @@ def api_app_home():
         )
 
         if processed:
+
             restaurant = processed
 
         else:
+
             process_store(
                 restaurant,
                 user_lat,
@@ -4557,13 +4760,17 @@ def api_app_home():
             )
 
         top_restaurants.append({
+
             "restaurant":
                 restaurant_json(
                     restaurant
                 ),
 
             "orders_count":
-                int(count or 0),
+                int(
+                    count
+                    or 0
+                ),
         })
 
     top_restaurants.sort(
@@ -4572,9 +4779,11 @@ def api_app_home():
                 x["restaurant"][
                     "can_accept_orders"
                 ]
+
                 and x["restaurant"][
                     "is_open"
                 ]
+
                 and x["restaurant"][
                     "deliverable"
                 ]
@@ -4642,6 +4851,7 @@ def api_app_home():
             )
 
             trending_items.append({
+
                 "id":
                     item.id,
 
@@ -4697,8 +4907,11 @@ def api_app_home():
 
                 "can_order": bool(
                     restaurant
+
                     and restaurant.can_accept_orders
+
                     and restaurant.is_open
+
                     and restaurant.deliverable
                 ),
             })
@@ -4710,12 +4923,6 @@ def api_app_home():
 
     # --------------------------------------------------------
     # PENDING ONLINE PAYMENT
-    #
-    # IMPORTANT:
-    # Do NOT call Razorpay from Home.
-    #
-    # Flutter already performs payment recovery separately.
-    # Home only performs the lightweight DB lookup.
     # --------------------------------------------------------
 
     pending_started = perf_counter()
@@ -4758,15 +4965,18 @@ def api_app_home():
                     == mobile10,
                 ),
             )
+
             .order_by(
                 Order.created_at.desc()
             )
+
             .first()
         )
 
         if pending:
 
             pending_payment_order = {
+
                 "id":
                     pending.id,
 
@@ -4800,22 +5010,31 @@ def api_app_home():
     # --------------------------------------------------------
 
     def store_sort_key(r):
+
         if (
             is_new_restaurant(r)
+
             and r.deliverable
+
             and r.is_open
+
             and r.can_accept_orders
         ):
+
             priority = 0
 
         elif (
             r.deliverable
+
             and r.is_open
+
             and r.can_accept_orders
         ):
+
             priority = 1
 
         else:
+
             priority = 2
 
         created_timestamp = (
@@ -4836,24 +5055,233 @@ def api_app_home():
     grocery_shops.sort(
         key=store_sort_key
     )
+     
+
+    
+    # --------------------------------------------------------
+    # HOME ANNOUNCEMENTS
+    # --------------------------------------------------------
+
+    announcements_started = perf_counter()
+
+    active_announcements = []
+
+    announcement_query = (
+        HomeAnnouncement.query
+        .filter(
+            HomeAnnouncement.is_enabled.is_(True),
+            HomeAnnouncement.show_on_home.is_(True),
+        )
+    )
+
+    # Current time for scheduled announcements
+    announcement_now = datetime.utcnow()
+
+    announcement_query = (
+        announcement_query
+        .filter(
+            db.or_(
+                HomeAnnouncement.starts_at.is_(None),
+                HomeAnnouncement.starts_at <= announcement_now,
+            )
+        )
+        .filter(
+            db.or_(
+                HomeAnnouncement.ends_at.is_(None),
+                HomeAnnouncement.ends_at >= announcement_now,
+            )
+        )
+        .order_by(
+            db.case(
+                (
+                    HomeAnnouncement.priority == "emergency",
+                    0,
+                ),
+                (
+                    HomeAnnouncement.priority == "high",
+                    1,
+                ),
+                (
+                    HomeAnnouncement.priority == "normal",
+                    2,
+                ),
+                else_=3,
+            ),
+            HomeAnnouncement.created_at.desc(),
+        )
+    )
+
+    all_announcements = announcement_query.all()
+
+    for announcement in all_announcements:
+
+        # ----------------------------------------------------
+        # SERVICE FILTER
+        # ----------------------------------------------------
+
+        announcement_service = (
+            announcement.service or "all"
+        ).strip().lower()
+
+        # Home API currently doesn't have a selected_service
+        # query parameter in this route, so "all" announcements
+        # are always eligible.
+        #
+        # If a specific service is supplied by Flutter later,
+        # it will be used here.
+
+        selected_service = (
+            request.args.get("service", "all")
+            .strip()
+            .lower()
+        )
+
+        if (
+            announcement_service != "all"
+            and announcement_service != selected_service
+        ):
+            continue
+
+        # ----------------------------------------------------
+        # TARGET FILTER
+        # ----------------------------------------------------
+
+        targets = announcement.targets
+
+        # No target = do not show
+        if not targets:
+            continue
+
+        visible = False
+
+        for target in targets:
+
+            target_type = (
+                target.target_type or ""
+            ).strip().lower()
+
+            target_value = (
+                target.target_value or ""
+            ).strip()
+
+            # ALL USERS
+            if target_type == "all":
+                visible = True
+                break
+
+            # LOCATION TARGET
+            if target_type == "location":
+
+                if (
+                    selected_location
+                    and target_value.lower()
+                    == selected_location.lower()
+                ):
+                    visible = True
+                    break
+
+            # SERVICE TARGET
+            if target_type == "service":
+
+                if (
+                    selected_service
+                    and target_value.lower()
+                    == selected_service.lower()
+                ):
+                    visible = True
+                    break
+
+        if not visible:
+            continue
+
+        # ----------------------------------------------------
+        # SERIALIZE ANNOUNCEMENT
+        # ----------------------------------------------------
+
+        active_announcements.append({
+            "id": announcement.id,
+
+            "title":
+                announcement.title or "",
+
+            "message":
+                announcement.message or "",
+
+            "content":
+                announcement.content or "",
+
+            "type":
+                announcement.announcement_type
+                or "notice",
+
+            "priority":
+                announcement.priority
+                or "normal",
+
+            "icon":
+                announcement.icon,
+
+            "image_url":
+                announcement.image_url,
+
+            "button_text":
+                announcement.button_text,
+
+            "button_action":
+                announcement.button_action,
+
+            "service":
+                announcement.service
+                or "all",
+
+            "dismissible":
+                bool(
+                    announcement.dismissible
+                ),
+
+            "starts_at": (
+                announcement.starts_at.isoformat()
+                if announcement.starts_at
+                else None
+            ),
+
+            "ends_at": (
+                announcement.ends_at.isoformat()
+                if announcement.ends_at
+                else None
+            ),
+        })
+
+    print(
+        "HOME announcements: "
+        f"{(perf_counter() - announcements_started) * 1000:.0f} ms "
+        f"({len(active_announcements)} active)"
+    )
+
 
     # --------------------------------------------------------
-    # BUILD RESPONSE DATA ONCE
+    # BUILD RESPONSE DATA
     # --------------------------------------------------------
 
     response_started = perf_counter()
 
     response_data = {
-        "success": True,
+
+        "success":
+            True,
 
         "selected_location":
             selected_location,
-
+        "announcements": active_announcements,
         "user_location_set":
             user_location_set,
 
         "all_locations":
             get_all_locations(),
+
+        # ----------------------------------------------------
+        # STORES
+        # ----------------------------------------------------
 
         "restaurants": [
             restaurant_json(r)
@@ -4870,16 +5298,51 @@ def api_app_home():
             for r in limited_restaurants
         ],
 
-        "categories": [
-            category_json(c)
-            for c in categories
-        ],
+        # ----------------------------------------------------
+        # MASTER CATEGORIES
+        # ----------------------------------------------------
+
+        # Existing field kept for backward compatibility.
+        "categories":
+            category_data,
+
+        # NEW
+        "food_categories":
+            food_categories,
+
+        # NEW
+        "snacks_categories":
+            snacks_categories,
+
+        # NEW
+        "beverage_categories":
+            beverage_categories,
+
+        # NEW
+        "dessert_categories":
+            dessert_categories,
+
+        # NEW
+        "bakery_categories":
+            bakery_categories,
+
+        # NEW
+        "grocery_master_categories":
+            grocery_category_master,
+
+        # ----------------------------------------------------
+        # GROCERY CATEGORIES
+        # ----------------------------------------------------
 
         "grocery_categories":
             grocery_categories,
 
         "grocery_store_categories":
             grocery_store_categories,
+
+        # ----------------------------------------------------
+        # ITEMS
+        # ----------------------------------------------------
 
         "popular_items":
             popular_items,
@@ -4895,6 +5358,10 @@ def api_app_home():
 
         "trending_items":
             trending_items,
+
+        # ----------------------------------------------------
+        # CUSTOMER
+        # ----------------------------------------------------
 
         "rewards":
             rewards,
@@ -4934,6 +5401,31 @@ def api_app_home():
     print(
         "HOME GROCERY:",
         len(grocery_shops),
+    )
+
+    print(
+        "HOME CATEGORIES:",
+        len(category_data),
+    )
+
+    print(
+        "HOME FOOD CATEGORIES:",
+        len(food_categories),
+    )
+
+    print(
+        "HOME SNACKS CATEGORIES:",
+        len(snacks_categories),
+    )
+
+    print(
+        "HOME BEVERAGE CATEGORIES:",
+        len(beverage_categories),
+    )
+
+    print(
+        "HOME DESSERT CATEGORIES:",
+        len(dessert_categories),
     )
 
     print(
@@ -8650,164 +9142,274 @@ def restaurant_dashboard():
     restaurant_id = session.get("restaurant_id")
 
     if not restaurant_id:
-        return redirect(
-            url_for("restaurant_login")
-        )
+        return redirect(url_for("restaurant_login"))
 
     today = datetime.utcnow().date()
     yesterday = today - timedelta(days=1)
     week_ago = today - timedelta(days=7)
 
-    # ========================================================
-    # FETCH ORDERS FOR THIS RESTAURANT
-    # ========================================================
+    # ---------------------------------------------------------
+    # PAGINATION
+    # 10 ORDERS PER PAGE FOR EVERY SECTION
+    # ---------------------------------------------------------
+    today_page = request.args.get("today_page", 1, type=int)
+    yesterday_page = request.args.get("yesterday_page", 1, type=int)
+    older_page = request.args.get("older_page", 1, type=int)
 
-    orders = (
+    PER_PAGE = 10
+
+    # ---------------------------------------------------------
+    # DATE RANGES
+    # ---------------------------------------------------------
+    today_start = datetime.combine(today, datetime.min.time())
+    tomorrow_start = today_start + timedelta(days=1)
+
+    yesterday_start = datetime.combine(
+        yesterday,
+        datetime.min.time()
+    )
+
+    week_start = datetime.combine(
+        week_ago,
+        datetime.min.time()
+    )
+
+    # ---------------------------------------------------------
+    # TODAY ORDERS - 10 PER PAGE
+    # ---------------------------------------------------------
+    today_pagination = (
         Order.query
-        .filter_by(
-            restaurant_id=restaurant_id
+        .filter(
+            Order.restaurant_id == restaurant_id,
+            Order.created_at >= today_start,
+            Order.created_at < tomorrow_start
         )
-        .order_by(
-            Order.created_at.desc()
+        .order_by(Order.created_at.desc())
+        .paginate(
+            page=today_page,
+            per_page=PER_PAGE,
+            error_out=False
+        )
+    )
+
+    today_orders = today_pagination.items
+
+    for order in today_orders:
+        order.day_category = "Today"
+
+    # ---------------------------------------------------------
+    # YESTERDAY ORDERS - 10 PER PAGE
+    # ---------------------------------------------------------
+    yesterday_pagination = (
+        Order.query
+        .filter(
+            Order.restaurant_id == restaurant_id,
+            Order.created_at >= yesterday_start,
+            Order.created_at < today_start
+        )
+        .order_by(Order.created_at.desc())
+        .paginate(
+            page=yesterday_page,
+            per_page=PER_PAGE,
+            error_out=False
+        )
+    )
+
+    yesterday_orders = yesterday_pagination.items
+
+    for order in yesterday_orders:
+        order.day_category = "Yesterday"
+
+    # ---------------------------------------------------------
+    # OLDER ORDERS - 10 PER PAGE
+    # ---------------------------------------------------------
+    older_pagination = (
+        Order.query
+        .filter(
+            Order.restaurant_id == restaurant_id,
+            Order.created_at < yesterday_start
+        )
+        .order_by(Order.created_at.desc())
+        .paginate(
+            page=older_page,
+            per_page=PER_PAGE,
+            error_out=False
+        )
+    )
+
+    older_orders = older_pagination.items
+
+    for order in older_orders:
+        order.day_category = "Older"
+
+    # ---------------------------------------------------------
+    # DISPLAY ORDERS
+    # ---------------------------------------------------------
+    orders = (
+        today_orders
+        + yesterday_orders
+        + older_orders
+    )
+
+    # ---------------------------------------------------------
+    # DASHBOARD STATISTICS
+    # IMPORTANT:
+    # These are calculated from DATABASE, NOT PAGINATED ORDERS
+    # ---------------------------------------------------------
+
+    # Today's total orders
+    today_orders_count = (
+        Order.query
+        .filter(
+            Order.restaurant_id == restaurant_id,
+            Order.created_at >= today_start,
+            Order.created_at < tomorrow_start
+        )
+        .count()
+    )
+
+    # Today's delivered orders
+    delivered_today_orders = (
+        Order.query
+        .filter(
+            Order.restaurant_id == restaurant_id,
+            Order.created_at >= today_start,
+            Order.created_at < tomorrow_start,
+            Order.status == "Delivered"
         )
         .all()
     )
 
-    # ========================================================
-    # CLASSIFY ORDERS
-    # ========================================================
+    # Today's pending
+    pending_today = (
+        Order.query
+        .filter(
+            Order.restaurant_id == restaurant_id,
+            Order.created_at >= today_start,
+            Order.created_at < tomorrow_start,
+            Order.status == "Pending"
+        )
+        .count()
+    )
 
-    for o in orders:
+    # Today's cancelled
+    cancelled_today = (
+        Order.query
+        .filter(
+            Order.restaurant_id == restaurant_id,
+            Order.created_at >= today_start,
+            Order.created_at < tomorrow_start,
+            Order.status == "Cancelled"
+        )
+        .count()
+    )
 
-        if o.created_at.date() == today:
-            o.day_category = "Today"
+    # Active orders
+    active_orders_count = (
+        Order.query
+        .filter(
+            Order.restaurant_id == restaurant_id,
+            Order.status.in_([
+                "Accepted",
+                "Preparing",
+                "Ready",
+                "Assignment Pending",
+                "Out for Delivery"
+            ])
+        )
+        .count()
+    )
 
-        elif o.created_at.date() == yesterday:
-            o.day_category = "Yesterday"
+    # ---------------------------------------------------------
+    # TODAY EARNINGS
+    # ---------------------------------------------------------
+    today_earnings = sum(
+        order.get_final_total()
+        for order in delivered_today_orders
+    )
 
-        else:
-            o.day_category = "Older"
+    today_cod_amount = sum(
+        order.get_final_total()
+        for order in delivered_today_orders
+        if order.payment_type == "COD"
+    )
 
-    today_orders = [
-        o
-        for o in orders
-        if o.day_category == "Today"
-    ]
+    today_online_amount = sum(
+        order.get_final_total()
+        for order in delivered_today_orders
+        if order.payment_type == "Online"
+    )
 
-    delivered_today_orders = [
-        o
-        for o in today_orders
-        if o.status == "Delivered"
-    ]
+    # ---------------------------------------------------------
+    # WEEKLY ORDERS
+    # ---------------------------------------------------------
+    weekly_orders_count = (
+        Order.query
+        .filter(
+            Order.restaurant_id == restaurant_id,
+            Order.created_at >= week_start
+        )
+        .count()
+    )
 
-    # ========================================================
-    # DASHBOARD STATS
-    # ========================================================
+    weekly_delivered_orders = (
+        Order.query
+        .filter(
+            Order.restaurant_id == restaurant_id,
+            Order.created_at >= week_start,
+            Order.status == "Delivered"
+        )
+        .all()
+    )
 
+    weekly_delivered_count = len(
+        weekly_delivered_orders
+    )
+
+    weekly_earnings = sum(
+        order.get_final_total()
+        for order in weekly_delivered_orders
+    )
+
+    # ---------------------------------------------------------
+    # STATS
+    # ---------------------------------------------------------
     stats = {
+        "today_orders": today_orders_count,
 
-        "today_orders":
-            len(today_orders),
+        "delivered_today": len(
+            delivered_today_orders
+        ),
 
-        "delivered_today":
-            len(delivered_today_orders),
+        "pending_today": pending_today,
 
-        "pending_today":
-            len([
-                o
-                for o in today_orders
-                if o.status == "Pending"
-            ]),
+        "cancelled_today": cancelled_today,
 
-        "cancelled_today":
-            len([
-                o
-                for o in today_orders
-                if o.status == "Cancelled"
-            ]),
+        "active_orders": active_orders_count,
 
-        "active_orders":
-            len([
-                o
-                for o in orders
-                if o.status in [
-                    "Accepted",
-                    "Preparing",
-                    "Ready",
-                    "Assignment Pending",
-                    "Out for Delivery",
-                ]
-            ]),
+        "today_earnings": today_earnings,
 
-        "today_earnings":
-            sum(
-                o.get_final_total()
-                for o in delivered_today_orders
-            ),
+        "today_cod_amount": today_cod_amount,
 
-        "today_cod_amount":
-            sum(
-                o.get_final_total()
-                for o in delivered_today_orders
-                if o.payment_type == "COD"
-            ),
+        "today_online_amount": today_online_amount,
 
-        "today_online_amount":
-            sum(
-                o.get_final_total()
-                for o in delivered_today_orders
-                if o.payment_type == "Online"
-            ),
+        "weekly_orders": weekly_orders_count,
 
-        "weekly_orders":
-            len([
-                o
-                for o in orders
-                if o.created_at.date() >= week_ago
-            ]),
+        "weekly_earnings": weekly_earnings,
 
-        "weekly_earnings":
-            sum(
-                o.get_final_total()
-                for o in orders
-                if (
-                    o.created_at.date() >= week_ago
-                    and o.status == "Delivered"
-                )
-            ),
-
-        "weekly_delivered_orders":
-            len([
-                o
-                for o in orders
-                if (
-                    o.created_at.date() >= week_ago
-                    and o.status == "Delivered"
-                )
-            ]),
+        "weekly_delivered_orders": weekly_delivered_count,
     }
 
-    # ========================================================
-    # RIDER ONLINE / OFFLINE CLEANUP
-    #
-    # A rider is marked offline only when:
-    # - currently marked online
-    # - last_seen exists
-    # - no heartbeat/location update for 5+ minutes
-    # ========================================================
-
-    threshold = (
-        datetime.utcnow()
-        - timedelta(minutes=5)
-    )
+    # ---------------------------------------------------------
+    # RIDER OFFLINE TIMEOUT
+    # ---------------------------------------------------------
+    threshold = datetime.utcnow() - timedelta(minutes=5)
 
     inactive_delivery_persons = (
         DeliveryPerson.query
         .filter(
             DeliveryPerson.is_online.is_(True),
-
             DeliveryPerson.last_seen.isnot(None),
-
             DeliveryPerson.last_seen < threshold,
         )
         .all()
@@ -8828,33 +9430,43 @@ def restaurant_dashboard():
     if inactive_delivery_persons:
         db.session.commit()
 
-    # ========================================================
-    # DELIVERY PERSONS LINKED TO THIS RESTAURANT
-    # ========================================================
-
+    # ---------------------------------------------------------
+    # RESTAURANT DELIVERY PERSONS
+    # ---------------------------------------------------------
     delivery_persons = (
         DeliveryPerson.query
         .join(RestaurantDelivery)
         .filter(
-            RestaurantDelivery.restaurant_id
-            == restaurant_id
+            RestaurantDelivery.restaurant_id == restaurant_id
         )
-        .order_by(
-            DeliveryPerson.name
-        )
+        .order_by(DeliveryPerson.name)
         .all()
     )
 
-    # ========================================================
+    # ---------------------------------------------------------
     # RENDER DASHBOARD
-    # ========================================================
-
+    # ---------------------------------------------------------
     return render_template(
         "restaurant_dashboard.html",
+
         stats=stats,
+
+        # Orders
         orders=orders,
+        today_orders=today_orders,
+        yesterday_orders=yesterday_orders,
+        older_orders=older_orders,
+
+        # Pagination
+        today_pagination=today_pagination,
+        yesterday_pagination=yesterday_pagination,
+        older_pagination=older_pagination,
+
+        # Delivery persons
         delivery_persons=delivery_persons
     )
+
+
 @app.route("/restaurant/delivery-persons")
 def restaurant_delivery_persons():
     restaurant_id = session.get("restaurant_id")
@@ -14238,75 +14850,506 @@ from werkzeug.utils import secure_filename
 import os
 from uuid import uuid4
 
+# ============================================================
+# ADMIN CATEGORY MANAGEMENT
+# ============================================================
+
 @app.route("/admin/categories", methods=["GET", "POST"])
 def manage_categories():
 
     if request.method == "POST":
-        name = request.form.get("name")
-        image = request.files.get("image")   # NEW
 
-        if name:
-            existing = Category.query.filter_by(name=name).first()
-            if not existing:
+        name = request.form.get("name", "").strip()
+        section = request.form.get("section", "food").strip().lower()
+        display_order = request.form.get("display_order", "0").strip()
+        parent_id = request.form.get("parent_id", "").strip()
+        is_active = request.form.get("is_active") == "1"
 
-                filename = secure_filename(image.filename)
-                save_path = os.path.join("static/images/categories", filename)
-                image.save(save_path)
+        # Selected existing locations
+        selected_locations = request.form.getlist("locations")
 
-                new_cat = Category(
-                    name=name,
-                    image="images/categories/" + filename
+        # Optional custom locations:
+        # Admin can type:
+        # Malikipuram, Sakhinetipalli
+        custom_locations_raw = request.form.get(
+            "custom_locations", ""
+        ).strip()
+
+        if custom_locations_raw:
+            custom_locations = [
+                location.strip()
+                for location in custom_locations_raw.split(",")
+                if location.strip()
+            ]
+
+            for location in custom_locations:
+                if location not in selected_locations:
+                    selected_locations.append(location)
+
+        image = request.files.get("image")
+
+        # --------------------------------------------------------
+        # BASIC VALIDATION
+        # --------------------------------------------------------
+
+        if not name:
+            return redirect(url_for("manage_categories"))
+
+        allowed_sections = {
+            "food",
+            "snacks",
+            "beverage",
+            "dessert",
+            "bakery",
+            "grocery",
+        }
+
+        if section not in allowed_sections:
+            section = "food"
+
+        try:
+            display_order = int(display_order)
+        except (TypeError, ValueError):
+            display_order = 0
+
+        parent_category_id = None
+
+        if parent_id:
+            try:
+                parent_category_id = int(parent_id)
+            except (TypeError, ValueError):
+                parent_category_id = None
+
+        # Prevent invalid self-parent
+        if parent_category_id is not None:
+            parent_category = Category.query.get(parent_category_id)
+
+            if not parent_category:
+                parent_category_id = None
+
+        # --------------------------------------------------------
+        # CHECK DUPLICATE CATEGORY
+        # --------------------------------------------------------
+
+        existing = Category.query.filter(
+            db.func.lower(Category.name) == name.lower(),
+            Category.section == section,
+        ).first()
+
+        if existing:
+            return redirect(url_for("manage_categories"))
+
+        # --------------------------------------------------------
+        # IMAGE UPLOAD
+        # --------------------------------------------------------
+
+        category_image = None
+
+        upload_folder = os.path.join(
+            "static",
+            "images",
+            "categories"
+        )
+
+        os.makedirs(upload_folder, exist_ok=True)
+
+        if image and image.filename:
+            original_filename = secure_filename(image.filename)
+
+            if original_filename:
+
+                unique_filename = (
+                    f"{uuid4().hex}_{original_filename}"
                 )
 
-                db.session.add(new_cat)
-                db.session.commit()
+                save_path = os.path.join(
+                    upload_folder,
+                    unique_filename
+                )
 
-    categories = Category.query.all()
-    return render_template("admin_categories.html", categories=categories)
+                image.save(save_path)
+
+                category_image = (
+                    f"images/categories/{unique_filename}"
+                )
+
+        # --------------------------------------------------------
+        # CREATE CATEGORY
+        # --------------------------------------------------------
+
+        new_cat = Category(
+            name=name,
+            image=category_image,
+            section=section,
+            is_active=is_active,
+            display_order=display_order,
+            parent_id=parent_category_id,
+        )
+
+        db.session.add(new_cat)
+
+        # Flush so new_cat.id is available
+        db.session.flush()
+
+        # --------------------------------------------------------
+        # CREATE LOCATION ASSIGNMENTS
+        # --------------------------------------------------------
+
+        clean_locations = []
+
+        for location in selected_locations:
+            location = location.strip()
+
+            if not location:
+                continue
+
+            if location.lower() not in [
+                x.lower() for x in clean_locations
+            ]:
+                clean_locations.append(location)
+
+        for location in clean_locations:
+
+            assignment = CategoryLocation(
+                category_id=new_cat.id,
+                location=location,
+            )
+
+            db.session.add(assignment)
+
+        db.session.commit()
+
+        return redirect(url_for("manage_categories"))
+
+    # ============================================================
+    # GET
+    # ============================================================
+
+    categories = (
+        Category.query
+        .order_by(
+            Category.section.asc(),
+            Category.display_order.asc(),
+            Category.name.asc(),
+        )
+        .all()
+    )
+
+    # Get all locations currently used by categories
+    locations = (
+        db.session.query(CategoryLocation.location)
+        .distinct()
+        .order_by(CategoryLocation.location.asc())
+        .all()
+    )
+
+    locations = [row[0] for row in locations if row[0]]
+
+    return render_template(
+        "admin_categories.html",
+        categories=categories,
+        locations=locations,
+    )
+
+
+# ============================================================
+# CATEGORY RESTAURANT PAGE
+# ============================================================
 
 @app.route("/category/<int:category_id>")
 def restaurants_by_category(category_id):
+
     category = Category.query.get_or_404(category_id)
 
-    # Get restaurants in this category
     restaurants = category.restaurants
 
-    # Pass current time for open/closed logic
     from datetime import datetime
+
     now = datetime.now().time()
 
     return render_template(
         "restaurants_by_category.html",
         category=category,
         restaurants=restaurants,
-        now=now  # needed for open/closed checks in your template
+        now=now,
     )
 
-@app.route("/admin/category/<int:category_id>/edit", methods=["POST"])
+
+# ============================================================
+# EDIT CATEGORY
+# ============================================================
+
+@app.route(
+    "/admin/category/<int:category_id>/edit",
+    methods=["POST"]
+)
 def edit_category(category_id):
+
     cat = Category.query.get_or_404(category_id)
-    new_name = request.form.get("name")
+
+    name = request.form.get("name", "").strip()
+
+    section = request.form.get(
+        "section",
+        cat.section or "food"
+    ).strip().lower()
+
+    display_order = request.form.get(
+        "display_order",
+        str(cat.display_order or 0)
+    ).strip()
+
+    parent_id = request.form.get(
+        "parent_id",
+        ""
+    ).strip()
+
+    is_active = request.form.get("is_active") == "1"
+
+    selected_locations = request.form.getlist("locations")
+
+    custom_locations_raw = request.form.get(
+        "custom_locations",
+        ""
+    ).strip()
+
+    # --------------------------------------------------------
+    # VALIDATE NAME
+    # --------------------------------------------------------
+
+    if not name:
+        name = cat.name
+
+    # --------------------------------------------------------
+    # VALIDATE SECTION
+    # --------------------------------------------------------
+
+    allowed_sections = {
+        "food",
+        "snacks",
+        "beverage",
+        "dessert",
+        "bakery",
+        "grocery",
+    }
+
+    if section not in allowed_sections:
+        section = cat.section or "food"
+
+    # --------------------------------------------------------
+    # DISPLAY ORDER
+    # --------------------------------------------------------
+
+    try:
+        display_order = int(display_order)
+    except (TypeError, ValueError):
+        display_order = 0
+
+    # --------------------------------------------------------
+    # PARENT
+    # --------------------------------------------------------
+
+    parent_category_id = None
+
+    if parent_id:
+        try:
+            parent_category_id = int(parent_id)
+        except (TypeError, ValueError):
+            parent_category_id = None
+
+    # Prevent category from being its own parent
+    if parent_category_id == cat.id:
+        parent_category_id = None
+
+    if parent_category_id is not None:
+
+        parent_category = Category.query.get(
+            parent_category_id
+        )
+
+        if not parent_category:
+            parent_category_id = None
+
+    # --------------------------------------------------------
+    # CHECK DUPLICATE
+    # --------------------------------------------------------
+
+    duplicate = Category.query.filter(
+        Category.id != cat.id,
+        db.func.lower(Category.name) == name.lower(),
+        Category.section == section,
+    ).first()
+
+    if duplicate:
+        return redirect(
+            url_for("manage_categories")
+        )
+
+    # --------------------------------------------------------
+    # UPDATE BASIC DATA
+    # --------------------------------------------------------
+
+    cat.name = name
+    cat.section = section
+    cat.display_order = display_order
+    cat.parent_id = parent_category_id
+    cat.is_active = is_active
+
+    # --------------------------------------------------------
+    # UPDATE IMAGE
+    # --------------------------------------------------------
+
     image = request.files.get("image")
 
-    if new_name:
-        cat.name = new_name
+    if image and image.filename:
 
-    if image and image.filename != "":
-        upload_folder = os.path.join("static", "images", "categories")
-        os.makedirs(upload_folder, exist_ok=True)
-        unique_name = f"{uuid4().hex}_{secure_filename(image.filename)}"
-        save_path = os.path.join(upload_folder, unique_name)
-        image.save(save_path)
-        cat.image = f"images/categories/{unique_name}"
+        upload_folder = os.path.join(
+            "static",
+            "images",
+            "categories"
+        )
+
+        os.makedirs(
+            upload_folder,
+            exist_ok=True
+        )
+
+        original_filename = secure_filename(
+            image.filename
+        )
+
+        if original_filename:
+
+            unique_filename = (
+                f"{uuid4().hex}_{original_filename}"
+            )
+
+            save_path = os.path.join(
+                upload_folder,
+                unique_filename
+            )
+
+            image.save(save_path)
+
+            cat.image = (
+                f"images/categories/{unique_filename}"
+            )
+
+    # --------------------------------------------------------
+    # UPDATE LOCATIONS
+    # --------------------------------------------------------
+
+    if custom_locations_raw:
+
+        custom_locations = [
+            location.strip()
+            for location in custom_locations_raw.split(",")
+            if location.strip()
+        ]
+
+        for location in custom_locations:
+
+            if location.lower() not in [
+                x.lower() for x in selected_locations
+            ]:
+                selected_locations.append(location)
+
+    # Remove existing assignments
+    CategoryLocation.query.filter_by(
+        category_id=cat.id
+    ).delete(
+        synchronize_session=False
+    )
+
+    # Remove duplicates
+    clean_locations = []
+
+    for location in selected_locations:
+
+        location = location.strip()
+
+        if not location:
+            continue
+
+        if location.lower() not in [
+            x.lower() for x in clean_locations
+        ]:
+            clean_locations.append(location)
+
+    # Add new assignments
+    for location in clean_locations:
+
+        db.session.add(
+            CategoryLocation(
+                category_id=cat.id,
+                location=location,
+            )
+        )
 
     db.session.commit()
-    return redirect(url_for("manage_categories"))
-@app.route("/admin/category/<int:category_id>/delete", methods=["POST"])
+
+    return redirect(
+        url_for("manage_categories")
+    )
+
+
+# ============================================================
+# DELETE CATEGORY
+# ============================================================
+@app.route(
+    "/admin/category/<int:category_id>/delete",
+    methods=["POST"]
+)
 def delete_category(category_id):
+
     cat = Category.query.get_or_404(category_id)
+
+    # --------------------------------------------------------
+    # CHECK WHETHER FOOD ITEMS USE THIS CATEGORY
+    # --------------------------------------------------------
+
+    food_item_count = FoodItem.query.filter_by(
+        category_id=cat.id
+    ).count()
+
+    if food_item_count > 0:
+
+        flash(
+            f'Cannot delete "{cat.name}". '
+            f'{food_item_count} food item(s) are using this category. '
+            f'Move them to another category first.',
+            "error",
+        )
+
+        return redirect(
+            url_for("manage_categories")
+        )
+
+    # --------------------------------------------------------
+    # REMOVE CATEGORY LOCATIONS
+    # --------------------------------------------------------
+
+    CategoryLocation.query.filter_by(
+        category_id=cat.id
+    ).delete(
+        synchronize_session=False
+    )
+
+    # --------------------------------------------------------
+    # DELETE CATEGORY
+    # --------------------------------------------------------
+
     db.session.delete(cat)
     db.session.commit()
-    return redirect(url_for("manage_categories"))
+
+    flash(
+        f'Category "{cat.name}" deleted successfully.',
+        "success",
+    )
+
+    return redirect(
+        url_for("manage_categories")
+    )
 import qrcode
 import io
 import base64
@@ -15039,6 +16082,8 @@ def top_customers():
 
 from datetime import datetime, timedelta
 from sqlalchemy import func
+
+
 @app.route("/employee/dashboard")
 def employee_dashboard():
 
@@ -15047,25 +16092,19 @@ def employee_dashboard():
     # ========================================================
 
     if not session.get("employee_id"):
-
         return redirect(
             url_for("employee_login")
         )
-
 
     emp = Employee.query.get(
         session.get("employee_id")
     )
 
-
     # ========================================================
     # FORCE LOGOUT CHECK
     # ========================================================
 
-    if (
-        not emp
-        or not emp.is_logged_in
-    ):
+    if not emp or not emp.is_logged_in:
 
         session.clear()
 
@@ -15073,24 +16112,57 @@ def employee_dashboard():
             url_for("employee_login")
         )
 
-
     # ========================================================
     # DATES
     # ========================================================
 
     today = datetime.utcnow().date()
 
-    yesterday = (
-        today - timedelta(days=1)
+    yesterday = today - timedelta(days=1)
+
+    today_start = datetime.combine(
+        today,
+        datetime.min.time()
     )
 
+    tomorrow_start = (
+        today_start + timedelta(days=1)
+    )
+
+    yesterday_start = datetime.combine(
+        yesterday,
+        datetime.min.time()
+    )
+
+    # ========================================================
+    # PAGINATION
+    # ========================================================
+
+    PER_PAGE = 10
+
+    today_page = request.args.get(
+        "today_page",
+        1,
+        type=int
+    )
+
+    yesterday_page = request.args.get(
+        "yesterday_page",
+        1,
+        type=int
+    )
+
+    older_page = request.args.get(
+        "older_page",
+        1,
+        type=int
+    )
 
     # ========================================================
     # ALLOWED ORDER STATUSES
     # ========================================================
 
     allowed_statuses = [
-
         "Pending",
         "Accepted",
         "Preparing",
@@ -15099,114 +16171,203 @@ def employee_dashboard():
         "Started",
         "Delivered",
         "Cancelled"
+    ]
+
+    # ========================================================
+    # COMMON ORDER OPTIONS
+    # ========================================================
+
+    order_options = [
+
+        db.joinedload(
+            Order.restaurant
+        ),
+
+        db.joinedload(
+            Order.items
+        ),
+
+        db.joinedload(
+            Order.delivery_person
+        )
 
     ]
 
-
     # ========================================================
-    # FETCH ORDERS
+    # TODAY ORDERS
+    # 10 PER PAGE
     # ========================================================
 
-    orders = (
+    today_pagination = (
 
         Order.query
 
         .filter(
             Order.status.in_(
                 allowed_statuses
-            )
+            ),
+
+            Order.created_at >= today_start,
+
+            Order.created_at < tomorrow_start
         )
 
         .options(
-
-            db.joinedload(
-                Order.restaurant
-            ),
-
-            db.joinedload(
-                Order.items
-            ),
-
-            db.joinedload(
-                Order.delivery_person
-            )
-
+            *order_options
         )
 
         .order_by(
             Order.created_at.desc()
         )
 
+        .paginate(
+            page=today_page,
+            per_page=PER_PAGE,
+            error_out=False
+        )
+
+    )
+
+    today_orders = today_pagination.items
+
+    for order in today_orders:
+        order.day_category = "Today"
+
+    # ========================================================
+    # YESTERDAY ORDERS
+    # 10 PER PAGE
+    # ========================================================
+
+    yesterday_pagination = (
+
+        Order.query
+
+        .filter(
+            Order.status.in_(
+                allowed_statuses
+            ),
+
+            Order.created_at >= yesterday_start,
+
+            Order.created_at < today_start
+        )
+
+        .options(
+            *order_options
+        )
+
+        .order_by(
+            Order.created_at.desc()
+        )
+
+        .paginate(
+            page=yesterday_page,
+            per_page=PER_PAGE,
+            error_out=False
+        )
+
+    )
+
+    yesterday_orders = (
+        yesterday_pagination.items
+    )
+
+    for order in yesterday_orders:
+        order.day_category = "Yesterday"
+
+    # ========================================================
+    # OLDER ORDERS
+    # 10 PER PAGE
+    # ========================================================
+
+    older_pagination = (
+
+        Order.query
+
+        .filter(
+            Order.status.in_(
+                allowed_statuses
+            ),
+
+            Order.created_at < yesterday_start
+        )
+
+        .options(
+            *order_options
+        )
+
+        .order_by(
+            Order.created_at.desc()
+        )
+
+        .paginate(
+            page=older_page,
+            per_page=PER_PAGE,
+            error_out=False
+        )
+
+    )
+
+    older_orders = (
+        older_pagination.items
+    )
+
+    for order in older_orders:
+        order.day_category = "Older"
+
+    # ========================================================
+    # COMBINED DISPLAY ORDERS
+    # ========================================================
+
+    orders = (
+        today_orders
+        + yesterday_orders
+        + older_orders
+    )
+
+    # ========================================================
+    # TODAY STATISTICS
+    #
+    # IMPORTANT:
+    # These use ALL today's orders, not just the 10 visible
+    # orders on the current page.
+    # ========================================================
+
+    today_all_orders = (
+
+        Order.query
+
+        .filter(
+            Order.status.in_(
+                allowed_statuses
+            ),
+
+            Order.created_at >= today_start,
+
+            Order.created_at < tomorrow_start
+        )
+
+        .options(
+            db.joinedload(Order.items)
+        )
+
         .all()
 
     )
 
-
     # ========================================================
-    # DAY CLASSIFICATION
+    # DELIVERED ORDERS
     # ========================================================
-
-    for o in orders:
-
-        if (
-            o.created_at
-            and o.created_at.date()
-            == today
-        ):
-
-            o.day_category = (
-                "Today"
-            )
-
-
-        elif (
-            o.created_at
-            and o.created_at.date()
-            == yesterday
-        ):
-
-            o.day_category = (
-                "Yesterday"
-            )
-
-
-        else:
-
-            o.day_category = (
-                "Older"
-            )
-
-
-    # ========================================================
-    # TODAY ORDERS
-    # ========================================================
-
-    today_orders = [
-
-        o
-
-        for o in orders
-
-        if (
-            o.created_at
-            and o.created_at.date()
-            == today
-        )
-
-    ]
-
 
     delivered_orders = [
 
-        o
+        order
 
-        for o in today_orders
+        for order in today_all_orders
 
-        if o.status
-        == "Delivered"
+        if order.status == "Delivered"
 
     ]
-
 
     # ========================================================
     # ACTIVE STATUSES
@@ -15222,116 +16383,94 @@ def employee_dashboard():
 
     ]
 
-
     # ========================================================
-    # STATS
+    # TODAY STATS
     # ========================================================
 
     stats = {
 
         "today_orders":
-
-            len(
-                today_orders
-            ),
-
+            len(today_all_orders),
 
         "today_delivered":
-
-            len(
-                delivered_orders
-            ),
-
+            len(delivered_orders),
 
         "today_cancelled":
-
             len([
 
-                o
+                order
 
-                for o in today_orders
+                for order in today_all_orders
 
-                if o.status
-                == "Cancelled"
+                if order.status == "Cancelled"
 
             ]),
-
 
         "today_pending":
-
             len([
 
-                o
+                order
 
-                for o in today_orders
+                for order in today_all_orders
 
-                if o.status
-                == "Pending"
+                if order.status == "Pending"
 
             ]),
-
 
         "today_active":
-
             len([
 
-                o
+                order
 
-                for o in today_orders
+                for order in today_all_orders
 
-                if o.status
-                in active_statuses
+                if order.status in active_statuses
 
             ]),
 
-
+        # ----------------------------------------------------
         # Delivered revenue only
+        # ----------------------------------------------------
+
         "today_revenue":
-
             sum(
 
-                o.final_total or 0
+                order.final_total or 0
 
-                for o
-                in delivered_orders
+                for order in delivered_orders
 
             ),
 
-
+        # ----------------------------------------------------
         # Delivered delivery charges only
-        "today_delivery_charges":
+        # ----------------------------------------------------
 
+        "today_delivery_charges":
             sum(
 
-                o.delivery_charge or 0
+                order.delivery_charge or 0
 
-                for o
-                in delivered_orders
+                for order in delivered_orders
 
             ),
 
-
+        # ----------------------------------------------------
         # Delivered items only
-        "today_items":
+        # ----------------------------------------------------
 
+        "today_items":
             sum(
 
                 sum(
-
                     item.quantity
-
-                    for item
-                    in o.items
-
+                    for item in order.items
                 )
 
-                for o
-                in delivered_orders
+                for order in delivered_orders
 
             )
 
     }
-
 
     # ========================================================
     # RESTAURANTS
@@ -15340,7 +16479,6 @@ def employee_dashboard():
     restaurants = (
         Restaurant.query.all()
     )
-
 
     # ========================================================
     # DELIVERY PERSONS
@@ -15358,7 +16496,6 @@ def employee_dashboard():
 
     )
 
-
     # ========================================================
     # RENDER
     # ========================================================
@@ -15367,25 +16504,36 @@ def employee_dashboard():
 
         "employee_dashboard.html",
 
-        orders=
-            orders,
+        # All currently displayed orders
+        orders=orders,
 
-        delivery_persons=
-            delivery_persons,
+        # Separate sections
+        today_orders=today_orders,
 
-        stats=
-            stats,
+        yesterday_orders=yesterday_orders,
 
-        restaurants=
-            restaurants,
+        older_orders=older_orders,
 
-        employee=
-            emp,
+        # Pagination objects
+        today_pagination=today_pagination,
 
-        timedelta=
-            timedelta
+        yesterday_pagination=yesterday_pagination,
+
+        older_pagination=older_pagination,
+
+        # Other data
+        delivery_persons=delivery_persons,
+
+        stats=stats,
+
+        restaurants=restaurants,
+
+        employee=emp,
+
+        timedelta=timedelta
 
     )
+
 import random
 from datetime import datetime
 import random
@@ -30288,6 +31436,1114 @@ def start_pickup_verification(order_id):
         "message": "Pickup verification started.",
         "pickup_status": order.pickup_status
     }), 200
+
+@app.route("/admin/home-content")
+def admin_home_content():
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+    announcements = HomeAnnouncement.query.order_by(
+        HomeAnnouncement.created_at.desc()
+    ).all()
+
+    return render_template(
+        "admin/home_content.html",
+        announcements=announcements
+    )
+
+
+@app.route("/admin/home-content/add", methods=["GET", "POST"])
+def admin_home_content_add():
+
+    # ------------------------------------------------------------
+    # ADMIN LOGIN
+    # ------------------------------------------------------------
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+    # ------------------------------------------------------------
+    # GET LOCATIONS
+    # ------------------------------------------------------------
+    # EXACT SAME LOGIC USED BY /restaurants
+    # ------------------------------------------------------------
+
+    all_locations = [
+        loc[0]
+        for loc in db.session.query(Restaurant.location).distinct().all()
+        if loc[0]
+    ]
+
+    # Remove duplicates while keeping original values
+    locations = []
+
+    for location in all_locations:
+
+        location = str(location).strip()
+
+        if location and location.lower() not in [
+            x.lower() for x in locations
+        ]:
+            locations.append(location)
+
+    # Sort locations
+    locations.sort(key=lambda x: x.lower())
+
+    # DEBUG
+    print("\n========== HOME CONTENT ==========")
+    print("Total restaurants:", Restaurant.query.count())
+    print("All restaurant locations:", all_locations)
+    print("Locations sent to template:", locations)
+    print("Location count:", len(locations))
+    print("=================================\n")
+
+    # ------------------------------------------------------------
+    # POST
+    # ------------------------------------------------------------
+
+    if request.method == "POST":
+
+        # --------------------------------------------------------
+        # BASIC DATA
+        # --------------------------------------------------------
+
+        title = request.form.get(
+            "title",
+            ""
+        ).strip()
+
+        message = request.form.get(
+            "message",
+            ""
+        ).strip()
+
+        content = request.form.get(
+            "content",
+            ""
+        ).strip()
+
+        announcement_type = request.form.get(
+            "announcement_type",
+            "notice"
+        ).strip()
+
+        priority = request.form.get(
+            "priority",
+            "normal"
+        ).strip()
+
+        icon = request.form.get(
+            "icon",
+            ""
+        ).strip()
+
+        image_url = request.form.get(
+            "image_url",
+            ""
+        ).strip()
+
+        button_text = request.form.get(
+            "button_text",
+            ""
+        ).strip()
+
+        button_action = request.form.get(
+            "button_action",
+            ""
+        ).strip()
+
+        service = request.form.get(
+            "service",
+            "all"
+        ).strip().lower()
+
+        # --------------------------------------------------------
+        # VALIDATION
+        # --------------------------------------------------------
+
+        if not title:
+
+            flash(
+                "Title is required.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/home_content_form.html",
+                locations=locations
+            )
+
+        if not message:
+
+            flash(
+                "Message is required.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/home_content_form.html",
+                locations=locations
+            )
+
+        # --------------------------------------------------------
+        # CREATE ANNOUNCEMENT
+        # --------------------------------------------------------
+
+        announcement = HomeAnnouncement(
+
+            title=title,
+
+            message=message,
+
+            content=content,
+
+            announcement_type=announcement_type,
+
+            priority=priority,
+
+            icon=icon,
+
+            image_url=image_url,
+
+            button_text=button_text,
+
+            button_action=button_action,
+
+            service=service,
+
+            is_enabled=(
+                request.form.get("is_enabled") == "on"
+            ),
+
+            show_on_home=(
+                request.form.get("show_on_home") == "on"
+            ),
+
+            send_push=(
+                request.form.get("send_push") == "on"
+            ),
+
+            dismissible=(
+                request.form.get("dismissible") == "on"
+            ),
+
+            starts_at=None,
+
+            ends_at=None
+        )
+
+        # --------------------------------------------------------
+        # START DATE
+        # --------------------------------------------------------
+
+        starts_at = request.form.get(
+            "starts_at",
+            ""
+        ).strip()
+
+        if starts_at:
+
+            try:
+
+                announcement.starts_at = datetime.strptime(
+                    starts_at,
+                    "%Y-%m-%dT%H:%M"
+                )
+
+            except ValueError:
+
+                flash(
+                    "Invalid start date/time.",
+                    "danger"
+                )
+
+                return render_template(
+                    "admin/home_content_form.html",
+                    locations=locations
+                )
+
+        # --------------------------------------------------------
+        # END DATE
+        # --------------------------------------------------------
+
+        ends_at = request.form.get(
+            "ends_at",
+            ""
+        ).strip()
+
+        if ends_at:
+
+            try:
+
+                announcement.ends_at = datetime.strptime(
+                    ends_at,
+                    "%Y-%m-%dT%H:%M"
+                )
+
+            except ValueError:
+
+                flash(
+                    "Invalid end date/time.",
+                    "danger"
+                )
+
+                return render_template(
+                    "admin/home_content_form.html",
+                    locations=locations
+                )
+
+        # --------------------------------------------------------
+        # DATE VALIDATION
+        # --------------------------------------------------------
+
+        if (
+            announcement.starts_at
+            and announcement.ends_at
+            and announcement.ends_at <= announcement.starts_at
+        ):
+
+            flash(
+                "End date/time must be after start date/time.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/home_content_form.html",
+                locations=locations
+            )
+
+        # --------------------------------------------------------
+        # SAVE ANNOUNCEMENT
+        # --------------------------------------------------------
+
+        db.session.add(announcement)
+
+        db.session.flush()
+
+        # --------------------------------------------------------
+        # TARGET TYPE
+        # --------------------------------------------------------
+
+        target_type = request.form.get(
+            "target_type",
+            "all"
+        ).strip().lower()
+
+        # ========================================================
+        # ALL USERS
+        # ========================================================
+
+        if target_type == "all":
+
+            db.session.add(
+                HomeAnnouncementTarget(
+                    announcement_id=announcement.id,
+                    target_type="all",
+                    target_value="all"
+                )
+            )
+
+        # ========================================================
+        # SPECIFIC LOCATIONS
+        # ========================================================
+
+        elif target_type == "location":
+
+            selected_locations = request.form.getlist(
+                "locations"
+            )
+
+            selected_locations = [
+                location.strip()
+                for location in selected_locations
+                if location and location.strip()
+            ]
+
+            # Remove duplicates
+            unique_locations = []
+
+            for location in selected_locations:
+
+                if location.lower() not in [
+                    x.lower()
+                    for x in unique_locations
+                ]:
+
+                    unique_locations.append(location)
+
+            # Validate
+            if not unique_locations:
+
+                db.session.rollback()
+
+                flash(
+                    "Please select at least one location.",
+                    "danger"
+                )
+
+                return render_template(
+                    "admin/home_content_form.html",
+                    locations=locations
+                )
+
+            # Save targets
+            for location in unique_locations:
+
+                db.session.add(
+                    HomeAnnouncementTarget(
+                        announcement_id=announcement.id,
+                        target_type="location",
+                        target_value=location
+                    )
+                )
+
+        # ========================================================
+        # SPECIFIC SERVICES
+        # ========================================================
+
+        elif target_type == "service":
+
+            selected_services = request.form.getlist(
+                "services"
+            )
+
+            selected_services = [
+                service.strip().lower()
+                for service in selected_services
+                if service and service.strip()
+            ]
+
+            unique_services = []
+
+            for selected_service in selected_services:
+
+                if selected_service not in unique_services:
+                    unique_services.append(selected_service)
+
+            if not unique_services:
+
+                db.session.rollback()
+
+                flash(
+                    "Please select at least one service.",
+                    "danger"
+                )
+
+                return render_template(
+                    "admin/home_content_form.html",
+                    locations=locations
+                )
+
+            for selected_service in unique_services:
+
+                db.session.add(
+                    HomeAnnouncementTarget(
+                        announcement_id=announcement.id,
+                        target_type="service",
+                        target_value=selected_service
+                    )
+                )
+
+        # ========================================================
+        # INVALID TARGET
+        # ========================================================
+
+        else:
+
+            db.session.rollback()
+
+            flash(
+                "Invalid target type.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/home_content_form.html",
+                locations=locations
+            )
+
+        # --------------------------------------------------------
+        # COMMIT
+        # --------------------------------------------------------
+
+        try:
+
+            db.session.commit()
+
+            flash(
+                "Home content created successfully.",
+                "success"
+            )
+
+            return redirect(
+                url_for("admin_home_content")
+            )
+
+        except Exception as e:
+
+            db.session.rollback()
+
+            print(
+                "HOME CONTENT SAVE ERROR:",
+                repr(e)
+            )
+
+            flash(
+                "Failed to create home content.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/home_content_form.html",
+                locations=locations
+            )
+
+    # ------------------------------------------------------------
+    # GET
+    # ------------------------------------------------------------
+
+    return render_template(
+        "admin/home_content_form.html",
+        locations=locations
+    )
+
+
+
+
+
+@app.route(
+    "/admin/home-content/<int:announcement_id>/toggle",
+    methods=["POST"]
+)
+def toggle_home_content(announcement_id):
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+    announcement = HomeAnnouncement.query.get_or_404(
+        announcement_id
+    )
+
+    announcement.is_enabled = (
+        not announcement.is_enabled
+    )
+
+    db.session.commit()
+
+    flash(
+        "Home content status updated.",
+        "success"
+    )
+
+    return redirect(
+        url_for("admin_home_content")
+    )
+
+
+# ============================================================
+# DELETE HOME CONTENT
+# ============================================================
+
+@app.route(
+    "/admin/home-content/<int:announcement_id>/delete",
+    methods=["POST"]
+)
+def delete_home_content(announcement_id):
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+    announcement = HomeAnnouncement.query.get_or_404(
+        announcement_id
+    )
+
+    try:
+
+        # Delete related targets first
+        HomeAnnouncementTarget.query.filter_by(
+            announcement_id=announcement.id
+        ).delete(
+            synchronize_session=False
+        )
+
+        # Delete announcement
+        db.session.delete(announcement)
+
+        db.session.commit()
+
+        flash(
+            "Home content deleted successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print(
+            "DELETE HOME CONTENT ERROR:",
+            repr(e)
+        )
+
+        flash(
+            "Failed to delete home content.",
+            "danger"
+        )
+
+    return redirect(
+        url_for("admin_home_content")
+    )
+@app.route(
+    "/admin/home-content/<int:announcement_id>/edit",
+    methods=["GET", "POST"]
+)
+def edit_home_content(announcement_id):
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+    announcement = HomeAnnouncement.query.get_or_404(
+        announcement_id
+    )
+
+    # --------------------------------------------------
+    # GET LOCATIONS
+    # --------------------------------------------------
+    all_locations = [
+        loc[0]
+        for loc in db.session.query(
+            Restaurant.location
+        ).distinct().all()
+        if loc[0]
+    ]
+
+    locations = []
+
+    for location in all_locations:
+        location = str(location).strip()
+
+        if location and location.lower() not in [
+            x.lower() for x in locations
+        ]:
+            locations.append(location)
+
+    locations.sort(key=lambda x: x.lower())
+
+    # --------------------------------------------------
+    # GET
+    # --------------------------------------------------
+    if request.method == "GET":
+
+        return render_template(
+            "admin/home_content_form.html",
+            announcement=announcement,
+            locations=locations
+        )
+
+    # --------------------------------------------------
+    # BASIC VALIDATION
+    # --------------------------------------------------
+    title = request.form.get(
+        "title",
+        ""
+    ).strip()
+
+    message = request.form.get(
+        "message",
+        ""
+    ).strip()
+
+    if not title:
+        flash(
+            "Title is required.",
+            "danger"
+        )
+
+        return render_template(
+            "admin/home_content_form.html",
+            announcement=announcement,
+            locations=locations
+        )
+
+    if not message:
+        flash(
+            "Message is required.",
+            "danger"
+        )
+
+        return render_template(
+            "admin/home_content_form.html",
+            announcement=announcement,
+            locations=locations
+        )
+
+    # --------------------------------------------------
+    # UPDATE ANNOUNCEMENT
+    # --------------------------------------------------
+    announcement.title = title
+
+    announcement.message = message
+
+    announcement.content = (
+        request.form.get(
+            "content",
+            ""
+        ).strip()
+    )
+
+    announcement.announcement_type = (
+        request.form.get(
+            "announcement_type",
+            "notice"
+        ).strip().lower()
+    )
+
+    announcement.priority = (
+        request.form.get(
+            "priority",
+            "normal"
+        ).strip().lower()
+    )
+
+    announcement.icon = (
+        request.form.get(
+            "icon",
+            ""
+        ).strip()
+    )
+
+    announcement.image_url = (
+        request.form.get(
+            "image_url",
+            ""
+        ).strip()
+    )
+
+    announcement.button_text = (
+        request.form.get(
+            "button_text",
+            ""
+        ).strip()
+    )
+
+    announcement.button_action = (
+        request.form.get(
+            "button_action",
+            ""
+        ).strip()
+    )
+
+    announcement.service = (
+        request.form.get(
+            "service",
+            "all"
+        ).strip().lower()
+    )
+
+    announcement.is_enabled = (
+        request.form.get(
+            "is_enabled"
+        ) == "on"
+    )
+
+    announcement.show_on_home = (
+        request.form.get(
+            "show_on_home"
+        ) == "on"
+    )
+
+    announcement.send_push = (
+        request.form.get(
+            "send_push"
+        ) == "on"
+    )
+
+    announcement.dismissible = (
+        request.form.get(
+            "dismissible"
+        ) == "on"
+    )
+
+    # --------------------------------------------------
+    # START DATE
+    # --------------------------------------------------
+    starts_at = request.form.get(
+        "starts_at",
+        ""
+    ).strip()
+
+    if starts_at:
+
+        try:
+
+            announcement.starts_at = datetime.strptime(
+                starts_at,
+                "%Y-%m-%dT%H:%M"
+            )
+
+        except ValueError:
+
+            flash(
+                "Invalid start date/time.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/home_content_form.html",
+                announcement=announcement,
+                locations=locations
+            )
+
+    else:
+
+        announcement.starts_at = None
+
+    # --------------------------------------------------
+    # END DATE
+    # --------------------------------------------------
+    ends_at = request.form.get(
+        "ends_at",
+        ""
+    ).strip()
+
+    if ends_at:
+
+        try:
+
+            announcement.ends_at = datetime.strptime(
+                ends_at,
+                "%Y-%m-%dT%H:%M"
+            )
+
+        except ValueError:
+
+            flash(
+                "Invalid end date/time.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/home_content_form.html",
+                announcement=announcement,
+                locations=locations
+            )
+
+    else:
+
+        announcement.ends_at = None
+
+    # --------------------------------------------------
+    # DATE VALIDATION
+    # --------------------------------------------------
+    if (
+        announcement.starts_at
+        and announcement.ends_at
+        and announcement.ends_at
+        <= announcement.starts_at
+    ):
+
+        flash(
+            "End date/time must be after start date/time.",
+            "danger"
+        )
+
+        return render_template(
+            "admin/home_content_form.html",
+            announcement=announcement,
+            locations=locations
+        )
+
+    # --------------------------------------------------
+    # TARGET TYPE
+    # --------------------------------------------------
+    target_type = (
+        request.form.get(
+            "target_type",
+            "all"
+        ).strip().lower()
+    )
+
+    if target_type not in (
+        "all",
+        "location",
+        "service"
+    ):
+
+        flash(
+            "Invalid target type.",
+            "danger"
+        )
+
+        return render_template(
+            "admin/home_content_form.html",
+            announcement=announcement,
+            locations=locations
+        )
+
+    # --------------------------------------------------
+    # REMOVE OLD TARGETS
+    # --------------------------------------------------
+    HomeAnnouncementTarget.query.filter_by(
+        announcement_id=announcement.id
+    ).delete(
+        synchronize_session=False
+    )
+
+    # --------------------------------------------------
+    # ALL USERS
+    # --------------------------------------------------
+    if target_type == "all":
+
+        db.session.add(
+            HomeAnnouncementTarget(
+                announcement_id=announcement.id,
+                target_type="all",
+                target_value="all"
+            )
+        )
+
+    # --------------------------------------------------
+    # LOCATIONS
+    # --------------------------------------------------
+    elif target_type == "location":
+
+        selected_locations = request.form.getlist(
+            "locations"
+        )
+
+        selected_locations = [
+            x.strip()
+            for x in selected_locations
+            if x and x.strip()
+        ]
+
+        if not selected_locations:
+
+            db.session.rollback()
+
+            flash(
+                "Please select at least one location.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/home_content_form.html",
+                announcement=announcement,
+                locations=locations
+            )
+
+        for location in selected_locations:
+
+            db.session.add(
+                HomeAnnouncementTarget(
+                    announcement_id=announcement.id,
+                    target_type="location",
+                    target_value=location
+                )
+            )
+
+    # --------------------------------------------------
+    # SERVICES
+    # --------------------------------------------------
+    elif target_type == "service":
+
+        selected_services = request.form.getlist(
+            "services"
+        )
+
+        selected_services = [
+            x.strip().lower()
+            for x in selected_services
+            if x and x.strip()
+        ]
+
+        if not selected_services:
+
+            db.session.rollback()
+
+            flash(
+                "Please select at least one service.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/home_content_form.html",
+                announcement=announcement,
+                locations=locations
+            )
+
+        for service in selected_services:
+
+            db.session.add(
+                HomeAnnouncementTarget(
+                    announcement_id=announcement.id,
+                    target_type="service",
+                    target_value=service
+                )
+            )
+
+    # --------------------------------------------------
+    # SAVE
+    # --------------------------------------------------
+    try:
+
+        db.session.commit()
+
+        flash(
+            "Home announcement updated and republished successfully.",
+            "success"
+        )
+
+        return redirect(
+            url_for(
+                "admin_home_content"
+            )
+        )
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print(
+            "EDIT HOME CONTENT ERROR:",
+            repr(e)
+        )
+
+        flash(
+            "Failed to update home content.",
+            "danger"
+        )
+
+        return render_template(
+            "admin/home_content_form.html",
+            announcement=announcement,
+            locations=locations
+        )
+# =========================================================
+# ADMIN - SUSPEND / ACTIVATE DELIVERY PERSON
+# =========================================================
+
+@app.route(
+    "/admin/delivery-person/<int:delivery_person_id>/toggle-status",
+    methods=["POST"]
+)
+def admin_toggle_delivery_person_status(
+    delivery_person_id
+):
+
+    # -----------------------------------------------------
+    # ADMIN AUTH
+    # -----------------------------------------------------
+
+    if not session.get("admin_logged_in"):
+        return jsonify({
+            "success": False,
+            "error": "Unauthorized"
+        }), 401
+
+
+    dp = DeliveryPerson.query.get_or_404(
+        delivery_person_id
+    )
+
+
+    # -----------------------------------------------------
+    # TOGGLE STATUS
+    # -----------------------------------------------------
+
+    dp.is_active = not dp.is_active
+
+
+    # -----------------------------------------------------
+    # WHEN SUSPENDED
+    # -----------------------------------------------------
+
+    if not dp.is_active:
+
+        dp.is_online = False
+
+        dp.is_available = False
+
+
+        message = (
+            f"{dp.name} has been suspended."
+        )
+
+
+    # -----------------------------------------------------
+    # WHEN ACTIVATED
+    # -----------------------------------------------------
+
+    else:
+
+        dp.is_available = True
+
+        message = (
+            f"{dp.name} has been activated."
+        )
+
+
+    db.session.commit()
+
+
+    return jsonify({
+        "success": True,
+        "id": dp.id,
+        "is_active": dp.is_active,
+        "is_online": dp.is_online,
+        "is_available": dp.is_available,
+        "message": message
+    })
+
+# =========================================================
+# ADMIN - DELIVERY PERSON CONTROL PAGE
+# =========================================================
+
+@app.route("/admin/delivery-person-control")
+def admin_delivery_person_control():
+
+    # -----------------------------------------------------
+    # USE YOUR EXISTING ADMIN AUTHENTICATION HERE
+    # -----------------------------------------------------
+    # If your admin session key is different,
+    # change this condition to your existing admin check.
+
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin_login"))
+
+
+    delivery_persons = (
+        DeliveryPerson.query
+        .order_by(DeliveryPerson.name.asc())
+        .all()
+    )
+
+
+    active_count = sum(
+        1 for dp in delivery_persons
+        if dp.is_active
+    )
+
+    suspended_count = sum(
+        1 for dp in delivery_persons
+        if not dp.is_active
+    )
+
+    online_count = sum(
+        1 for dp in delivery_persons
+        if dp.is_online
+    )
+
+
+    return render_template(
+        "admin_delivery_person_control.html",
+        delivery_persons=delivery_persons,
+        active_count=active_count,
+        suspended_count=suspended_count,
+        online_count=online_count
+    )
+
+
 # ==========================================================
 # RIDER APPLICATION ROUTE REGISTRATION
 # ==========================================================

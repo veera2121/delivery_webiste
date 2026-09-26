@@ -2,396 +2,1384 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Employee Dashboard- RucHiGo</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+<title>Employee Dashboard - RucHiGo</title>
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}">
+
 <style>
-    /* ===== GLOBAL ===== */
+
+/* =========================================================
+   RucHiGo Employee Dashboard
+   Laptop Optimized + Modern Light Glass UI
+   ========================================================= */
+
+:root {
+    --bg: #f4f7f9;
+    --surface: #ffffff;
+    --surface-soft: #f8fafc;
+    --surface-glass: rgba(255, 255, 255, 0.86);
+
+    --border: #e5eaf0;
+    --border-soft: #edf1f5;
+
+    --text: #172033;
+    --text-secondary: #475467;
+    --muted: #667085;
+    --muted-light: #98a2b3;
+
+    --primary: #0f766e;
+    --primary-hover: #115e59;
+    --primary-soft: #ecfdf8;
+
+    --blue: #2563eb;
+    --blue-soft: #eff6ff;
+
+    --green: #16a34a;
+    --green-soft: #ecfdf3;
+
+    --orange: #d97706;
+    --orange-soft: #fff7ed;
+
+    --red: #dc2626;
+    --red-soft: #fef2f2;
+
+    --purple: #7c3aed;
+    --purple-soft: #f5f3ff;
+
+    --cyan: #0891b2;
+    --cyan-soft: #ecfeff;
+
+    --shadow-sm: 0 3px 12px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.07);
+    --shadow-lg: 0 16px 38px rgba(15, 23, 42, 0.10);
+
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+}
+
+
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    width: 100%;
+    overflow-x: hidden;
+}
+
 body {
-    font-family: 'Poppins', sans-serif;
-    background: #0f172a;
-    color: #ffffff;
+    width: 100%;
+    min-height: 100vh;
+
     margin: 0;
-    padding: 20px;
+    padding: 18px;
+
+    overflow-x: hidden;
+
+    font-family: 'Poppins', 'Inter', Arial, sans-serif;
+
+    background:
+        radial-gradient(
+            circle at 0% 0%,
+            rgba(20, 184, 166, 0.08),
+            transparent 24%
+        ),
+        radial-gradient(
+            circle at 100% 0%,
+            rgba(59, 130, 246, 0.06),
+            transparent 22%
+        ),
+        var(--bg);
+
+    color: var(--text);
 }
 
-/* ===== HEADINGS ===== */
-h2, h3 {
-    font-weight: 600;
+button,
+input,
+select {
+    font-family: inherit;
+}
+
+button {
+    -webkit-tap-highlight-color: transparent;
+}
+
+a {
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+/* =========================================================
+   MAIN DASHBOARD SHELL
+   Laptop optimized
+   ========================================================= */
+
+.dashboard-shell {
+    width: 100%;
+    max-width: 1580px;
+
+    margin: 0 auto;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.emp-header {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 17px 20px;
+
     margin-bottom: 10px;
+
+    background: var(--surface-glass);
+
+    border: 1px solid rgba(255, 255, 255, 0.82);
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-md);
+
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
 }
 
-h2 {
-    font-size: 24px;
+.emp-header h2 {
+    margin: 0;
+
+    color: var(--text);
+
+    font-size: clamp(18px, 1.5vw, 23px);
+    font-weight: 750;
+
+    line-height: 1.3;
 }
 
-h3 {
-    margin-top: 30px;
-    color: #94a3b8;
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+.emp-top-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    margin-bottom: 16px;
 }
 
-/* ===== STATS SECTION ===== */
+.logout-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    min-height: 38px;
+
+    padding: 8px 15px;
+
+    background: #ffffff;
+    color: #b42318;
+
+    border: 1px solid #f0d4d1;
+    border-radius: var(--radius-sm);
+
+    text-decoration: none;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    box-shadow: var(--shadow-sm);
+
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: #fff7f6;
+    border-color: #e8b8b3;
+    transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   TITLES
+   ========================================================= */
+
+.dashboard-title {
+    margin: 5px 0 16px;
+
+    color: var(--text);
+
+    font-size: 21px;
+    font-weight: 750;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    margin: 22px 0 10px;
+
+    color: var(--text-secondary);
+
+    font-size: 16px;
+    font-weight: 750;
+}
+
+
+/* =========================================================
+   STATS CARD
+   ========================================================= */
+
 .stats-wrapper {
-    background: linear-gradient(145deg, #1e293b, #020617);
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-    margin-bottom: 25px;
+    width: 100%;
+
+    overflow-x: auto;
+
+    padding: 7px;
+
+    margin-bottom: 17px;
+
+    background: var(--surface-glass);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-md);
+
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
 }
 
 .stats-table {
     width: 100%;
-    border-collapse: collapse;
+    min-width: 880px;
+
+    border-collapse: separate;
+    border-spacing: 4px;
+
     text-align: center;
 }
 
 .stats-table th {
-    padding: 12px;
-    color: #94a3b8;
-    font-size: 14px;
+    padding: 8px 7px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+    font-weight: 750;
+
+    white-space: nowrap;
 }
 
 .stats-table td {
-    padding: 12px;
-    font-weight: 600;
-    font-size: 15px;
+    padding: 11px 6px;
+
+    background: var(--surface-soft);
+
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+
+    color: var(--text);
+
+    font-size: 13px;
+    font-weight: 750;
+
+    white-space: nowrap;
 }
 
-/* COLORS */
-.green { color: #22c55e; }
-.red { color: #ef4444; }
-.blue { color: #3b82f6; }
-.orange { color: #f59e0b; }
+.green {
+    color: var(--green) !important;
+}
 
-/* ===== TOP BAR ===== */
+.red {
+    color: var(--red) !important;
+}
+
+.blue {
+    color: var(--blue) !important;
+}
+
+.orange {
+    color: var(--orange) !important;
+}
+
+
+/* =========================================================
+   SEARCH / FILTER BAR
+   ========================================================= */
+
 .emp-top-bar {
+    width: 100%;
+
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
     align-items: center;
+
+    gap: 9px;
+    flex-wrap: wrap;
+
+    padding: 10px 11px;
+
+    margin-bottom: 8px;
+
+    background: var(--surface-glass);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+
+    box-shadow: var(--shadow-sm);
+
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
 }
 
 .emp-top-bar input,
 .emp-top-bar select {
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: none;
-    background: #1e293b;
-    color: #fff;
+    height: 38px;
+
+    padding: 8px 12px;
+
+    border: 1px solid #dde3ea;
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: var(--text-secondary);
+
     outline: none;
-    box-shadow: inset 0 0 0 1px #334155;
+
+    font-size: 12px;
+
+    transition: all 0.2s ease;
+}
+
+.emp-top-bar input {
+    width: 270px;
+    max-width: 100%;
+}
+
+.emp-top-bar select {
+    min-width: 150px;
+}
+
+.emp-top-bar input::placeholder {
+    color: var(--muted-light);
 }
 
 .emp-top-bar input:focus,
 .emp-top-bar select:focus {
-    box-shadow: 0 0 0 2px #3b82f6;
+    border-color: #80cbc4;
+
+    box-shadow:
+        0 0 0 3px rgba(20, 184, 166, 0.08);
 }
 
 .live-count {
     margin-left: auto;
-    font-weight: 600;
+
+    color: var(--muted);
+
+    font-size: 12px;
+    font-weight: 650;
+
+    white-space: nowrap;
 }
 
-/* ===== TABLE ===== */
+.live-count strong {
+    color: var(--primary);
+}
+
+
+/* =========================================================
+   ORDER SECTION
+   ========================================================= */
+
+.order-section {
+    width: 100%;
+
+    transition:
+        opacity 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+/* =========================================================
+   TABLE WRAPPER
+   Important for laptop:
+   page itself does not overflow horizontally.
+   ========================================================= */
+
+.table-wrap {
+    width: 100%;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius-md);
+
+    box-shadow: var(--shadow-md);
+}
+
+
+/* =========================================================
+   ORDER TABLE
+   ========================================================= */
+
 .emp-table {
     width: 100%;
-    border-collapse: collapse;
-    background: #020617;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+
+    min-width: 1340px;
+
+    border-collapse: separate;
+    border-spacing: 0;
+
+    background: #ffffff;
 }
 
 .emp-table th {
-    background: #1e293b;
-    padding: 14px;
-    font-size: 14px;
-    color: #94a3b8;
+    padding: 10px 9px;
+
+    background: #f8fafc;
+
+    border-bottom: 1px solid var(--border);
+
+    color: #667085;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+
+    white-space: nowrap;
+
+    position: sticky;
+    top: 0;
+
+    z-index: 3;
 }
 
 .emp-table td {
-    padding: 14px;
-    border-bottom: 1px solid #1e293b;
-    font-size: 14px;
+    padding: 10px 9px;
+
+    border-bottom: 1px solid var(--border-soft);
+
+    color: var(--text-secondary);
+
+    font-size: 11px;
+
+    vertical-align: top;
 }
 
-.emp-table tr:hover {
-    background: rgba(59,130,246,0.08);
-    transition: 0.3s;
+.emp-table tbody tr {
+    transition:
+        background 0.18s ease,
+        box-shadow 0.18s ease;
 }
 
-/* NEW ORDER HIGHLIGHT */
+.emp-table tbody tr:hover {
+    background: #f8fffd;
+}
+
+.emp-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =========================================================
+   COLUMN WIDTHS
+   ========================================================= */
+
+.emp-table th:nth-child(1),
+.emp-table td:nth-child(1) {
+    width: 75px;
+}
+
+.emp-table th:nth-child(2),
+.emp-table td:nth-child(2) {
+    width: 125px;
+}
+
+.emp-table th:nth-child(3),
+.emp-table td:nth-child(3) {
+    width: 145px;
+}
+
+.emp-table th:nth-child(4),
+.emp-table td:nth-child(4) {
+    width: 195px;
+}
+
+.emp-table th:nth-child(5),
+.emp-table td:nth-child(5) {
+    width: 250px;
+}
+
+.emp-table th:nth-child(6),
+.emp-table td:nth-child(6) {
+    width: 80px;
+}
+
+.emp-table th:nth-child(7),
+.emp-table td:nth-child(7) {
+    width: 90px;
+}
+
+.emp-table th:nth-child(8),
+.emp-table td:nth-child(8) {
+    width: 125px;
+}
+
+.emp-table th:nth-child(9),
+.emp-table td:nth-child(9) {
+    width: 180px;
+}
+
+.emp-table th:nth-child(10),
+.emp-table td:nth-child(10) {
+    width: 120px;
+}
+
+.emp-table th:nth-child(11),
+.emp-table td:nth-child(11) {
+    width: 150px;
+}
+
+.emp-table th:nth-child(12),
+.emp-table td:nth-child(12) {
+    width: 130px;
+}
+
+
+/* =========================================================
+   ORDER ID
+   ========================================================= */
+
+.emp-table td:first-child strong {
+    color: var(--text);
+
+    font-size: 11px;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   NEW ORDER
+   ========================================================= */
+
 .new-order {
-    animation: glow 1s infinite alternate;
+    background: #f0fdf9 !important;
+
+    box-shadow:
+        inset 4px 0 0 #14b8a6;
 }
 
-@keyframes glow {
-    from { background: rgba(34,197,94,0.1); }
-    to { background: rgba(34,197,94,0.25); }
+@keyframes newOrderPulse {
+
+    0% {
+        box-shadow:
+            inset 4px 0 0 #14b8a6;
+    }
+
+    50% {
+        box-shadow:
+            inset 6px 0 0 #0d9488;
+    }
+
+    100% {
+        box-shadow:
+            inset 4px 0 0 #14b8a6;
+    }
+
 }
 
-/* ===== STATUS COLORS ===== */
-.status-Pending { color: #f59e0b; }
-.status-Accepted { color: #3b82f6; }
-.status-Preparing { color: #6366f1; }
-.status-Ready { color: #22c55e; }
-.status-Delivered { color: #10b981; }
-.status-Cancelled { color: #ef4444; }
-
-/* ===== ITEMS LIST ===== */
-.items {
-    padding-left: 18px;
+.new-order {
+    animation: newOrderPulse 1.8s infinite;
 }
 
-.items li {
-    margin-bottom: 4px;
-}
 
-/* ===== ADDRESS ===== */
+/* =========================================================
+   ADDRESS
+   ========================================================= */
+
 .address {
-    max-width: 200px;
-    font-size: 13px;
-    color: #cbd5f5;
+    max-width: 195px;
+
+    color: #667085 !important;
+
+    font-size: 10.5px !important;
+
+    line-height: 1.5;
 }
 
-/* ===== DELIVERY STATUS ===== */
-.online {
-    color: #22c55e;
+
+/* =========================================================
+   CUSTOMER
+   ========================================================= */
+
+.food-name {
+    color: #344054;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   WHATSAPP
+   ========================================================= */
+
+.wa-btn {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 27px;
+    height: 25px;
+
+    margin-top: 4px;
+
+    background: #22c55e;
+    color: #ffffff;
+
+    border-radius: 7px;
+
+    text-decoration: none;
+
     font-size: 12px;
+
+    transition: all 0.2s ease;
+}
+
+.wa-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(34, 197, 94, 0.2);
+}
+
+
+/* =========================================================
+   ITEM ROW
+   ========================================================= */
+
+.item-line {
+    display: flex;
+    align-items: center;
+
+    gap: 4px;
+    flex-wrap: wrap;
+
+    margin-bottom: 5px;
+}
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 2px 6px;
+
+    border-radius: 999px;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.category-tag {
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+.weight-tag {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.qty-tag {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.price-tag {
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.more-items {
+    margin-top: 3px;
+
+    color: #98a2b3;
+
+    font-size: 9px;
+    font-weight: 650;
+}
+
+
+/* =========================================================
+   DELIVERY STATUS
+   ========================================================= */
+
+.dp-cell {
+    white-space: nowrap;
+}
+
+.online {
+    color: #16a34a !important;
+
+    font-size: 10px;
+    font-weight: 700;
 }
 
 .offline {
-    color: #ef4444;
-    font-size: 12px;
-}
+    color: #dc2626 !important;
 
-/* ===== ACTION BUTTONS ===== */
-.sticky-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.sticky-actions select {
-    padding: 6px;
-    border-radius: 8px;
-    background: #1e293b;
-    color: #fff;
-    border: none;
-}
-
-.sticky-actions button {
-    background: linear-gradient(135deg, #3b82f6, #6366f1);
-    border: none;
-    padding: 6px 10px;
-    border-radius: 8px;
-    color: #fff;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.sticky-actions button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 5px 15px rgba(59,130,246,0.4);
-}
-
-.sticky-actions button:disabled {
-    background: gray;
-    cursor: not-allowed;
-}
-
-/* ===== WHATSAPP BUTTON ===== */
-.wa-btn {
-    display: inline-block;
-    margin-top: 5px;
-    padding: 5px 8px;
-    border-radius: 8px;
-    background: #25d366;
-    color: white;
-    text-decoration: none;
-    font-size: 12px;
-}
-
-/* ===== POPUP ===== */
-#newOrderBadge {
-    font-weight: bold;
-    backdrop-filter: blur(10px);
-    background: rgba(0,0,0,0.7);
-}
-
-/* ===== SCROLL ===== */
-::-webkit-scrollbar {
-    width: 6px;
-}
-::-webkit-scrollbar-thumb {
-    background: #3b82f6;
-    border-radius: 10px;
-} 
-.emp-top-actions {
-    display: flex;
-    justify-content: flex-start;
-    margin-bottom: 15px;
-}
-
-.logout-btn {
-    background: #ff4d4d;
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: 0.3s;
-}
-
-.logout-btn:hover {
-    background: #e60000;
-} 
-.emp-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.emp-header h2 {
+    font-size: 10px;
     font-weight: 700;
-    color: #01ece1;
-}
-</style>  
-<style>
-.session-popup {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-
-    background: rgba(0,0,0,0.6);
-
-    display: none;
-    justify-content: center;
-    align-items: center;
-
-    z-index: 9999;
 }
 
-.popup-box {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    text-align: center;
-    width: 280px;
 
-    animation: popupFade 0.3s ease;
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.status-cell {
+    min-width: 160px;
+
+    font-weight: 750;
 }
 
-.popup-box h3 {
-    margin-bottom: 10px;
+.status-Pending {
+    color: #b45309 !important;
 }
 
-.popup-box button {
-    margin-top: 15px;
-    padding: 10px 18px;
-    border: none;
-    background: #ff4d4d;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
+.status-Accepted {
+    color: #2563eb !important;
 }
 
-@keyframes popupFade {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-} 
+.status-Preparing {
+    color: #7c3aed !important;
+}
+
+.status-Ready {
+    color: #15803d !important;
+}
+
+.status-Out-for-Delivery {
+    color: #0891b2 !important;
+}
+
+.status-Started {
+    color: #2563eb !important;
+}
+
+.status-Delivered {
+    color: #15803d !important;
+}
+
+.status-Cancelled {
+    color: #dc2626 !important;
+}
+
+
+/* =========================================================
+   PAYMENT BADGES
+   ========================================================= */
 
 .payment-badge {
-    display: inline-block;
+    display: inline-flex;
+
+    align-items: center;
+
     margin-top: 4px;
+
     padding: 3px 6px;
-    border-radius: 6px;
-    font-size: 12px;
+
+    border-radius: 999px;
+
+    font-size: 8.5px;
+    font-weight: 700;
+
+    white-space: nowrap;
 }
 
 .payment-badge.COD {
-    background: #ffe0b2;
-    color: #e65100;
+    background: var(--orange-soft);
+    color: #c2410c;
 }
 
 .payment-badge.Online {
-    background: #c8e6c9;
-    color: #1b5e20;
+    background: var(--green-soft);
+    color: #15803d;
 }
 
 .payment-badge.NotCollected {
-    background: #eee;
-    color: #555;
-} 
-.item-line{
-    display:flex;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:5px;
-    margin-bottom:5px;
+    background: #f2f4f7;
+    color: #667085;
 }
 
-.food-name{
-    font-size:13px;
-    font-weight:600;
-    color:#ffffff;
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.sticky-actions {
+    min-width: 140px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
 }
 
-.tag{
-    font-size:10px;
-    font-weight:600;
-    padding:2px 7px;
-    border-radius:999px;
+.sticky-actions select {
+    width: 100%;
+
+    min-height: 31px;
+
+    padding: 5px 7px;
+
+    background: #ffffff;
+    color: #344054;
+
+    border: 1px solid #dfe5ec;
+    border-radius: 8px;
+
+    outline: none;
+
+    font-size: 9.5px;
 }
 
-.category-tag{
-    background:#eef2ff;
-    color:#4338ca;
+.sticky-actions select:focus {
+    border-color: #7dd3c7;
+
+    box-shadow:
+        0 0 0 3px rgba(20,184,166,0.08);
 }
 
-.weight-tag{
-    background:#ecfdf5;
-    color:#047857;
+.sticky-actions button {
+    width: 100%;
+
+    min-height: 31px;
+
+    padding: 6px 8px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: var(--primary);
+    color: #ffffff;
+
+    cursor: pointer;
+
+    font-size: 9.5px;
+    font-weight: 750;
+
+    transition: all 0.18s ease;
 }
 
-.qty-tag{
-    background:#fff7ed;
-    color:#c2410c;
+.sticky-actions button:hover {
+    background: var(--primary-hover);
+
+    transform: translateY(-1px);
 }
 
-.more-items{
-    margin-top:4px;
-    font-size:11px;
-    color:#6b7280;
-    font-weight:600;
-} 
-.price-tag{
-    background:#fef3c7;
-    color:#92400e;
+.sticky-actions button:disabled,
+.sticky-actions select:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+
+    transform: none;
 }
+
+.assign-btn {
+    background: #2563eb !important;
+}
+
+.assign-btn:hover {
+    background: #1d4ed8 !important;
+}
+
+
+/* =========================================================
+   CANCEL REASON
+   ========================================================= */
+
+.cancel-reason {
+    max-width: 120px;
+
+    color: var(--red) !important;
+
+    font-size: 10px !important;
+
+    line-height: 1.45;
+}
+
+
+/* =========================================================
+   PAGINATION
+   ========================================================= */
+
+.pagination-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    padding: 9px 2px 2px;
+}
+
+.pagination-info {
+    color: var(--muted);
+
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+
+    gap: 4px;
+
+    flex-wrap: wrap;
+}
+
+.pagination a,
+.pagination span {
+    min-width: 30px;
+    height: 30px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 8px;
+
+    border-radius: 8px;
+
+    font-size: 10.5px;
+    font-weight: 750;
+
+    text-decoration: none;
+}
+
+.pagination a {
+    background: #ffffff;
+
+    border: 1px solid #dfe5ec;
+
+    color: #475467;
+
+    transition: all 0.18s ease;
+}
+
+.pagination a:hover {
+    background: var(--primary-soft);
+
+    border-color: #99f6e4;
+
+    color: var(--primary);
+}
+
+.pagination .active {
+    background: var(--primary);
+
+    border: 1px solid var(--primary);
+
+    color: #ffffff;
+}
+
+.pagination .disabled {
+    background: #f2f4f7;
+
+    border: 1px solid #eaecf0;
+
+    color: #98a2b3;
+}
+
+
+/* =========================================================
+   EMPTY
+   ========================================================= */
+
+.empty-state {
+    width: 100%;
+
+    padding: 19px;
+
+    background: #ffffff;
+
+    border: 1px dashed #d7dde5;
+
+    border-radius: var(--radius-md);
+
+    color: var(--muted);
+
+    text-align: center;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   AJAX LOADING
+   ========================================================= */
+
+.order-section.section-loading {
+    opacity: 0.55;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   NEW ORDER BADGE
+   ========================================================= */
+
+#newOrderBadge {
+    position: fixed;
+
+    top: 18px;
+    right: 18px;
+
+    z-index: 9999;
+
+    display: none;
+
+    padding: 10px 15px;
+
+    background: #ffffff;
+
+    color: #344054;
+
+    border: 1px solid #c7f5e9;
+
+    border-left: 4px solid #14b8a6;
+
+    border-radius: 11px;
+
+    box-shadow: var(--shadow-lg);
+
+    font-size: 12px;
+    font-weight: 750;
+}
+
+
+/* =========================================================
+   SESSION POPUP
+   ========================================================= */
+
+.session-popup {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 99999;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(15, 23, 42, 0.30);
+
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+}
+
+.popup-box {
+    width: min(340px, 100%);
+
+    padding: 24px;
+
+    background: #ffffff;
+
+    border: 1px solid var(--border);
+
+    border-radius: 17px;
+
+    box-shadow: var(--shadow-lg);
+
+    text-align: center;
+
+    animation: popupFade 0.25s ease;
+}
+
+.popup-box h3 {
+    margin: 0 0 8px;
+
+    color: var(--text);
+
+    font-size: 18px;
+}
+
+.popup-box p {
+    margin: 0;
+
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+.popup-box button {
+    margin-top: 17px;
+
+    padding: 9px 17px;
+
+    border: none;
+
+    border-radius: 9px;
+
+    background: var(--primary);
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.popup-box button:hover {
+    background: var(--primary-hover);
+}
+
+@keyframes popupFade {
+
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   SCROLLBARS
+   ========================================================= */
+
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: #eef2f6;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #a8b3c0;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #7d8997;
+}
+
+
+/* =========================================================
+   LAPTOP 1366 - 1600
+   ========================================================= */
+
+@media (min-width: 1000px) and (max-width: 1600px) {
+
+    body {
+        padding: 15px;
+    }
+
+    .dashboard-shell {
+        max-width: 1540px;
+    }
+
+    .emp-header {
+        padding: 15px 18px;
+    }
+
+    .dashboard-title {
+        font-size: 20px;
+    }
+
+    .section-title {
+        font-size: 15px;
+        margin-top: 19px;
+    }
+
+}
+
+
+/* =========================================================
+   SMALLER LAPTOP
+   ========================================================= */
+
+@media (min-width: 769px) and (max-width: 1200px) {
+
+    body {
+        padding: 12px;
+    }
+
+    .emp-table {
+        min-width: 1260px;
+    }
+
+    .stats-table {
+        min-width: 820px;
+    }
+
+    .emp-top-bar input {
+        width: 240px;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    body {
+        padding: 10px;
+    }
+
+    .emp-header {
+        padding: 14px;
+    }
+
+    .emp-header h2 {
+        font-size: 17px;
+    }
+
+    .dashboard-title {
+        font-size: 18px;
+    }
+
+    .emp-top-actions {
+        justify-content: stretch;
+    }
+
+    .logout-btn {
+        width: 100%;
+    }
+
+    .emp-top-bar {
+        align-items: stretch;
+    }
+
+    .emp-top-bar input,
+    .emp-top-bar select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .live-count {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .pagination-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .pagination {
+        width: 100%;
+    }
+
+}
+
 </style>
+</head>
+
+
+<body>
+
+<div class="dashboard-shell">
+
+
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
+
 <div class="emp-header">
-    <h2>👨‍💼 Welcome, {{ employee.name }}</h2>
+
+    <h2>
+        👨‍💼 Welcome, {{ employee.name }}
+    </h2>
+
 </div>
+
+
 <div class="emp-top-actions">
-    <a href="{{ url_for('employee_logout') }}" class="logout-btn">
+
+    <a
+        href="{{ url_for('employee_logout') }}"
+        class="logout-btn"
+    >
         🚪 Logout
     </a>
-</div>
-<h2>👨‍💼 Employee Orders Panel</h2> 
 
-<h2>📊 Today Performance</h2>
+</div>
+
+
+<!-- =========================================================
+     MAIN TITLE
+     ========================================================= -->
+
+<h2 class="dashboard-title">
+    👨‍💼 Employee Orders Panel
+</h2>
+
+
+<!-- =========================================================
+     PERFORMANCE
+     ========================================================= -->
+
+<h3 class="section-title">
+    📊 Today Performance
+</h3>
+
 
 <div class="stats-wrapper">
 
 <table class="stats-table">
+
 <thead>
 <tr>
+
     <th>🍽 Restaurants</th>
     <th>📦 Orders</th>
     <th>✅ Delivered</th>
@@ -401,491 +1389,2448 @@ h3 {
     <th>💰 Revenue</th>
     <th>🚚 Delivery ₹</th>
     <th>🍛 Items Sold</th>
+
 </tr>
 </thead>
 
+
 <tbody>
 <tr>
-    <td data-label="Restaurants">{{ restaurants|length }}</td>
-    <td data-label="Orders">{{ stats.today_orders }}</td>
-    <td data-label="Delivered" class="green">{{ stats.today_delivered }}</td>
-    <td data-label="Cancelled" class="red">{{ stats.today_cancelled }}</td>
-    <td data-label="Active" class="blue">{{ stats.today_active }}</td>
-    <td data-label="Pending" class="orange">{{ stats.today_pending }}</td>
-    <td data-label="Revenue">₹{{ stats.today_revenue }}</td>
-    <td data-label="Delivery">₹{{ stats.today_delivery_charges }}</td>
-    <td data-label="Items">{{ stats.today_items }}</td>
+
+    <td>
+        {{ restaurants|length }}
+    </td>
+
+    <td>
+        {{ stats.today_orders }}
+    </td>
+
+    <td class="green">
+        {{ stats.today_delivered }}
+    </td>
+
+    <td class="red">
+        {{ stats.today_cancelled }}
+    </td>
+
+    <td class="blue">
+        {{ stats.today_active }}
+    </td>
+
+    <td class="orange">
+        {{ stats.today_pending }}
+    </td>
+
+    <td>
+        ₹{{ stats.today_revenue }}
+    </td>
+
+    <td>
+        ₹{{ stats.today_delivery_charges }}
+    </td>
+
+    <td>
+        {{ stats.today_items }}
+    </td>
+
 </tr>
 </tbody>
 
 </table>
 
 </div>
+
+
+<!-- =========================================================
+     FILTER
+     ========================================================= -->
+
 <div class="emp-top-bar">
-    <input type="text" id="searchInput" placeholder="🔍 Search Order / Name / Phone">
+
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="🔍 Search Order / Name / Phone"
+    >
+
 
     <select id="statusFilter">
-        <option value="">All Status</option>
-        <option>Pending</option>
-        <option>Preparing</option>
-        <option>Out for Delivery</option>
-        <option>Delivered</option>
-        <option>Cancelled</option>
+
+        <option value="">
+            All Status
+        </option>
+
+        <option value="Pending">
+            Pending
+        </option>
+
+        <option value="Preparing">
+            Preparing
+        </option>
+
+        <option value="Out for Delivery">
+            Out for Delivery
+        </option>
+
+        <option value="Delivered">
+            Delivered
+        </option>
+
+        <option value="Cancelled">
+            Cancelled
+        </option>
+
     </select>
 
+
     <span class="live-count">
-        📦 Total Orders: <strong id="orderCount">{{ orders|length }}</strong>
+
+        📦 Total Orders:
+
+        <strong id="orderCount">
+            {{
+                today_pagination.total
+                + yesterday_pagination.total
+                + older_pagination.total
+            }}
+        </strong>
+
     </span>
-</div> 
 
-{% for category in ['Today','Yesterday','Older'] %}
+</div>
 
-<h3>📅 {{ category }} Orders</h3>
 
-{% set filtered_orders = orders | selectattr("day_category", "equalto", category) | list %}
+<!-- =========================================================
+     ORDER ROW MACRO
+     ========================================================= -->
 
-{% if filtered_orders %}
+{% macro render_order_row(order) %}
 
-<table class="emp-table">
-
-<thead>
-<tr>
-    <th>ID</th>
-    <th>Restaurant</th>
-    <th>Customer</th>
-    <th>Address</th>
-    <th>Items</th>
-    <th>Delivery ₹</th>
-    <th>Total ₹</th> 
-    <th>Placed Time</th>
-    <th>Status</th> 
-    <th>Delivery Boy</th>
-    <th>Actions</th> 
-    <th>Cancel Reason</th>
-</tr>
-</thead>
-
-<tbody>
-{% for order in filtered_orders %}
-<tr data-order-id="{{ order.id }}"
+<tr
+    data-order-id="{{ order.id }}"
     data-status="{{ order.status }}"
-    class="{% if order.status == 'Pending' %}new-order{% endif %}">
+    class="{% if order.status == 'Pending' %}new-order{% endif %}"
+>
 
-<td>#{{ order.order_id }}</td>
 
-<td>{{ order.restaurant.name }}</td>
+<!-- ID -->
 
-<td>
-    {{ order.customer_name }} <br>
-    {{ order.phone }}
+<td data-label="ID">
+
+    <strong>
+        #{{ order.order_id }}
+    </strong>
+
+</td>
+
+
+<!-- RESTAURANT -->
+
+<td data-label="Restaurant">
+
+    {% if order.restaurant %}
+
+        {{ order.restaurant.name }}
+
+    {% else %}
+
+        -
+
+    {% endif %}
+
+</td>
+
+
+<!-- CUSTOMER -->
+
+<td data-label="Customer">
+
+    <strong>
+        {{ order.customer_name }}
+    </strong>
+
     <br>
-    <a href="https://wa.me/{{ order.phone }}" target="_blank" class="wa-btn">💬</a>
-</td>
 
-<td class="address">
-    {{ order.house_no }}, {{ order.landmark }},
-    {{ order.city }}, {{ order.state }} - {{ order.pincode }}
-</td>
-
-<td>
-
-{% for item in order.items[:3] %}
-
-<div class="item-line">
-
-    <span class="food-name">
-        🍽️ {{ item.item_name }}
+    <span style="color:#667085;">
+        {{ order.phone }}
     </span>
 
-    {% if item.category %}
+    <br>
+
+    <a
+        href="https://wa.me/{{ order.phone }}"
+        target="_blank"
+        rel="noopener"
+        class="wa-btn"
+        title="WhatsApp Customer"
+    >
+        💬
+    </a>
+
+</td>
+
+
+<!-- ADDRESS -->
+
+<td
+    data-label="Address"
+    class="address"
+>
+
+    {{ order.house_no }},
+    {{ order.landmark }},
+    {{ order.city }},
+    {{ order.state }}
+    -
+    {{ order.pincode }}
+
+</td>
+
+
+<!-- ITEMS -->
+
+<td data-label="Items">
+
+    {% for item in order.items[:3] %}
+
+    <div class="item-line">
+
+        <span class="food-name">
+            🍽️ {{ item.item_name }}
+        </span>
+
+
+        {% if item.category %}
+
         <span class="tag category-tag">
             {{ item.category }}
         </span>
-    {% endif %}
 
-    {% if item.weight %}
+        {% endif %}
+
+
+        {% if item.weight %}
+
         <span class="tag weight-tag">
             {{ item.weight }}
         </span>
-    {% endif %}
 
-    <span class="tag qty-tag">
-        ×{{ item.quantity }}
-    </span>
+        {% endif %}
 
-    <span class="tag price-tag">
-        ₹{{ item.price }}
-    </span>
 
-</div>
-
-{% endfor %}
-
-{% if order.items|length > 3 %}
-<div class="more-items">
-    +{{ order.items|length - 3 }} more items
-</div>
-{% endif %}
-
-</td>
-
-<td>₹{{ order.delivery_charge or 0 }}</td>
-
-<td><strong>₹{{ order.final_total }}</strong></td>
-<td>
-    {{ (order.created_at + timedelta(hours=5, minutes=30)).strftime('%d-%m-%Y %I:%M %p') }}
-</td>
-<td class="status-cell status-{{ order.status }}">
-
-    <!-- MAIN STATUS -->
-    {{ order.status }}
-
-    <!-- LOCK -->
-    {% if order.status in ['Delivered','Cancelled'] %}
-        <br>
-        <span style="color:gray;font-size:12px;">
-            🔒 Locked
+        <span class="tag qty-tag">
+            ×{{ item.quantity }}
         </span>
+
+
+        <span class="tag price-tag">
+            ₹{{ item.price }}
+        </span>
+
+    </div>
+
+    {% endfor %}
+
+
+    {% if order.items|length > 3 %}
+
+    <div class="more-items">
+
+        +{{ order.items|length - 3 }}
+        more items
+
+    </div>
+
     {% endif %}
+
+</td>
+
+
+<!-- DELIVERY CHARGE -->
+
+<td data-label="Delivery">
+
+    ₹{{ order.delivery_charge or 0 }}
+
+</td>
+
+
+<!-- TOTAL -->
+
+<td data-label="Total">
+
+    <strong>
+        ₹{{ order.final_total }}
+    </strong>
+
+</td>
+
+
+<!-- CREATED -->
+
+<td data-label="Placed Time">
+
+    {% if order.created_at %}
+
+        {{
+            (
+                order.created_at
+                + timedelta(hours=5, minutes=30)
+            ).strftime('%d-%m-%Y %I:%M %p')
+        }}
+
+    {% else %}
+
+        -
+
+    {% endif %}
+
+</td>
+
+
+<!-- STATUS -->
+
+<td
+    data-label="Status"
+    class="status-cell status-{{ order.status|replace(' ', '-') }}"
+>
+
+    <strong>
+        {{ order.status }}
+    </strong>
+
+
+    {% if order.status in ['Delivered', 'Cancelled'] %}
 
     <br>
 
-    <!-- PAYMENT STATUS -->
+    <span
+        style="
+            color:#98a2b3;
+            font-size:9px;
+            font-weight:650;
+        "
+    >
+        🔒 Locked
+    </span>
+
+    {% endif %}
+
+
+    <br>
+
+
+    <!-- PAYMENT -->
 
     {% if order.payment_source == "Checkout" %}
+
         <span class="payment-badge Online">
             💳 Paid During Checkout
         </span>
 
+
     {% elif order.payment_source == "DeliveryLink" %}
+
         <span class="payment-badge Online">
             🚚💳 Paid At Delivery
         </span>
 
+
     {% elif order.payment_type == "COD"
-            and order.payment_status != "Paid" %}
+          and order.payment_status != "Paid" %}
+
         <span class="payment-badge COD">
             💵 Cash On Delivery
         </span>
 
+
     {% elif order.payment_type == "COD"
-            and order.payment_status == "Paid" %}
+          and order.payment_status == "Paid" %}
+
         <span class="payment-badge Online">
             💳 Paid Online After COD
         </span>
 
+
     {% else %}
+
         <span class="payment-badge NotCollected">
             ⚠ Payment Pending
         </span>
+
     {% endif %}
+
 
     <!-- PAYMENT TIME -->
+
     {% if order.payment_time %}
-        <br>
-        <span style="font-size:12px;color:#666;">
-            🕒 {{ order.payment_time.strftime('%d-%m-%Y %I:%M %p') }}
-        </span>
+
+    <br>
+
+    <span
+        style="
+            display:inline-block;
+            margin-top:4px;
+            color:#667085;
+            font-size:8.5px;
+            font-weight:500;
+        "
+    >
+
+        🕒
+        {{ order.payment_time.strftime(
+            '%d-%m-%Y %I:%M %p'
+        ) }}
+
+    </span>
+
     {% endif %}
+
 
     <!-- CANCEL REASON -->
+
     {% if order.status == 'Cancelled'
           and order.cancel_reason %}
-        <br>
-        <span style="color:red;font-size:12px;">
-            ❌ {{ order.cancel_reason }}
-        </span>
+
+    <br>
+
+    <span
+        style="
+            display:inline-block;
+            margin-top:4px;
+            color:#dc2626;
+            font-size:9px;
+            font-weight:650;
+        "
+    >
+
+        ❌ {{ order.cancel_reason }}
+
+    </span>
+
     {% endif %}
 
 </td>
-<!-- ✅ DELIVERY PERSON -->
-<td class="dp-cell">
+
+
+<!-- DELIVERY BOY -->
+
+<td
+    data-label="Delivery Boy"
+    class="dp-cell"
+>
+
     {% if order.delivery_person %}
-        {{ order.delivery_person.name }} <br>
-        <span class="{% if order.delivery_person.is_online %}online{% else %}offline{% endif %}">
-            ● {{ "Online" if order.delivery_person.is_online else "Offline" }}
+
+        <strong>
+            {{ order.delivery_person.name }}
+        </strong>
+
+        <br>
+
+        <span
+            class="{%
+                if order.delivery_person.is_online
+            %}online{% else %}offline{% endif %}"
+        >
+
+            ●
+
+            {{
+                "Online"
+                if order.delivery_person.is_online
+                else "Offline"
+            }}
+
         </span>
+
     {% else %}
-        <span style="color:red;">Not Assigned</span>
+
+        <span
+            style="
+                color:#dc2626;
+                font-size:9px;
+                font-weight:700;
+            "
+        >
+            Not Assigned
+        </span>
+
     {% endif %}
+
 </td>
 
-<!-- ✅ ACTIONS -->
-<td class="sticky-actions">
 
-<!-- STATUS -->
-<select class="status-select"
+<!-- ACTIONS -->
+
+<td
+    data-label="Actions"
+    class="sticky-actions"
+>
+
+
+    <!-- STATUS SELECT -->
+
+    <select
+        class="status-select"
         data-order-id="{{ order.id }}"
-        {% if order.status in ['Delivered','Cancelled'] %}disabled{% endif %}>
 
-    <option {% if order.status=='Pending' %}selected{% endif %}>Pending</option>
-    <option {% if order.status=='Accepted' %}selected{% endif %}>Accepted</option>
-    <option {% if order.status=='Preparing' %}selected{% endif %}>Preparing</option>
-    <option {% if order.status=='Ready' %}selected{% endif %}>Ready</option>
-    <option {% if order.status=='Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
-    <option {% if order.status=='Cancelled' %}selected{% endif %}>Cancelled</option>
+        {% if order.status in ['Delivered','Cancelled'] %}
+        disabled
+        {% endif %}
+    >
 
-    <option disabled {% if order.status=='Delivered' %}selected{% endif %}>Delivered</option>
-</select>
+        <option
+            value="Pending"
+            {% if order.status == 'Pending' %}
+            selected
+            {% endif %}
+        >
+            Pending
+        </option>
 
-<button class="update-btn"
+
+        <option
+            value="Accepted"
+            {% if order.status == 'Accepted' %}
+            selected
+            {% endif %}
+        >
+            Accepted
+        </option>
+
+
+        <option
+            value="Preparing"
+            {% if order.status == 'Preparing' %}
+            selected
+            {% endif %}
+        >
+            Preparing
+        </option>
+
+
+        <option
+            value="Ready"
+            {% if order.status == 'Ready' %}
+            selected
+            {% endif %}
+        >
+            Ready
+        </option>
+
+
+        <option
+            value="Out for Delivery"
+            {% if order.status == 'Out for Delivery' %}
+            selected
+            {% endif %}
+        >
+            Out for Delivery
+        </option>
+
+
+        <option
+            value="Cancelled"
+            {% if order.status == 'Cancelled' %}
+            selected
+            {% endif %}
+        >
+            Cancelled
+        </option>
+
+
+        <option
+            value="Delivered"
+            disabled
+            {% if order.status == 'Delivered' %}
+            selected
+            {% endif %}
+        >
+            Delivered
+        </option>
+
+    </select>
+
+
+    <!-- UPDATE -->
+
+    <button
+        type="button"
+        class="update-btn"
         data-order-id="{{ order.id }}"
-        {% if order.status in ['Delivered','Cancelled'] %}disabled{% endif %}>
-    ✔
-</button>
 
-<br><br>
+        {% if order.status in ['Delivered','Cancelled'] %}
+        disabled
+        {% endif %}
+    >
+        ✔ Update
+    </button>
 
-<!-- ASSIGN -->
-<select class="assign-select"
+
+    <!-- ASSIGN DELIVERY -->
+
+    <select
+        class="assign-select"
         data-order-id="{{ order.id }}"
-        {% if order.status in ['Delivered','Cancelled'] %}disabled{% endif %}>
 
-    <option value="">Select Delivery</option>
+        {% if order.status in ['Delivered','Cancelled'] %}
+        disabled
+        {% endif %}
+    >
 
-    {% for dp in delivery_persons %}
-    <option value="{{ dp.id }}"
-        {% if order.delivery_person_id == dp.id %}selected{% endif %}>
-        {{ dp.name }}
-    </option>
-    {% endfor %}
-</select>
+        <option value="">
+            Select Delivery
+        </option>
 
-<button class="assign-btn"
+
+        {% for dp in delivery_persons %}
+
+        <option
+            value="{{ dp.id }}"
+
+            {% if order.delivery_person_id == dp.id %}
+            selected
+            {% endif %}
+        >
+
+            {{ dp.name }}
+
+        </option>
+
+        {% endfor %}
+
+    </select>
+
+
+    <!-- ASSIGN -->
+
+    <button
+        type="button"
+        class="assign-btn"
         data-order-id="{{ order.id }}"
-        {% if order.status in ['Delivered','Cancelled'] %}disabled{% endif %}>
-    Assign
-</button>
 
-<!-- ✅ CANCEL REASON -->
-<td data-label="Cancel Reason">
-    {{ order.cancel_reason or '-' }}
+        {% if order.status in ['Delivered','Cancelled'] %}
+        disabled
+        {% endif %}
+    >
+        Assign
+    </button>
+
+
 </td>
+
+
+<!-- CANCEL REASON COLUMN -->
+
+<td
+    data-label="Cancel Reason"
+    class="cancel-reason"
+>
+
+    {% if order.cancel_reason %}
+
+        ❌ {{ order.cancel_reason }}
+
+    {% else %}
+
+        <span style="color:#98a2b3;">
+            -
+        </span>
+
+    {% endif %}
+
 </td>
+
 
 </tr>
-{% endfor %}
-</tbody>
 
-</table>
-{% else %}
-<p>No {{ category.lower() }} orders.</p>
-{% endif %}
-
-{% endfor %}
-<div id="newOrderBadge" style="
-position: fixed;
-top: 20px;
-right: 20px;
-background: #111;
-color: #fff;
-padding: 12px 18px;
-border-radius: 10px;
-display: none;
-z-index: 9999;
-box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-">
-🔔 New Order
-</div> 
+{% endmacro %}
 
 
-<div id="sessionPopup" class="session-popup">
-    <div class="popup-box">
-        <h3>⚠️ Session Expired</h3>
-        <p>Admin logged you out</p>
-        <button onclick="goLogin()">Login Again</button>
+<!-- =========================================================
+     TODAY SECTION
+     ========================================================= -->
+
+<div
+    id="todaySection"
+    class="order-section"
+    data-section="today"
+>
+
+    <h3 class="section-title">
+        📅 Today Orders
+    </h3>
+
+
+    {% if today_orders %}
+
+    <div class="table-wrap">
+
+        <table class="emp-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>ID</th>
+                    <th>Restaurant</th>
+                    <th>Customer</th>
+                    <th>Address</th>
+                    <th>Items</th>
+                    <th>Delivery ₹</th>
+                    <th>Total ₹</th>
+                    <th>Placed Time</th>
+                    <th>Status</th>
+                    <th>Delivery Boy</th>
+                    <th>Actions</th>
+                    <th>Cancel Reason</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for order in today_orders %}
+
+                    {{ render_order_row(order) }}
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
     </div>
+
+
+    <!-- TODAY PAGINATION -->
+
+    <div class="pagination-wrap">
+
+
+        <div class="pagination-info">
+
+            Showing
+            {{
+                ((today_pagination.page - 1)
+                * today_pagination.per_page) + 1
+            }}
+            -
+            {{
+                ((today_pagination.page - 1)
+                * today_pagination.per_page)
+                + today_orders|length
+            }}
+            of
+            {{ today_pagination.total }}
+
+            today orders
+
+        </div>
+
+
+        <div class="pagination">
+
+
+            <!-- PREVIOUS -->
+
+            {% if today_pagination.has_prev %}
+
+            <a
+                href="{{ url_for(
+                    'employee_dashboard',
+                    today_page=today_pagination.prev_num,
+                    yesterday_page=yesterday_pagination.page,
+                    older_page=older_pagination.page
+                ) }}"
+                class="section-page-link"
+                data-section="today"
+            >
+                ‹
+            </a>
+
+            {% else %}
+
+            <span class="disabled">
+                ‹
+            </span>
+
+            {% endif %}
+
+
+            <!-- NUMBERS -->
+
+            {% for page_num in today_pagination.iter_pages(
+                left_edge=1,
+                right_edge=1,
+                left_current=2,
+                right_current=2
+            ) %}
+
+
+                {% if page_num %}
+
+
+                    {% if page_num == today_pagination.page %}
+
+                    <span class="active">
+                        {{ page_num }}
+                    </span>
+
+                    {% else %}
+
+                    <a
+                        href="{{ url_for(
+                            'employee_dashboard',
+                            today_page=page_num,
+                            yesterday_page=yesterday_pagination.page,
+                            older_page=older_pagination.page
+                        ) }}"
+                        class="section-page-link"
+                        data-section="today"
+                    >
+                        {{ page_num }}
+                    </a>
+
+                    {% endif %}
+
+
+                {% else %}
+
+                    <span class="disabled">
+                        …
+                    </span>
+
+                {% endif %}
+
+
+            {% endfor %}
+
+
+            <!-- NEXT -->
+
+            {% if today_pagination.has_next %}
+
+            <a
+                href="{{ url_for(
+                    'employee_dashboard',
+                    today_page=today_pagination.next_num,
+                    yesterday_page=yesterday_pagination.page,
+                    older_page=older_pagination.page
+                ) }}"
+                class="section-page-link"
+                data-section="today"
+            >
+                ›
+            </a>
+
+            {% else %}
+
+            <span class="disabled">
+                ›
+            </span>
+
+            {% endif %}
+
+
+        </div>
+
+    </div>
+
+
+    {% else %}
+
+    <div class="empty-state">
+        📭 No today orders.
+    </div>
+
+    {% endif %}
+
 </div>
+
+
+<!-- =========================================================
+     YESTERDAY SECTION
+     ========================================================= -->
+
+<div
+    id="yesterdaySection"
+    class="order-section"
+    data-section="yesterday"
+>
+
+    <h3 class="section-title">
+        📅 Yesterday Orders
+    </h3>
+
+
+    {% if yesterday_orders %}
+
+    <div class="table-wrap">
+
+        <table class="emp-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>ID</th>
+                    <th>Restaurant</th>
+                    <th>Customer</th>
+                    <th>Address</th>
+                    <th>Items</th>
+                    <th>Delivery ₹</th>
+                    <th>Total ₹</th>
+                    <th>Placed Time</th>
+                    <th>Status</th>
+                    <th>Delivery Boy</th>
+                    <th>Actions</th>
+                    <th>Cancel Reason</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for order in yesterday_orders %}
+
+                    {{ render_order_row(order) }}
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- YESTERDAY PAGINATION -->
+
+    <div class="pagination-wrap">
+
+
+        <div class="pagination-info">
+
+            Showing
+            {{
+                ((yesterday_pagination.page - 1)
+                * yesterday_pagination.per_page) + 1
+            }}
+            -
+            {{
+                ((yesterday_pagination.page - 1)
+                * yesterday_pagination.per_page)
+                + yesterday_orders|length
+            }}
+            of
+            {{ yesterday_pagination.total }}
+
+            yesterday orders
+
+        </div>
+
+
+        <div class="pagination">
+
+
+            <!-- PREVIOUS -->
+
+            {% if yesterday_pagination.has_prev %}
+
+            <a
+                href="{{ url_for(
+                    'employee_dashboard',
+                    today_page=today_pagination.page,
+                    yesterday_page=yesterday_pagination.prev_num,
+                    older_page=older_pagination.page
+                ) }}"
+                class="section-page-link"
+                data-section="yesterday"
+            >
+                ‹
+            </a>
+
+            {% else %}
+
+            <span class="disabled">
+                ‹
+            </span>
+
+            {% endif %}
+
+
+            <!-- NUMBERS -->
+
+            {% for page_num in yesterday_pagination.iter_pages(
+                left_edge=1,
+                right_edge=1,
+                left_current=2,
+                right_current=2
+            ) %}
+
+
+                {% if page_num %}
+
+
+                    {% if page_num == yesterday_pagination.page %}
+
+                    <span class="active">
+                        {{ page_num }}
+                    </span>
+
+                    {% else %}
+
+                    <a
+                        href="{{ url_for(
+                            'employee_dashboard',
+                            today_page=today_pagination.page,
+                            yesterday_page=page_num,
+                            older_page=older_pagination.page
+                        ) }}"
+                        class="section-page-link"
+                        data-section="yesterday"
+                    >
+                        {{ page_num }}
+                    </a>
+
+                    {% endif %}
+
+
+                {% else %}
+
+                    <span class="disabled">
+                        …
+                    </span>
+
+                {% endif %}
+
+
+            {% endfor %}
+
+
+            <!-- NEXT -->
+
+            {% if yesterday_pagination.has_next %}
+
+            <a
+                href="{{ url_for(
+                    'employee_dashboard',
+                    today_page=today_pagination.page,
+                    yesterday_page=yesterday_pagination.next_num,
+                    older_page=older_pagination.page
+                ) }}"
+                class="section-page-link"
+                data-section="yesterday"
+            >
+                ›
+            </a>
+
+            {% else %}
+
+            <span class="disabled">
+                ›
+            </span>
+
+            {% endif %}
+
+
+        </div>
+
+    </div>
+
+
+    {% else %}
+
+    <div class="empty-state">
+        📭 No yesterday orders.
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- =========================================================
+     OLDER SECTION
+     ========================================================= -->
+
+<div
+    id="olderSection"
+    class="order-section"
+    data-section="older"
+>
+
+    <h3 class="section-title">
+        📅 Older Orders
+    </h3>
+
+
+    {% if older_orders %}
+
+    <div class="table-wrap">
+
+        <table class="emp-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>ID</th>
+                    <th>Restaurant</th>
+                    <th>Customer</th>
+                    <th>Address</th>
+                    <th>Items</th>
+                    <th>Delivery ₹</th>
+                    <th>Total ₹</th>
+                    <th>Placed Time</th>
+                    <th>Status</th>
+                    <th>Delivery Boy</th>
+                    <th>Actions</th>
+                    <th>Cancel Reason</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for order in older_orders %}
+
+                    {{ render_order_row(order) }}
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- OLDER PAGINATION -->
+
+    <div class="pagination-wrap">
+
+
+        <div class="pagination-info">
+
+            Showing
+            {{
+                ((older_pagination.page - 1)
+                * older_pagination.per_page) + 1
+            }}
+            -
+            {{
+                ((older_pagination.page - 1)
+                * older_pagination.per_page)
+                + older_orders|length
+            }}
+            of
+            {{ older_pagination.total }}
+
+            older orders
+
+        </div>
+
+
+        <div class="pagination">
+
+
+            <!-- PREVIOUS -->
+
+            {% if older_pagination.has_prev %}
+
+            <a
+                href="{{ url_for(
+                    'employee_dashboard',
+                    today_page=today_pagination.page,
+                    yesterday_page=yesterday_pagination.page,
+                    older_page=older_pagination.prev_num
+                ) }}"
+                class="section-page-link"
+                data-section="older"
+            >
+                ‹
+            </a>
+
+            {% else %}
+
+            <span class="disabled">
+                ‹
+            </span>
+
+            {% endif %}
+
+
+            <!-- NUMBERS -->
+
+            {% for page_num in older_pagination.iter_pages(
+                left_edge=1,
+                right_edge=1,
+                left_current=2,
+                right_current=2
+            ) %}
+
+
+                {% if page_num %}
+
+
+                    {% if page_num == older_pagination.page %}
+
+                    <span class="active">
+                        {{ page_num }}
+                    </span>
+
+                    {% else %}
+
+                    <a
+                        href="{{ url_for(
+                            'employee_dashboard',
+                            today_page=today_pagination.page,
+                            yesterday_page=yesterday_pagination.page,
+                            older_page=page_num
+                        ) }}"
+                        class="section-page-link"
+                        data-section="older"
+                    >
+                        {{ page_num }}
+                    </a>
+
+                    {% endif %}
+
+
+                {% else %}
+
+                    <span class="disabled">
+                        …
+                    </span>
+
+                {% endif %}
+
+
+            {% endfor %}
+
+
+            <!-- NEXT -->
+
+            {% if older_pagination.has_next %}
+
+            <a
+                href="{{ url_for(
+                    'employee_dashboard',
+                    today_page=today_pagination.page,
+                    yesterday_page=yesterday_pagination.page,
+                    older_page=older_pagination.next_num
+                ) }}"
+                class="section-page-link"
+                data-section="older"
+            >
+                ›
+            </a>
+
+            {% else %}
+
+            <span class="disabled">
+                ›
+            </span>
+
+            {% endif %}
+
+
+        </div>
+
+    </div>
+
+
+    {% else %}
+
+    <div class="empty-state">
+        📭 No older orders.
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- =========================================================
+     NEW ORDER BADGE
+     ========================================================= -->
+
+<div id="newOrderBadge">
+    🔔 New Order
+</div>
+
+
+<!-- =========================================================
+     SESSION POPUP
+     ========================================================= -->
+
+<div
+    id="sessionPopup"
+    class="session-popup"
+>
+
+    <div class="popup-box">
+
+        <h3>
+            ⚠️ Session Expired
+        </h3>
+
+        <p>
+            Admin logged you out
+        </p>
+
+        <button onclick="goLogin()">
+            Login Again
+        </button>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
 <script>
 
-// ================= FILTER =================
+
+/* =========================================================
+   FILTER SYSTEM
+   ========================================================= */
+
 function applyFilters() {
-    const search = document.getElementById("searchInput")?.value.toLowerCase() || "";
-    const status = document.getElementById("statusFilter")?.value.toLowerCase() || "";
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    const statusFilter =
+        document.getElementById("statusFilter");
+
+
+    const search =
+        searchInput
+            ? searchInput.value.toLowerCase().trim()
+            : "";
+
+
+    const status =
+        statusFilter
+            ? statusFilter.value.toLowerCase().trim()
+            : "";
+
 
     let count = 0;
 
-    document.querySelectorAll(".emp-table tbody tr").forEach(row => {
 
-        const text = row.innerText.toLowerCase();
-        const rowStatus = (row.dataset.status || "").toLowerCase();
+    document
+        .querySelectorAll(".emp-table tbody tr")
+        .forEach(row => {
 
-        let show = true;
-
-        if (search && !text.includes(search)) show = false;
-        if (status && rowStatus !== status) show = false;
-
-        row.style.display = show ? "" : "none";
-
-        if (show) count++;
-    });
-
-    const countEl = document.getElementById("orderCount");
-    if (countEl) countEl.innerText = count;
-}
-
-// Events
-document.getElementById("searchInput")?.addEventListener("keyup", applyFilters);
-document.getElementById("statusFilter")?.addEventListener("change", applyFilters);
+            const text =
+                row.innerText.toLowerCase();
 
 
-// ================= LIVE ORDER SYSTEM =================
-let lastOrderId = "{{ orders[0].order_id if orders else '' }}";
-const notifySound = new Audio("/static/sounds/neworder.mp3");
-
-// 🔔 Popup
-function showPopup(msg) {
-    const badge = document.getElementById("newOrderBadge");
-    if (!badge) return;
-
-    badge.innerHTML = msg;
-    badge.style.display = "block";
-
-    setTimeout(() => {
-        badge.style.display = "none";
-    }, 4000);
-}
+            const rowStatus =
+                (
+                    row.dataset.status || ""
+                ).toLowerCase();
 
 
-// ================= AUTO REFRESH (OPTIMIZED) =================
-setInterval(() => {
+            let show = true;
 
-    fetch(window.location.href)
-        .then(res => res.text())
-        .then(html => {
 
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, "text/html");
-
-            const newBody = doc.querySelector(".emp-table tbody");
-            const currentBody = document.querySelector(".emp-table tbody");
-
-            if (!newBody || !currentBody) return;
-
-            // ✅ Detect NEW ORDER before replace
-            const firstRow = newBody.querySelector("tr");
-            const newOrderId = firstRow?.querySelector("td")?.innerText.replace("#","").trim();
-
-            if (newOrderId && newOrderId !== lastOrderId) {
-                notifySound.play();
-                showPopup("🔔 New Order Received!");
-                lastOrderId = newOrderId;
+            if (
+                search &&
+                !text.includes(search)
+            ) {
+                show = false;
             }
 
-            // ✅ Update table
-            currentBody.innerHTML = newBody.innerHTML;
 
-            // ✅ Re-apply filters
-            applyFilters();
-
-        })
-        .catch(err => console.log(err));
-
-}, 10000); // 10 sec
-
-
-// ================= GLOBAL CLICK HANDLER =================
-document.addEventListener("click", function(e) {
-
-    const row = e.target.closest("tr");
-    if (!row) return;
-
-    const orderId = row.dataset.orderId;
-
-    // ================= STATUS UPDATE =================
-    if (e.target.classList.contains("update-btn")) {
-
-        const select = row.querySelector(".status-select");
-        const status = select.value;
-
-        fetch(`/employee/update-status/${orderId}`, {
-            method: "POST",
-            headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            body: `status=${encodeURIComponent(status)}`
-        })
-        .then(res => res.json())
-        .then(data => {
-
-            if (!data.success) {
-                alert(data.error || "Error updating");
-                return;
+            if (
+                status &&
+                rowStatus !== status
+            ) {
+                show = false;
             }
 
-            const statusCell = row.querySelector(".status-cell");
-            statusCell.innerHTML = data.new_status;
 
-            // 🔒 LOCK FINAL STATES
-            if (data.new_status === "Delivered" || data.new_status === "Cancelled") {
-                select.disabled = true;
-                e.target.disabled = true;
+            row.style.display =
+                show ? "" : "none";
 
-                statusCell.innerHTML += "<br><span style='color:gray;font-size:12px;'>🔒 Locked</span>";
+
+            if (show) {
+                count++;
             }
+
         });
+
+
+    const countEl =
+        document.getElementById("orderCount");
+
+
+    if (countEl) {
+
+        /*
+         * While filtering:
+         * show visible rows.
+         */
+
+        if (search || status) {
+
+            countEl.innerText =
+                count;
+
+        } else {
+
+            /*
+             * Restore total database count.
+             */
+
+            countEl.innerText =
+                "{{ today_pagination.total
+                 + yesterday_pagination.total
+                 + older_pagination.total }}";
+
+        }
+
     }
 
-    // ================= ASSIGN DELIVERY =================
-    if (e.target.classList.contains("assign-btn")) {
+}
 
-        const select = row.querySelector(".assign-select");
-        const dpId = select.value;
 
-        if (!dpId) {
-            alert("Select delivery person");
+/* =========================================================
+   FILTER EVENTS
+   ========================================================= */
+
+document
+    .getElementById("searchInput")
+    ?.addEventListener(
+        "input",
+        applyFilters
+    );
+
+
+document
+    .getElementById("statusFilter")
+    ?.addEventListener(
+        "change",
+        applyFilters
+    );
+
+
+/* =========================================================
+   NEW ORDER SYSTEM
+   ========================================================= */
+
+let lastOrderId =
+    "{{ today_orders[0].order_id if today_orders else '' }}";
+
+
+const notifySound =
+    new Audio(
+        "/static/sounds/neworder.mp3"
+    );
+
+
+function showPopup(message) {
+
+    const badge =
+        document.getElementById(
+            "newOrderBadge"
+        );
+
+
+    if (!badge) {
+        return;
+    }
+
+
+    badge.innerHTML =
+        message;
+
+
+    badge.style.display =
+        "block";
+
+
+    setTimeout(() => {
+
+        badge.style.display =
+            "none";
+
+    }, 4000);
+
+}
+
+
+/* =========================================================
+   SECTION LOADING
+   ========================================================= */
+
+function setSectionLoading(
+    section,
+    loading
+) {
+
+    if (!section) {
+        return;
+    }
+
+
+    if (loading) {
+
+        section.classList.add(
+            "section-loading"
+        );
+
+    } else {
+
+        section.classList.remove(
+            "section-loading"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   SECTION-ONLY PAGINATION
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    async function(e) {
+
+        const link =
+            e.target.closest(
+                ".section-page-link"
+            );
+
+
+        if (!link) {
             return;
         }
 
-        fetch(`/employee/assign-delivery/${orderId}`, {
-            method: "POST",
-            headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            body: `delivery_person_id=${encodeURIComponent(dpId)}`
-        })
-        .then(res => res.json())
-        .then(data => {
 
-            if (!data.success) {
-                alert(data.error || "Error assigning");
+        e.preventDefault();
+
+
+        const url =
+            link.href;
+
+
+        const sectionName =
+            link.dataset.section;
+
+
+        const sectionMap = {
+
+            today:
+                "#todaySection",
+
+            yesterday:
+                "#yesterdaySection",
+
+            older:
+                "#olderSection"
+
+        };
+
+
+        const selector =
+            sectionMap[sectionName];
+
+
+        if (!selector) {
+            return;
+        }
+
+
+        const currentSection =
+            document.querySelector(
+                selector
+            );
+
+
+        if (!currentSection) {
+            return;
+        }
+
+
+        setSectionLoading(
+            currentSection,
+            true
+        );
+
+
+        try {
+
+            const response =
+                await fetch(
+                    url,
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        },
+
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+
+            }
+
+
+            const html =
+                await response.text();
+
+
+            const parser =
+                new DOMParser();
+
+
+            const doc =
+                parser.parseFromString(
+                    html,
+                    "text/html"
+                );
+
+
+            const newSection =
+                doc.querySelector(
+                    selector
+                );
+
+
+            if (!newSection) {
+
+                throw new Error(
+                    "Section not found"
+                );
+
+            }
+
+
+            /*
+             * IMPORTANT:
+             *
+             * Only the clicked section
+             * is replaced.
+             */
+
+            currentSection.replaceWith(
+                newSection
+            );
+
+
+            /*
+             * Change URL without
+             * reloading the page.
+             */
+
+            window.history.pushState(
+                {},
+                "",
+                url
+            );
+
+
+            /*
+             * Apply existing filters
+             * to new rows.
+             */
+
+            applyFilters();
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Pagination error:",
+                error
+            );
+
+
+            /*
+             * Fallback only if AJAX fails.
+             */
+
+            window.location.href =
+                url;
+
+        }
+
+        finally {
+
+            const updatedSection =
+                document.querySelector(
+                    selector
+                );
+
+
+            setSectionLoading(
+                updatedSection,
+                false
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   AUTO REFRESH
+   ========================================================= */
+
+/*
+ * This refreshes the visible rows without
+ * performing a browser page reload.
+ *
+ * All three sections are updated.
+ */
+
+setInterval(
+    async function() {
+
+        try {
+
+            const response =
+                await fetch(
+                    window.location.href,
+                    {
+                        method: "GET",
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
                 return;
             }
 
-            // ✅ Update Delivery UI
-            const dpCell = row.querySelector(".dp-cell");
-            dpCell.innerHTML = `
-                ${data.delivery_person_name} <br>
-                <span class="online">● Assigned</span>
-            `;
 
-            // ✅ Update Status UI
-            const statusCell = row.querySelector(".status-cell");
-            statusCell.innerHTML = data.new_status;
+            const html =
+                await response.text();
 
-            const statusSelect = row.querySelector(".status-select");
-            statusSelect.value = data.new_status;
-        });
+
+            const parser =
+                new DOMParser();
+
+
+            const doc =
+                parser.parseFromString(
+                    html,
+                    "text/html"
+                );
+
+
+            /* =========================================
+               TODAY
+               ========================================= */
+
+            updateTableBody(
+                "#todaySection",
+                doc,
+                0
+            );
+
+
+            /* =========================================
+               YESTERDAY
+               ========================================= */
+
+            updateTableBody(
+                "#yesterdaySection",
+                doc,
+                1
+            );
+
+
+            /* =========================================
+               OLDER
+               ========================================= */
+
+            updateTableBody(
+                "#olderSection",
+                doc,
+                2
+            );
+
+
+            /*
+             * Reapply filters.
+             */
+
+            applyFilters();
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Dashboard refresh error:",
+                error
+            );
+
+        }
+
+    },
+    10000
+);
+
+
+/* =========================================================
+   UPDATE ONLY TABLE BODY
+   ========================================================= */
+
+function updateTableBody(
+    selector,
+    documentObject,
+    fallbackIndex
+) {
+
+    const currentSection =
+        document.querySelector(
+            selector
+        );
+
+
+    const newSection =
+        documentObject.querySelector(
+            selector
+        );
+
+
+    if (
+        !currentSection ||
+        !newSection
+    ) {
+        return;
     }
 
-});
+
+    const currentBody =
+        currentSection.querySelector(
+            "tbody"
+        );
 
 
-// ================= SESSION CHECK =================
-function showSessionPopup() {
-    document.getElementById("sessionPopup").style.display = "flex";
+    const newBody =
+        newSection.querySelector(
+            "tbody"
+        );
+
+
+    if (
+        currentBody &&
+        newBody
+    ) {
+
+        /*
+         * Detect newest row before
+         * replacing the body.
+         */
+
+        if (
+            fallbackIndex === 0
+        ) {
+
+            detectNewOrder(
+                newBody
+            );
+
+        }
+
+
+        currentBody.innerHTML =
+            newBody.innerHTML;
+
+    }
+
 }
+
+
+/* =========================================================
+   DETECT NEW ORDER
+   ========================================================= */
+
+function detectNewOrder(
+    newBody
+) {
+
+    const firstRow =
+        newBody.querySelector(
+            "tr"
+        );
+
+
+    if (!firstRow) {
+        return;
+    }
+
+
+    const firstCell =
+        firstRow.querySelector(
+            "td"
+        );
+
+
+    if (!firstCell) {
+        return;
+    }
+
+
+    const newId =
+        firstCell.innerText
+            .replace("#", "")
+            .trim();
+
+
+    if (
+        newId &&
+        lastOrderId &&
+        newId !== lastOrderId
+    ) {
+
+        notifySound
+            .play()
+            .catch(() => {});
+
+
+        showPopup(
+            "🔔 New Order Received!"
+        );
+
+    }
+
+
+    if (newId) {
+
+        lastOrderId =
+            newId;
+
+    }
+
+}
+
+
+/* =========================================================
+   STATUS UPDATE
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    function(e) {
+
+        const updateButton =
+            e.target.closest(
+                ".update-btn"
+            );
+
+
+        if (!updateButton) {
+            return;
+        }
+
+
+        const row =
+            updateButton.closest(
+                "tr"
+            );
+
+
+        if (!row) {
+            return;
+        }
+
+
+        const orderId =
+            updateButton.dataset.orderId;
+
+
+        const select =
+            row.querySelector(
+                ".status-select"
+            );
+
+
+        if (
+            !orderId ||
+            !select
+        ) {
+            return;
+        }
+
+
+        const status =
+            select.value;
+
+
+        updateButton.disabled =
+            true;
+
+
+        fetch(
+            `/employee/update-status/${orderId}`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/x-www-form-urlencoded"
+                },
+
+                body:
+                    `status=${encodeURIComponent(
+                        status
+                    )}`
+            }
+        )
+
+        .then(res => res.json())
+
+        .then(data => {
+
+            if (!data.success) {
+
+                alert(
+                    data.error ||
+                    "Error updating"
+                );
+
+                return;
+            }
+
+
+            /*
+             * Update visible status.
+             */
+
+            const statusCell =
+                row.querySelector(
+                    ".status-cell"
+                );
+
+
+            if (statusCell) {
+
+                statusCell.innerHTML =
+                    data.new_status;
+
+            }
+
+
+            /*
+             * Lock final states.
+             */
+
+            if (
+                data.new_status ===
+                    "Delivered" ||
+
+                data.new_status ===
+                    "Cancelled"
+            ) {
+
+                select.disabled =
+                    true;
+
+
+                updateButton.disabled =
+                    true;
+
+
+                if (statusCell) {
+
+                    statusCell.innerHTML +=
+                        `
+                        <br>
+                        <span
+                            style="
+                                color:#98a2b3;
+                                font-size:9px;
+                                font-weight:650;
+                            "
+                        >
+                            🔒 Locked
+                        </span>
+                        `;
+
+                }
+
+            } else {
+
+                updateButton.disabled =
+                    false;
+
+            }
+
+        })
+
+        .catch(error => {
+
+            console.error(
+                "Status update error:",
+                error
+            );
+
+
+            alert(
+                "Unable to update status"
+            );
+
+
+            updateButton.disabled =
+                false;
+
+        });
+
+    }
+);
+
+
+/* =========================================================
+   ASSIGN DELIVERY
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    function(e) {
+
+        const assignButton =
+            e.target.closest(
+                ".assign-btn"
+            );
+
+
+        if (!assignButton) {
+            return;
+        }
+
+
+        const row =
+            assignButton.closest(
+                "tr"
+            );
+
+
+        if (!row) {
+            return;
+        }
+
+
+        const orderId =
+            assignButton.dataset.orderId;
+
+
+        const select =
+            row.querySelector(
+                ".assign-select"
+            );
+
+
+        if (
+            !orderId ||
+            !select
+        ) {
+            return;
+        }
+
+
+        const deliveryPersonId =
+            select.value;
+
+
+        if (!deliveryPersonId) {
+
+            alert(
+                "Select delivery person"
+            );
+
+            return;
+        }
+
+
+        assignButton.disabled =
+            true;
+
+
+        fetch(
+            `/employee/assign-delivery/${orderId}`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/x-www-form-urlencoded"
+                },
+
+                body:
+                    `delivery_person_id=${encodeURIComponent(
+                        deliveryPersonId
+                    )}`
+            }
+        )
+
+        .then(res => res.json())
+
+        .then(data => {
+
+            if (!data.success) {
+
+                alert(
+                    data.error ||
+                    "Error assigning"
+                );
+
+                return;
+            }
+
+
+            /*
+             * Update delivery person.
+             */
+
+            const dpCell =
+                row.querySelector(
+                    ".dp-cell"
+                );
+
+
+            if (dpCell) {
+
+                dpCell.innerHTML =
+                    `
+                    <strong>
+                        ${escapeHtml(
+                            data.delivery_person_name
+                        )}
+                    </strong>
+
+                    <br>
+
+                    <span class="online">
+                        ● Assigned
+                    </span>
+                    `;
+
+            }
+
+
+            /*
+             * Update status.
+             */
+
+            const statusCell =
+                row.querySelector(
+                    ".status-cell"
+                );
+
+
+            if (statusCell) {
+
+                statusCell.innerHTML =
+                    escapeHtml(
+                        data.new_status
+                    );
+
+            }
+
+
+            const statusSelect =
+                row.querySelector(
+                    ".status-select"
+                );
+
+
+            if (statusSelect) {
+
+                statusSelect.value =
+                    data.new_status;
+
+            }
+
+
+            assignButton.disabled =
+                false;
+
+        })
+
+        .catch(error => {
+
+            console.error(
+                "Assignment error:",
+                error
+            );
+
+
+            alert(
+                "Unable to assign delivery person"
+            );
+
+
+            assignButton.disabled =
+                false;
+
+        });
+
+    }
+);
+
+
+/* =========================================================
+   SIMPLE HTML ESCAPE
+   ========================================================= */
+
+function escapeHtml(value) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.textContent =
+        value ?? "";
+
+
+    return div.innerHTML;
+
+}
+
+
+/* =========================================================
+   SESSION
+   ========================================================= */
+
+function showSessionPopup() {
+
+    const popup =
+        document.getElementById(
+            "sessionPopup"
+        );
+
+
+    if (popup) {
+
+        popup.style.display =
+            "flex";
+
+    }
+
+}
+
 
 function goLogin() {
-    window.location.href = "/employee/login";
+
+    window.location.href =
+        "/employee/login";
+
 }
 
-// 🔁 Check session every 5 sec
-setInterval(() => {
-    fetch("/employee/check-session")
+
+/* =========================================================
+   SESSION CHECK
+   ========================================================= */
+
+setInterval(
+    function() {
+
+        fetch(
+            "/employee/check-session",
+            {
+                cache: "no-store"
+            }
+        )
+
         .then(res => res.json())
+
         .then(data => {
-            if (!data.active) showSessionPopup();
+
+            if (
+                data &&
+                !data.active
+            ) {
+
+                showSessionPopup();
+
+            }
+
         })
-        .catch(err => console.error(err));
-}, 5000);
+
+        .catch(error => {
+
+            console.error(
+                "Session check error:",
+                error
+            );
+
+        });
+
+    },
+    5000
+);
+
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        applyFilters();
+
+    }
+);
+
+
+/* =========================================================
+   BACK / FORWARD
+   =========================================================
+   
+   We reload only when the user uses browser
+   back/forward because the browser URL can
+   represent a different combination of pages.
+   ========================================================= */
+
+window.addEventListener(
+    "popstate",
+    function() {
+
+        window.location.reload();
+
+    }
+);
 
 </script>
+
 </body>
 </html>

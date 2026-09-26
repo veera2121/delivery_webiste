@@ -15,7 +15,7 @@
 {# ✅ Restaurant-specific Install Button #}
 {% block install_button %}
 <button id="installApp" class="install-fab">
-  📲 Install Restaurant App
+    📲 Install Restaurant App
 </button>
 {% endblock %}
 
@@ -23,8 +23,17 @@
 
 <style>
 /* ===== GLOBAL STYLES ===== */
-* { box-sizing: border-box; margin:0; padding:0; }
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg,#f4f7fa,#e9eef5); color:#333; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg,#f4f7fa,#e9eef5);
+    color:#333;
+}
 
 /* ===== DASHBOARD CONTAINER ===== */
 .dashboard-container {
@@ -37,210 +46,356 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 }
 
 /* ===== HEADINGS ===== */
-h2 { font-size: 26px; margin-bottom: 8px; }
-h3 { font-size: 18px; margin-bottom: 15px; color:#666; }
-
-/* ===== TOP LINKS ===== */
-.top-links { display:flex; flex-wrap:wrap; gap:15px; margin-bottom:25px; }
-.top-links a {
-    padding:12px 20px; border-radius:12px; color:#fff; font-weight:700; transition:0.3s; text-decoration:none;
-}
-.top-links a.delivery-boys { background: linear-gradient(135deg,#43a047,#66bb6a); }
-.top-links a.logout { background: linear-gradient(135deg,#e53935,#ef5350); }
-.top-links a:hover { transform:scale(1.05); box-shadow:0 10px 25px rgba(0,0,0,0.2); }
-
-/* ===== FILTERS ===== */
-.filters, .filter-inline { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
-.filters input, .filters select, .filter-inline input, .filter-inline select {
-    padding:10px 14px; border-radius:10px; border:1px solid #ccc; font-size:14px; transition:0.3s;
-}
-.filters input:focus, .filters select:focus, .filter-inline input:focus, .filter-inline select:focus {
-    outline:none; border-color:#ff5722; box-shadow:0 0 10px rgba(255,87,34,0.25);
-}
-
-/* ===== TABLE STYLES ===== */
-.table-wrapper { overflow-x:auto; margin-bottom:30px; }
-table { width:100%; border-collapse:collapse; border-radius:14px; overflow:hidden; }
-thead { background: linear-gradient(135deg,#22ffda,#068372); color:#fff; position:sticky; top:0; z-index:2; }
-th, td { padding:14px; text-align:center; font-size:14px; }
-tbody tr { transition:0.2s ease; }
-tbody tr:nth-child(even) { background:#fafafa; }
-tbody tr:hover { background:#fff3e0; }
-
-/* ===== STATUS BADGES ===== */
-.status { padding:6px 14px; border-radius:30px; font-size:12px; font-weight:700; color:#fff; display:inline-block; }
-.status.Pending { background:#ff9800; } 
-.status.Accepted {
-    background: #048061;   /* blue */
-    color: white;
-}
-.status.Out-for-Delivery {
-  background: linear-gradient(135deg, #ff9800, #ff5722);
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(255, 87, 34, 0.35);
-  animation: deliveryPulse 1.4s infinite;
-}
-.status.Preparing { background:#2196f3; } 
-
-
-.status.Ready { background:#9c27b0; }
-.status.Out-for-Delivery {
-    background: #ffeb3b;
-    color: #4caf50;
-}
-.status.Delivered { background:#4caf50; }
-.status.Cancelled { background:#f44336; }
-
-/* ===== PAYMENT BADGES ===== */
-.payment-badge { padding:6px 14px; border-radius:30px; font-size:12px; font-weight:700; color:#fff; display:inline-block; }
-.payment-badge.COD { background:#ff9800; }
-.payment-badge.Online { background:#4caf50; }
-.payment-badge.NotCollected { background:#9e9e9e; }
-
-/* ===== BUTTONS ===== */
-.assign-btn { background: linear-gradient(135deg,#2196f3,#42a5f5); color:#fff; padding:6px 12px; border-radius:8px; cursor:pointer; }
-.update-btn { background: linear-gradient(135deg,#ff5722,#ff7043); color:#fff; padding:6px 12px; border-radius:8px; cursor:pointer; }
-
-/* ===== NEW ORDER BADGE ===== */
-.new-order-badge {
-    position: fixed; top:20px; right:20px;
-    background: linear-gradient(135deg,#ff5722,#ff7043);
-    color:#fff; padding:14px 22px; border-radius:14px; font-weight:700;
-    box-shadow:0 10px 25px rgba(0,0,0,0.3);
-    display:none; z-index:9999;
-}
-
-/* Feedback column reason in red */
-td[data-label="Feedback"] {
-    color: red;
-    font-weight: 600;
-}
-/* Feedback badge */
-.feedback-badge {
-    display: inline-block;
-    background-color: #f44336; /* red background */
-    color: white;              /* text color */
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    max-width: 200px;          /* optional: prevent very long text */
-    white-space: nowrap;       /* keep in single line */
-    overflow: hidden;
-    text-overflow: ellipsis;   /* show ... if too long */
-    text-align: center;
-}/* ===== CARDS (default mobile view) ===== */
-/* Table wrapper to allow horizontal scroll */
-/* ===== Mobile Cards ===== */
-.stats-cards-wrapper {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    padding: 15px 0;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-}
-
-.stats-card {
-    flex: 0 0 auto;
-    min-width: 140px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    padding: 15px;
-    text-align: center;
-}
-
-.stats-card strong {
-    display: block;
-    font-size: 13px;
-    color: #666;
+h2 {
+    font-size: 26px;
     margin-bottom: 8px;
 }
 
-.stats-card span {
-    font-size: 16px;
-    color: #333;
-    font-weight: 700;
+h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color:#666;
 }
 
-/* ===== Horizontal Table ===== */
+/* ===== TOP LINKS ===== */
+.top-links {
+    display:flex;
+    flex-wrap:wrap;
+    gap:15px;
+    margin-bottom:25px;
+}
+
+.top-links a {
+    padding:12px 20px;
+    border-radius:12px;
+    color:#fff;
+    font-weight:700;
+    transition:0.3s;
+    text-decoration:none;
+}
+
+.top-links a.delivery-boys {
+    background: linear-gradient(135deg,#43a047,#66bb6a);
+}
+
+.top-links a.logout {
+    background: linear-gradient(135deg,#e53935,#ef5350);
+}
+
+.top-links a:hover {
+    transform:scale(1.05);
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* ===== FILTERS ===== */
+.filters,
+.filter-inline {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.filters input,
+.filters select,
+.filter-inline input,
+.filter-inline select {
+    padding:10px 14px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    font-size:14px;
+    transition:0.3s;
+}
+
+.filters input:focus,
+.filters select:focus,
+.filter-inline input:focus,
+.filter-inline select:focus {
+    outline:none;
+    border-color:#ff5722;
+    box-shadow:0 0 10px rgba(255,87,34,0.25);
+}
+
+/* ===== TABLE STYLES ===== */
+.table-wrapper {
+    overflow-x:auto;
+    margin-bottom:20px;
+}
+
+table {
+    width:100%;
+    border-collapse:collapse;
+    border-radius:14px;
+    overflow:hidden;
+}
+
+thead {
+    background: linear-gradient(135deg,#22ffda,#068372);
+    color:#fff;
+    position:sticky;
+    top:0;
+    z-index:2;
+}
+
+th,
+td {
+    padding:14px;
+    text-align:center;
+    font-size:14px;
+}
+
+tbody tr {
+    transition:0.2s ease;
+}
+
+tbody tr:nth-child(even) {
+    background:#fafafa;
+}
+
+tbody tr:hover {
+    background:#fff3e0;
+}
+
+/* ===== STATUS BADGES ===== */
+.status {
+    padding:6px 14px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:700;
+    color:#fff;
+    display:inline-block;
+}
+
+.status.Pending {
+    background:#ff9800;
+}
+
+.status.Accepted {
+    background:#048061;
+    color:white;
+}
+
+.status.Preparing {
+    background:#2196f3;
+}
+
+.status.Ready {
+    background:#9c27b0;
+}
+
+.status.Out-for-Delivery {
+    background: linear-gradient(135deg,#ff9800,#ff5722);
+    color:#fff;
+    box-shadow:0 4px 10px rgba(255,87,34,0.35);
+    animation:deliveryPulse 1.4s infinite;
+}
+
+.status.Delivered {
+    background:#4caf50;
+}
+
+.status.Cancelled {
+    background:#f44336;
+}
+
+/* ===== PAYMENT BADGES ===== */
+.payment-badge {
+    padding:6px 14px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:700;
+    color:#fff;
+    display:inline-block;
+}
+
+.payment-badge.COD {
+    background:#ff9800;
+}
+
+.payment-badge.Online {
+    background:#4caf50;
+}
+
+.payment-badge.NotCollected {
+    background:#9e9e9e;
+}
+
+/* ===== BUTTONS ===== */
+.assign-btn {
+    background:linear-gradient(135deg,#2196f3,#42a5f5);
+    color:#fff;
+    padding:6px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    border:none;
+}
+
+.update-btn {
+    background:linear-gradient(135deg,#ff5722,#ff7043);
+    color:#fff;
+    padding:6px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    border:none;
+}
+
+/* ===== NEW ORDER BADGE ===== */
+.new-order-badge {
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:linear-gradient(135deg,#ff5722,#ff7043);
+    color:#fff;
+    padding:14px 22px;
+    border-radius:14px;
+    font-weight:700;
+    box-shadow:0 10px 25px rgba(0,0,0,0.3);
+    display:none;
+    z-index:9999;
+}
+
+/* ===== FEEDBACK ===== */
+td[data-label="Feedback"] {
+    color:red;
+    font-weight:600;
+}
+
+.feedback-badge {
+    display:inline-block;
+    background-color:#f44336;
+    color:white;
+    padding:4px 10px;
+    border-radius:12px;
+    font-size:12px;
+    font-weight:600;
+    max-width:200px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    text-align:center;
+}
+
+/* ===== STATS CARDS ===== */
+.stats-cards-wrapper {
+    display:flex;
+    gap:12px;
+    overflow-x:auto;
+    padding:15px 0;
+    -webkit-overflow-scrolling:touch;
+    scroll-behavior:smooth;
+}
+
+.stats-card {
+    flex:0 0 auto;
+    min-width:140px;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    padding:15px;
+    text-align:center;
+}
+
+.stats-card strong {
+    display:block;
+    font-size:13px;
+    color:#666;
+    margin-bottom:8px;
+}
+
+.stats-card span {
+    font-size:16px;
+    color:#333;
+    font-weight:700;
+}
+
+/* ===== DESKTOP STATS ===== */
 .stats-table-wrapper {
-    display: none; /* hide by default on mobile */
-    overflow-x: auto;
-    padding: 15px 0;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
+    display:none;
+    overflow-x:auto;
+    padding:15px 0;
+    -webkit-overflow-scrolling:touch;
+    scroll-behavior:smooth;
 }
 
 .stats-table {
-    border-collapse: collapse;
-    min-width: 1000px; /* force horizontal scroll if needed */
-    width: 100%;
-    background: #fff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    border-radius: 12px;
+    border-collapse:collapse;
+    min-width:1000px;
+    width:100%;
+    background:#fff;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    border-radius:12px;
 }
 
-.stats-table th, .stats-table td {
-    padding: 12px 15px;
-    text-align: center;
+.stats-table th,
+.stats-table td {
+    padding:12px 15px;
+    text-align:center;
 }
 
 .stats-table th {
-    background: #f4f4f4;
-    color: #333;
-    font-weight: 600;
+    background:#f4f4f4;
+    color:#333;
+    font-weight:600;
 }
 
 .stats-table tbody tr:nth-child(even) {
-    background: #f9f9f9;
+    background:#f9f9f9;
 }
 
 .stats-table td {
-    font-weight: 500;
-    color: #555;
+    font-weight:500;
+    color:#555;
 }
 
-/* ===== MEDIA QUERIES ===== */
-@media (min-width: 769px) {
-    .stats-cards-wrapper {
-        display: none; /* hide cards on desktop */
-    }
-    .stats-table-wrapper {
-        display: block; /* show horizontal table on desktop */
-    }
-}
-/* Base button style */
-.top-links .btn, .btn {
-    display: inline-block;
-    padding: 10px 20px;
-    border-radius: 6px;
-    color: white;
-    font-weight: 600;
-    text-decoration: none;
-    text-align: center;
-    transition: all 0.3s ease;
-    margin-right: 10px;
-    font-size: 16px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+/* ===== TOP BUTTONS ===== */
+.top-links .btn,
+.btn {
+    display:inline-block;
+    padding:10px 20px;
+    border-radius:6px;
+    color:white;
+    font-weight:600;
+    text-decoration:none;
+    text-align:center;
+    transition:all 0.3s ease;
+    margin-right:10px;
+    font-size:16px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.15);
 }
 
-/* Hover effect */
-.top-links .btn:hover, .btn:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+.top-links .btn:hover,
+.btn:hover {
+    opacity:0.9;
+    transform:translateY(-2px);
+    box-shadow:0 5px 12px rgba(0,0,0,0.2);
 }
 
-/* Individual colors */
-.delivery-boys { background-color: #ff9800; }       /* orange */
-.manage-offers { background-color: #ff5722; }       /* deep orange */
-.edit-card { background-color: #4caf50; }           /* green */
-.reports { background-color: #673ab7; }            /* purple */
-.logout { background-color: #f44336; }             /* red */
-.view-delivery-persons { background-color: #009688; } /* teal */
-.item-line{
+.delivery-boys {
+    background-color:#ff9800;
+}
+
+.manage-offers {
+    background-color:#ff5722;
+}
+
+.edit-card {
+    background-color:#4caf50;
+}
+
+.reports {
+    background-color:#673ab7;
+}
+
+.logout {
+    background-color:#f44336;
+}
+
+.view-delivery-persons {
+    background-color:#009688;
+}
+
+/* ===== ITEM TAGS ===== */
+.item-line {
     display:flex;
     align-items:center;
     flex-wrap:wrap;
@@ -248,367 +403,2925 @@ td[data-label="Feedback"] {
     margin-bottom:6px;
 }
 
-.food-name{
+.food-name {
     font-weight:600;
     color:#111827;
 }
 
-.tag{
+.tag {
     font-size:10px;
     padding:2px 8px;
     border-radius:999px;
     font-weight:600;
 }
 
-.category-tag{
+.category-tag {
     background:#eef2ff;
     color:#4338ca;
 }
 
-.weight-tag{
+.weight-tag {
     background:#ecfdf5;
     color:#047857;
 }
 
-.qty-tag{
+.qty-tag {
     background:#fff7ed;
     color:#c2410c;
-} 
-.price-tag{
+}
+
+.price-tag {
     background:#fef3c7;
     color:#92400e;
 }
+
+/* =========================================================
+   PAGINATION
+   ========================================================= */
+.pagination {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+    margin:10px 0 35px;
+}
+
+.pagination a,
+.pagination span {
+    min-width:38px;
+    height:38px;
+    padding:0 12px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    text-decoration:none;
+    font-weight:700;
+    font-size:14px;
+}
+
+.pagination a {
+    background:#f1f5f9;
+    color:#0f172a;
+    border:1px solid #e2e8f0;
+    transition:0.2s ease;
+}
+
+.pagination a:hover {
+    background:#068372;
+    color:#fff;
+    transform:translateY(-1px);
+}
+
+.pagination .active {
+    background:linear-gradient(135deg,#22ffda,#068372);
+    color:#fff;
+    border:1px solid #068372;
+}
+
+.pagination .disabled {
+    background:#f8fafc;
+    color:#94a3b8;
+    border:1px solid #e2e8f0;
+}
+
+.pagination-info {
+    text-align:center;
+    color:#64748b;
+    font-size:13px;
+    margin-top:-25px;
+    margin-bottom:20px;
+}
+
+/* =========================================================
+   AJAX ORDER ACTIONS / SECTION REFRESH
+   ========================================================= */
+
+.order-section {
+    width: 100%;
+    transition: opacity .18s ease;
+}
+
+.order-section.section-loading {
+    opacity: .55;
+    pointer-events: none;
+}
+
+.order-action-form {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.order-action-form button {
+    transition: .2s ease;
+}
+
+.order-action-form button.is-loading {
+    opacity: .65;
+    cursor: wait;
+    transform: none !important;
+}
+
+.ajax-refresh-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 8px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width:768px) {
+
+    .dashboard-container {
+        margin:10px;
+        padding:15px;
+        border-radius:14px;
+    }
+
+    h2 {
+        font-size:22px;
+    }
+
+    .top-links {
+        gap:8px;
+    }
+
+    .top-links .btn,
+    .btn {
+        padding:9px 12px;
+        font-size:13px;
+        margin-right:0;
+    }
+
+    .table-wrapper {
+        margin-left:-5px;
+        margin-right:-5px;
+    }
+
+    th,
+    td {
+        padding:10px;
+        font-size:12px;
+    }
+
+    .pagination a,
+    .pagination span {
+        min-width:34px;
+        height:34px;
+        font-size:12px;
+        padding:0 9px;
+    }
+}
+
+@media (min-width:769px) {
+    .stats-cards-wrapper {
+        display:none;
+    }
+
+    .stats-table-wrapper {
+        display:block;
+    }
+}
 </style>
 
+
 <div class="dashboard-container">
-<h2>Welcome, {{ session['restaurant_name'] }}</h2>
-<div id="newOrderBadge" class="new-order-badge">🔔 New Order Received!</div>
-<!-- TOP LINKS -->
-<div class="top-links">
-    <a href="{{ url_for('delivery_boys_cod_summary') }}" class="btn delivery-boys">
-        Delivery Boys COD
-    </a>
 
-    <a href="{{ url_for('manage_offers', restaurant_id=session['restaurant_id']) }}" class="btn manage-offers">
-        🔥 Manage Offers
-    </a>
+    <h2>Welcome, {{ session['restaurant_name'] }}</h2>
 
-    <a href="{{ url_for('edit_restaurant_card', restaurant_id=session['restaurant_id']) }}" class="btn edit-card">
-        ✏️ Edit Restaurant Card
-    </a>
+    <div id="newOrderBadge" class="new-order-badge">
+        🔔 New Order Received!
+    </div>
 
-    <a href="{{ url_for('restaurant_reports') }}" class="btn reports">
-        📊 Reports
-    </a>
 
-    <a href="{{ url_for('restaurant_logout') }}" class="btn logout">
-        Logout
-    </a>
-</div>
+    <!-- =====================================================
+         TOP LINKS
+    ====================================================== -->
 
-<div style="margin-bottom: 20px;">
-    <a href="{{ url_for('restaurant_delivery_persons') }}" class="btn view-delivery-persons">
-        View All Delivery Persons
-    </a>
-</div>
+    <div class="top-links">
 
-<!-- FILTERS -->
-<div class="filter-inline">
-    <input type="text" id="searchInput" placeholder="Search Order ID, Customer, Phone">
-    <input type="date" id="fromDate">
-    <input type="date" id="toDate">
-    <select id="statusFilter">
-        <option value="">All Status</option>
-        <option value="Pending">Pending</option>
-        <option value="Accepted">Accepted</option>
-        <option value="Preparing">Preparing</option>
-        <option value="Ready">Ready</option>
-        <option value="Out for Delivery">Out for Delivery</option>
-        <option value="Delivered">Delivered</option>
-        <option value="Cancelled">Cancelled</option>
-    </select>
-    <button id="searchBtn">Search</button>
-    <button id="clearFilters">Clear</button>
-</div>
-<!-- CARDS (mobile) -->
-<div class="stats-cards-wrapper">
-    <div class="stats-card"><strong>Today Orders</strong><span>{{ stats.today_orders }}</span></div>
-    <div class="stats-card"><strong>Delivered Today</strong><span>{{ stats.delivered_today }}</span></div>
-    <div class="stats-card"><strong>Pending Today</strong><span>{{ stats.pending_today }}</span></div>
-    <div class="stats-card"><strong>Cancelled Today</strong><span>{{ stats.cancelled_today }}</span></div>
-    <div class="stats-card"><strong>Active Orders</strong><span>{{ stats.active_orders }}</span></div>
-    <div class="stats-card"><strong>Today Earnings</strong><span>₹{{ stats.today_earnings }}</span></div>
-    <div class="stats-card"><strong>COD Amount</strong><span>₹{{ stats.today_cod_amount }}</span></div>
-    <div class="stats-card"><strong>Online Amount</strong><span>₹{{ stats.today_online_amount }}</span></div>
-    <div class="stats-card"><strong>Weekly Orders</strong><span>{{ stats.weekly_orders }}</span></div>
-    <div class="stats-card"><strong>Weekly Earnings</strong><span>₹{{ stats.weekly_earnings }}</span></div>
-    <div class="stats-card"><strong>Weekly Delivered</strong><span>{{ stats.weekly_delivered_orders }}</span></div>
-</div>
-
-<!-- TABLE (desktop) -->
-<h3>Today's Overview</h3>
-
-<div class="stats-table-wrapper">
-    <table class="stats-table">
-        <thead>
-            <tr>
-                <th>Today Orders</th>
-                <th>Delivered Today</th>
-                <th>Pending Today</th>
-                <th>Cancelled Today</th>
-                <th>Active Orders</th>
-                <th>Today Earnings</th>
-                <th>COD Amount</th>
-                <th>Online Amount</th>
-                <th>Weekly Orders</th>
-                <th>Weekly Earnings</th>
-                <th>Weekly Delivered</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>{{ stats.today_orders }}</td>
-                <td>{{ stats.delivered_today }}</td>
-                <td>{{ stats.pending_today }}</td>
-                <td>{{ stats.cancelled_today }}</td>
-                <td>{{ stats.active_orders }}</td>
-                <td>₹{{ stats.today_earnings }}</td>
-                <td>₹{{ stats.today_cod_amount }}</td>
-                <td>₹{{ stats.today_online_amount }}</td>
-                <td>{{ stats.weekly_orders }}</td>
-                <td>₹{{ stats.weekly_earnings }}</td>
-                <td>{{ stats.weekly_delivered_orders }}</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-</table>
-</div>
-<!-- ORDERS TABLE -->
-{% for category in ['Today','Yesterday','Older'] %}
-<h3>{{ category }} Orders</h3>
-{% set filtered_orders = orders|selectattr("day_category","equalto",category)|list %}
-{% if filtered_orders %}
-<div class="table-wrapper">
-<table>
-<thead>
-<tr>
-<th>Order ID</th>
-<th>Customer</th>
-<th>Items</th>
-<th>Qty×Price</th>
-<th>Total</th>
-<th>Status</th>
-<th>Placed</th>
-<th>Location</th>
-<th>Assign Delivery</th>
-<th>Update Status</th>
-<th>Payment</th>
-<th>Cancel Reason</th>
-<th>Feedback</th>
-</tr>
-</thead>
-<tbody>
-
-{% for order in filtered_orders %}
-<tr data-status="{{ order.status }}" data-order-id="{{ order.order_id }}">
-
-<td data-label="Order ID">{{ order.order_id }}</td>
-<td data-label="Customer">{{ order.customer_name }}<br>{{ order.phone }}</td>
-<td data-label="Items">
-
-{% for item in order.items %}
-
-<div class="item-line">
-
-    <span class="food-name">
-        🍽️ {{ item.item_name }}
-    </span>
-
-    {% if item.category %}
-        <span class="tag category-tag">
-            {{ item.category }}
-        </span>
-    {% endif %}
-
-    {% if item.weight %}
-        <span class="tag weight-tag">
-            {{ item.weight }}
-        </span>
-    {% endif %}
-
-    <span class="tag qty-tag">
-        ×{{ item.quantity }}
-    </span>
-
-    <span class="tag price-tag">
-        ₹{{ item.price }}
-    </span>
-
-</div>
-
-{% endfor %}
-
-</td>
-<td data-label="Qty×Price">
-{% for item in order.items %}{{ item.quantity }} × ₹{{ item.price }}<br>{% endfor %}
-</td>
-<td data-label="Total" style="text-align:left;">
-    <strong>Items:</strong> ₹{{ order.items_total }}<br>
-    <strong>Delivery:</strong> ₹{{ order.delivery_charge or 0 }}<br>
-    <strong>Discount:</strong> ₹{{ order.discount or 0 }}{% if order.coupon_used %} ({{ order.coupon_used }}){% endif %}<br>
-    <strong>R-Offer:</strong> ₹{{ order.restaurant_offer_discount or 0 }}<br>
-
-    <hr style="margin:4px 0;">
-
-    <strong>Total:</strong> ₹{{ order.final_total }}
-</td>
-<td data-label="Status"><span class="status {{ order.status }}">{{ order.status }}</span></td>
-<td data-label="Placed">{{ order.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
-<td data-label="Location">
-    {{ order.house_no }}, {{ order.landmark }}, {{ order.city }},
-    {{ order.state }} - {{ order.pincode }}
-
-    {% if order.customer_lat and order.customer_lng %}
-        <br>
-        <a href="{{ url_for('track_order', order_id=order.id) }}"
-           class="map-btn">
-           📍 map
+        <a href="{{ url_for('delivery_boys_cod_summary') }}"
+           class="btn delivery-boys">
+            Delivery Boys COD
         </a>
-    {% else %}
-        <br><span style="color:red;">Location not shared</span>
+
+        <a href="{{ url_for('manage_offers', restaurant_id=session['restaurant_id']) }}"
+           class="btn manage-offers">
+            🔥 Manage Offers
+        </a>
+
+        <a href="{{ url_for('edit_restaurant_card', restaurant_id=session['restaurant_id']) }}"
+           class="btn edit-card">
+            ✏️ Edit Restaurant Card
+        </a>
+
+        <a href="{{ url_for('restaurant_reports') }}"
+           class="btn reports">
+            📊 Reports
+        </a>
+
+        <a href="{{ url_for('restaurant_logout') }}"
+           class="btn logout">
+            Logout
+        </a>
+
+    </div>
+
+
+    <div style="margin-bottom:20px;">
+
+        <a href="{{ url_for('restaurant_delivery_persons') }}"
+           class="btn view-delivery-persons">
+            View All Delivery Persons
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTERS
+    ====================================================== -->
+
+    <div class="filter-inline">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search Order ID, Customer, Phone"
+        >
+
+        <input
+            type="date"
+            id="fromDate"
+        >
+
+        <input
+            type="date"
+            id="toDate"
+        >
+
+        <select id="statusFilter">
+
+            <option value="">All Status</option>
+
+            <option value="Pending">Pending</option>
+
+            <option value="Accepted">Accepted</option>
+
+            <option value="Preparing">Preparing</option>
+
+            <option value="Ready">Ready</option>
+
+            <option value="Out for Delivery">Out for Delivery</option>
+
+            <option value="Delivered">Delivered</option>
+
+            <option value="Cancelled">Cancelled</option>
+
+        </select>
+
+        <button id="searchBtn">
+            Search
+        </button>
+
+        <button id="clearFilters">
+            Clear
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         MOBILE STATS
+    ====================================================== -->
+
+    <div id="mobileStats" class="stats-cards-wrapper">
+
+        <div class="stats-card">
+            <strong>Today Orders</strong>
+            <span>{{ stats.today_orders }}</span>
+        </div>
+
+        <div class="stats-card">
+            <strong>Delivered Today</strong>
+            <span>{{ stats.delivered_today }}</span>
+        </div>
+
+        <div class="stats-card">
+            <strong>Pending Today</strong>
+            <span>{{ stats.pending_today }}</span>
+        </div>
+
+        <div class="stats-card">
+            <strong>Cancelled Today</strong>
+            <span>{{ stats.cancelled_today }}</span>
+        </div>
+
+        <div class="stats-card">
+            <strong>Active Orders</strong>
+            <span>{{ stats.active_orders }}</span>
+        </div>
+
+        <div class="stats-card">
+            <strong>Today Earnings</strong>
+            <span>₹{{ stats.today_earnings }}</span>
+        </div>
+
+        <div class="stats-card">
+            <strong>COD Amount</strong>
+            <span>₹{{ stats.today_cod_amount }}</span>
+        </div>
+
+        <div class="stats-card">
+            <strong>Online Amount</strong>
+            <span>₹{{ stats.today_online_amount }}</span>
+        </div>
+
+        <div class="stats-card">
+            <strong>Weekly Orders</strong>
+            <span>{{ stats.weekly_orders }}</span>
+        </div>
+
+        <div class="stats-card">
+            <strong>Weekly Earnings</strong>
+            <span>₹{{ stats.weekly_earnings }}</span>
+        </div>
+
+        <div class="stats-card">
+            <strong>Weekly Delivered</strong>
+            <span>{{ stats.weekly_delivered_orders }}</span>
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         DESKTOP STATS
+    ====================================================== -->
+
+    <h3>Today's Overview</h3>
+
+    <div id="desktopStats" class="stats-table-wrapper">
+
+        <table class="stats-table">
+
+            <thead>
+                <tr>
+                    <th>Today Orders</th>
+                    <th>Delivered Today</th>
+                    <th>Pending Today</th>
+                    <th>Cancelled Today</th>
+                    <th>Active Orders</th>
+                    <th>Today Earnings</th>
+                    <th>COD Amount</th>
+                    <th>Online Amount</th>
+                    <th>Weekly Orders</th>
+                    <th>Weekly Earnings</th>
+                    <th>Weekly Delivered</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <tr>
+
+                    <td>{{ stats.today_orders }}</td>
+
+                    <td>{{ stats.delivered_today }}</td>
+
+                    <td>{{ stats.pending_today }}</td>
+
+                    <td>{{ stats.cancelled_today }}</td>
+
+                    <td>{{ stats.active_orders }}</td>
+
+                    <td>₹{{ stats.today_earnings }}</td>
+
+                    <td>₹{{ stats.today_cod_amount }}</td>
+
+                    <td>₹{{ stats.today_online_amount }}</td>
+
+                    <td>{{ stats.weekly_orders }}</td>
+
+                    <td>₹{{ stats.weekly_earnings }}</td>
+
+                    <td>{{ stats.weekly_delivered_orders }}</td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <section id="todaySection" class="order-section">
+
+    <h3>Today Orders</h3>
+
+    {% if today_orders %}
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Qty×Price</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Placed</th>
+                    <th>Location</th>
+                    <th>Assign Delivery</th>
+                    <th>Update Status</th>
+                    <th>Payment</th>
+                    <th>Cancel Reason</th>
+                    <th>Feedback</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            {% for order in today_orders %}
+
+                <tr
+                    data-status="{{ order.status }}"
+                    data-order-id="{{ order.order_id }}"
+                >
+
+                    <td data-label="Order ID">
+                        {{ order.order_id }}
+                    </td>
+
+                    <td data-label="Customer">
+                        {{ order.customer_name }}<br>
+                        {{ order.phone }}
+                    </td>
+
+                    <td data-label="Items">
+
+                        {% for item in order.items %}
+
+                        <div class="item-line">
+
+                            <span class="food-name">
+                                🍽️ {{ item.item_name }}
+                            </span>
+
+                            {% if item.category %}
+                            <span class="tag category-tag">
+                                {{ item.category }}
+                            </span>
+                            {% endif %}
+
+                            {% if item.weight %}
+                            <span class="tag weight-tag">
+                                {{ item.weight }}
+                            </span>
+                            {% endif %}
+
+                            <span class="tag qty-tag">
+                                ×{{ item.quantity }}
+                            </span>
+
+                            <span class="tag price-tag">
+                                ₹{{ item.price }}
+                            </span>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </td>
+
+                    <td data-label="Qty×Price">
+
+                        {% for item in order.items %}
+                            {{ item.quantity }} × ₹{{ item.price }}<br>
+                        {% endfor %}
+
+                    </td>
+
+                    <td data-label="Total" style="text-align:left;">
+
+                        <strong>Items:</strong>
+                        ₹{{ order.items_total }}<br>
+
+                        <strong>Delivery:</strong>
+                        ₹{{ order.delivery_charge or 0 }}<br>
+
+                        <strong>Discount:</strong>
+                        ₹{{ order.discount or 0 }}
+
+                        {% if order.coupon_used %}
+                            ({{ order.coupon_used }})
+                        {% endif %}
+
+                        <br>
+
+                        <strong>R-Offer:</strong>
+                        ₹{{ order.restaurant_offer_discount or 0 }}
+
+                        <hr style="margin:4px 0;">
+
+                        <strong>Total:</strong>
+                        ₹{{ order.final_total }}
+
+                    </td>
+
+                    <td data-label="Status">
+                        <span class="status {{ order.status }}">
+                            {{ order.status }}
+                        </span>
+                    </td>
+
+                    <td data-label="Placed">
+                        {{ order.created_at.strftime('%d-%m-%Y %H:%M') }}
+                    </td>
+
+                    <td data-label="Location">
+
+                        {{ order.house_no }},
+                        {{ order.landmark }},
+                        {{ order.city }},
+                        {{ order.state }} -
+                        {{ order.pincode }}
+
+                        {% if order.customer_lat and order.customer_lng %}
+
+                        <br>
+
+                        <a href="{{ url_for('track_order', order_id=order.id) }}"
+                           class="map-btn">
+                            📍 map
+                        </a>
+
+                        {% else %}
+
+                        <br>
+                        <span style="color:red;">
+                            Location not shared
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td data-label="Assign Delivery">
+
+                        <form
+                            class="order-action-form assign-order-form"
+                            method="POST"
+                            action="{{ url_for('restaurant_assign_delivery', order_id=order.id) }}"
+                        >
+
+                            <select name="delivery_person_id" required>
+
+                                <option value="">
+                                    Select
+                                </option>
+
+                                {% for dp in delivery_persons %}
+
+                                <option
+                                    value="{{ dp.id }}"
+                                    {% if order.delivery_person_id == dp.id %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ dp.name }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                            <button type="submit" class="assign-btn">
+                                Assign
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                    <td data-label="Update Status">
+
+                        <form
+                            class="order-action-form status-order-form"
+                            method="POST"
+                            action="{{ url_for('update_status', order_id=order.id) }}"
+                        >
+
+                            <select name="status">
+
+                                <option value="Pending"
+                                    {% if order.status == 'Pending' %}selected{% endif %}>
+                                    Pending
+                                </option>
+
+                                <option value="Accepted"
+                                    {% if order.status == 'Accepted' %}selected{% endif %}>
+                                    Accepted
+                                </option>
+
+                                <option value="Preparing"
+                                    {% if order.status == 'Preparing' %}selected{% endif %}>
+                                    Preparing
+                                </option>
+
+                                <option value="Ready"
+                                    {% if order.status == 'Ready' %}selected{% endif %}>
+                                    Ready
+                                </option>
+
+                                <option value="Assignment Pending"
+                                    {% if order.status == 'Assignment Pending' %}selected{% endif %}
+                                    disabled>
+                                    ⏳ Waiting for Rider
+                                </option>
+
+                                <option value="Out for Delivery"
+                                    {% if order.status == 'Out for Delivery' %}selected{% endif %}
+                                    disabled>
+                                    🚴 Out for Delivery (Auto)
+                                </option>
+
+                                <option value="Picked Up"
+                                    {% if order.status == 'Picked Up' %}selected{% endif %}
+                                    disabled>
+                                    📦 Picked Up (Auto)
+                                </option>
+
+                                <option value="Started"
+                                    {% if order.status == 'Started' %}selected{% endif %}
+                                    disabled>
+                                    🚚 Delivery Started
+                                </option>
+
+                                <option value="Delivered"
+                                    {% if order.status == 'Delivered' %}selected{% endif %}
+                                    disabled>
+                                    ✔ Delivered
+                                </option>
+
+                                <option value="Cancelled"
+                                    {% if order.status == 'Cancelled' %}selected{% endif %}>
+                                    Cancelled
+                                </option>
+
+                            </select>
+
+                            <button type="submit" class="update-btn">
+                                Update
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                    <td data-label="Payment">
+
+                        {% if order.payment_type == 'COD' %}
+
+                            <span class="payment-badge COD">
+                                COD
+                            </span>
+
+                        {% elif order.payment_type == 'Online' %}
+
+                            <span class="payment-badge Online">
+                                Online
+                            </span>
+
+                        {% else %}
+
+                            <span class="payment-badge NotCollected">
+                                Not Collected
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td data-label="Cancel Reason">
+                        {{ order.cancel_reason or '-' }}
+                    </td>
+
+                    <td data-label="Feedback">
+
+                        {% if order.not_delivered_reason %}
+
+                            <span class="feedback-badge">
+                                {{ order.not_delivered_reason }}
+                            </span>
+
+                        {% else %}
+
+                            <span style="color:gray;">
+                                -
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- TODAY PAGINATION -->
+
+    {% if today_pagination.pages > 1 %}
+
+    <div class="pagination">
+
+        {% if today_pagination.has_prev %}
+
+        <a href="{{ url_for(
+            'restaurant_dashboard',
+            today_page=today_pagination.prev_num,
+            yesterday_page=yesterday_pagination.page,
+            older_page=older_pagination.page
+        ) }}">
+            ‹
+        </a>
+
+        {% else %}
+
+        <span class="disabled">‹</span>
+
+        {% endif %}
+
+
+        {% for page_num in today_pagination.iter_pages(
+            left_edge=1,
+            right_edge=1,
+            left_current=2,
+            right_current=2
+        ) %}
+
+            {% if page_num %}
+
+                {% if page_num == today_pagination.page %}
+
+                    <span class="active">
+                        {{ page_num }}
+                    </span>
+
+                {% else %}
+
+                    <a href="{{ url_for(
+                        'restaurant_dashboard',
+                        today_page=page_num,
+                        yesterday_page=yesterday_pagination.page,
+                        older_page=older_pagination.page
+                    ) }}">
+                        {{ page_num }}
+                    </a>
+
+                {% endif %}
+
+            {% else %}
+
+                <span>…</span>
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        {% if today_pagination.has_next %}
+
+        <a href="{{ url_for(
+            'restaurant_dashboard',
+            today_page=today_pagination.next_num,
+            yesterday_page=yesterday_pagination.page,
+            older_page=older_pagination.page
+        ) }}">
+            ›
+        </a>
+
+        {% else %}
+
+        <span class="disabled">›</span>
+
+        {% endif %}
+
+    </div>
+
+    <div class="pagination-info">
+
+        Page {{ today_pagination.page }}
+        of {{ today_pagination.pages }}
+
+        ·
+        {{ today_pagination.total }} total today orders
+
+    </div>
+
     {% endif %}
-</td>
 
-
-<td data-label="Assign Delivery">
-  <form method="POST" action="{{ url_for('restaurant_assign_delivery', order_id=order.id) }}">
-    <select name="delivery_person_id" required>
-      <option value="">Select</option>
-      {% for dp in delivery_persons %}
-        <option value="{{ dp.id }}" {% if order.delivery_person_id == dp.id %}selected{% endif %}>{{ dp.name }}</option>
-      {% endfor %}
-    </select>
-    <button type="submit" class="assign-btn">Assign</button>
-  </form>
-</td>
-
-<td data-label="Update Status">
-  <form method="POST" action="{{ url_for('update_status', order_id=order.id) }}">
-    <select name="status">
-
-      <option value="Pending" {% if order.status=='Pending' %}selected{% endif %}>Pending</option>
-      <option value="Accepted" {% if order.status=='Accepted' %}selected{% endif %}>Accepted</option>
-      <option value="Preparing" {% if order.status=='Preparing' %}selected{% endif %}>Preparing</option>
-      <option value="Ready" {% if order.status=='Ready' %}selected{% endif %}>Ready</option>
-      <option value="Out for Delivery" {% if order.status=='Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
-
-      <!-- 🔒 DELIVERY CONTROLLED STATES (READ ONLY) -->
-      <option value="Started" {% if order.status=='Started' %}selected{% endif %} disabled>🚚 Delivery Started</option>
-      <option value="Delivered" {% if order.status=='Delivered' %}selected{% endif %} disabled>✔ Delivered</option>
-      <option value="Cancelled" {% if order.status=='Cancelled' %}selected{% endif %}>Cancelled</option>
-
-    </select>
-      <button type="submit" class="update-btn">Update</button>
-  </form>
-</td>
-
-
-  
- 
-
-<td data-label="Payment">
-{% if order.payment_type=='COD' %}<span class="payment-badge COD">COD</span>
-{% elif order.payment_type=='Online' %}<span class="payment-badge Online">Online</span>
-{% else %}<span class="payment-badge NotCollected">Not Collected</span>{% endif %}
-</td>
-
-<td data-label="Cancel Reason">{{ order.cancel_reason or '-' }}</td>
-<td data-label="Feedback">
-    {% if order.not_delivered_reason %}
-        <span class="feedback-badge">{{ order.not_delivered_reason }}</span>
     {% else %}
-        <span style="color: gray;">-</span>
-    {% endif %}
-</td>
 
-</tr>
-{% endfor %}
-</tbody>
-</table>
+        <p>No today orders.</p>
+
+    {% endif %}
+
+
+
+    </section>
+
+    <section id="yesterdaySection" class="order-section">
+
+    <h3>Yesterday Orders</h3>
+
+    {% if yesterday_orders %}
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Qty×Price</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Placed</th>
+                    <th>Location</th>
+                    <th>Assign Delivery</th>
+                    <th>Update Status</th>
+                    <th>Payment</th>
+                    <th>Cancel Reason</th>
+                    <th>Feedback</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            {% for order in yesterday_orders %}
+
+                <tr
+                    data-status="{{ order.status }}"
+                    data-order-id="{{ order.order_id }}"
+                >
+
+                    <td data-label="Order ID">
+                        {{ order.order_id }}
+                    </td>
+
+                    <td data-label="Customer">
+                        {{ order.customer_name }}<br>
+                        {{ order.phone }}
+                    </td>
+
+                    <td data-label="Items">
+
+                        {% for item in order.items %}
+
+                        <div class="item-line">
+
+                            <span class="food-name">
+                                🍽️ {{ item.item_name }}
+                            </span>
+
+                            {% if item.category %}
+                            <span class="tag category-tag">
+                                {{ item.category }}
+                            </span>
+                            {% endif %}
+
+                            {% if item.weight %}
+                            <span class="tag weight-tag">
+                                {{ item.weight }}
+                            </span>
+                            {% endif %}
+
+                            <span class="tag qty-tag">
+                                ×{{ item.quantity }}
+                            </span>
+
+                            <span class="tag price-tag">
+                                ₹{{ item.price }}
+                            </span>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </td>
+
+                    <td data-label="Qty×Price">
+
+                        {% for item in order.items %}
+                            {{ item.quantity }} × ₹{{ item.price }}<br>
+                        {% endfor %}
+
+                    </td>
+
+                    <td data-label="Total" style="text-align:left;">
+
+                        <strong>Items:</strong>
+                        ₹{{ order.items_total }}<br>
+
+                        <strong>Delivery:</strong>
+                        ₹{{ order.delivery_charge or 0 }}<br>
+
+                        <strong>Discount:</strong>
+                        ₹{{ order.discount or 0 }}
+
+                        {% if order.coupon_used %}
+                            ({{ order.coupon_used }})
+                        {% endif %}
+
+                        <br>
+
+                        <strong>R-Offer:</strong>
+                        ₹{{ order.restaurant_offer_discount or 0 }}
+
+                        <hr style="margin:4px 0;">
+
+                        <strong>Total:</strong>
+                        ₹{{ order.final_total }}
+
+                    </td>
+
+                    <td data-label="Status">
+                        <span class="status {{ order.status }}">
+                            {{ order.status }}
+                        </span>
+                    </td>
+
+                    <td data-label="Placed">
+                        {{ order.created_at.strftime('%d-%m-%Y %H:%M') }}
+                    </td>
+
+                    <td data-label="Location">
+
+                        {{ order.house_no }},
+                        {{ order.landmark }},
+                        {{ order.city }},
+                        {{ order.state }} -
+                        {{ order.pincode }}
+
+                        {% if order.customer_lat and order.customer_lng %}
+
+                        <br>
+
+                        <a href="{{ url_for('track_order', order_id=order.id) }}"
+                           class="map-btn">
+                            📍 map
+                        </a>
+
+                        {% else %}
+
+                        <br>
+                        <span style="color:red;">
+                            Location not shared
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td data-label="Assign Delivery">
+
+                        <form
+                            class="order-action-form assign-order-form"
+                            method="POST"
+                            action="{{ url_for('restaurant_assign_delivery', order_id=order.id) }}"
+                        >
+
+                            <select name="delivery_person_id" required>
+
+                                <option value="">
+                                    Select
+                                </option>
+
+                                {% for dp in delivery_persons %}
+
+                                <option
+                                    value="{{ dp.id }}"
+                                    {% if order.delivery_person_id == dp.id %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ dp.name }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                            <button type="submit" class="assign-btn">
+                                Assign
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                    <td data-label="Update Status">
+
+                        <form
+                            class="order-action-form status-order-form"
+                            method="POST"
+                            action="{{ url_for('update_status', order_id=order.id) }}"
+                        >
+
+                            <select name="status">
+
+                                <option value="Pending"
+                                    {% if order.status == 'Pending' %}selected{% endif %}>
+                                    Pending
+                                </option>
+
+                                <option value="Accepted"
+                                    {% if order.status == 'Accepted' %}selected{% endif %}>
+                                    Accepted
+                                </option>
+
+                                <option value="Preparing"
+                                    {% if order.status == 'Preparing' %}selected{% endif %}>
+                                    Preparing
+                                </option>
+
+                                <option value="Ready"
+                                    {% if order.status == 'Ready' %}selected{% endif %}>
+                                    Ready
+                                </option>
+
+                                <option value="Assignment Pending"
+                                    {% if order.status == 'Assignment Pending' %}selected{% endif %}
+                                    disabled>
+                                    ⏳ Waiting for Rider
+                                </option>
+
+                                <option value="Out for Delivery"
+                                    {% if order.status == 'Out for Delivery' %}selected{% endif %}
+                                    disabled>
+                                    🚴 Out for Delivery (Auto)
+                                </option>
+
+                                <option value="Picked Up"
+                                    {% if order.status == 'Picked Up' %}selected{% endif %}
+                                    disabled>
+                                    📦 Picked Up (Auto)
+                                </option>
+
+                                <option value="Started"
+                                    {% if order.status == 'Started' %}selected{% endif %}
+                                    disabled>
+                                    🚚 Delivery Started
+                                </option>
+
+                                <option value="Delivered"
+                                    {% if order.status == 'Delivered' %}selected{% endif %}
+                                    disabled>
+                                    ✔ Delivered
+                                </option>
+
+                                <option value="Cancelled"
+                                    {% if order.status == 'Cancelled' %}selected{% endif %}>
+                                    Cancelled
+                                </option>
+
+                            </select>
+
+                            <button type="submit" class="update-btn">
+                                Update
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                    <td data-label="Payment">
+
+                        {% if order.payment_type == 'COD' %}
+
+                            <span class="payment-badge COD">
+                                COD
+                            </span>
+
+                        {% elif order.payment_type == 'Online' %}
+
+                            <span class="payment-badge Online">
+                                Online
+                            </span>
+
+                        {% else %}
+
+                            <span class="payment-badge NotCollected">
+                                Not Collected
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td data-label="Cancel Reason">
+                        {{ order.cancel_reason or '-' }}
+                    </td>
+
+                    <td data-label="Feedback">
+
+                        {% if order.not_delivered_reason %}
+
+                            <span class="feedback-badge">
+                                {{ order.not_delivered_reason }}
+                            </span>
+
+                        {% else %}
+
+                            <span style="color:gray;">
+                                -
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- YESTERDAY PAGINATION -->
+
+    {% if yesterday_pagination.pages > 1 %}
+
+    <div class="pagination">
+
+        {% if yesterday_pagination.has_prev %}
+
+        <a href="{{ url_for(
+            'restaurant_dashboard',
+            today_page=today_pagination.page,
+            yesterday_page=yesterday_pagination.prev_num,
+            older_page=older_pagination.page
+        ) }}">
+            ‹
+        </a>
+
+        {% else %}
+
+        <span class="disabled">‹</span>
+
+        {% endif %}
+
+
+        {% for page_num in yesterday_pagination.iter_pages(
+            left_edge=1,
+            right_edge=1,
+            left_current=2,
+            right_current=2
+        ) %}
+
+            {% if page_num %}
+
+                {% if page_num == yesterday_pagination.page %}
+
+                    <span class="active">
+                        {{ page_num }}
+                    </span>
+
+                {% else %}
+
+                    <a href="{{ url_for(
+                        'restaurant_dashboard',
+                        today_page=today_pagination.page,
+                        yesterday_page=page_num,
+                        older_page=older_pagination.page
+                    ) }}">
+                        {{ page_num }}
+                    </a>
+
+                {% endif %}
+
+            {% else %}
+
+                <span>…</span>
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        {% if yesterday_pagination.has_next %}
+
+        <a href="{{ url_for(
+            'restaurant_dashboard',
+            today_page=today_pagination.page,
+            yesterday_page=yesterday_pagination.next_num,
+            older_page=older_pagination.page
+        ) }}">
+            ›
+        </a>
+
+        {% else %}
+
+        <span class="disabled">›</span>
+
+        {% endif %}
+
+    </div>
+
+    <div class="pagination-info">
+
+        Page {{ yesterday_pagination.page }}
+        of {{ yesterday_pagination.pages }}
+
+        ·
+        {{ yesterday_pagination.total }} total yesterday orders
+
+    </div>
+
+    {% endif %}
+
+    {% else %}
+
+        <p>No yesterday orders.</p>
+
+    {% endif %}
+
+
+
+    </section>
+
+    <section id="olderSection" class="order-section">
+
+    <h3>Older Orders</h3>
+
+    {% if older_orders %}
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Qty×Price</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Placed</th>
+                    <th>Location</th>
+                    <th>Assign Delivery</th>
+                    <th>Update Status</th>
+                    <th>Payment</th>
+                    <th>Cancel Reason</th>
+                    <th>Feedback</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            {% for order in older_orders %}
+
+                <tr
+                    data-status="{{ order.status }}"
+                    data-order-id="{{ order.order_id }}"
+                >
+
+                    <td data-label="Order ID">
+                        {{ order.order_id }}
+                    </td>
+
+                    <td data-label="Customer">
+                        {{ order.customer_name }}<br>
+                        {{ order.phone }}
+                    </td>
+
+                    <td data-label="Items">
+
+                        {% for item in order.items %}
+
+                        <div class="item-line">
+
+                            <span class="food-name">
+                                🍽️ {{ item.item_name }}
+                            </span>
+
+                            {% if item.category %}
+                            <span class="tag category-tag">
+                                {{ item.category }}
+                            </span>
+                            {% endif %}
+
+                            {% if item.weight %}
+                            <span class="tag weight-tag">
+                                {{ item.weight }}
+                            </span>
+                            {% endif %}
+
+                            <span class="tag qty-tag">
+                                ×{{ item.quantity }}
+                            </span>
+
+                            <span class="tag price-tag">
+                                ₹{{ item.price }}
+                            </span>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </td>
+
+                    <td data-label="Qty×Price">
+
+                        {% for item in order.items %}
+                            {{ item.quantity }} × ₹{{ item.price }}<br>
+                        {% endfor %}
+
+                    </td>
+
+                    <td data-label="Total" style="text-align:left;">
+
+                        <strong>Items:</strong>
+                        ₹{{ order.items_total }}<br>
+
+                        <strong>Delivery:</strong>
+                        ₹{{ order.delivery_charge or 0 }}<br>
+
+                        <strong>Discount:</strong>
+                        ₹{{ order.discount or 0 }}
+
+                        {% if order.coupon_used %}
+                            ({{ order.coupon_used }})
+                        {% endif %}
+
+                        <br>
+
+                        <strong>R-Offer:</strong>
+                        ₹{{ order.restaurant_offer_discount or 0 }}
+
+                        <hr style="margin:4px 0;">
+
+                        <strong>Total:</strong>
+                        ₹{{ order.final_total }}
+
+                    </td>
+
+                    <td data-label="Status">
+                        <span class="status {{ order.status }}">
+                            {{ order.status }}
+                        </span>
+                    </td>
+
+                    <td data-label="Placed">
+                        {{ order.created_at.strftime('%d-%m-%Y %H:%M') }}
+                    </td>
+
+                    <td data-label="Location">
+
+                        {{ order.house_no }},
+                        {{ order.landmark }},
+                        {{ order.city }},
+                        {{ order.state }} -
+                        {{ order.pincode }}
+
+                        {% if order.customer_lat and order.customer_lng %}
+
+                        <br>
+
+                        <a href="{{ url_for('track_order', order_id=order.id) }}"
+                           class="map-btn">
+                            📍 map
+                        </a>
+
+                        {% else %}
+
+                        <br>
+                        <span style="color:red;">
+                            Location not shared
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td data-label="Assign Delivery">
+
+                        <form
+                            class="order-action-form assign-order-form"
+                            method="POST"
+                            action="{{ url_for('restaurant_assign_delivery', order_id=order.id) }}"
+                        >
+
+                            <select name="delivery_person_id" required>
+
+                                <option value="">
+                                    Select
+                                </option>
+
+                                {% for dp in delivery_persons %}
+
+                                <option
+                                    value="{{ dp.id }}"
+                                    {% if order.delivery_person_id == dp.id %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ dp.name }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                            <button type="submit" class="assign-btn">
+                                Assign
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                    <td data-label="Update Status">
+
+                        <form
+                            class="order-action-form status-order-form"
+                            method="POST"
+                            action="{{ url_for('update_status', order_id=order.id) }}"
+                        >
+
+                            <select name="status">
+
+                                <option value="Pending"
+                                    {% if order.status == 'Pending' %}selected{% endif %}>
+                                    Pending
+                                </option>
+
+                                <option value="Accepted"
+                                    {% if order.status == 'Accepted' %}selected{% endif %}>
+                                    Accepted
+                                </option>
+
+                                <option value="Preparing"
+                                    {% if order.status == 'Preparing' %}selected{% endif %}>
+                                    Preparing
+                                </option>
+
+                                <option value="Ready"
+                                    {% if order.status == 'Ready' %}selected{% endif %}>
+                                    Ready
+                                </option>
+
+                                <option value="Assignment Pending"
+                                    {% if order.status == 'Assignment Pending' %}selected{% endif %}
+                                    disabled>
+                                    ⏳ Waiting for Rider
+                                </option>
+
+                                <option value="Out for Delivery"
+                                    {% if order.status == 'Out for Delivery' %}selected{% endif %}
+                                    disabled>
+                                    🚴 Out for Delivery (Auto)
+                                </option>
+
+                                <option value="Picked Up"
+                                    {% if order.status == 'Picked Up' %}selected{% endif %}
+                                    disabled>
+                                    📦 Picked Up (Auto)
+                                </option>
+
+                                <option value="Started"
+                                    {% if order.status == 'Started' %}selected{% endif %}
+                                    disabled>
+                                    🚚 Delivery Started
+                                </option>
+
+                                <option value="Delivered"
+                                    {% if order.status == 'Delivered' %}selected{% endif %}
+                                    disabled>
+                                    ✔ Delivered
+                                </option>
+
+                                <option value="Cancelled"
+                                    {% if order.status == 'Cancelled' %}selected{% endif %}>
+                                    Cancelled
+                                </option>
+
+                            </select>
+
+                            <button type="submit" class="update-btn">
+                                Update
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                    <td data-label="Payment">
+
+                        {% if order.payment_type == 'COD' %}
+
+                            <span class="payment-badge COD">
+                                COD
+                            </span>
+
+                        {% elif order.payment_type == 'Online' %}
+
+                            <span class="payment-badge Online">
+                                Online
+                            </span>
+
+                        {% else %}
+
+                            <span class="payment-badge NotCollected">
+                                Not Collected
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td data-label="Cancel Reason">
+                        {{ order.cancel_reason or '-' }}
+                    </td>
+
+                    <td data-label="Feedback">
+
+                        {% if order.not_delivered_reason %}
+
+                            <span class="feedback-badge">
+                                {{ order.not_delivered_reason }}
+                            </span>
+
+                        {% else %}
+
+                            <span style="color:gray;">
+                                -
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- OLDER PAGINATION -->
+
+    {% if older_pagination.pages > 1 %}
+
+    <div class="pagination">
+
+        {% if older_pagination.has_prev %}
+
+        <a href="{{ url_for(
+            'restaurant_dashboard',
+            today_page=today_pagination.page,
+            yesterday_page=yesterday_pagination.page,
+            older_page=older_pagination.prev_num
+        ) }}">
+            ‹
+        </a>
+
+        {% else %}
+
+        <span class="disabled">‹</span>
+
+        {% endif %}
+
+
+        {% for page_num in older_pagination.iter_pages(
+            left_edge=1,
+            right_edge=1,
+            left_current=2,
+            right_current=2
+        ) %}
+
+            {% if page_num %}
+
+                {% if page_num == older_pagination.page %}
+
+                    <span class="active">
+                        {{ page_num }}
+                    </span>
+
+                {% else %}
+
+                    <a href="{{ url_for(
+                        'restaurant_dashboard',
+                        today_page=today_pagination.page,
+                        yesterday_page=yesterday_pagination.page,
+                        older_page=page_num
+                    ) }}">
+                        {{ page_num }}
+                    </a>
+
+                {% endif %}
+
+            {% else %}
+
+                <span>…</span>
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        {% if older_pagination.has_next %}
+
+        <a href="{{ url_for(
+            'restaurant_dashboard',
+            today_page=today_pagination.page,
+            yesterday_page=yesterday_pagination.page,
+            older_page=older_pagination.next_num
+        ) }}">
+            ›
+        </a>
+
+        {% else %}
+
+        <span class="disabled">›</span>
+
+        {% endif %}
+
+    </div>
+
+    <div class="pagination-info">
+
+        Page {{ older_pagination.page }}
+        of {{ older_pagination.pages }}
+
+        ·
+        {{ older_pagination.total }} total older orders
+
+    </div>
+
+    {% endif %}
+
+    {% else %}
+
+        <p>No older orders.</p>
+
+    {% endif %}
+
+
+    </section>
+
+    <!-- MAP -->
+    <div
+        id="map"
+        style="height:300px;width:100%;margin-bottom:20px;"
+    ></div>
+
 </div>
-{% else %}
-<p>No {{ category.lower() }} orders.</p>
-{% endif %}
-{% endfor %}
-<div id="map" style="height: 300px; width: 100%; margin-bottom: 20px;"></div>
-
 
 
 <script>
-// ===== FILTERS =====
+
+/* =========================================================
+   FILTERS
+   ========================================================= */
+
 function applyFilters() {
-    const searchValue = document.getElementById("searchInput").value.trim().toLowerCase();
-    const statusValue = document.getElementById("statusFilter").value.trim().toLowerCase();
-    const rows = document.querySelectorAll("tbody tr");
-    rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        const rowStatus = (row.getAttribute("data-status")||"").toLowerCase();
-        row.style.display = ((searchValue && !text.includes(searchValue)) || (statusValue && rowStatus!=statusValue)) ? "none" : "";
-    });
-}
-document.getElementById("searchBtn").addEventListener("click", applyFilters);
-document.getElementById("clearFilters").addEventListener("click", function(){
-    document.getElementById("searchInput").value="";
-    document.getElementById("statusFilter").value="";
-    applyFilters();
-});
-document.getElementById("searchInput").addEventListener("keyup", e=>{if(e.key==="Enter") applyFilters();});
 
-// ===== NEW ORDER SOUND & POPUP =====
-let lastOrderId = "{{ orders[0].order_id if orders else '' }}";
-const notifySound = new Audio("/static/sounds/neworder.mp3");
+    const searchInput =
+        document.getElementById("searchInput");
 
-function showPopup(msg){
-    const badge = document.getElementById("newOrderBadge");
-    badge.innerHTML = msg;
-    badge.style.display = "block";
-    setTimeout(() => badge.style.display = "none", 4000);
-}
+    const statusFilter =
+        document.getElementById("statusFilter");
 
-setInterval(() => {
-    fetch(window.location.href)
-        .then(r => r.text())
-        .then(html => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, "text/html");
+    const fromDate =
+        document.getElementById("fromDate");
 
-            // Update tables (same as before)
-            const updatedTables = doc.querySelectorAll("table tbody");
-            const currentTables = document.querySelectorAll("table tbody");
-            updatedTables.forEach((ut, i) => {
-                if (currentTables[i]) {
-                    currentTables[i].innerHTML = ut.innerHTML;
+    const toDate =
+        document.getElementById("toDate");
+
+
+    const searchValue =
+        searchInput
+            ? searchInput.value.trim().toLowerCase()
+            : "";
+
+
+    const statusValue =
+        statusFilter
+            ? statusFilter.value.trim().toLowerCase()
+            : "";
+
+
+    const fromValue =
+        fromDate
+            ? fromDate.value
+            : "";
+
+
+    const toValue =
+        toDate
+            ? toDate.value
+            : "";
+
+
+    document.querySelectorAll(
+        ".table-wrapper table tbody tr[data-order-id]"
+    ).forEach(row => {
+
+        const text =
+            row.innerText.toLowerCase();
+
+        const rowStatus =
+            (
+                row.getAttribute("data-status") || ""
+            ).toLowerCase();
+
+        let show = true;
+
+
+        if (
+            searchValue &&
+            !text.includes(searchValue)
+        ) {
+            show = false;
+        }
+
+
+        if (
+            statusValue &&
+            rowStatus !== statusValue
+        ) {
+            show = false;
+        }
+
+
+        /*
+         * Date filtering uses the visible Placed cell.
+         * Keep the existing dashboard behavior without
+         * adding any backend dependency.
+         */
+
+        const placedCell =
+            row.querySelector(
+                '[data-label="Placed"]'
+            );
+
+
+        if (
+            (fromValue || toValue) &&
+            placedCell
+        ) {
+
+            const placedText =
+                placedCell.innerText.trim();
+
+            const parts =
+                placedText.split("-");
+
+
+            if (parts.length === 3) {
+
+                const day =
+                    parts[0].padStart(2, "0");
+
+                const month =
+                    parts[1].padStart(2, "0");
+
+                const year =
+                    parts[2].slice(0, 4);
+
+
+                const rowDate =
+                    `${year}-${month}-${day}`;
+
+
+                if (
+                    fromValue &&
+                    rowDate < fromValue
+                ) {
+                    show = false;
                 }
-            });
 
-            // 🔥 Detect ONLY newest order
-            const firstRow = doc.querySelector("tbody tr[data-order-id]");
-            if (!firstRow) return;
 
-            const newOrderId = firstRow.getAttribute("data-order-id");
+                if (
+                    toValue &&
+                    rowDate > toValue
+                ) {
+                    show = false;
+                }
 
-            if (newOrderId && newOrderId !== lastOrderId) {
-                notifySound.play();
-                showPopup("🔔 New Order Received!");
-                lastOrderId = newOrderId;
             }
-        })
-        .catch(console.error);
-}, 8000);
+
+        }
+
+
+        row.style.display =
+            show ? "" : "none";
+
+    });
+
+}
+
+
+/* =========================================================
+   FILTER EVENTS
+   ========================================================= */
+
+document
+    .getElementById("searchBtn")
+    ?.addEventListener(
+        "click",
+        function() {
+            applyFilters();
+        }
+    );
+
+
+document
+    .getElementById("clearFilters")
+    ?.addEventListener(
+        "click",
+        function() {
+
+            const searchInput =
+                document.getElementById(
+                    "searchInput"
+                );
+
+            const fromDate =
+                document.getElementById(
+                    "fromDate"
+                );
+
+            const toDate =
+                document.getElementById(
+                    "toDate"
+                );
+
+            const statusFilter =
+                document.getElementById(
+                    "statusFilter"
+                );
+
+
+            if (searchInput) {
+                searchInput.value = "";
+            }
+
+            if (fromDate) {
+                fromDate.value = "";
+            }
+
+            if (toDate) {
+                toDate.value = "";
+            }
+
+            if (statusFilter) {
+                statusFilter.value = "";
+            }
+
+
+            applyFilters();
+
+        }
+    );
+
+
+document
+    .getElementById("searchInput")
+    ?.addEventListener(
+        "keyup",
+        function(e) {
+
+            if (e.key === "Enter") {
+                applyFilters();
+            }
+
+        }
+    );
+
+
+/* =========================================================
+   NEW ORDER SOUND
+   ========================================================= */
+
+let lastOrderId =
+    "{{ orders[0].order_id if orders else '' }}";
+
+
+const notifySound =
+    new Audio(
+        "/static/sounds/neworder.mp3"
+    );
+
+
+function showPopup(message) {
+
+    const badge =
+        document.getElementById(
+            "newOrderBadge"
+        );
+
+
+    if (!badge) {
+        return;
+    }
+
+
+    badge.innerHTML =
+        message;
+
+
+    badge.style.display =
+        "block";
+
+
+    setTimeout(
+        function() {
+
+            badge.style.display =
+                "none";
+
+        },
+        4000
+    );
+
+}
+
+
+/* =========================================================
+   SECTION LOADING
+   ========================================================= */
+
+function setSectionLoading(
+    section,
+    loading
+) {
+
+    if (!section) {
+        return;
+    }
+
+
+    section.classList.toggle(
+        "section-loading",
+        loading
+    );
+
+}
+
+
+/* =========================================================
+   REPLACE ONLY ONE ORDER SECTION
+   ========================================================= */
+
+async function refreshOrderSection(
+    sectionId,
+    url,
+    extraOptions = {}
+) {
+
+    const currentSection =
+        document.getElementById(
+            sectionId
+        );
+
+
+    if (!currentSection) {
+        return false;
+    }
+
+
+    setSectionLoading(
+        currentSection,
+        true
+    );
+
+
+    try {
+
+        const response =
+            await fetch(
+                url,
+                {
+                    method:
+                        extraOptions.method || "GET",
+
+                    body:
+                        extraOptions.body || undefined,
+
+                    headers: {
+                        "X-Requested-With":
+                            "XMLHttpRequest",
+
+                        ...(extraOptions.headers || {})
+                    },
+
+                    cache: "no-store"
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+
+        }
+
+
+        const contentType =
+            response.headers.get(
+                "content-type"
+            ) || "";
+
+
+        /*
+         * Support JSON responses too.
+         * If the existing Flask action returns JSON,
+         * we still refresh only the affected section.
+         */
+
+        if (
+            contentType.includes(
+                "application/json"
+            )
+        ) {
+
+            const data =
+                await response.json();
+
+
+            if (!data.success) {
+
+                throw new Error(
+                    data.error ||
+                    "Action failed"
+                );
+
+            }
+
+
+            /*
+             * GET the dashboard again,
+             * but replace only this section.
+             */
+
+            return await replaceSectionFromUrl(
+                sectionId,
+                window.location.href
+            );
+
+        }
+
+
+        const html =
+            await response.text();
+
+
+        const parser =
+            new DOMParser();
+
+
+        const doc =
+            parser.parseFromString(
+                html,
+                "text/html"
+            );
+
+
+        const newSection =
+            doc.getElementById(
+                sectionId
+            );
+
+
+        if (!newSection) {
+
+            throw new Error(
+                `#${sectionId} not found`
+            );
+
+        }
+
+
+        currentSection.replaceWith(
+            newSection
+        );
+
+
+        /*
+         * Also refresh the summary stats after
+         * an action without refreshing the whole page.
+         */
+
+        replaceOptionalFragment(
+            doc,
+            "mobileStats"
+        );
+
+        replaceOptionalFragment(
+            doc,
+            "desktopStats"
+        );
+
+
+        applyFilters();
+
+
+        return true;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Section refresh error:",
+            error
+        );
+
+
+        showPopup(
+            "⚠️ Could not refresh section"
+        );
+
+
+        return false;
+
+    }
+
+    finally {
+
+        const updatedSection =
+            document.getElementById(
+                sectionId
+            );
+
+
+        setSectionLoading(
+            updatedSection,
+            false
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   REPLACE SECTION FROM GET URL
+   ========================================================= */
+
+async function replaceSectionFromUrl(
+    sectionId,
+    url
+) {
+
+    const response =
+        await fetch(
+            url,
+            {
+                method: "GET",
+
+                headers: {
+                    "X-Requested-With":
+                        "XMLHttpRequest"
+                },
+
+                cache: "no-store"
+            }
+        );
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            `HTTP ${response.status}`
+        );
+
+    }
+
+
+    const html =
+        await response.text();
+
+
+    const parser =
+        new DOMParser();
+
+
+    const doc =
+        parser.parseFromString(
+            html,
+            "text/html"
+        );
+
+
+    const currentSection =
+        document.getElementById(
+            sectionId
+        );
+
+
+    const newSection =
+        doc.getElementById(
+            sectionId
+        );
+
+
+    if (
+        !currentSection ||
+        !newSection
+    ) {
+
+        throw new Error(
+            "Requested section not found"
+        );
+
+    }
+
+
+    currentSection.replaceWith(
+        newSection
+    );
+
+
+    replaceOptionalFragment(
+        doc,
+        "mobileStats"
+    );
+
+    replaceOptionalFragment(
+        doc,
+        "desktopStats"
+    );
+
+
+    applyFilters();
+
+
+    return true;
+
+}
+
+
+/* =========================================================
+   OPTIONAL FRAGMENT REPLACEMENT
+   ========================================================= */
+
+function replaceOptionalFragment(
+    doc,
+    id
+) {
+
+    const current =
+        document.getElementById(id);
+
+    const fresh =
+        doc.getElementById(id);
+
+
+    if (
+        current &&
+        fresh
+    ) {
+
+        current.replaceWith(
+            fresh
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   PAGINATION
+   ONLY THE CLICKED SECTION REFRESHES
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    async function(e) {
+
+        const link =
+            e.target.closest(
+                ".order-section .pagination a"
+            );
+
+
+        if (!link) {
+            return;
+        }
+
+
+        /*
+         * Do not allow normal browser navigation.
+         */
+
+        e.preventDefault();
+
+
+        const section =
+            link.closest(
+                ".order-section"
+            );
+
+
+        if (!section) {
+            return;
+        }
+
+
+        const sectionId =
+            section.id;
+
+
+        if (!sectionId) {
+            return;
+        }
+
+
+        const success =
+            await refreshOrderSection(
+                sectionId,
+                link.href
+            );
+
+
+        /*
+         * Keep URL in sync without
+         * refreshing the page.
+         */
+
+        if (success) {
+
+            window.history.pushState(
+                {},
+                "",
+                link.href
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   ORDER ACTION BUTTONS
+   ASSIGN DELIVERY / UPDATE STATUS
+   ========================================================= */
+
+/*
+ * This catches both forms:
+ *
+ * restaurant_assign_delivery
+ * update_status
+ *
+ * The POST still goes to your existing Flask endpoint.
+ *
+ * After Flask responds, only the relevant order section
+ * is replaced.
+ */
+
+document.addEventListener(
+    "submit",
+    async function(e) {
+
+        const form =
+            e.target.closest(
+                ".order-action-form"
+            );
+
+
+        if (!form) {
+            return;
+        }
+
+
+        e.preventDefault();
+
+
+        const section =
+            form.closest(
+                ".order-section"
+            );
+
+
+        if (!section) {
+            return;
+        }
+
+
+        const sectionId =
+            section.id;
+
+
+        const button =
+            form.querySelector(
+                "button[type='submit']"
+            );
+
+
+        const originalText =
+            button
+                ? button.innerText
+                : "";
+
+
+        if (button) {
+
+            button.disabled =
+                true;
+
+            button.classList.add(
+                "is-loading"
+            );
+
+
+            button.innerText =
+                form.classList.contains(
+                    "assign-order-form"
+                )
+                    ? "Assigning..."
+                    : "Updating...";
+
+        }
+
+
+        try {
+
+            /*
+             * Use FormData so the existing Flask routes
+             * receive exactly the same form fields.
+             */
+
+            const formData =
+                new FormData(form);
+
+
+            const response =
+                await fetch(
+                    form.action,
+                    {
+                        method: "POST",
+
+                        body: formData,
+
+                        headers: {
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        },
+
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+
+            }
+
+
+            const contentType =
+                response.headers.get(
+                    "content-type"
+                ) || "";
+
+
+            /*
+             * JSON response support.
+             */
+
+            if (
+                contentType.includes(
+                    "application/json"
+                )
+            ) {
+
+                const data =
+                    await response.json();
+
+
+                if (!data.success) {
+
+                    alert(
+                        data.error ||
+                        "Action failed"
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                 * Existing Flask action succeeded.
+                 * Now GET dashboard and replace only
+                 * the affected section + stats.
+                 */
+
+                await replaceSectionFromUrl(
+                    sectionId,
+                    window.location.href
+                );
+
+            }
+
+
+            /*
+             * Existing Flask form routes normally
+             * redirect back to the dashboard.
+             * fetch() follows the redirect automatically.
+             */
+
+            else {
+
+                const html =
+                    await response.text();
+
+
+                const parser =
+                    new DOMParser();
+
+
+                const doc =
+                    parser.parseFromString(
+                        html,
+                        "text/html"
+                    );
+
+
+                const currentSection =
+                    document.getElementById(
+                        sectionId
+                    );
+
+
+                const newSection =
+                    doc.getElementById(
+                        sectionId
+                    );
+
+
+                if (
+                    !currentSection ||
+                    !newSection
+                ) {
+
+                    throw new Error(
+                        "Updated section not found"
+                    );
+
+                }
+
+
+                /*
+                 * Replace ONLY the section.
+                 */
+
+                currentSection.replaceWith(
+                    newSection
+                );
+
+
+                /*
+                 * Refresh summary statistics
+                 * without refreshing the full page.
+                 */
+
+                replaceOptionalFragment(
+                    doc,
+                    "mobileStats"
+                );
+
+                replaceOptionalFragment(
+                    doc,
+                    "desktopStats"
+                );
+
+
+                applyFilters();
+
+            }
+
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Order action error:",
+                error
+            );
+
+
+            alert(
+                "Unable to complete action. Please try again."
+            );
+
+        }
+
+        finally {
+
+            /*
+             * Button may no longer exist if
+             * the section was replaced.
+             */
+
+            const activeButton =
+                document.querySelector(
+                    `#${sectionId} .${form.classList.contains("assign-order-form")
+                        ? "assign-btn"
+                        : "update-btn"}`
+                );
+
+
+            if (activeButton) {
+
+                activeButton.disabled =
+                    false;
+
+                activeButton.classList.remove(
+                    "is-loading"
+                );
+
+            }
+
+
+            /*
+             * If the original section remains,
+             * restore the button as well.
+             */
+
+            if (button && document.body.contains(button)) {
+
+                button.disabled =
+                    false;
+
+                button.classList.remove(
+                    "is-loading"
+                );
+
+                button.innerText =
+                    originalText;
+
+            }
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   AUTO REFRESH
+   Every 8 seconds.
+   Does not reload the complete browser page.
+   ========================================================= */
+
+setInterval(
+    async function() {
+
+        /*
+         * Do not interfere while an order form is being
+         * submitted.
+         */
+
+        if (
+            document.querySelector(
+                ".order-action-form .is-loading"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    window.location.href,
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        },
+
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+                return;
+            }
+
+
+            const html =
+                await response.text();
+
+
+            const parser =
+                new DOMParser();
+
+
+            const doc =
+                parser.parseFromString(
+                    html,
+                    "text/html"
+                );
+
+
+            /*
+             * Update visible table bodies only.
+             * Pagination page remains unchanged.
+             */
+
+            const currentBodies =
+                document.querySelectorAll(
+                    ".order-section .table-wrapper table tbody"
+                );
+
+
+            const newBodies =
+                doc.querySelectorAll(
+                    ".order-section .table-wrapper table tbody"
+                );
+
+
+            newBodies.forEach(
+                function(newBody, index) {
+
+                    const currentBody =
+                        currentBodies[index];
+
+
+                    if (!currentBody) {
+                        return;
+                    }
+
+
+                    if (index === 0) {
+
+                        detectNewOrder(
+                            newBody
+                        );
+
+                    }
+
+
+                    currentBody.innerHTML =
+                        newBody.innerHTML;
+
+                }
+            );
+
+
+            /*
+             * Keep stats fresh too.
+             */
+
+            replaceOptionalFragment(
+                doc,
+                "mobileStats"
+            );
+
+            replaceOptionalFragment(
+                doc,
+                "desktopStats"
+            );
+
+
+            applyFilters();
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Dashboard auto refresh:",
+                error
+            );
+
+        }
+
+    },
+    8000
+);
+
+
+/* =========================================================
+   DETECT NEWEST ORDER
+   ========================================================= */
+
+function detectNewOrder(
+    body
+) {
+
+    const firstRow =
+        body.querySelector(
+            "tr[data-order-id]"
+        );
+
+
+    if (!firstRow) {
+        return;
+    }
+
+
+    const newOrderId =
+        firstRow.getAttribute(
+            "data-order-id"
+        );
+
+
+    if (
+        newOrderId &&
+        lastOrderId &&
+        newOrderId !== lastOrderId
+    ) {
+
+        notifySound
+            .play()
+            .catch(
+                () => {}
+            );
+
+
+        showPopup(
+            "🔔 New Order Received!"
+        );
+
+    }
+
+
+    if (newOrderId) {
+
+        lastOrderId =
+            newOrderId;
+
+    }
+
+}
+
+
+/* =========================================================
+   SESSION / OTHER PAGE LOGIC
+   ========================================================= */
+
+/*
+ * No full-page reload is used for order actions.
+ * Navigation links such as Reports, Manage Offers,
+ * Delivery Boys, and Logout continue to navigate normally
+ * because they open different dashboard pages/actions.
+ */
+
 
 </script>
-
 
 {% endblock %}

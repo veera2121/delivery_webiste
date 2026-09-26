@@ -1736,6 +1736,82 @@ color:#b91c1c;
 <a href="{{ url_for('admin_employees') }}" class="admin-card">
     👨‍💼 Manage Employees
 </a>
+<a href="/admin/rider-applications" class="admin-card">
+    <span class="icon">🚴</span>
+    <span class="title">Rider Applications</span>
+    <span class="subtitle">Approve riders & manage password resets</span>
+</a>
+
+
+<a href="{{ url_for('admin_home_content') }}" class="admin-card"> 📢 Home Content </a>
+<a
+    href="{{ url_for('restaurant_pickup_qr') }}"
+    class="admin-card"
+>
+    <span>📱</span>
+    <div>
+        <strong>Restaurant Pickup QR</strong>
+        <small>Generate & manage pickup QR</small>
+    </div>
+</a>
+<a href="/admin/rider-applications" class="admin-card">
+    <span class="icon">🚴</span>
+    <span>
+        <strong>Delivery Partner Applications</strong>
+        <small>Review and approve rider applications</small>
+    </span>
+</a>
+<a
+    href="{{ url_for('admin_delivery_person_control') }}"
+    class="admin-card"
+>
+    🚴 Delivery Person Control
+</a>
+<a
+    href="{{ url_for('admin_rider_settlements') }}"
+    style="
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:15px 18px;
+        border-radius:14px;
+        background:#ffffff;
+        color:#111827;
+        text-decoration:none;
+        font-weight:800;
+        box-shadow:0 5px 18px rgba(0,0,0,.07);
+    "
+>
+
+    <span style="font-size:22px;">
+        💰
+    </span>
+
+    <div>
+
+        <div>
+            Rider Cash & Settlements
+        </div>
+
+        <small
+            style="
+                color:#6b7280;
+                font-weight:500;
+            "
+        >
+            Cash collection, earnings & payouts
+        </small>
+
+    </div>
+
+</a>
+<a
+
+    href="{{ url_for('grocery_sync_page') }}"
+    class="admin-card"
+>
+    🛒 Grocery Sync
+</a>
 <a href="{{ url_for('admin_logout') }}" class="admin-card red">🚪 Logout</a> 
 </div> 
 
@@ -3080,5 +3156,6 @@ async function loadRestaurantPerformance() {
 }
 
 </script>
+
 </body>
 </html>
