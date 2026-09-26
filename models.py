@@ -926,12 +926,105 @@ class OrderItem(db.Model):
         return round((self.price or 0) * (self.quantity or 0), 2)
 # ----------------- Category -----------------
 class Category(db.Model):
-    __tablename__ = "category"   # ⭐ VERY IMPORTANT
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False, unique=True)
-    image = db.Column(db.String(200))
-    
+    __tablename__ = "category"
 
+    id = db.Column(db.Integer, primary_key=True)
+
+    name = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    image = db.Column(
+        db.String(200),
+        nullable=True
+    )
+
+    section = db.Column(
+        db.String(50),
+        nullable=False,
+        default="food",
+        server_default="food"
+    )
+
+    is_active = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        server_default="true"
+    )
+
+    display_order = db.Column(
+        db.Integer,
+        nullable=False,
+        default=0,
+        server_default="0"
+    )
+
+    parent_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            "category.id",
+            ondelete="SET NULL"
+        ),
+        nullable=True
+    )
+
+    parent = db.relationship(
+        "Category",
+        remote_side=[id],
+        backref=db.backref(
+            "subcategories",
+            lazy="dynamic"
+        )
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "name",
+            "section",
+            name="uq_category_name_section"
+        ),
+    )
+
+class CategoryLocation(db.Model):
+    __tablename__ = "category_location"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    category_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            "category.id",
+            ondelete="CASCADE"
+        ),
+        nullable=False
+    )
+
+    location = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    category = db.relationship(
+        "Category",
+        backref=db.backref(
+            "location_assignments",
+            cascade="all, delete-orphan",
+            lazy="select"
+        )
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "category_id",
+            "location",
+            name="uq_category_location"
+        ),
+    )
 # ----------------- Food Item (For Trending & Analytics) ----------------- 
 class FoodItem(db.Model):
     __tablename__ = "food_item"
@@ -1889,4 +1982,115 @@ class OrderPickupVerification(db.Model):
 
     restaurant_user = db.relationship(
         "RestaurantUser"
+    ) 
+
+
+class HomeAnnouncement(db.Model):
+    __tablename__ = "home_announcements"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    content = db.Column(db.Text)
+
+    announcement_type = db.Column(
+        db.String(30),
+        nullable=False,
+        default="notice"
+    )
+
+    priority = db.Column(
+        db.String(20),
+        nullable=False,
+        default="normal"
+    )
+
+    icon = db.Column(db.String(100))
+    image_url = db.Column(db.Text)
+
+    button_text = db.Column(db.String(100))
+    button_action = db.Column(db.String(300))
+
+    # all / restaurant / bakery / grocery
+    service = db.Column(
+        db.String(30),
+        nullable=False,
+        default="all"
+    )
+
+    starts_at = db.Column(db.DateTime)
+    ends_at = db.Column(db.DateTime)
+
+    is_enabled = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False
+    )
+
+    show_on_home = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True
+    )
+
+    send_push = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False
+    )
+
+    dismissible = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+
+class HomeAnnouncementTarget(db.Model):
+    __tablename__ = "home_announcement_targets"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    announcement_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            "home_announcements.id",
+            ondelete="CASCADE"
+        ),
+        nullable=False
+    )
+
+    # all / location / service
+    target_type = db.Column(
+        db.String(30),
+        nullable=False
+    )
+
+    # Example:
+    # "Machilipatnam"
+    # "Gudivada"
+    # "grocery"
+    target_value = db.Column(
+        db.String(150),
+        nullable=False
+    )
+
+    announcement = db.relationship(
+        "HomeAnnouncement",
+        backref=db.backref(
+            "targets",
+            cascade="all, delete-orphan"
+        )
     )
