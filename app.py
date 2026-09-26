@@ -3245,7 +3245,7 @@ def home():
     # ========================================================
 
     response = render_template(
-        "sameindex.html",
+        "index.html",
 
         # Stores
         restaurants=restaurants,
@@ -32419,130 +32419,6 @@ def edit_home_content(announcement_id):
             announcement=announcement,
             locations=locations
         )
-# =========================================================
-# ADMIN - SUSPEND / ACTIVATE DELIVERY PERSON
-# =========================================================
-
-@app.route(
-    "/admin/delivery-person/<int:delivery_person_id>/toggle-status",
-    methods=["POST"]
-)
-def admin_toggle_delivery_person_status(
-    delivery_person_id
-):
-
-    # -----------------------------------------------------
-    # ADMIN AUTH
-    # -----------------------------------------------------
-
-    if not session.get("admin_logged_in"):
-        return jsonify({
-            "success": False,
-            "error": "Unauthorized"
-        }), 401
-
-
-    dp = DeliveryPerson.query.get_or_404(
-        delivery_person_id
-    )
-
-
-    # -----------------------------------------------------
-    # TOGGLE STATUS
-    # -----------------------------------------------------
-
-    dp.is_active = not dp.is_active
-
-
-    # -----------------------------------------------------
-    # WHEN SUSPENDED
-    # -----------------------------------------------------
-
-    if not dp.is_active:
-
-        dp.is_online = False
-
-        dp.is_available = False
-
-
-        message = (
-            f"{dp.name} has been suspended."
-        )
-
-
-    # -----------------------------------------------------
-    # WHEN ACTIVATED
-    # -----------------------------------------------------
-
-    else:
-
-        dp.is_available = True
-
-        message = (
-            f"{dp.name} has been activated."
-        )
-
-
-    db.session.commit()
-
-
-    return jsonify({
-        "success": True,
-        "id": dp.id,
-        "is_active": dp.is_active,
-        "is_online": dp.is_online,
-        "is_available": dp.is_available,
-        "message": message
-    })
-
-# =========================================================
-# ADMIN - DELIVERY PERSON CONTROL PAGE
-# =========================================================
-
-@app.route("/admin/delivery-person-control")
-def admin_delivery_person_control():
-
-    # -----------------------------------------------------
-    # USE YOUR EXISTING ADMIN AUTHENTICATION HERE
-    # -----------------------------------------------------
-    # If your admin session key is different,
-    # change this condition to your existing admin check.
-
-    if not session.get("admin_logged_in"):
-        return redirect(url_for("admin_login"))
-
-
-    delivery_persons = (
-        DeliveryPerson.query
-        .order_by(DeliveryPerson.name.asc())
-        .all()
-    )
-
-
-    active_count = sum(
-        1 for dp in delivery_persons
-        if dp.is_active
-    )
-
-    suspended_count = sum(
-        1 for dp in delivery_persons
-        if not dp.is_active
-    )
-
-    online_count = sum(
-        1 for dp in delivery_persons
-        if dp.is_online
-    )
-
-
-    return render_template(
-        "admin_delivery_person_control.html",
-        delivery_persons=delivery_persons,
-        active_count=active_count,
-        suspended_count=suspended_count,
-        online_count=online_count
-    )
-
 
 # ==========================================================
 # RIDER APPLICATION ROUTE REGISTRATION
