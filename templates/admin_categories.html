@@ -1,36 +1,937 @@
-<h2>Add New Category</h2>
+<!DOCTYPE html>
+<html lang="en">
 
-<form method="POST" enctype="multipart/form-data">
+<head>
+    <meta charset="UTF-8">
 
-  <input type="text" name="name" placeholder="Category name" required>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-  <!-- NEW -->
-  <input type="file" name="image" accept="image/*" required>
+    <title>Manage Categories - RucHiGo Admin</title>
 
-  <button type="submit">Add</button>
+    <style>
 
-</form>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 25px;
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            color: #202124;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 25px rgba(0,0,0,.06);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(220px, 1fr));
+
+            gap: 15px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #555;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 11px 13px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            font-size: 14px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .locations {
+            margin-top: 20px;
+        }
+
+        .location-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .location-option {
+            background: #f3f4f6;
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .location-option input {
+            width: auto;
+        }
+
+        .custom-location {
+            margin-top: 12px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .checkbox-row input {
+            width: auto;
+        }
+
+        .btn {
+            border: none;
+            padding: 11px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            margin-top: 18px;
+        }
+
+        .btn-add {
+            background: #5b5ce2;
+            color: white;
+        }
+
+        .btn-save {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #dc2626;
+            color: white;
+        }
+
+        .categories {
+            display: grid;
+            gap: 18px;
+        }
+
+        .category-item {
+            background: #fff;
+            border: 1px solid #ececec;
+            border-radius: 16px;
+            padding: 18px;
+        }
+
+        .category-top {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .category-image {
+            width: 85px;
+            height: 85px;
+            object-fit: cover;
+            border-radius: 14px;
+            border: 1px solid #eee;
+            background: #fafafa;
+        }
+
+        .category-info {
+            flex: 1;
+        }
+
+        .category-info h3 {
+            margin: 0 0 7px;
+            font-size: 19px;
+        }
+
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            background: #f1f5f9;
+        }
+
+        .badge.active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge.inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .edit-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(200px, 1fr));
+
+            gap: 12px;
+        }
+
+        .edit-locations {
+            margin-top: 15px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .actions .btn {
+            margin-top: 14px;
+        }
+
+        .empty {
+            padding: 30px;
+            text-align: center;
+            color: #777;
+            background: white;
+            border-radius: 15px;
+        }
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .category-top {
+                align-items: flex-start;
+            }
+
+            .category-image {
+                width: 70px;
+                height: 70px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% if messages %}
+
+        {% for category, message in messages %}
+
+            <div
+                style="
+                    margin-bottom:15px;
+                    padding:14px 16px;
+                    border-radius:12px;
+                    background:
+                        {% if category == 'error' %}
+                            #fee2e2
+                        {% else %}
+                            #dcfce7
+                        {% endif %};
+                    color:
+                        {% if category == 'error' %}
+                            #991b1b
+                        {% else %}
+                            #166534
+                        {% endif %};
+                    font-weight:700;
+                "
+            >
+                {{ message }}
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+<div class="page">
+
+    <h1>Category Management</h1>
 
 
-<hr>
-<h3>Existing Categories</h3>
+    <!-- ======================================================
+         ADD NEW CATEGORY
+    ======================================================= -->
 
-{% for cat in categories %}
-  <div class="category-item">
-    <img src="{{ url_for('static', filename=cat.image or 'images/categories/default.png') }}" 
-         width="80" height="80">
-    <span>{{ cat.name }}</span>
+    <div class="card">
 
-    <!-- Edit form -->
-    <form method="POST" enctype="multipart/form-data" action="{{ url_for('edit_category', category_id=cat.id) }}">
-      <input type="text" name="name" value="{{ cat.name }}" required>
-      <input type="file" name="image" accept="image/*">
-      <button type="submit">Save</button>
-    </form>
+        <h2>Add New Category</h2>
 
-    <!-- Optional: delete -->
-    <form method="POST" action="{{ url_for('delete_category', category_id=cat.id) }}" style="display:inline;">
-      <button type="submit" onclick="return confirm('Delete this category?')">Delete</button>
-    </form>
-  </div>
-{% endfor %}
+        <form
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            <div class="form-grid">
+
+                <!-- CATEGORY NAME -->
+
+                <div class="field">
+
+                    <label>
+                        Category Name
+                    </label>
+
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Example: Biryani"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- SECTION -->
+
+                <div class="field">
+
+                    <label>
+                        Section
+                    </label>
+
+                    <select name="section">
+
+                        <option value="food">
+                            Food
+                        </option>
+
+                        <option value="snacks">
+                            Snacks
+                        </option>
+
+                        <option value="beverage">
+                            Beverage
+                        </option>
+
+                        <option value="dessert">
+                            Dessert
+                        </option>
+
+                        <option value="bakery">
+                            Bakery
+                        </option>
+
+                        <option value="grocery">
+                            Grocery
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- DISPLAY ORDER -->
+
+                <div class="field">
+
+                    <label>
+                        Display Order
+                    </label>
+
+                    <input
+                        type="number"
+                        name="display_order"
+                        value="0"
+                        min="0"
+                    >
+
+                </div>
+
+
+                <!-- PARENT CATEGORY -->
+
+                <div class="field">
+
+                    <label>
+                        Parent Category
+                    </label>
+
+                    <select name="parent_id">
+
+                        <option value="">
+                            No Parent
+                        </option>
+
+                        {% for parent in categories %}
+
+                            <option value="{{ parent.id }}">
+
+                                {{ parent.name }}
+                                —
+                                {{ parent.section|capitalize }}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- IMAGE -->
+
+                <div class="field">
+
+                    <label>
+                        Category Image
+                    </label>
+
+                    <input
+                        type="file"
+                        name="image"
+                        accept="image/*"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- ACTIVE -->
+
+            <div class="checkbox-row">
+
+                <input
+                    type="checkbox"
+                    name="is_active"
+                    value="1"
+                    checked
+                >
+
+                <label>
+                    Active category
+                </label>
+
+            </div>
+
+
+            <!-- LOCATIONS -->
+
+            <div class="locations">
+
+                <strong>
+                    Available Locations
+                </strong>
+
+                <div class="location-grid">
+
+                    {% for location in locations %}
+
+                        <label class="location-option">
+
+                            <input
+                                type="checkbox"
+                                name="locations"
+                                value="{{ location }}"
+                            >
+
+                            {{ location }}
+
+                        </label>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- CUSTOM LOCATION -->
+
+                <div class="custom-location">
+
+                    <input
+                        type="text"
+                        name="custom_locations"
+                        placeholder="Add new locations separated by commas"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="btn btn-add"
+            >
+                Add Category
+            </button>
+
+        </form>
+
+    </div>
+
+
+
+    <!-- ======================================================
+         EXISTING CATEGORIES
+    ======================================================= -->
+
+    <div class="card">
+
+        <h2>Existing Categories</h2>
+
+        {% if categories %}
+
+            <div class="categories">
+
+                {% for cat in categories %}
+
+                    <div class="category-item">
+
+
+                        <!-- CATEGORY HEADER -->
+
+                        <div class="category-top">
+
+                            <img
+                                class="category-image"
+                                src="{{ url_for(
+                                    'static',
+                                    filename=cat.image or
+                                    'images/categories/default.png'
+                                ) }}"
+                                alt="{{ cat.name }}"
+                            >
+
+
+                            <div class="category-info">
+
+                                <h3>
+                                    {{ cat.name }}
+                                </h3>
+
+
+                                <div class="badges">
+
+                                    <span class="badge">
+
+                                        {{ cat.section|capitalize }}
+
+                                    </span>
+
+
+                                    <span class="badge">
+
+                                        Order:
+                                        {{ cat.display_order }}
+
+                                    </span>
+
+
+                                    {% if cat.is_active %}
+
+                                        <span class="badge active">
+                                            Active
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge inactive">
+                                            Inactive
+                                        </span>
+
+                                    {% endif %}
+
+
+                                    {% if cat.parent %}
+
+                                        <span class="badge">
+
+                                            Parent:
+                                            {{ cat.parent.name }}
+
+                                        </span>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- ==================================================
+                             EDIT FORM
+                        =================================================== -->
+
+                        <form
+                            method="POST"
+                            enctype="multipart/form-data"
+                            action="{{ url_for(
+                                'edit_category',
+                                category_id=cat.id
+                            ) }}"
+                        >
+
+
+                            <div class="edit-grid">
+
+
+                                <!-- NAME -->
+
+                                <div class="field">
+
+                                    <label>
+                                        Name
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value="{{ cat.name }}"
+                                        required
+                                    >
+
+                                </div>
+
+
+                                <!-- SECTION -->
+
+                                <div class="field">
+
+                                    <label>
+                                        Section
+                                    </label>
+
+                                    <select name="section">
+
+                                        <option
+                                            value="food"
+                                            {% if cat.section == 'food' %}
+                                                selected
+                                            {% endif %}
+                                        >
+                                            Food
+                                        </option>
+
+                                        <option
+                                            value="snacks"
+                                            {% if cat.section == 'snacks' %}
+                                                selected
+                                            {% endif %}
+                                        >
+                                            Snacks
+                                        </option>
+
+                                        <option
+                                            value="beverage"
+                                            {% if cat.section == 'beverage' %}
+                                                selected
+                                            {% endif %}
+                                        >
+                                            Beverage
+                                        </option>
+
+                                        <option
+                                            value="dessert"
+                                            {% if cat.section == 'dessert' %}
+                                                selected
+                                            {% endif %}
+                                        >
+                                            Dessert
+                                        </option>
+
+                                        <option
+                                            value="bakery"
+                                            {% if cat.section == 'bakery' %}
+                                                selected
+                                            {% endif %}
+                                        >
+                                            Bakery
+                                        </option>
+
+                                        <option
+                                            value="grocery"
+                                            {% if cat.section == 'grocery' %}
+                                                selected
+                                            {% endif %}
+                                        >
+                                            Grocery
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <!-- ORDER -->
+
+                                <div class="field">
+
+                                    <label>
+                                        Display Order
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        name="display_order"
+                                        value="{{ cat.display_order }}"
+                                        min="0"
+                                    >
+
+                                </div>
+
+
+                                <!-- PARENT -->
+
+                                <div class="field">
+
+                                    <label>
+                                        Parent Category
+                                    </label>
+
+                                    <select name="parent_id">
+
+                                        <option value="">
+                                            No Parent
+                                        </option>
+
+                                        {% for parent in categories %}
+
+                                            {% if parent.id != cat.id %}
+
+                                                <option
+                                                    value="{{ parent.id }}"
+                                                    {% if cat.parent_id == parent.id %}
+                                                        selected
+                                                    {% endif %}
+                                                >
+
+                                                    {{ parent.name }}
+                                                    —
+                                                    {{ parent.section|capitalize }}
+
+                                                </option>
+
+                                            {% endif %}
+
+                                        {% endfor %}
+
+                                    </select>
+
+                                </div>
+
+
+                                <!-- NEW IMAGE -->
+
+                                <div class="field">
+
+                                    <label>
+                                        Replace Image
+                                    </label>
+
+                                    <input
+                                        type="file"
+                                        name="image"
+                                        accept="image/*"
+                                    >
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- ACTIVE -->
+
+                            <div class="checkbox-row">
+
+                                <input
+                                    type="checkbox"
+                                    name="is_active"
+                                    value="1"
+                                    {% if cat.is_active %}
+                                        checked
+                                    {% endif %}
+                                >
+
+                                <label>
+                                    Active category
+                                </label>
+
+                            </div>
+
+
+
+                            <!-- LOCATIONS -->
+
+                            <div class="edit-locations">
+
+                                <strong>
+                                    Locations
+                                </strong>
+
+                                <div class="location-grid">
+
+                                    {% for location in locations %}
+
+                                        {% set assigned = false %}
+
+                                        {% for assignment
+                                            in cat.location_assignments %}
+
+                                            {% if assignment.location|lower
+                                                == location|lower %}
+
+                                                {% set assigned = true %}
+
+                                            {% endif %}
+
+                                        {% endfor %}
+
+
+                                        <label class="location-option">
+
+                                            <input
+                                                type="checkbox"
+                                                name="locations"
+                                                value="{{ location }}"
+                                                {% if assigned %}
+                                                    checked
+                                                {% endif %}
+                                            >
+
+                                            {{ location }}
+
+                                        </label>
+
+                                    {% endfor %}
+
+                                </div>
+
+
+                                <div class="custom-location">
+
+                                    <input
+                                        type="text"
+                                        name="custom_locations"
+                                        placeholder="Add new locations separated by commas"
+                                    >
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- ACTIONS -->
+
+                            <div class="actions">
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-save"
+                                >
+                                    Save Changes
+                                </button>
+
+                            </div>
+
+                        </form>
+
+
+
+                        <!-- ==================================================
+                             DELETE
+                        =================================================== -->
+
+                        <form
+                            method="POST"
+                            action="{{ url_for(
+                                'delete_category',
+                                category_id=cat.id
+                            ) }}"
+                        >
+
+                            <button
+                                type="submit"
+                                class="btn btn-delete"
+                                onclick="return confirm(
+                                    'Delete this category?'
+                                )"
+                            >
+                                Delete Category
+                            </button>
+
+                        </form>
+
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty">
+                No categories found.
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+</body>
+
+</html>
