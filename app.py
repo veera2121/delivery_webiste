@@ -47,7 +47,9 @@ from push import VAPID_PUBLIC_KEY, register_subscription, send_push, subscriptio
 from functools import wraps
 import firebase_admin
 from firebase_admin import credentials
-
+import os
+import firebase_admin
+from firebase_admin import credentials, messaging
 from dispatch_service import haversine 
 from dispatch_service import assign_delivery_to_order,assign_waiting_order_to_rider,find_nearest_rider_excluding
 # ================= LOCAL IMPORTS =================
@@ -251,7 +253,128 @@ ALLOWED_DOC_EXTENSIONS = {
 
 MAX_DOCUMENT_BYTES = 8 * 1024 * 1024
 
+import os
+import json
+import firebase_admin
+from firebase_admin import credentials, messaging
 
+
+# ============================================================
+# FIREBASE ADMIN INITIALIZATION
+# ============================================================
+
+if not firebase_admin._apps:
+
+    firebase_json = os.environ.get("FIREBASE_KEY")
+
+    if firebase_json:
+        try:
+            cred = credentials.Certificate(
+                json.loads(firebase_json)
+            )
+
+            firebase_admin.initialize_app(cred)
+
+            print("✅ Firebase initialized from FIREBASE_KEY")
+
+        except Exception as e:
+            print(f"❌ Firebase initialization failed: {e}")
+
+    else:
+        try:
+            cred = credentials.Certificate(
+                "firebase_key.json"
+            )
+
+            firebase_admin.initialize_app(cred)
+
+            print("✅ Firebase initialized from local JSON")
+
+        except Exception as e:
+            print(f"❌ Firebase local initialization failed: {e}")
+
+    print("🔥 RUNNING APP FILE:", os.path.abspath(__file__))
+    print("🔥 FIREBASE FILE EXISTS:", os.path.exists("firebase_key.json"))
+    print("🔥 FIREBASE ABSOLUTE PATH:",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "firebase_key.json"))
+
+
+# ============================================================
+# FIREBASE ADMIN SDK INITIALIZATION
+# ============================================================
+
+import os
+import json
+import firebase_admin
+from firebase_admin import credentials, messaging
+
+
+def initialize_firebase():
+
+    # Already initialized
+    if firebase_admin._apps:
+        print("✅ Firebase already initialized")
+        return firebase_admin.get_app()
+
+    # --------------------------------------------------------
+    # Production / Railway
+    # --------------------------------------------------------
+    firebase_json = os.environ.get("FIREBASE_KEY")
+
+    if firebase_json:
+
+        try:
+            cred = credentials.Certificate(
+                json.loads(firebase_json)
+            )
+
+            firebase_admin.initialize_app(cred)
+
+            print("✅ Firebase initialized from FIREBASE_KEY")
+
+            return firebase_admin.get_app()
+
+        except Exception as e:
+
+            print(f"❌ Firebase initialization failed: {e}")
+            raise
+
+    # --------------------------------------------------------
+    # Local development
+    # --------------------------------------------------------
+    firebase_file = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "firebase_key.json"
+    )
+
+    if os.path.exists(firebase_file):
+
+        try:
+
+            cred = credentials.Certificate(
+                firebase_file
+            )
+
+            firebase_admin.initialize_app(cred)
+
+            print("✅ Firebase initialized from local JSON")
+
+            return firebase_admin.get_app()
+
+        except Exception as e:
+
+            print(
+                f"❌ Local Firebase initialization failed: {e}"
+            )
+            raise
+
+    raise FileNotFoundError(
+        f"Firebase credentials not found: {firebase_file}"
+    )
+
+
+# Initialize Firebase when app starts
+firebase_app = initialize_firebase()
 def _normalize_phone(value):
     digits = "".join(
         ch for ch in (value or "")
@@ -1639,17 +1762,7 @@ import json
 import firebase_admin
 from firebase_admin import credentials
 
-# Initialize Firebase ONLY ONCE
-if not firebase_admin._apps:
-    firebase_json = os.environ.get("FIREBASE_KEY")
-
-    if firebase_json:
-        cred = credentials.Certificate(json.loads(firebase_json))
-        firebase_admin.initialize_app(cred)
-        print("✅ Firebase initialized successfully")
-    else:
-        print("❌ FIREBASE_KEY not found in environment variables")
-       
+   
 def make_whatsapp_link(order):
 
     restaurant = Restaurant.query.get(order.restaurant_id)
@@ -11540,49 +11653,57 @@ def edit_restaurant(restaurant_id):
 
 
 
-
 @app.route("/delivery/history")
 def delivery_history():
     delivery_person_id = session.get("delivery_person_id")
+
     if not delivery_person_id:
         return redirect(url_for("delivery_login"))
 
     today = datetime.utcnow().date()
     yesterday = today - timedelta(days=1)
 
-    # ✅ ONLY completed orders
+    # ONLY completed orders
     history = Order.query.filter(
         Order.delivery_person_id == delivery_person_id,
-        Order.status.in_(["Delivered", "Customer Not Available"])
+        Order.status.in_(["delivered", "Customer Not Available"])
     ).order_by(Order.updated_at.desc()).all()
 
-    # ✅ Classify orders by day
+    # Classify orders by day
     for o in history:
-        if o.created_at.date() == today:
+        if o.created_at and o.created_at.date() == today:
             o.day_category = "Today"
-        elif o.created_at.date() == yesterday:
+        elif o.created_at and o.created_at.date() == yesterday:
             o.day_category = "Yesterday"
         else:
             o.day_category = "Older"
 
-    # ✅ Day-wise totals (Delivered only)
+    # Day-wise totals
     totals = {}
+
     for day in ["Today", "Yesterday", "Older"]:
+
         day_orders = [
             o for o in history
-            if o.day_category == day and o.status == "Delivered"
+            if o.day_category == day
+            and o.status == "delivered"
         ]
 
         cod_amount = sum(
-            o.get_final_total() for o in day_orders if o.payment_type == "COD"
+            o.get_final_total()
+            for o in day_orders
+            if o.payment_type == "COD"
         )
 
         online_amount = sum(
-            o.get_final_total() for o in day_orders if o.payment_type == "Online"
+            o.get_final_total()
+            for o in day_orders
+            if o.payment_type == "Online"
         )
 
         delivery_charge_total = sum(
-            o.delivery_charge or 0 for o in day_orders
+            o.delivery_charge or 0
+            for o in day_orders
         )
 
         totals[day] = {
@@ -11590,15 +11711,34 @@ def delivery_history():
             "cod_amount": cod_amount,
             "online_amount": online_amount,
             "delivery_charge": delivery_charge_total,
-            "grand_total": cod_amount + online_amount + delivery_charge_total
+            "grand_total": (
+                cod_amount
+                + online_amount
+                + delivery_charge_total
+            )
         }
 
-    # ✅ ALL TOTALS (Today + Yesterday + Older)
+    # ALL TOTALS
     all_totals = {
-        "count": sum(totals[d]["count"] for d in totals),
-        "cod_amount": sum(totals[d]["cod_amount"] for d in totals),
-        "online_amount": sum(totals[d]["online_amount"] for d in totals),
-        "delivery_charge": sum(totals[d]["delivery_charge"] for d in totals),
+        "count": sum(
+            totals[d]["count"]
+            for d in totals
+        ),
+
+        "cod_amount": sum(
+            totals[d]["cod_amount"]
+            for d in totals
+        ),
+
+        "online_amount": sum(
+            totals[d]["online_amount"]
+            for d in totals
+        ),
+
+        "delivery_charge": sum(
+            totals[d]["delivery_charge"]
+            for d in totals
+        ),
     }
 
     all_totals["grand_total"] = (
@@ -11613,7 +11753,6 @@ def delivery_history():
         totals=totals,
         all_totals=all_totals
     )
-
 @app.route("/delivery/mark-delivered", methods=["POST"])
 def delivery_mark_delivered():
 
@@ -23724,6 +23863,8 @@ def app_payment_failed():
         "paid": False,
         "status": "Pending Payment"
     }), 200
+
+
 @app.route(
     "/api/app/register-device",
     methods=["POST"]
@@ -32419,7 +32560,59 @@ def edit_home_content(announcement_id):
             announcement=announcement,
             locations=locations
         )
+@app.route("/api/app/save-fcm-token", methods=["POST"])
+def save_customer_fcm_token():
+    data = request.get_json(silent=True) or {}
 
+    mobile = str(data.get("mobile", "")).strip()
+    token = str(data.get("fcm_token", "")).strip()
+    device = str(data.get("device", "android")).strip().lower()
+
+    if not mobile or not token:
+        return jsonify({
+            "success": False,
+            "message": "Mobile and FCM token are required"
+        }), 400
+
+    customer = Customer.query.filter_by(
+        mobile=mobile
+    ).first()
+
+    if not customer:
+        return jsonify({
+            "success": False,
+            "message": "Customer not found"
+        }), 404
+
+    existing = FCMToken.query.filter_by(
+        token=token
+    ).first()
+
+    if existing:
+        existing.user_id = customer.id
+        existing.device = device
+        existing.last_active = datetime.utcnow()
+    else:
+        db.session.add(
+            FCMToken(
+                user_id=customer.id,
+                token=token,
+                device=device,
+                last_active=datetime.utcnow()
+            )
+        )
+
+    db.session.commit()
+
+    print(
+        f"✅ CUSTOMER FCM TOKEN SAVED: "
+        f"customer={customer.id}, device={device}"
+    )
+
+    return jsonify({
+        "success": True,
+        "customer_id": customer.id
+    })
 # ==========================================================
 # RIDER APPLICATION ROUTE REGISTRATION
 # ==========================================================
