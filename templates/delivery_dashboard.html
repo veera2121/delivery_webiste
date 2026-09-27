@@ -474,231 +474,428 @@ select:focus {
 body.modal-open{
     overflow: auto !important;
 }
+/* =====================================
+   INCOMING DELIVERY OVERLAY
+===================================== */
 
-.incoming-popup{
+.incoming-order-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
 
-display:none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-position:fixed;
+    padding: 18px;
 
-top:0;
-left:0;
+    background:
+        radial-gradient(
+            circle at top,
+            rgba(34, 197, 94, 0.18),
+            transparent 42%
+        ),
+        rgba(4, 10, 20, 0.86);
 
-width:100%;
-height:100%;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
 
-background:rgba(0,0,0,.55);
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
 
-backdrop-filter:blur(7px);
-
-justify-content:center;
-
-align-items:center;
-
-z-index:999999;
-
+    transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
 }
 
-.incoming-card{
-
-width:390px;
-
-background:rgba(255,255,255,.96);
-
-border-radius:28px;
-
-padding:30px;
-
-box-shadow:0 25px 70px rgba(0,0,0,.25);
-
-animation:popup .35s;
-
-text-align:center;
-
+.incoming-order-overlay.show {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
 }
 
-@keyframes popup{
+.incoming-order-card {
+    position: relative;
 
-from{
+    width: min(460px, 100%);
+    max-height: calc(100vh - 30px);
+    overflow-y: auto;
 
-transform:translateY(50px) scale(.85);
+    padding: 28px 24px 24px;
 
-opacity:0;
+    text-align: center;
 
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.99),
+            rgba(242, 255, 247, 0.98)
+        );
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.8);
+
+    border-radius: 30px;
+
+    box-shadow:
+        0 30px 90px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(34, 197, 94, 0.08);
+
+    transform:
+        translateY(30px)
+        scale(0.92);
+
+    transition:
+        transform 0.3s
+        cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-to{
-
-transform:translateY(0) scale(1);
-
-opacity:1;
-
+.incoming-order-overlay.show
+.incoming-order-card {
+    transform:
+        translateY(0)
+        scale(1);
 }
 
+.incoming-pulse {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 82px;
+    height: 82px;
+
+    margin: 0 auto 14px;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #dcfce7,
+            #bbf7d0
+        );
+
+    font-size: 42px;
 }
 
-.bike-icon{
+.incoming-pulse::before,
+.incoming-pulse::after {
+    content: "";
 
-font-size:60px;
+    position: absolute;
+    inset: 0;
 
-animation:bounce .8s infinite alternate;
+    border:
+        2px solid
+        rgba(34, 197, 94, 0.55);
 
+    border-radius: inherit;
+
+    animation:
+        incomingPulse 1.8s
+        infinite ease-out;
 }
 
-@keyframes bounce{
-
-to{
-
-transform:translateY(-8px);
-
+.incoming-pulse::after {
+    animation-delay: 0.8s;
 }
 
+@keyframes incomingPulse {
+    0% {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.7);
+    }
 }
 
-.incoming-header h2{
+.incoming-label {
+    margin: 5px 0 6px;
 
-margin:10px 0 5px;
+    color: #16a34a;
 
-font-size:28px;
-
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
 }
 
-.incoming-header p{
+.incoming-order-card h2 {
+    margin: 0;
 
-color:#777;
+    color: #111827;
 
+    font-size: 28px;
+    font-weight: 900;
 }
 
-.row{
+.incoming-message {
+    margin: 7px 0 18px;
 
-display:flex;
-
-justify-content:space-between;
-
-padding:12px 0;
-
-border-bottom:1px solid #eee;
-
-font-size:18px;
-
+    color: #64748b;
+    font-size: 14px;
 }
 
-.timer-circle{
+.timer-wrapper {
+    display: flex;
+    justify-content: center;
 
-position:relative;
-
-width:130px;
-
-height:130px;
-
-margin:25px auto;
-
+    margin-bottom: 20px;
 }
 
-#popupTimer{
+.timer-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 
-position:absolute;
+    width: 88px;
+    height: 88px;
 
-top:50%;
+    border:
+        7px solid
+        #22c55e;
 
-left:50%;
+    border-radius: 50%;
 
-transform:translate(-50%,-50%);
+    background: #ffffff;
 
-font-size:36px;
-
-font-weight:bold;
-
-color:#ff5722;
-
+    box-shadow:
+        0 10px 28px
+        rgba(34, 197, 94, 0.2);
 }
 
-.bg-circle{
+.timer-circle.warning {
+    border-color: #f59e0b;
 
-fill:none;
-
-stroke:#eee;
-
-stroke-width:10;
-
+    animation:
+        timerWarning
+        0.8s infinite alternate;
 }
 
-.progress-circle{
+.timer-circle.danger {
+    border-color: #ef4444;
 
-fill:none;
-
-stroke:#28a745;
-
-stroke-width:10;
-
-stroke-linecap:round;
-
-transform:rotate(-90deg);
-
-transform-origin:center;
-
-stroke-dasharray:352;
-
-stroke-dashoffset:0;
-
-transition:stroke-dashoffset 1s linear;
-
+    animation:
+        timerWarning
+        0.45s infinite alternate;
 }
 
-.popup-buttons{
+@keyframes timerWarning {
+    from {
+        transform: scale(1);
+    }
 
-display:flex;
-
-gap:15px;
-
-margin-top:25px;
-
+    to {
+        transform: scale(1.06);
+    }
 }
 
-.popup-buttons button{
+.timer-circle span {
+    color: #111827;
 
-flex:1;
-
-padding:15px;
-
-border:none;
-
-border-radius:14px;
-
-font-size:18px;
-
-font-weight:bold;
-
-cursor:pointer;
-
+    font-size: 29px;
+    font-weight: 900;
+    line-height: 1;
 }
 
-.accept-btn{
+.timer-circle small {
+    margin-top: 4px;
 
-background:#16a34a;
+    color: #64748b;
 
-color:white;
-
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
 }
 
-.reject-btn{
+.incoming-order-details {
+    display: grid;
+    gap: 10px;
 
-background:#ef4444;
+    padding: 14px;
 
-color:white;
+    text-align: left;
 
+    background:
+        rgba(241, 245, 249, 0.85);
+
+    border:
+        1px solid
+        rgba(148, 163, 184, 0.18);
+
+    border-radius: 20px;
 }
 
-.accept-btn:hover{
+.detail-row {
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    align-items: center;
+    gap: 11px;
 
-transform:scale(1.05);
+    padding: 9px 10px;
 
+    background:
+        rgba(255, 255, 255, 0.82);
+
+    border-radius: 14px;
 }
 
-.reject-btn:hover{
+.detail-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-transform:scale(1.05);
+    width: 42px;
+    height: 42px;
 
+    background: #ecfdf5;
+    border-radius: 12px;
+
+    font-size: 20px;
+}
+
+.detail-row div {
+    min-width: 0;
+}
+
+.detail-row small {
+    display: block;
+
+    margin-bottom: 2px;
+
+    color: #94a3b8;
+
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.detail-row strong {
+    display: block;
+
+    color: #1e293b;
+
+    font-size: 14px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.incoming-order-error {
+    display: none;
+
+    margin: 14px 0 0;
+    padding: 10px;
+
+    color: #b91c1c;
+
+    background: #fee2e2;
+    border-radius: 12px;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.incoming-order-error.show {
+    display: block;
+}
+
+.incoming-order-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr;
+    gap: 12px;
+
+    margin-top: 18px;
+}
+
+.incoming-reject-btn,
+.incoming-accept-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    min-height: 52px;
+    padding: 13px 15px;
+
+    border: none;
+    border-radius: 16px;
+
+    font-size: 15px;
+    font-weight: 900;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.incoming-reject-btn {
+    color: #dc2626;
+
+    background: #fee2e2;
+    border:
+        1px solid
+        rgba(239, 68, 68, 0.18);
+}
+
+.incoming-accept-btn {
+    color: #ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #22c55e,
+            #15803d
+        );
+
+    box-shadow:
+        0 12px 25px
+        rgba(34, 197, 94, 0.3);
+}
+
+.incoming-reject-btn:hover,
+.incoming-accept-btn:hover {
+    transform: translateY(-2px);
+}
+
+.incoming-reject-btn:disabled,
+.incoming-accept-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+body.incoming-order-open {
+    overflow: hidden;
+}
+
+@media (max-width: 480px) {
+    .incoming-order-overlay {
+        padding: 10px;
+    }
+
+    .incoming-order-card {
+        padding: 24px 16px 18px;
+        border-radius: 24px;
+    }
+
+    .incoming-order-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .incoming-accept-btn {
+        order: -1;
+    }
 }
 </style>
 
@@ -1350,7 +1547,10 @@ document.getElementById("installApp")
 
 });
 </script>
-
+<script>
+const VAPID_PUBLIC_KEY = "{{ VAPID_PUBLIC_KEY }}";
+console.log("VAPID:", VAPID_PUBLIC_KEY);
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging.js";
@@ -1457,6 +1657,500 @@ popup.style.display="none";
 
 }
 </script>
+<script>
+function sendLocation(position) {
+
+    fetch("/delivery/ping", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+        })
+    })
+    .catch(err => console.log(err));
+}
+
+function locationError(err) {
+    console.log("GPS Error:", err.message);
+}
+
+if ("geolocation" in navigator) {
+
+    navigator.geolocation.watchPosition(
+        sendLocation,
+        locationError,
+        {
+            enableHighAccuracy: true,
+            maximumAge: 5000,
+            timeout: 10000
+        }
+    );
+
+}
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const overlay = document.getElementById(
+        "incomingOrderOverlay"
+    );
+
+    const orderNumberElement = document.getElementById(
+        "popupOrderNumber"
+    );
+
+    const restaurantElement = document.getElementById(
+        "popupRestaurant"
+    );
+
+    const customerElement = document.getElementById(
+        "popupCustomer"
+    );
+
+    const phoneElement = document.getElementById(
+        "popupPhone"
+    );
+
+    const addressElement = document.getElementById(
+        "popupAddress"
+    );
+
+    const amountElement = document.getElementById(
+        "popupAmount"
+    );
+
+    const paymentElement = document.getElementById(
+        "popupPayment"
+    );
+
+    const timerElement = document.getElementById(
+        "popupTimer"
+    );
+
+    const timerCircle = document.querySelector(
+        ".timer-circle"
+    );
+
+    const errorElement = document.getElementById(
+        "incomingOrderError"
+    );
+
+    const acceptButton = document.getElementById(
+        "acceptIncomingOrderButton"
+    );
+
+    const rejectButton = document.getElementById(
+        "rejectIncomingOrderButton"
+    );
+
+    let currentOrderId = null;
+    let currentDisplayOrderId = null;
+    let countdownInterval = null;
+    let pollingInterval = null;
+    let requestInProgress = false;
+    let popupOpen = false;
+
+    function showError(message) {
+        errorElement.textContent =
+            message || "Something went wrong.";
+
+        errorElement.classList.add("show");
+    }
+
+    function clearError() {
+        errorElement.textContent = "";
+        errorElement.classList.remove("show");
+    }
+
+    function setButtonsLoading(loading) {
+        acceptButton.disabled = loading;
+        rejectButton.disabled = loading;
+
+        acceptButton.innerHTML = loading
+            ? "Please wait..."
+            : "<span>✓</span> Accept Order";
+
+        rejectButton.innerHTML = loading
+            ? "Please wait..."
+            : "<span>✕</span> Reject";
+    }
+
+    function stopTimer() {
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+    }
+
+    function closeIncomingOrderOverlay() {
+        stopTimer();
+
+        overlay.classList.remove("show");
+        overlay.setAttribute("aria-hidden", "true");
+
+        document.body.classList.remove(
+            "incoming-order-open"
+        );
+
+        popupOpen = false;
+        currentOrderId = null;
+        currentDisplayOrderId = null;
+
+        clearError();
+        setButtonsLoading(false);
+    }
+
+    function startTimer(seconds) {
+        stopTimer();
+
+        let timeLeft = Number(seconds);
+
+        if (
+            !Number.isFinite(timeLeft)
+            || timeLeft <= 0
+        ) {
+            timeLeft = 30;
+        }
+
+        timerElement.textContent = timeLeft;
+
+        timerCircle.classList.remove(
+            "warning",
+            "danger"
+        );
+
+        countdownInterval = setInterval(() => {
+            timeLeft -= 1;
+
+            timerElement.textContent = Math.max(
+                timeLeft,
+                0
+            );
+
+            timerCircle.classList.toggle(
+                "warning",
+                timeLeft <= 15 && timeLeft > 5
+            );
+
+            timerCircle.classList.toggle(
+                "danger",
+                timeLeft <= 5
+            );
+
+            if (timeLeft <= 0) {
+                stopTimer();
+
+                rejectCurrentOrder(true);
+            }
+        }, 1000);
+    }
+
+    function openIncomingOrderOverlay(order) {
+        if (!order || !order.id) {
+            return;
+        }
+
+        currentOrderId = order.id;
+
+        currentDisplayOrderId =
+            order.order_id || order.id;
+
+        orderNumberElement.textContent =
+            `#${currentDisplayOrderId}`;
+
+        restaurantElement.textContent =
+            order.restaurant_name || "Restaurant";
+
+        customerElement.textContent =
+            order.customer_name || "Customer";
+
+        phoneElement.textContent =
+            order.customer_phone || "Not available";
+
+        addressElement.textContent =
+            order.delivery_address ||
+            "Address not available";
+
+        const amount = Number(
+            order.total_amount || 0
+        );
+
+        amountElement.textContent =
+            `₹${amount.toFixed(2)}`;
+
+        paymentElement.textContent =
+            order.payment_method ||
+            "Not specified";
+
+        clearError();
+        setButtonsLoading(false);
+
+        overlay.classList.add("show");
+        overlay.setAttribute("aria-hidden", "false");
+
+        document.body.classList.add(
+            "incoming-order-open"
+        );
+
+        popupOpen = true;
+
+        startTimer(
+            order.seconds_remaining || 30
+        );
+
+        playIncomingOrderSound();
+    }
+
+    function playIncomingOrderSound() {
+        const audio = document.getElementById(
+            "incomingOrderAudio"
+        );
+
+        if (!audio) {
+            return;
+        }
+
+        audio.currentTime = 0;
+
+        audio.play().catch(() => {
+            console.log(
+                "Browser blocked automatic audio."
+            );
+        });
+    }
+
+    async function checkCurrentAssignment() {
+        if (
+            requestInProgress
+            || popupOpen
+        ) {
+            return;
+        }
+
+        requestInProgress = true;
+
+        try {
+            const response = await fetch(
+                "/api/delivery/current-assignment",
+                {
+                    method: "GET",
+                    credentials: "same-origin",
+                    headers: {
+                        "Accept": "application/json"
+                    },
+                    cache: "no-store"
+                }
+            );
+
+            if (response.status === 401) {
+                console.warn(
+                    "Rider is not logged in."
+                );
+
+                return;
+            }
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Unable to check assignments."
+                );
+            }
+
+            if (
+                data.success &&
+                data.has_assignment &&
+                data.order &&
+                data.order.status ===
+                    "Assignment Pending" &&
+                (
+                    data.order.rider_response ===
+                        "Pending" ||
+                    data.order.rider_response === null
+                )
+            ) {
+                openIncomingOrderOverlay(
+                    data.order
+                );
+            }
+
+        } catch (error) {
+            console.error(
+                "Assignment polling error:",
+                error
+            );
+
+        } finally {
+            requestInProgress = false;
+        }
+    }
+
+    async function acceptCurrentOrder() {
+        if (
+            !currentOrderId
+            || requestInProgress
+        ) {
+            return;
+        }
+
+        const orderId = currentOrderId;
+
+        requestInProgress = true;
+        clearError();
+        setButtonsLoading(true);
+
+        try {
+            const response = await fetch(
+                `/api/delivery/order/${orderId}/accept`,
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({})
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.message ||
+                    "Unable to accept the order."
+                );
+            }
+
+            stopTimer();
+
+            acceptButton.innerHTML =
+                "✓ Order Accepted";
+
+            setTimeout(() => {
+                closeIncomingOrderOverlay();
+                window.location.reload();
+            }, 600);
+
+        } catch (error) {
+            console.error(
+                "Accept order error:",
+                error
+            );
+
+            showError(error.message);
+            setButtonsLoading(false);
+
+        } finally {
+            requestInProgress = false;
+        }
+    }
+
+    async function rejectCurrentOrder(
+        autoReject = false
+    ) {
+        if (
+            !currentOrderId
+            || requestInProgress
+        ) {
+            return;
+        }
+
+        const orderId = currentOrderId;
+
+        requestInProgress = true;
+        clearError();
+        setButtonsLoading(true);
+
+        try {
+            const response = await fetch(
+                `/api/delivery/order/${orderId}/reject`,
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        auto_reject: autoReject
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.message ||
+                    "Unable to reject the order."
+                );
+            }
+
+            stopTimer();
+
+            rejectButton.innerHTML =
+                autoReject
+                    ? "Request Expired"
+                    : "Order Rejected";
+
+            setTimeout(() => {
+                closeIncomingOrderOverlay();
+                window.location.reload();
+            }, 600);
+
+        } catch (error) {
+            console.error(
+                "Reject order error:",
+                error
+            );
+
+            showError(error.message);
+            setButtonsLoading(false);
+
+        } finally {
+            requestInProgress = false;
+        }
+    }
+
+    acceptButton.addEventListener(
+        "click",
+        acceptCurrentOrder
+    );
+
+    rejectButton.addEventListener(
+        "click",
+        () => rejectCurrentOrder(false)
+    );
+
+    // First check immediately
+    checkCurrentAssignment();
+
+    // Continue checking every 3 seconds
+    pollingInterval = setInterval(
+        checkCurrentAssignment,
+        3000
+    );
+
+    window.addEventListener(
+        "beforeunload",
+        () => {
+            stopTimer();
+
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+        }
+    );
+});
+</script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Customer Not Available Modal -->
@@ -1530,85 +2224,148 @@ popup.style.display="none";
 
 </div>
 <div id="toast" class="toast"></div>
-<!-- Incoming Delivery Popup 
-<div id="incomingOrderPopup" class="incoming-popup">
+<!-- Incoming Delivery Popup -->
 
-    <div class="incoming-card">
+<!-- =====================================
+     INCOMING DELIVERY REQUEST OVERLAY
+====================================== -->
+<div
+    id="incomingOrderOverlay"
+    class="incoming-order-overlay"
+    aria-hidden="true"
+>
+    <div class="incoming-order-card">
 
-        <div class="incoming-header">
+        <div class="incoming-pulse">
+            <span>🛵</span>
+        </div>
 
-            <div class="bike-icon">
-                🛵
+        <p class="incoming-label">
+            NEW DELIVERY REQUEST
+        </p>
+
+        <h2>
+            Order
+            <span id="popupOrderNumber">#---</span>
+        </h2>
+
+        <p class="incoming-message">
+            A new delivery has been assigned to you.
+        </p>
+
+        <div class="timer-wrapper">
+            <div class="timer-circle">
+                <span id="popupTimer">30</span>
+                <small>seconds</small>
+            </div>
+        </div>
+
+        <div class="incoming-order-details">
+
+            <div class="detail-row">
+                <span class="detail-icon">🏪</span>
+
+                <div>
+                    <small>Restaurant</small>
+
+                    <strong id="popupRestaurant">
+                        Restaurant
+                    </strong>
+                </div>
             </div>
 
-            <h2>New Delivery Request</h2>
+            <div class="detail-row">
+                <span class="detail-icon">👤</span>
 
-            <p>Accept this order before time runs out.</p>
+                <div>
+                    <small>Customer</small>
+
+                    <strong id="popupCustomer">
+                        Customer
+                    </strong>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-icon">📞</span>
+
+                <div>
+                    <small>Phone</small>
+
+                    <strong id="popupPhone">
+                        Not available
+                    </strong>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-icon">📍</span>
+
+                <div>
+                    <small>Delivery address</small>
+
+                    <strong id="popupAddress">
+                        Address not available
+                    </strong>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-icon">💵</span>
+
+                <div>
+                    <small>Order amount</small>
+
+                    <strong id="popupAmount">
+                        ₹0
+                    </strong>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-icon">💳</span>
+
+                <div>
+                    <small>Payment</small>
+
+                    <strong id="popupPayment">
+                        Not specified
+                    </strong>
+                </div>
+            </div>
 
         </div>
 
-        <div class="incoming-info">
+        <p
+            id="incomingOrderError"
+            class="incoming-order-error"
+        ></p>
 
-            <div class="row">
-                <span>🍴 Restaurant</span>
-                <strong id="popupRestaurant"></strong>
-            </div>
+        <div class="incoming-order-actions">
 
-            <div class="row">
-                <span>📦 Order</span>
-                <strong id="popupOrder"></strong>
-            </div>
-
-        </div>
-
-        <div class="timer-circle">
-
-            <svg width="130" height="130">
-
-                <circle
-                    cx="65"
-                    cy="65"
-                    r="56"
-                    class="bg-circle"/>
-
-                <circle
-                    cx="65"
-                    cy="65"
-                    r="56"
-                    class="progress-circle"
-                    id="progressCircle"/>
-
-            </svg>
-
-            <div id="popupTimer">
-                30
-            </div>
-
-        </div>
-
-        <div class="popup-buttons">
-
-            <button id="rejectDelivery"
-                    class="reject-btn">
-
+            <button
+                type="button"
+                id="rejectIncomingOrderButton"
+                class="incoming-reject-btn"
+            >
+                <span>✕</span>
                 Reject
-
             </button>
 
-            <button id="acceptDelivery"
-                    class="accept-btn">
-
-                Accept
-
+            <button
+                type="button"
+                id="acceptIncomingOrderButton"
+                class="incoming-accept-btn"
+            >
+                <span>✓</span>
+                Accept Order
             </button>
 
         </div>
 
     </div>
-
 </div>
-
 <audio id="orderSound">
     <source src="/static/sounds/neworder.mp3">
-</audio>-->
+</audio>
 {% endblock %}
