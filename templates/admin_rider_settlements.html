@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rider Settlements - RucHiGo</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #1e293b;
+        }
+
+        .page {
+            max-width: 1350px;
+            margin: auto;
+            padding: 24px;
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .title h1 {
+            margin: 0;
+            font-size: 27px;
+        }
+
+        .title p {
+            margin: 6px 0 0;
+            color: #64748b;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            padding: 11px 16px;
+            background: white;
+            border-radius: 12px;
+            color: #1e293b;
+            font-weight: 700;
+            border: 1px solid #e2e8f0;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .summary-value {
+            font-size: 25px;
+            font-weight: 900;
+        }
+
+        .green { color: #059669; }
+        .orange { color: #ea580c; }
+        .blue { color: #2563eb; }
+        .red { color: #dc2626; }
+
+        .rider-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .rider-card {
+            background: white;
+            border-radius: 22px;
+            padding: 20px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .rider-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .rider-name {
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .rider-info {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .batch-count {
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #4338ca;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .batch-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .batch-row {
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            background: #fbfcfe;
+        }
+
+        .batch-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .batch-title {
+            font-size: 15px;
+            font-weight: 900;
+        }
+
+        .batch-date {
+            margin-top: 4px;
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        .status {
+            padding: 7px 12px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
+        .status-submitted {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .status-verified {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .money-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+        }
+
+        .money-box {
+            background: white;
+            border-radius: 13px;
+            padding: 12px;
+            border: 1px solid #edf0f5;
+        }
+
+        .money-label {
+            font-size: 10px;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .money-value {
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+        .batch-action {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #e2e8f0;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .action-title {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .action-amount {
+            margin-top: 3px;
+            font-size: 19px;
+            font-weight: 900;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            font-weight: 800;
+            border-radius: 12px;
+            padding: 11px 15px;
+        }
+
+        .collect-btn {
+            background: #ea580c;
+            color: white;
+        }
+
+        .pay-btn {
+            background: #059669;
+            color: white;
+        }
+
+        .verify-btn {
+            background: #2563eb;
+            color: white;
+        }
+
+        .disabled-btn {
+            background: #e2e8f0;
+            color: #64748b;
+            cursor: default;
+        }
+
+        .empty {
+            padding: 30px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .details-toggle {
+            margin-top: 12px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 11px 13px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        .details-toggle:hover {
+            background: #f1f5f9;
+        }
+
+        .details-toggle .arrow {
+            transition: transform .2s ease;
+            font-size: 16px;
+        }
+
+        .details-toggle.open .arrow {
+            transform: rotate(180deg);
+        }
+
+        .batch-details {
+            display: none;
+            margin-top: 10px;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .batch-details.open {
+            display: block;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .detail-item {
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid #edf0f5;
+        }
+
+        .detail-label {
+            font-size: 10px;
+            color: #64748b;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 13px;
+            color: #0f172a;
+            font-weight: 800;
+            word-break: break-word;
+        }
+
+        @media (max-width: 600px) {
+            .page {
+                padding: 14px;
+            }
+
+            .top-bar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .rider-header,
+            .batch-top {
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="top-bar">
+        <div class="title">
+            <h1>💰 Rider Cash & Settlements</h1>
+            <p>{{ today_date.strftime("%d %b %Y") }}</p>
+        </div>
+
+        <a href="{{ url_for('admin_dashboard') }}"
+           class="back-btn">
+            ← Admin Dashboard
+        </a>
+    </div>
+
+    <div class="summary-grid">
+
+        <div class="summary-card">
+            <div class="summary-label">Deliveries</div>
+            <div class="summary-value">
+                {{ summary.total_deliveries }}
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">
+                COD Cash Handled
+            </div>
+            <div class="summary-value">
+                ₹{{ "%.2f"|format(summary.cash_collected) }}
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">
+                Online Orders
+            </div>
+            <div class="summary-value blue">
+                ₹{{ "%.2f"|format(summary.online_amount) }}
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">
+                Rider Earnings
+            </div>
+            <div class="summary-value green">
+                ₹{{ "%.2f"|format(summary.rider_earnings) }}
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">
+                Cash To Collect
+            </div>
+            <div class="summary-value orange">
+                ₹{{ "%.2f"|format(summary.cash_to_collect) }}
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">
+                RucHiGo To Pay
+            </div>
+            <div class="summary-value red">
+                ₹{{ "%.2f"|format(summary.platform_to_pay) }}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="rider-list">
+
+        {% for item in rider_data %}
+
+        {% set rider = item.rider %}
+
+        <div class="rider-card">
+
+            <div class="rider-header">
+
+                <div>
+                    <div class="rider-name">
+                        {{ rider.name }}
+                    </div>
+
+                    <div class="rider-info">
+                        Rider ID: {{ rider.id }}
+
+                        {% if rider.phone %}
+                            • {{ rider.phone }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="batch-count">
+                    {{ item.batches|length }}
+                    {{ 'Batch' if item.batches|length == 1 else 'Batches' }}
+                </div>
+
+            </div>
+
+            <div class="batch-list">
+
+                {% for batch in item.batches %}
+
+                {% set settlement = batch.settlement %}
+                {% set status = settlement.status or 'Pending' %}
+
+                <div class="batch-row">
+
+                    <div class="batch-top">
+
+                        <div>
+                            <div class="batch-title">
+                                🧾 Batch #{{ settlement.batch_no or 1 }}
+                            </div>
+
+                            <div class="batch-date">
+                                {{ settlement.settlement_date.strftime("%d %b %Y") if settlement.settlement_date else "" }}
+                                • {{ batch.deliveries }}
+                                {{ 'delivery' if batch.deliveries == 1 else 'deliveries' }}
+                            </div>
+                        </div>
+
+                        {% if status|lower == "verified" %}
+
+                            <div class="status status-verified">
+                                ✓ Verified
+                            </div>
+
+                        {% elif status|lower == "submitted" %}
+
+                            <div class="status status-submitted">
+                                Submitted
+                            </div>
+
+                        {% else %}
+
+                            <div class="status status-pending">
+                                Pending
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                    <div class="money-grid">
+
+                        <div class="money-box">
+                            <div class="money-label">
+                                Deliveries
+                            </div>
+                            <div class="money-value">
+                                {{ batch.deliveries }}
+                            </div>
+                        </div>
+
+                        <div class="money-box">
+                            <div class="money-label">
+                                COD Orders
+                            </div>
+                            <div class="money-value">
+                                {{ settlement.cod_orders }}
+                            </div>
+                        </div>
+
+                        <div class="money-box">
+                            <div class="money-label">
+                                Online Orders
+                            </div>
+                            <div class="money-value">
+                                {{ settlement.online_orders }}
+                            </div>
+                        </div>
+
+                        <div class="money-box">
+                            <div class="money-label">
+                                COD Cash
+                            </div>
+                            <div class="money-value">
+                                ₹{{ "%.2f"|format(batch.cash_collected) }}
+                            </div>
+                        </div>
+
+                        <div class="money-box">
+                            <div class="money-label">
+                                Online Paid
+                            </div>
+                            <div class="money-value">
+                                ₹{{ "%.2f"|format(batch.online_amount) }}
+                            </div>
+                        </div>
+
+                        <div class="money-box">
+                            <div class="money-label">
+                                Rider Earnings
+                            </div>
+                            <div class="money-value green">
+                                ₹{{ "%.2f"|format(batch.rider_earnings) }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="batch-action">
+
+                        <div>
+
+                            {% if batch.cash_to_submit > 0 %}
+
+                                <div class="action-title">
+                                    Collect from rider
+                                </div>
+
+                                <div class="action-amount orange">
+                                    ₹{{ "%.2f"|format(batch.cash_to_submit) }}
+                                </div>
+
+                            {% elif batch.platform_to_pay > 0 %}
+
+                                <div class="action-title">
+                                    RucHiGo should pay rider
+                                </div>
+
+                                <div class="action-amount green">
+                                    ₹{{ "%.2f"|format(batch.platform_to_pay) }}
+                                </div>
+
+                            {% else %}
+
+                                <div class="action-title">
+                                    Net settlement
+                                </div>
+
+                                <div class="action-amount green">
+                                    ₹0.00
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+                        <div>
+
+                            {% if status|lower == "verified" %}
+
+                                <button
+                                    class="disabled-btn"
+                                    disabled>
+                                    ✓ Verified
+                                </button>
+
+                            {% elif status|lower == "pending" %}
+
+                                <button
+                                    class="disabled-btn"
+                                    disabled>
+                                    Waiting for Rider Submission
+                                </button>
+
+                            {% elif status|lower == "submitted"
+                                  and batch.cash_to_submit > 0 %}
+
+                                <button
+                                    class="collect-btn"
+                                    onclick="
+                                        verifySettlement(
+                                            {{ settlement.id }},
+                                            'collect',
+                                            {{ batch.cash_to_submit }}
+                                        )
+                                    ">
+                                    Cash Received
+                                    ₹{{ "%.2f"|format(batch.cash_to_submit) }}
+                                </button>
+
+                            {% elif status|lower == "submitted"
+                                  and batch.platform_to_pay > 0 %}
+
+                                <button
+                                    class="pay-btn"
+                                    onclick="
+                                        verifySettlement(
+                                            {{ settlement.id }},
+                                            'pay',
+                                            {{ batch.platform_to_pay }}
+                                        )
+                                    ">
+                                    Paid Rider
+                                    ₹{{ "%.2f"|format(batch.platform_to_pay) }}
+                                </button>
+
+                            {% elif status|lower == "submitted" %}
+
+                                <button
+                                    class="verify-btn"
+                                    onclick="
+                                        verifySettlement(
+                                            {{ settlement.id }},
+                                            'clear',
+                                            0
+                                        )
+                                    ">
+                                    Verify Batch
+                                </button>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="details-toggle"
+                        onclick="toggleBatchDetails({{ settlement.id }}, this)">
+                        <span>View Settlement Details</span>
+                        <span class="arrow">⌄</span>
+                    </button>
+
+                    <div
+                        id="batch-details-{{ settlement.id }}"
+                        class="batch-details">
+
+                        <div class="detail-grid">
+
+                            <div class="detail-item">
+                                <div class="detail-label">Settlement ID</div>
+                                <div class="detail-value">{{ settlement.id }}</div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Batch Number</div>
+                                <div class="detail-value">#{{ settlement.batch_no or 1 }}</div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Settlement Date</div>
+                                <div class="detail-value">
+                                    {{ settlement.settlement_date.strftime("%d %b %Y") if settlement.settlement_date else "-" }}
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Status</div>
+                                <div class="detail-value">{{ settlement.status or 'Pending' }}</div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Total Deliveries</div>
+                                <div class="detail-value">{{ batch.deliveries }}</div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">COD Orders</div>
+                                <div class="detail-value">{{ settlement.cod_orders }}</div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Online Orders</div>
+                                <div class="detail-value">{{ settlement.online_orders }}</div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Total Order Value</div>
+                                <div class="detail-value">
+                                    ₹{{ "%.2f"|format(settlement.total_order_value or 0) }}
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">COD Cash Collected</div>
+                                <div class="detail-value">
+                                    ₹{{ "%.2f"|format(batch.cash_collected) }}
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Online Paid</div>
+                                <div class="detail-value">
+                                    ₹{{ "%.2f"|format(batch.online_amount) }}
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Rider Earnings</div>
+                                <div class="detail-value">
+                                    ₹{{ "%.2f"|format(batch.rider_earnings) }}
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Cash To Submit</div>
+                                <div class="detail-value">
+                                    ₹{{ "%.2f"|format(batch.cash_to_submit) }}
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">RucHiGo To Pay</div>
+                                <div class="detail-value">
+                                    ₹{{ "%.2f"|format(batch.platform_to_pay) }}
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Submitted At</div>
+                                <div class="detail-value">
+                                    {% if settlement.submitted_at %}
+                                        {{ settlement.submitted_at.strftime("%d %b %Y, %I:%M:%S %p") }} UTC
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Verified At</div>
+                                <div class="detail-value">
+                                    {% if settlement.verified_at %}
+                                        {{ settlement.verified_at.strftime("%d %b %Y, %I:%M:%S %p") }} UTC
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        {% else %}
+
+        <div class="rider-card empty">
+            No rider settlements available.
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<script>
+
+function toggleBatchDetails(settlementId, button) {
+    const details = document.getElementById(
+        `batch-details-${settlementId}`
+    );
+
+    if (!details) return;
+
+    const isOpen = details.classList.toggle('open');
+    button.classList.toggle('open', isOpen);
+
+    const label = button.querySelector('span:first-child');
+    if (label) {
+        label.textContent = isOpen
+            ? 'Hide Settlement Details'
+            : 'View Settlement Details';
+    }
+}
+
+async function verifySettlement(
+    settlementId,
+    type,
+    amount
+) {
+
+    let message = '';
+
+    if (type === 'collect') {
+
+        message =
+            `Confirm that ₹${amount} cash was physically received from this rider?`;
+
+    } else if (type === 'pay') {
+
+        message =
+            `Confirm that ₹${amount} was paid to this rider?`;
+
+    } else {
+
+        message =
+            'Confirm this settlement batch is fully verified?';
+    }
+
+    if (!confirm(message)) {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                `/api/admin/rider-settlement/${settlementId}/verify`,
+                {
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type':
+                            'application/json'
+                    },
+
+                    body: JSON.stringify({
+                        action: type
+                    })
+                }
+            );
+
+        const data =
+            await response.json();
+
+        if (!response.ok ||
+            data.success !== true) {
+
+            alert(
+                data.message ||
+                'Unable to verify settlement.'
+            );
+
+            return;
+        }
+
+        alert(
+            data.message ||
+            'Settlement verified successfully.'
+        );
+
+        window.location.reload();
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            'Something went wrong.'
+        );
+    }
+}
+
+</script>
+
+</body>
+</html>

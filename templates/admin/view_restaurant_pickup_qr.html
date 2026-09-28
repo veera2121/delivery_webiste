@@ -1,0 +1,607 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Pickup QR - {{ restaurant.name }}
+    </title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 20px;
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 750px;
+            margin: 0 auto;
+        }
+
+        /* =========================
+           BACK BUTTON
+        ========================= */
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+
+            margin-bottom: 20px;
+
+            color: #2563eb;
+            text-decoration: none;
+
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* =========================
+           MAIN CARD
+        ========================= */
+
+        .card {
+            background: #ffffff;
+
+            border-radius: 22px;
+
+            padding: 35px 25px;
+
+            text-align: center;
+
+            box-shadow:
+                0 10px 35px rgba(0, 0, 0, 0.08);
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .restaurant-name {
+            margin: 0;
+
+            font-size: 30px;
+            font-weight: 800;
+
+            color: #111827;
+        }
+
+        .restaurant-id {
+            margin-top: 8px;
+
+            color: #6b7280;
+
+            font-size: 14px;
+        }
+
+        /* =========================
+           STATUS
+        ========================= */
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+
+            margin-top: 18px;
+
+            padding: 8px 16px;
+
+            border-radius: 30px;
+
+            background: #dcfce7;
+            color: #166534;
+
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        /* =========================
+           QR AREA
+        ========================= */
+
+        .qr-section {
+            margin-top: 30px;
+        }
+
+        .qr-title {
+            margin-bottom: 15px;
+
+            font-size: 18px;
+            font-weight: 700;
+
+            color: #111827;
+        }
+
+        .qr-box {
+            width: 350px;
+            height: 350px;
+
+            max-width: 90vw;
+            max-height: 90vw;
+
+            margin: 0 auto;
+
+            padding: 20px;
+
+            background: #ffffff;
+
+            border: 2px solid #e5e7eb;
+
+            border-radius: 20px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            box-shadow:
+                0 5px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .qr-box img {
+            display: block;
+
+            width: 100%;
+            height: 100%;
+
+            object-fit: contain;
+        }
+
+        /* =========================
+           INSTRUCTION
+        ========================= */
+
+        .instruction {
+            max-width: 550px;
+
+            margin: 22px auto 0;
+
+            padding: 15px 18px;
+
+            border-radius: 12px;
+
+            background: #f3f4f6;
+
+            color: #4b5563;
+
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .instruction strong {
+            color: #111827;
+        }
+
+        /* =========================
+           TOKEN
+        ========================= */
+
+        .token-section {
+            margin-top: 25px;
+
+            text-align: left;
+        }
+
+        .token-label {
+            margin-bottom: 8px;
+
+            font-size: 13px;
+            font-weight: 700;
+
+            color: #374151;
+        }
+
+        .token-box {
+            padding: 14px;
+
+            background: #f9fafb;
+
+            border: 1px solid #e5e7eb;
+
+            border-radius: 10px;
+
+            font-size: 12px;
+
+            color: #6b7280;
+
+            word-break: break-all;
+        }
+
+        /* =========================
+           BUTTONS
+        ========================= */
+
+        .buttons {
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            gap: 12px;
+
+            margin-top: 30px;
+
+            flex-wrap: wrap;
+        }
+
+        .btn,
+        button {
+            display: inline-flex;
+
+            align-items: center;
+            justify-content: center;
+
+            gap: 7px;
+
+            min-height: 46px;
+
+            padding: 12px 22px;
+
+            border: none;
+
+            border-radius: 11px;
+
+            font-size: 15px;
+
+            font-weight: 700;
+
+            text-decoration: none;
+
+            cursor: pointer;
+
+            transition: 0.2s ease;
+        }
+
+        .btn:hover,
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        /* PRINT */
+
+        .print-btn {
+            background: #111827;
+            color: #ffffff;
+        }
+
+        .print-btn:hover {
+            background: #000000;
+        }
+
+        /* DOWNLOAD */
+
+        .download-btn {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .download-btn:hover {
+            background: #1d4ed8;
+        }
+
+        /* BACK */
+
+        .back-btn {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .back-btn:hover {
+            background: #d1d5db;
+        }
+
+        /* =========================
+           FOOTER NOTE
+        ========================= */
+
+        .footer-note {
+            margin-top: 25px;
+
+            color: #9ca3af;
+
+            font-size: 12px;
+        }
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 20px 12px;
+            }
+
+            .card {
+                padding: 28px 16px;
+            }
+
+            .restaurant-name {
+                font-size: 24px;
+            }
+
+            .qr-box {
+                width: 300px;
+                height: 300px;
+
+                padding: 15px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .btn,
+            button {
+                width: 100%;
+                max-width: 320px;
+            }
+        }
+
+        /* =========================
+           PRINT
+        ========================= */
+
+        @media print {
+
+            body {
+                padding: 0;
+
+                background: #ffffff;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+
+            .back-link,
+            .buttons,
+            .token-section,
+            .footer-note {
+                display: none !important;
+            }
+
+            .card {
+                padding: 20px;
+
+                box-shadow: none;
+
+                border-radius: 0;
+            }
+
+            .restaurant-name {
+                font-size: 28px;
+            }
+
+            .qr-box {
+                width: 400px;
+                height: 400px;
+
+                border: none;
+
+                box-shadow: none;
+            }
+
+            .instruction {
+                background: #ffffff;
+
+                border: none;
+            }
+
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- =========================
+         BACK
+    ========================= -->
+
+    <a
+        href="{{ url_for('restaurant_pickup_qr') }}"
+        class="back-link"
+    >
+        ← Back to Pickup QR Management
+    </a>
+
+
+    <!-- =========================
+         MAIN CARD
+    ========================= -->
+
+    <div class="card">
+
+
+        <!-- RESTAURANT NAME -->
+
+        <h1 class="restaurant-name">
+            {{ restaurant.name }}
+        </h1>
+
+
+        <!-- RESTAURANT ID -->
+
+        <div class="restaurant-id">
+
+            Restaurant ID:
+            {{ restaurant.id }}
+
+        </div>
+
+
+        <!-- STATUS -->
+
+        {% if pickup_qr.is_active %}
+
+            <div class="status">
+                ✓ Pickup QR Active
+            </div>
+
+        {% else %}
+
+            <div
+                class="status"
+                style="
+                    background:#fee2e2;
+                    color:#991b1b;
+                "
+            >
+                ✕ Pickup QR Inactive
+            </div>
+
+        {% endif %}
+
+
+        <!-- =========================
+             QR
+        ========================= -->
+
+        <div class="qr-section">
+
+            <div class="qr-title">
+                Restaurant Pickup QR
+            </div>
+
+
+            <div class="qr-box">
+
+                <img
+                    src="{{ url_for(
+                        'restaurant_pickup_qr_image',
+                        restaurant_id=restaurant.id
+                    ) }}"
+                    alt="Restaurant Pickup QR"
+                >
+
+            </div>
+
+
+            <!-- INSTRUCTION -->
+
+            <div class="instruction">
+
+                <strong>
+                    Keep this QR code at the restaurant counter.
+                </strong>
+
+                <br>
+
+                The assigned delivery partner will scan this
+                QR code when collecting an order.
+
+                <br>
+
+                This QR belongs permanently to
+                <strong>{{ restaurant.name }}</strong>.
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             TOKEN
+        ========================= -->
+
+        <div class="token-section">
+
+            <div class="token-label">
+                QR Token
+            </div>
+
+            <div class="token-box">
+                {{ pickup_qr.qr_token }}
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             BUTTONS
+        ========================= -->
+
+        <div class="buttons">
+
+
+            <!-- PRINT -->
+
+            <button
+                type="button"
+                class="print-btn"
+                onclick="window.print()"
+            >
+                🖨️ Print QR
+            </button>
+
+
+            <!-- DOWNLOAD -->
+
+            <a
+                href="{{ url_for(
+                    'restaurant_pickup_qr_image',
+                    restaurant_id=restaurant.id
+                ) }}"
+                class="btn download-btn"
+                download
+            >
+                ⬇️ Download QR
+            </a>
+
+
+            <!-- BACK -->
+
+            <a
+                href="{{ url_for('restaurant_pickup_qr') }}"
+                class="btn back-btn"
+            >
+                ← Back
+            </a>
+
+        </div>
+
+
+        <!-- FOOTER -->
+
+        <div class="footer-note">
+
+            RucHiGo Restaurant Pickup Verification
+
+        </div>
+
+
+    </div>
+
+</div>
+
+</body>
+</html>
+

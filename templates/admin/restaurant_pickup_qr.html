@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Restaurant Pickup QR</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin-top: 8px;
+            color: #6b7280;
+        }
+
+        .restaurant-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .restaurant-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            box-shadow:
+                0 2px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .restaurant-info h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .restaurant-id {
+            margin-top: 5px;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .qr-status {
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .qr-created {
+            color: #15803d;
+            font-weight: 600;
+        }
+
+        .qr-not-created {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        button,
+        a {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .generate-btn {
+            background: #111827;
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: #000;
+        }
+
+        .view-btn {
+            background: #2563eb;
+            color: white;
+        }
+
+        .view-btn:hover {
+            background: #1d4ed8;
+        }
+
+        @media (max-width: 700px) {
+
+            body {
+                padding: 15px;
+            }
+
+            .restaurant-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .actions {
+                width: 100%;
+            }
+
+            .actions button,
+            .actions a {
+                flex: 1;
+                text-align: center;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <h1>
+            Restaurant Pickup QR
+        </h1>
+
+        <p>
+            Generate and manage the permanent pickup QR
+            for each restaurant.
+        </p>
+
+    </div>
+
+
+    <div class="restaurant-list">
+
+        {% for restaurant in restaurants %}
+
+        <div class="restaurant-card">
+
+            <div class="restaurant-info">
+
+                <h3>
+                    {{ restaurant.name }}
+                </h3>
+
+                <div class="restaurant-id">
+                    Restaurant ID:
+                    {{ restaurant.id }}
+                </div>
+
+
+                {% if restaurant.pickup_qr %}
+
+                    <div class="qr-status qr-created">
+                        ✓ QR Generated
+                    </div>
+
+                {% else %}
+
+                    <div class="qr-status qr-not-created">
+                        QR Not Generated
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="actions">
+
+                {% if restaurant.pickup_qr %}
+
+                    <a
+                        class="view-btn"
+                        href="{{ url_for(
+                            'view_restaurant_pickup_qr',
+                            restaurant_id=restaurant.id
+                        ) }}"
+                    >
+                        View QR
+                    </a>
+
+                {% else %}
+
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'generate_restaurant_pickup_qr',
+                            restaurant_id=restaurant.id
+                        ) }}"
+                    >
+
+                        <button
+                            type="submit"
+                            class="generate-btn"
+                        >
+                            Generate QR
+                        </button>
+
+                    </form>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        {% else %}
+
+        <div class="restaurant-card">
+
+            <div>
+                No restaurants found.
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

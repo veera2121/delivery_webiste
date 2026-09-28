@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Rider Application Settings</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            color: #1f2937;
+        }
+
+        .page {
+            max-width: 850px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 0;
+            color: #6b7280;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        .field-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 17px 5px;
+
+            border-bottom: 1px solid #eef0f3;
+        }
+
+        .field-row:last-child {
+            border-bottom: none;
+        }
+
+        .field-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .field-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .field-status {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        /* Checkbox */
+
+        .switch {
+            position: relative;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+
+            inset: 0;
+
+            background: #d1d5db;
+
+            border-radius: 30px;
+
+            transition: 0.2s;
+        }
+
+        .slider:before {
+            content: "";
+
+            position: absolute;
+
+            height: 22px;
+            width: 22px;
+
+            left: 3px;
+            top: 3px;
+
+            background: white;
+
+            border-radius: 50%;
+
+            transition: 0.2s;
+
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background: #16a34a;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        .save-container {
+            margin-top: 25px;
+        }
+
+        .save-btn {
+            width: 100%;
+
+            border: none;
+
+            background: #16a34a;
+            color: white;
+
+            padding: 14px 20px;
+
+            border-radius: 10px;
+
+            font-size: 16px;
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+        .save-btn:hover {
+            background: #15803d;
+        }
+
+        .required-badge {
+            display: inline-block;
+
+            background: #dcfce7;
+            color: #15803d;
+
+            padding: 3px 8px;
+
+            border-radius: 20px;
+
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .optional-badge {
+            display: inline-block;
+
+            background: #f3f4f6;
+            color: #6b7280;
+
+            padding: 3px 8px;
+
+            border-radius: 20px;
+
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+
+            .page {
+                margin: 15px auto;
+                padding: 12px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .header h1 {
+                font-size: 23px;
+            }
+
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="header">
+
+        <h1>
+            Rider Application Requirements
+        </h1>
+
+        <p>
+            Select which information riders must provide
+            when submitting their application.
+        </p>
+
+    </div>
+
+
+    <form method="POST">
+
+        <div class="card">
+
+            {% for field_name, field_label in fields.items() %}
+
+                <div class="field-row">
+
+                    <div class="field-info">
+
+                        <div class="field-name">
+                            {{ field_label }}
+                        </div>
+
+                        <div class="field-status">
+
+                            {% if settings.get(field_name) %}
+
+                                <span class="required-badge">
+                                    Required
+                                </span>
+
+                            {% else %}
+
+                                <span class="optional-badge">
+                                    Optional
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            name="required_{{ field_name }}"
+                            value="1"
+
+                            {% if settings.get(field_name) %}
+                                checked
+                            {% endif %}
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+            {% endfor %}
+
+
+            <div class="save-container">
+
+                <button
+                    type="submit"
+                    class="save-btn"
+                >
+                    Save Requirements
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<script>
+
+    document.querySelectorAll(
+        '.switch input'
+    ).forEach(function(input) {
+
+        input.addEventListener(
+            'change',
+            function() {
+
+                const status =
+                    this.closest('.field-row')
+                        .querySelector('.field-status');
+
+                if (this.checked) {
+
+                    status.innerHTML =
+                        '<span class="required-badge">Required</span>';
+
+                } else {
+
+                    status.innerHTML =
+                        '<span class="optional-badge">Optional</span>';
+
+                }
+
+            }
+        );
+
+    });
+
+</script>
+
+</body>
+</html>

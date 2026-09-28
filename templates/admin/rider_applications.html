@@ -1,0 +1,2801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>RucHiGo Rider Applications</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+      background: #f4f6fa;
+      color: #111827;
+    }
+
+    .page {
+      max-width: 1280px;
+      margin: auto;
+      padding: 24px;
+    }
+
+    /* =========================================================
+       TOP BAR
+    ========================================================= */
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .sub {
+      color: #6b7280;
+      margin-top: 6px;
+    }
+
+    /* =========================================================
+       FILTERS
+    ========================================================= */
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .filter {
+      border: 1px solid #dbe2ea;
+      background: #fff;
+      color: #374151;
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .filter:hover {
+      background: #f9fafb;
+    }
+
+    .filter.active {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    /* =========================================================
+       GRID
+    ========================================================= */
+
+    .grid {
+      display: grid;
+      grid-template-columns:
+        repeat(auto-fit, minmax(330px, 1fr));
+
+      gap: 16px;
+    }
+
+    /* =========================================================
+       CARD
+    ========================================================= */
+
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 18px;
+
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, .05);
+    }
+
+    .head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .name {
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .code {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 3px;
+    }
+
+    /* =========================================================
+       STATUS BADGES
+    ========================================================= */
+
+    .badge {
+      padding: 7px 10px;
+      border-radius: 999px;
+
+      font-size: 12px;
+      font-weight: 800;
+
+      white-space: nowrap;
+    }
+
+    .pending {
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .approved {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .rejected {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .needs {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    /* =========================================================
+       DETAILS
+    ========================================================= */
+
+    .rows {
+      margin-top: 16px;
+
+      display: grid;
+      gap: 9px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+
+      gap: 12px;
+
+      font-size: 14px;
+    }
+
+    .label {
+      color: #6b7280;
+    }
+
+    .value {
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* =========================================================
+       DOCUMENTS
+    ========================================================= */
+
+    .docs {
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 8px;
+
+      margin-top: 16px;
+    }
+
+    .doc {
+      border: 1px solid #dbe2ea;
+
+      background: #f8fafc;
+
+      color: #1f2937;
+
+      text-decoration: none;
+
+      padding: 10px 12px;
+
+      border-radius: 12px;
+
+      text-align: center;
+
+      font-weight: 700;
+
+      font-size: 13px;
+    }
+
+    .doc:hover {
+      background: #eef2f7;
+    }
+
+    /* =========================================================
+       ACTIONS
+    ========================================================= */
+
+    .actions {
+      display: flex;
+
+      gap: 8px;
+
+      flex-wrap: wrap;
+
+      margin-top: 16px;
+    }
+
+    button.action {
+      border: 0;
+
+      border-radius: 12px;
+
+      padding: 11px 14px;
+
+      font-weight: 800;
+
+      cursor: pointer;
+    }
+
+    button.action:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .approveBtn {
+      background: #16a34a;
+      color: #fff;
+    }
+
+    .approveBtn:hover {
+      background: #15803d;
+    }
+
+    .rejectBtn {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .rejectBtn:hover {
+      background: #fecaca;
+    }
+
+    .changeBtn {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .changeBtn:hover {
+      background: #bfdbfe;
+    }
+
+    /* =========================================================
+       EMPTY
+    ========================================================= */
+
+    .empty {
+      padding: 50px;
+
+      text-align: center;
+
+      color: #6b7280;
+
+      background: #fff;
+
+      border-radius: 20px;
+    }
+
+    /* =========================================================
+       ACTIVATION BOX
+    ========================================================= */
+
+    .activation {
+      margin-top: 16px;
+
+      padding: 16px;
+
+      background: #f0fdf4;
+
+      border: 1px solid #bbf7d0;
+
+      border-radius: 16px;
+    }
+
+    .activation-title {
+      font-size: 15px;
+
+      font-weight: 800;
+
+      color: #166534;
+
+      margin-bottom: 8px;
+    }
+
+    .activation-code {
+      background: #fff;
+
+      border: 1px dashed #86efac;
+
+      border-radius: 10px;
+
+      padding: 12px;
+
+      font-size: 18px;
+
+      font-weight: 900;
+
+      letter-spacing: 1px;
+
+      color: #14532d;
+
+      text-align: center;
+
+      word-break: break-all;
+
+      margin-bottom: 10px;
+    }
+
+    .activation-info {
+      font-size: 12px;
+
+      color: #166534;
+
+      margin-bottom: 12px;
+    }
+
+    /* =========================================================
+       WHATSAPP BUTTON
+    ========================================================= */
+
+    .whatsappBtn {
+      width: 100%;
+
+      border: 0;
+
+      border-radius: 12px;
+
+      padding: 13px 16px;
+
+      background: #25d366;
+
+      color: #fff;
+
+      font-size: 14px;
+
+      font-weight: 900;
+
+      cursor: pointer;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 8px;
+    }
+
+    .whatsappBtn:hover {
+      background: #1ebe5d;
+    }
+
+    .whatsappBtn:disabled {
+      opacity: .6;
+
+      cursor: not-allowed;
+    }
+
+    .resendBtn {
+      width: 100%;
+      margin-top: 9px;
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 16px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .resendBtn:hover {
+      background: #1d4ed8;
+    }
+
+    .resendBtn:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    /* =========================================================
+       SENT MESSAGE
+    ========================================================= */
+
+    .sentMessage {
+      margin-top: 10px;
+
+      padding: 9px 12px;
+
+      background: #ecfdf5;
+
+      border-radius: 10px;
+
+      color: #047857;
+
+      font-size: 12px;
+
+      font-weight: 700;
+
+      text-align: center;
+    }
+
+    /* =========================================================
+       RESET PANEL
+    ========================================================= */
+
+    .resetPanel {
+      margin-bottom: 18px;
+      background: #fff;
+      border: 1px solid #dbe2ea;
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.04);
+    }
+
+    .resetPanelHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .resetPanelTitle {
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .resetRequests {
+      display: grid;
+      gap: 10px;
+    }
+
+    .resetRequest {
+      border: 1px solid #fde68a;
+      background: #fffbeb;
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .resetRequestName {
+      font-weight: 900;
+    }
+
+    .resetRequestMeta {
+      color: #6b7280;
+      font-size: 12px;
+      margin: 4px 0 8px;
+    }
+
+    .resetOtp {
+      background: #fff;
+      border: 1px dashed #f59e0b;
+      border-radius: 10px;
+      padding: 9px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      margin-bottom: 8px;
+    }
+
+    .resetExpiry {
+      color: #92400e;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .resetActions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .resetActionBtn {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .resetCopyBtn {
+      background: #111827;
+      color: #fff;
+    }
+
+    .resetCancelBtn {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    /* =========================================================
+       SECOND RESET PANEL
+    ========================================================= */
+
+    .passwordResetCard {
+      margin: 0 0 20px 0;
+      padding: 18px;
+      background: #ffffff;
+      border: 2px solid #f59e0b;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.05);
+    }
+
+    .passwordResetCard .resetHeader {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .passwordResetCard .resetTitle {
+      font-size:18px;
+      font-weight:900;
+    }
+
+    .passwordResetCard .resetHint {
+      color:#6b7280;
+      font-size:12px;
+      margin-top:4px;
+    }
+
+    .resetList {
+      display:grid;
+      gap:10px;
+    }
+
+    .resetItem {
+      background:#fffbeb;
+      border:1px solid #fde68a;
+      border-radius:14px;
+      padding:14px;
+    }
+
+    .resetItemTop {
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+
+    .resetName {
+      font-weight:900;
+      font-size:15px;
+    }
+
+    .resetMeta {
+      margin-top:4px;
+      color:#6b7280;
+      font-size:12px;
+    }
+
+    .resetOtpLarge {
+      margin-top:12px;
+      padding:12px;
+      background:#fff;
+      border:1px dashed #f59e0b;
+      border-radius:10px;
+      text-align:center;
+      font-size:26px;
+      font-weight:900;
+      letter-spacing:4px;
+    }
+
+    .resetExpire {
+      margin-top:8px;
+      color:#92400e;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .resetBtns {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .resetBtn {
+      border:0;
+      border-radius:10px;
+      padding:9px 12px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .resetCopy {
+      background:#111827;
+      color:#fff;
+    }
+
+    .resetCancel {
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+
+    /* =========================================================
+       MOBILE
+    ========================================================= */
+
+    @media(max-width: 600px) {
+
+      .page {
+        padding: 14px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+
+        flex-direction: column;
+      }
+
+      .docs {
+        grid-template-columns: 1fr;
+      }
+
+      .row {
+        align-items: flex-start;
+      }
+
+      .value {
+        max-width: 60%;
+
+        word-break: break-word;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="page">
+
+  <!-- =========================================================
+       TOP BAR
+  ========================================================== -->
+
+  <div class="topbar">
+
+    <div>
+
+      <h1>
+        Delivery Partner Applications
+      </h1>
+
+      <div class="sub">
+        Review identity documents before enabling rider login.
+      </div>
+
+    </div>
+
+    <button
+      class="filter"
+      onclick="loadApplications()"
+      type="button"
+    >
+      Refresh
+    </button>
+
+  </div>
+
+  <!-- =========================================================
+       FILTERS
+  ========================================================== -->
+
+  <div class="filters">
+
+    <button
+      class="filter active"
+      data-status=""
+      onclick="setStatus(this)"
+      type="button"
+    >
+      All
+    </button>
+
+    <button
+      class="filter"
+      data-status="Pending"
+      onclick="setStatus(this)"
+      type="button"
+    >
+      Pending
+    </button>
+
+    <button
+      class="filter"
+      data-status="Needs More Information"
+      onclick="setStatus(this)"
+      type="button"
+    >
+      Needs Info
+    </button>
+
+    <button
+      class="filter"
+      data-status="Approved"
+      onclick="setStatus(this)"
+      type="button"
+    >
+      Approved
+    </button>
+
+    <button
+      class="filter"
+      data-status="Rejected"
+      onclick="setStatus(this)"
+      type="button"
+    >
+      Rejected
+    </button>
+
+  </div>
+
+  <!-- =========================================================
+       PASSWORD RESET REQUESTS
+  ========================================================== -->
+
+  <div class="resetPanel">
+
+    <div class="resetPanelHead">
+
+      <div class="resetPanelTitle">
+        🔐 Password Reset Requests
+      </div>
+
+      <button
+        class="filter"
+        onclick="loadPasswordResetRequests()"
+        type="button"
+      >
+        Refresh OTPs
+      </button>
+
+    </div>
+
+    <div id="resetRequests">
+
+      <div class="empty">
+        Loading password reset requests...
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="passwordResetCard">
+
+    <div class="resetHeader">
+
+      <div>
+
+        <div class="resetTitle">
+          🔐 Password Reset OTPs
+        </div>
+
+        <div class="resetHint">
+          Riders who requested a password reset appear here.
+          Share the OTP with the rider.
+        </div>
+
+      </div>
+
+      <button
+        class="filter"
+        onclick="loadPasswordResetRequests()"
+        type="button"
+      >
+        🔄 Refresh OTPs
+      </button>
+
+    </div>
+
+    <div id="passwordResetRequests">
+
+      <div class="empty">
+        Loading password reset requests...
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =========================================================
+       APPLICATION CONTENT
+  ========================================================== -->
+
+  <div id="content">
+
+    <div class="empty">
+      Loading applications...
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+  /* ============================================================
+     STATE
+  ============================================================ */
+
+  let selectedStatus = '';
+
+
+  /* ============================================================
+     STATUS FILTER
+  ============================================================ */
+
+  function setStatus(button) {
+
+    document
+      .querySelectorAll('.filter[data-status]')
+      .forEach(x => {
+        x.classList.remove('active');
+      });
+
+    button.classList.add('active');
+
+    selectedStatus =
+      button.dataset.status || '';
+
+    loadApplications();
+  }
+
+
+  /* ============================================================
+     HTML ESCAPE
+  ============================================================ */
+
+  function esc(value) {
+
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+
+  }
+
+
+  /* ============================================================
+     BADGE CLASS
+  ============================================================ */
+
+  function badgeClass(status) {
+
+    const s =
+      String(status || '').toLowerCase();
+
+    if (s === 'approved') {
+      return 'approved';
+    }
+
+    if (s === 'rejected') {
+      return 'rejected';
+    }
+
+    if (s.includes('needs')) {
+      return 'needs';
+    }
+
+    return 'pending';
+  }
+
+
+  /* ============================================================
+     LOAD APPLICATIONS
+  ============================================================ */
+
+  async function loadApplications() {
+
+    const content =
+      document.getElementById('content');
+
+    content.innerHTML =
+      '<div class="empty">Loading applications...</div>';
+
+    const q =
+      selectedStatus
+        ? `?status=${encodeURIComponent(selectedStatus)}`
+        : '';
+
+    try {
+
+      const response =
+        await fetch(
+          `/api/admin/rider-applications${q}`,
+          {
+            headers: {
+              'Accept': 'application/json'
+            }
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (
+        !response.ok ||
+        data.success !== true
+      ) {
+
+        throw new Error(
+          data.message ||
+          'Unable to load applications'
+        );
+
+      }
+
+      const apps =
+        data.applications || [];
+
+      if (!apps.length) {
+
+        content.innerHTML =
+          '<div class="empty">No rider applications found.</div>';
+
+        return;
+      }
+
+      content.innerHTML =
+        `<div class="grid">
+          ${apps.map(renderApplication).join('')}
+        </div>`;
+
+    }
+
+    catch (e) {
+
+      content.innerHTML =
+        `<div class="empty">
+          ${esc(e.message)}
+        </div>`;
+
+    }
+
+  }
+
+
+  /* ============================================================
+     DOCUMENT URL
+  ============================================================ */
+
+  function getDocumentUrl(path) {
+
+    if (!path) {
+      return '';
+    }
+
+    const value =
+      String(path).trim();
+
+    if (!value) {
+      return '';
+    }
+
+    if (
+      /^https?:\/\//i.test(value) ||
+      value.startsWith('blob:')
+    ) {
+      return value;
+    }
+
+    if (value.startsWith('/')) {
+      return value;
+    }
+
+    return (
+      '/api/admin/rider-applications/document?path=' +
+      encodeURIComponent(value)
+    );
+  }
+
+
+  /* ============================================================
+     RENDER APPLICATION
+  ============================================================ */
+
+  function renderApplication(a) {
+
+    const d =
+      a.document_urls || {};
+
+    const status =
+      String(a.status || '')
+        .toLowerCase();
+
+    const approved =
+      status === 'approved';
+
+    const rejected =
+      status === 'rejected';
+
+    return `
+
+      <div
+        class="card"
+        id="application-${a.id}"
+      >
+
+        <!-- HEADER -->
+
+        <div class="head">
+
+          <div>
+
+            <div class="name">
+              ${esc(a.full_name)}
+            </div>
+
+            <div class="code">
+              Application:
+              ${esc(a.application_code)}
+            </div>
+
+          </div>
+
+          <span
+            class="badge ${badgeClass(a.status)}"
+          >
+            ${esc(a.status)}
+          </span>
+
+        </div>
+
+
+        <!-- DETAILS -->
+
+        <div class="rows">
+
+          <div class="row">
+
+            <span class="label">
+              Mobile
+            </span>
+
+            <span class="value">
+              ${esc(a.phone)}
+            </span>
+
+          </div>
+
+
+          <div class="row">
+
+            <span class="label">
+              DOB
+            </span>
+
+            <span class="value">
+              ${esc(a.dob || '-')}
+            </span>
+
+          </div>
+
+
+          <div class="row">
+
+            <span class="label">
+              Location
+            </span>
+
+            <span class="value">
+              ${esc(a.city || '-')},
+              ${esc(a.pincode || '-')}
+            </span>
+
+          </div>
+
+
+          <div class="row">
+
+            <span class="label">
+              Vehicle
+            </span>
+
+            <span class="value">
+              ${esc(a.vehicle_type || '-')}
+              ${esc(a.vehicle_number || '')}
+            </span>
+
+          </div>
+
+
+          <div class="row">
+
+            <span class="label">
+              Applied
+            </span>
+
+            <span class="value">
+              ${esc(formatDate(a.submitted_at))}
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- REJECTION REASON -->
+
+        ${
+          rejected && a.rejection_reason
+            ? `
+
+              <div
+                style="
+                  margin-top:16px;
+                  padding:12px;
+                  background:#fef2f2;
+                  border:1px solid #fecaca;
+                  border-radius:12px;
+                  color:#991b1b;
+                  font-size:13px;
+                "
+              >
+
+                <strong>
+                  Rejection Reason:
+                </strong>
+
+                <div style="margin-top:5px;">
+                  ${esc(a.rejection_reason)}
+                </div>
+
+              </div>
+
+            `
+            : ''
+        }
+
+
+        <!-- REVIEW NOTE -->
+
+        ${
+          a.review_note
+            ? `
+
+              <div
+                style="
+                  margin-top:10px;
+                  padding:12px;
+                  background:#eff6ff;
+                  border:1px solid #bfdbfe;
+                  border-radius:12px;
+                  color:#1e40af;
+                  font-size:13px;
+                "
+              >
+
+                <strong>
+                  Review Note:
+                </strong>
+
+                <div style="margin-top:5px;">
+                  ${esc(a.review_note)}
+                </div>
+
+              </div>
+
+            `
+            : ''
+        }
+
+
+        <!-- DOCUMENTS -->
+
+        <div class="docs">
+
+          ${
+            d.aadhaar_front
+              ? `
+                <a
+                  class="doc"
+                  href="${esc(getDocumentUrl(d.aadhaar_front))}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Aadhaar Front
+                </a>
+              `
+              : ''
+          }
+
+
+          ${
+            d.aadhaar_back
+              ? `
+                <a
+                  class="doc"
+                  href="${esc(getDocumentUrl(d.aadhaar_back))}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Aadhaar Back
+                </a>
+              `
+              : ''
+          }
+
+
+          ${
+            d.pan_photo
+              ? `
+                <a
+                  class="doc"
+                  href="${esc(getDocumentUrl(d.pan_photo))}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  PAN Card
+                </a>
+              `
+              : ''
+          }
+
+
+          ${
+            d.selfie_photo
+              ? `
+                <a
+                  class="doc"
+                  href="${esc(getDocumentUrl(d.selfie_photo))}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Selfie
+                </a>
+              `
+              : ''
+          }
+
+
+          ${
+            d.driving_license
+              ? `
+                <a
+                  class="doc"
+                  href="${esc(getDocumentUrl(d.driving_license))}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Driving Licence
+                </a>
+              `
+              : ''
+          }
+
+        </div>
+
+
+        <!-- ACTION BUTTONS -->
+
+        ${
+          (!approved && !rejected)
+            ? `
+
+              <div class="actions">
+
+                <button
+                  class="action approveBtn"
+                  id="approve-btn-${a.id}"
+                  onclick="approveApplication(${a.id})"
+                  type="button"
+                >
+                  ✓ Approve Rider
+                </button>
+
+
+                <button
+                  class="action changeBtn"
+                  onclick="requestChanges(${a.id})"
+                  type="button"
+                >
+                  Request Changes
+                </button>
+
+
+                <button
+                  class="action rejectBtn"
+                  onclick="rejectApplication(${a.id})"
+                  type="button"
+                >
+                  Reject
+                </button>
+
+              </div>
+
+            `
+            : ''
+        }
+
+
+        <!-- ACTIVATION AREA -->
+
+        <div
+          id="activation-${a.id}"
+        >
+
+          ${
+            approved && a.activation_token
+              ? renderActivation(
+                  a.id,
+                  a.full_name,
+                  a.phone,
+                  a.activation_token,
+                  a.activation_expires_at
+                )
+              : ''
+          }
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* ============================================================
+     RENDER ACTIVATION BOX
+  ============================================================ */
+
+  function renderActivation(
+    id,
+    name,
+    phone,
+    token,
+    expiresAt
+  ) {
+
+    return `
+
+      <div class="activation">
+
+        <div class="activation-title">
+          ✓ Rider Approved
+        </div>
+
+        <div
+          class="activation-code"
+          id="activation-code-${id}"
+        >
+          ${esc(token)}
+        </div>
+
+        <div
+          class="activation-info"
+          id="activation-info-${id}"
+        >
+          Activation code expires:
+          ${esc(formatDate(expiresAt))}
+        </div>
+
+        <button
+          class="whatsappBtn"
+          id="whatsapp-btn-${id}"
+          type="button"
+          onclick="sendWhatsApp(${id})"
+        >
+          💬 Send Approval & Activation Code on WhatsApp
+        </button>
+
+        <button
+          class="resendBtn"
+          id="resend-btn-${id}"
+          type="button"
+          onclick="resendActivationCode(${id})"
+        >
+          🔄 Generate New Activation Code
+        </button>
+
+        <div
+          id="sent-${id}"
+        ></div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* ============================================================
+     APPROVE APPLICATION
+  ============================================================ */
+
+  async function approveApplication(id) {
+
+    if (
+      !confirm(
+        'Approve this rider and create login account?'
+      )
+    ) {
+      return;
+    }
+
+    const button =
+      document.getElementById(
+        `approve-btn-${id}`
+      );
+
+    if (button) {
+
+      button.disabled = true;
+
+      button.textContent =
+        'Approving...';
+
+    }
+
+    try {
+
+      const response =
+        await fetch(
+          `/api/admin/rider-applications/${id}/approve`,
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+
+              'Accept':
+                'application/json'
+            },
+
+            body: JSON.stringify({})
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (
+        !response.ok ||
+        data.success !== true
+      ) {
+
+        throw new Error(
+          data.message ||
+          'Approval failed'
+        );
+
+      }
+
+      const card =
+        document.getElementById(
+          `application-${id}`
+        );
+
+      let phone =
+        data.phone || '';
+
+      let name =
+        data.full_name ||
+        data.rider_name ||
+        'Delivery Partner';
+
+
+      /* ========================================================
+         GET PHONE FROM CARD IF NEEDED
+      ======================================================== */
+
+      if (!phone && card) {
+
+        const rows =
+          card.querySelectorAll('.row');
+
+        rows.forEach(row => {
+
+          const label =
+            row.querySelector('.label');
+
+          const value =
+            row.querySelector('.value');
+
+          if (
+            label &&
+            value &&
+            label.textContent
+              .trim()
+              .toLowerCase() === 'mobile'
+          ) {
+
+            phone =
+              value.textContent.trim();
+
+          }
+
+        });
+
+      }
+
+
+      /* ========================================================
+         GET NAME FROM CARD IF NEEDED
+      ======================================================== */
+
+      if (
+        name === 'Delivery Partner' &&
+        card
+      ) {
+
+        const nameElement =
+          card.querySelector('.name');
+
+        if (nameElement) {
+
+          name =
+            nameElement.textContent.trim();
+
+        }
+
+      }
+
+
+      const token =
+        data.activation_token;
+
+      if (!token) {
+
+        alert(
+          'Rider approved, but the server did not return an activation code.'
+        );
+
+        loadApplications();
+
+        return;
+      }
+
+
+      /* ========================================================
+         SHOW ACTIVATION BOX
+      ======================================================== */
+
+      const box =
+        document.getElementById(
+          `activation-${id}`
+        );
+
+      if (box) {
+
+        box.innerHTML =
+          renderActivation(
+            id,
+            name,
+            phone,
+            token,
+            data.activation_expires_at
+          );
+
+      }
+
+
+      /* ========================================================
+         CHANGE STATUS BADGE
+      ======================================================== */
+
+      if (card) {
+
+        const badge =
+          card.querySelector('.badge');
+
+        if (badge) {
+
+          badge.textContent =
+            'Approved';
+
+          badge.className =
+            'badge approved';
+
+        }
+
+
+        const actions =
+          card.querySelector('.actions');
+
+        if (actions) {
+
+          actions.remove();
+
+        }
+
+      }
+
+
+      alert(
+        'Rider approved successfully.\n\n' +
+        'Activation code is ready.\n\n' +
+        'Click "Send Approval & Activation Code on WhatsApp" to send it.'
+      );
+
+    }
+
+    catch (e) {
+
+      alert(
+        e.message ||
+        'Approval failed'
+      );
+
+      if (button) {
+
+        button.disabled = false;
+
+        button.textContent =
+          '✓ Approve Rider';
+
+      }
+
+    }
+
+  }
+
+
+  /* ============================================================
+     GENERATE / RESEND ACTIVATION CODE
+  ============================================================ */
+
+  async function resendActivationCode(id) {
+
+    if (
+      !confirm(
+        'Generate a new activation code?\n\n' +
+        'The previous activation code will stop working.'
+      )
+    ) {
+      return;
+    }
+
+    const button =
+      document.getElementById(
+        `resend-btn-${id}`
+      );
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Generating...';
+    }
+
+    try {
+
+      const response =
+        await fetch(
+          `/api/admin/rider-applications/${id}/activation-code`,
+          {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json'
+            }
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (
+        !response.ok ||
+        data.success !== true
+      ) {
+        throw new Error(
+          data.message ||
+          'Unable to generate activation code.'
+        );
+      }
+
+      const codeElement =
+        document.getElementById(
+          `activation-code-${id}`
+        );
+
+      if (codeElement) {
+        codeElement.textContent =
+          data.activation_token || '';
+      }
+
+      const infoElement =
+        document.getElementById(
+          `activation-info-${id}`
+        );
+
+      if (infoElement) {
+        infoElement.textContent =
+          'Activation code expires: ' +
+          formatDate(
+            data.activation_expires_at
+          );
+      }
+
+      const sentBox =
+        document.getElementById(
+          `sent-${id}`
+        );
+
+      if (sentBox) {
+        sentBox.innerHTML = `
+          <div class="sentMessage">
+            ✓ New activation code generated.
+            Click WhatsApp to send the new code.
+          </div>
+        `;
+      }
+
+      alert(
+        'New activation code generated successfully.\n\n' +
+        'Activation Code: ' +
+        (data.activation_token || '')
+      );
+
+    } catch (e) {
+
+      alert(
+        e.message ||
+        'Unable to generate activation code.'
+      );
+
+    } finally {
+
+      if (button) {
+        button.disabled = false;
+        button.textContent =
+          '🔄 Generate New Activation Code';
+      }
+
+    }
+
+  }
+
+
+  /* ============================================================
+     SEND WHATSAPP
+     
+     IMPORTANT:
+     We only pass the application ID from onclick.
+     This prevents special characters in rider names
+     from breaking the generated HTML.
+  ============================================================ */
+
+  function sendWhatsApp(id) {
+
+    const card =
+      document.getElementById(
+        `application-${id}`
+      );
+
+    if (!card) {
+
+      alert(
+        'Application not found.'
+      );
+
+      return;
+
+    }
+
+
+    /* ==========================================================
+       RIDER NAME
+    ========================================================== */
+
+    const nameElement =
+      card.querySelector('.name');
+
+    const name =
+      nameElement
+        ? nameElement.textContent.trim()
+        : 'Delivery Partner';
+
+
+    /* ==========================================================
+       RIDER PHONE
+    ========================================================== */
+
+    let phone = '';
+
+    const rows =
+      card.querySelectorAll('.row');
+
+    rows.forEach(row => {
+
+      const label =
+        row.querySelector('.label');
+
+      const value =
+        row.querySelector('.value');
+
+      if (
+        label &&
+        value &&
+        label.textContent
+          .trim()
+          .toLowerCase() === 'mobile'
+      ) {
+
+        phone =
+          value.textContent.trim();
+
+      }
+
+    });
+
+
+    phone =
+      String(phone || '')
+        .replace(/\D/g, '');
+
+
+    /* ==========================================================
+       INDIA COUNTRY CODE
+    ========================================================== */
+
+    if (
+      phone.length === 10
+    ) {
+
+      phone =
+        '91' + phone;
+
+    }
+
+
+    if (
+      phone.length !== 12
+    ) {
+
+      alert(
+        'Invalid rider mobile number. Please check the rider phone number.'
+      );
+
+      return;
+
+    }
+
+
+    /* ==========================================================
+       ACTIVATION CODE
+    ========================================================== */
+
+    const codeElement =
+      document.getElementById(
+        `activation-code-${id}`
+      );
+
+    if (!codeElement) {
+
+      alert(
+        'Activation code not found.'
+      );
+
+      return;
+
+    }
+
+
+    const activationCode =
+      codeElement.textContent.trim();
+
+
+    if (!activationCode) {
+
+      alert(
+        'Activation code is not available.'
+      );
+
+      return;
+
+    }
+
+
+    /* ==========================================================
+       EXPIRY
+    ========================================================== */
+
+    let expiryText =
+      'the expiry time shown in the app';
+
+
+    const activationInfo =
+      card.querySelector(
+        '.activation-info'
+      );
+
+    if (activationInfo) {
+
+      expiryText =
+        activationInfo.textContent
+          .replace(
+            'Activation code expires:',
+            ''
+          )
+          .trim();
+
+    }
+
+
+    /* ==========================================================
+       WHATSAPP MESSAGE
+    ========================================================== */
+
+    const message =
+`🎉 Congratulations ${name}!
+
+We are pleased to inform you that you have been selected as a RucHiGo Delivery Partner. 🚴‍♂️
+
+Your rider account has been approved successfully.
+
+🔐 Your Activation Code:
+${activationCode}
+
+📱 Please open the RucHiGo Delivery Partner app and select "Activate Account".
+
+Enter:
+• Your mobile number
+• The activation code above
+• Create your new password
+
+⏰ Activation code expires:
+${expiryText}
+
+After activation, you can login to your RucHiGo Delivery Partner account.
+
+Welcome to RucHiGo! 💙💚
+
+— RucHiGo Team`;
+
+
+    /* ==========================================================
+       WHATSAPP URL
+    ========================================================== */
+
+    const whatsappUrl =
+      `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+
+    console.log(
+      'Opening WhatsApp:',
+      whatsappUrl
+    );
+
+
+    /* ==========================================================
+       OPEN WHATSAPP
+    ========================================================== */
+
+    const whatsappWindow =
+      window.open(
+        whatsappUrl,
+        '_blank'
+      );
+
+
+    if (!whatsappWindow) {
+
+      alert(
+        'WhatsApp could not be opened. Please allow pop-ups for this admin page.'
+      );
+
+      return;
+
+    }
+
+
+    /* ==========================================================
+       UPDATE UI
+    ========================================================== */
+
+    const sentBox =
+      document.getElementById(
+        `sent-${id}`
+      );
+
+    if (sentBox) {
+
+      sentBox.innerHTML = `
+
+        <div class="sentMessage">
+
+          ✓ WhatsApp message prepared for ${esc(name)}
+
+        </div>
+
+      `;
+
+    }
+
+  }
+
+
+  /* ============================================================
+     REJECT APPLICATION
+  ============================================================ */
+
+  async function rejectApplication(id) {
+
+    const reason =
+      prompt(
+        'Enter rejection reason:'
+      );
+
+    if (
+      !reason ||
+      !reason.trim()
+    ) {
+
+      return;
+
+    }
+
+    try {
+
+      const response =
+        await fetch(
+          `/api/admin/rider-applications/${id}/reject`,
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+
+              'Accept':
+                'application/json'
+            },
+
+            body: JSON.stringify({
+              reason:
+                reason.trim()
+            })
+          }
+        );
+
+      const data =
+        await response.json();
+
+      alert(
+        data.message ||
+        'Done'
+      );
+
+      if (data.success) {
+
+        loadApplications();
+
+      }
+
+    }
+
+    catch (e) {
+
+      alert(
+        'Unable to reject application.'
+      );
+
+    }
+
+  }
+
+
+  /* ============================================================
+     REQUEST CHANGES
+  ============================================================ */
+
+  async function requestChanges(id) {
+
+    const note =
+      prompt(
+        'What should the rider correct or re-submit?'
+      );
+
+    if (
+      !note ||
+      !note.trim()
+    ) {
+
+      return;
+
+    }
+
+    try {
+
+      const response =
+        await fetch(
+          `/api/admin/rider-applications/${id}/request-changes`,
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+
+              'Accept':
+                'application/json'
+            },
+
+            body: JSON.stringify({
+              note:
+                note.trim()
+            })
+          }
+        );
+
+      const data =
+        await response.json();
+
+      alert(
+        data.message ||
+        'Done'
+      );
+
+      if (data.success) {
+
+        loadApplications();
+
+      }
+
+    }
+
+    catch (e) {
+
+      alert(
+        'Unable to request changes.'
+      );
+
+    }
+
+  }
+
+
+  /* ============================================================
+     DATE FORMAT
+  ============================================================ */
+
+  function formatDate(value) {
+
+    if (!value) {
+      return '-';
+    }
+
+    let parsed;
+
+    try {
+
+      if (
+        value.endsWith('Z') ||
+        value.includes('+')
+      ) {
+
+        parsed =
+          new Date(value);
+
+      }
+
+      else {
+
+        parsed =
+          new Date(`${value}Z`);
+
+      }
+
+    }
+
+    catch (e) {
+
+      return value;
+
+    }
+
+    if (
+      Number.isNaN(
+        parsed.getTime()
+      )
+    ) {
+
+      return value;
+
+    }
+
+    return parsed.toLocaleString(
+      'en-IN',
+      {
+        timeZone:
+          'Asia/Kolkata',
+
+        day:
+          '2-digit',
+
+        month:
+          'short',
+
+        year:
+          'numeric',
+
+        hour:
+          '2-digit',
+
+        minute:
+          '2-digit'
+      }
+    );
+
+  }
+
+
+  /* ============================================================
+     PASSWORD RESET REQUESTS
+  ============================================================ */
+
+  async function loadPasswordResetRequests() {
+
+    const container =
+      document.getElementById(
+        'resetRequests'
+      );
+
+    const secondContainer =
+      document.getElementById(
+        'passwordResetRequests'
+      );
+
+    if (!container) {
+      return;
+    }
+
+    container.innerHTML =
+      '<div class="empty">Loading password reset requests...</div>';
+
+    if (secondContainer) {
+
+      secondContainer.innerHTML =
+        '<div class="empty">Loading password reset requests...</div>';
+
+    }
+
+    try {
+
+      const response =
+        await fetch(
+          '/api/admin/rider-password-reset-requests',
+          {
+            headers: {
+              'Accept':
+                'application/json'
+            }
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (
+        !response.ok ||
+        data.success !== true
+      ) {
+
+        throw new Error(
+          data.message ||
+          'Unable to load password reset requests.'
+        );
+
+      }
+
+      const requests =
+        data.requests || [];
+
+
+      if (!requests.length) {
+
+        const emptyHtml =
+          '<div class="empty">No pending password reset requests.</div>';
+
+        container.innerHTML =
+          emptyHtml;
+
+        if (secondContainer) {
+          secondContainer.innerHTML =
+            emptyHtml;
+        }
+
+        return;
+
+      }
+
+
+      /* ========================================================
+         FIRST PANEL
+      ======================================================== */
+
+      const firstHtml = `
+
+        <div class="resetRequests">
+
+          ${requests.map(
+            renderPasswordResetRequest
+          ).join('')}
+
+        </div>
+
+      `;
+
+      container.innerHTML =
+        firstHtml;
+
+
+      /* ========================================================
+         SECOND PANEL
+      ======================================================== */
+
+      if (secondContainer) {
+
+        secondContainer.innerHTML = `
+
+          <div class="resetList">
+
+            ${requests.map(
+              renderPasswordResetItem
+            ).join('')}
+
+          </div>
+
+        `;
+
+      }
+
+    }
+
+    catch (e) {
+
+      const errorHtml =
+        `<div class="empty">
+          ${esc(e.message)}
+        </div>`;
+
+      container.innerHTML =
+        errorHtml;
+
+      if (secondContainer) {
+        secondContainer.innerHTML =
+          errorHtml;
+      }
+
+    }
+
+  }
+
+
+  /* ============================================================
+     PASSWORD RESET REQUEST - PANEL 1
+  ============================================================ */
+
+  function renderPasswordResetRequest(r) {
+
+    return `
+
+      <div
+        class="resetRequest"
+        id="reset-request-${r.id}"
+      >
+
+        <div class="resetRequestName">
+          ${esc(r.name)}
+        </div>
+
+        <div class="resetRequestMeta">
+
+          Rider ID:
+          ${esc(r.rider_id)}
+
+          &nbsp;•&nbsp;
+
+          Mobile:
+          ${esc(r.phone)}
+
+        </div>
+
+        <div class="resetOtp">
+          ${esc(r.otp)}
+        </div>
+
+        <div class="resetExpiry">
+          Expires:
+          ${esc(formatDate(r.expires_at))}
+        </div>
+
+        <div class="resetActions">
+
+          <button
+            class="resetActionBtn resetCopyBtn"
+            onclick="copyResetOtp(${JSON.stringify(r.otp)})"
+            type="button"
+          >
+            📋 Copy OTP
+          </button>
+
+          <button
+            class="resetActionBtn resetCancelBtn"
+            onclick="cancelPasswordReset(${r.id})"
+            type="button"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* ============================================================
+     PASSWORD RESET REQUEST - PANEL 2
+  ============================================================ */
+
+  function renderPasswordResetItem(r) {
+
+    return `
+
+      <div
+        class="resetItem"
+        id="reset-item-${r.id}"
+      >
+
+        <div class="resetItemTop">
+
+          <div>
+
+            <div class="resetName">
+              ${esc(r.name)}
+            </div>
+
+            <div class="resetMeta">
+
+              Rider ID:
+              ${esc(r.rider_id)}
+
+              &nbsp;•&nbsp;
+
+              Mobile:
+              ${esc(r.phone)}
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="resetOtpLarge">
+
+          ${esc(r.otp)}
+
+        </div>
+
+
+        <div
+          class="resetExpire"
+          id="reset-expiry-${r.id}"
+          data-expires-at="${esc(r.expires_at)}"
+        >
+
+          Expires in
+          ${formatResetRemaining(r.expires_at)}
+
+        </div>
+
+
+        <div class="resetBtns">
+
+          <button
+            class="resetBtn resetCopy"
+            onclick="copyResetOtp(${JSON.stringify(r.otp)})"
+            type="button"
+          >
+            📋 Copy OTP
+          </button>
+
+          <button
+            class="resetBtn resetCancel"
+            onclick="cancelPasswordReset(${r.id})"
+            type="button"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* ============================================================
+     COPY OTP
+  ============================================================ */
+
+  async function copyResetOtp(otp) {
+
+    try {
+
+      await navigator.clipboard.writeText(
+        String(otp || '')
+      );
+
+      alert(
+        'OTP copied.'
+      );
+
+    }
+
+    catch (e) {
+
+      prompt(
+        'Copy this OTP:',
+        String(otp || '')
+      );
+
+    }
+
+  }
+
+
+  /* ============================================================
+     RESET REMAINING
+  ============================================================ */
+
+  function formatResetRemaining(expiresAt) {
+
+    const end =
+      new Date(expiresAt).getTime();
+
+    const diff =
+      Math.max(
+        0,
+        end - Date.now()
+      );
+
+    const totalSeconds =
+      Math.floor(
+        diff / 1000
+      );
+
+    const minutes =
+      Math.floor(
+        totalSeconds / 60
+      );
+
+    const seconds =
+      totalSeconds % 60;
+
+    return (
+      `${minutes}m ` +
+      `${String(seconds).padStart(2, '0')}s`
+    );
+
+  }
+
+
+  /* ============================================================
+     UPDATE RESET COUNTDOWNS
+  ============================================================ */
+
+  function updatePasswordResetCountdowns() {
+
+    document
+      .querySelectorAll(
+        '[id^="reset-expiry-"]'
+      )
+      .forEach(el => {
+
+        const expiresAt =
+          el.dataset.expiresAt;
+
+        if (!expiresAt) {
+          return;
+        }
+
+        const end =
+          new Date(
+            expiresAt
+          ).getTime();
+
+        const remaining =
+          end - Date.now();
+
+        if (
+          remaining <= 0
+        ) {
+
+          el.textContent =
+            'OTP expired';
+
+          el.style.color =
+            '#b91c1c';
+
+          return;
+
+        }
+
+        el.textContent =
+          `Expires in ${formatResetRemaining(expiresAt)}`;
+
+      });
+
+  }
+
+
+  /* ============================================================
+     CHECK EXPIRED RESET REQUESTS
+  ============================================================ */
+
+  async function checkExpiredPasswordResetRequests() {
+
+    const items =
+      document.querySelectorAll(
+        '[id^="reset-expiry-"]'
+      );
+
+    let expired = false;
+
+    items.forEach(el => {
+
+      const expiresAt =
+        el.dataset.expiresAt;
+
+      if (!expiresAt) {
+        return;
+      }
+
+      if (
+        new Date(
+          expiresAt
+        ).getTime() <= Date.now()
+      ) {
+
+        expired = true;
+
+      }
+
+    });
+
+    updatePasswordResetCountdowns();
+
+    if (expired) {
+
+      await loadPasswordResetRequests();
+
+    }
+
+  }
+
+
+  /* ============================================================
+     CANCEL PASSWORD RESET
+  ============================================================ */
+
+  async function cancelPasswordReset(id) {
+
+    if (
+      !confirm(
+        'Cancel this password reset request?'
+      )
+    ) {
+
+      return;
+
+    }
+
+    try {
+
+      const response =
+        await fetch(
+          `/api/admin/rider-password-reset-requests/${id}/cancel`,
+          {
+            method: 'POST',
+
+            headers: {
+              'Accept':
+                'application/json'
+            }
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (
+        !response.ok ||
+        data.success !== true
+      ) {
+
+        throw new Error(
+          data.message ||
+          'Unable to cancel request.'
+        );
+
+      }
+
+      loadPasswordResetRequests();
+
+    }
+
+    catch (e) {
+
+      alert(
+        e.message ||
+        'Unable to cancel password reset request.'
+      );
+
+    }
+
+  }
+
+
+  /* ============================================================
+     TIMERS
+  ============================================================ */
+
+  setInterval(
+    checkExpiredPasswordResetRequests,
+    1000
+  );
+
+  setInterval(
+    loadPasswordResetRequests,
+    10000
+  );
+
+
+  /* ============================================================
+     INITIAL LOAD
+  ============================================================ */
+
+  loadApplications();
+
+  loadPasswordResetRequests();
+
+  updatePasswordResetCountdowns();
+
+</script>
+
+</body>
+</html>
