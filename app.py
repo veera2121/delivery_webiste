@@ -30292,6 +30292,104 @@ def approve_rider_application(application_id):
                 str(e)
 
         }), 500
+
+
+@app.route(
+    "/api/delivery/application-status",
+    methods=["GET"]
+)
+def api_delivery_application_status():
+
+    try:
+
+        phone = _normalize_phone(
+            request.args.get("phone")
+        )
+
+        if len(phone) != 10:
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "Invalid mobile number."
+            }), 400
+
+        application = (
+            RiderApplication.query
+            .filter_by(
+                phone=phone
+            )
+            .order_by(
+                RiderApplication.id.desc()
+            )
+            .first()
+        )
+
+        if not application:
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "No rider application found for this number."
+            }), 404
+
+        return jsonify({
+
+            "success": True,
+
+            "application": {
+
+                "id":
+                    application.id,
+
+                "application_code":
+                    application.application_code,
+
+                "full_name":
+                    application.full_name or "",
+
+                "phone":
+                    application.phone or "",
+
+                "status":
+                    application.status or "Pending",
+
+                "rejection_reason":
+                    application.rejection_reason or "",
+
+                "rider_id":
+                    application.rider_id,
+
+                "reviewed_at":
+                    application.reviewed_at.isoformat()
+                    if application.reviewed_at
+                    else None,
+
+                "applied_at":
+                    application.created_at.isoformat()
+                    if application.created_at
+                    else None
+            }
+
+        }), 200
+
+    except Exception as e:
+
+        app.logger.exception(
+            "Rider application status failed"
+        )
+
+        return jsonify({
+
+            "success": False,
+
+            "message":
+                "Unable to load application status.",
+
+            "error":
+                str(e)
+
+        }), 500
 # ==========================================================
 # GENERATE / RESEND ACTIVATION CODE
 # ==========================================================
