@@ -28687,6 +28687,8 @@ def get_rider_applications():
                 str(e)
 
         }), 500
+
+
 @app.route(
     "/api/delivery/application",
     methods=["POST"]
@@ -28696,6 +28698,10 @@ def submit_rider_application():
     saved_paths = []
 
     try:
+
+        # ======================================================
+        # READ + NORMALIZE DATA
+        # ======================================================
 
         phone = _normalize_phone(
             request.form.get("phone")
@@ -28735,6 +28741,10 @@ def submit_rider_application():
             request.form.get("dob")
         )
 
+        # ======================================================
+        # VALIDATION
+        # ======================================================
+
         if not full_name:
             raise ValueError(
                 "Full name is required."
@@ -28764,23 +28774,84 @@ def submit_rider_application():
                 "Enter a valid 6-digit pincode."
             )
 
+        # ======================================================
+        # CHECK EXISTING RIDER
+        #
+        # IMPORTANT:
+        # Existing rider is NOT rejected.
+        #
+        # They must still submit the application and wait
+        # for admin approval.
+        # ======================================================
+
+        existing_rider = (
+            DeliveryPerson.query
+            .filter_by(phone=phone)
+            .first()
+        )
+
         existing_auth = (
             RiderAuthAccount.query
             .filter_by(phone=phone)
             .first()
         )
 
-        if existing_auth:
+        # ======================================================
+        # PREVENT DUPLICATE PENDING APPLICATION
+        # ======================================================
+
+        existing_pending_application = (
+            RiderApplication.query
+            .filter(
+                RiderApplication.phone == phone,
+                RiderApplication.status == "Pending"
+            )
+            .first()
+        )
+
+        if existing_pending_application:
 
             return jsonify({
+
                 "success": False,
+
                 "message":
-                    "A delivery partner account already exists for this mobile number."
+                    "You already have a pending rider application.",
+
+                "application": {
+
+                    "id":
+                        existing_pending_application.id,
+
+                    "application_code":
+                        existing_pending_application.application_code,
+
+                    "status":
+                        existing_pending_application.status,
+
+                    "submitted_at":
+                        (
+                            existing_pending_application
+                            .submitted_at
+                            .isoformat()
+                            if existing_pending_application.submitted_at
+                            else None
+                        )
+                }
+
             }), 409
+
+        # ======================================================
+        # GENERATE APPLICATION CODE
+        # ======================================================
 
         application_code = (
             _generate_application_code()
         )
+
+        # ======================================================
+        # SAVE AADHAAR FRONT
+        # ======================================================
 
         aadhaar_front = _save_private_upload(
             request.files.get(
@@ -28794,6 +28865,10 @@ def submit_rider_application():
             aadhaar_front
         )
 
+        # ======================================================
+        # SAVE AADHAAR BACK
+        # ======================================================
+
         aadhaar_back = _save_private_upload(
             request.files.get(
                 "aadhaar_back"
@@ -28805,6 +28880,10 @@ def submit_rider_application():
         saved_paths.append(
             aadhaar_back
         )
+
+        # ======================================================
+        # SAVE PAN
+        # ======================================================
 
         pan_photo = _save_private_upload(
             request.files.get(
@@ -28818,6 +28897,10 @@ def submit_rider_application():
             pan_photo
         )
 
+        # ======================================================
+        # SAVE SELFIE
+        # ======================================================
+
         selfie_photo = _save_private_upload(
             request.files.get(
                 "selfie_photo"
@@ -28829,6 +28912,10 @@ def submit_rider_application():
         saved_paths.append(
             selfie_photo
         )
+
+        # ======================================================
+        # SAVE DRIVING LICENSE
+        # ======================================================
 
         driving_license = _save_private_upload(
             request.files.get(
@@ -28843,6 +28930,16 @@ def submit_rider_application():
             saved_paths.append(
                 driving_license
             )
+
+        # ======================================================
+        # CREATE RIDER APPLICATION
+        #
+        # IMPORTANT:
+        # Do NOT set rider_id yet.
+        #
+        # Even if this phone belongs to an existing rider,
+        # admin must approve first.
+        # ======================================================
 
         application = RiderApplication(
 
@@ -28889,7 +28986,10 @@ def submit_rider_application():
                 driving_license,
 
             status=
-                "Pending"
+                "Pending",
+
+            rider_id=
+                None
         )
 
         db.session.add(
@@ -28898,12 +28998,94 @@ def submit_rider_application():
 
         db.session.commit()
 
+        # ======================================================
+        # LOG
+        # ======================================================
+
+        if existing_rider:
+
+            print(
+                "=============================================="
+            )
+            print(
+                "EXISTING RIDER APPLICATION SUBMITTED"
+            )
+            print(
+                "Application ID:",
+                application.id
+            )
+            print(
+                "Application Code:",
+                application.application_code
+            )
+            print(
+                "Existing Rider ID:",
+                existing_rider.id
+            )
+            print(
+                "Phone:",
+                phone
+            )
+            print(
+                "Existing Auth Account:",
+                bool(existing_auth)
+            )
+            print(
+                "STATUS: Pending Admin Approval"
+            )
+            print(
+                "=============================================="
+            )
+
+            message = (
+                "Application submitted successfully. "
+                "Your application will be reviewed by admin."
+            )
+
+        else:
+
+            print(
+                "=============================================="
+            )
+            print(
+                "NEW RIDER APPLICATION SUBMITTED"
+            )
+            print(
+                "Application ID:",
+                application.id
+            )
+            print(
+                "Application Code:",
+                application.application_code
+            )
+            print(
+                "Phone:",
+                phone
+            )
+            print(
+                "STATUS: Pending Admin Approval"
+            )
+            print(
+                "=============================================="
+            )
+
+            message = (
+                "Application submitted successfully."
+            )
+
+        # ======================================================
+        # SUCCESS RESPONSE
+        # ======================================================
+
         return jsonify({
 
             "success": True,
 
             "message":
-                "Application submitted successfully.",
+                message,
+
+            "existing_rider":
+                bool(existing_rider),
 
             "application": {
 
@@ -28916,11 +29098,18 @@ def submit_rider_application():
                 "status":
                     application.status,
 
+                "rider_id":
+                    application.rider_id,
+
                 "submitted_at":
                     application.submitted_at.isoformat()
             }
 
         }), 201
+
+    # ==========================================================
+    # VALIDATION ERROR
+    # ==========================================================
 
     except ValueError as exc:
 
@@ -28935,13 +29124,22 @@ def submit_rider_application():
 
                 try:
                     os.remove(path)
+
                 except OSError:
                     pass
 
         return jsonify({
+
             "success": False,
-            "message": str(exc)
+
+            "message":
+                str(exc)
+
         }), 400
+
+    # ==========================================================
+    # UNEXPECTED ERROR
+    # ==========================================================
 
     except Exception:
 
@@ -28951,10 +29149,26 @@ def submit_rider_application():
             "Rider application failed"
         )
 
+        for path in saved_paths:
+
+            if (
+                path
+                and os.path.exists(path)
+            ):
+
+                try:
+                    os.remove(path)
+
+                except OSError:
+                    pass
+
         return jsonify({
+
             "success": False,
+
             "message":
                 "Unable to submit application right now."
+
         }), 500
 from werkzeug.security import check_password_hash
 
@@ -29435,7 +29649,6 @@ def reject_rider_application(application_id):
 # ==========================================================
 # APPROVE RIDER APPLICATION
 # ==========================================================
-
 @app.route(
     "/api/admin/rider-applications/<int:application_id>/approve",
     methods=["POST"]
@@ -29455,9 +29668,12 @@ def approve_rider_application(application_id):
         if not application:
 
             return jsonify({
+
                 "success": False,
+
                 "message":
                     "Rider application not found."
+
             }), 404
 
         # ======================================================
@@ -29470,9 +29686,12 @@ def approve_rider_application(application_id):
         ):
 
             return jsonify({
+
                 "success": False,
+
                 "message":
                     "This rider application is already approved."
+
             }), 400
 
         # ======================================================
@@ -29486,13 +29705,16 @@ def approve_rider_application(application_id):
         if len(phone) != 10:
 
             return jsonify({
+
                 "success": False,
+
                 "message":
                     "Invalid rider mobile number."
+
             }), 400
 
         # ======================================================
-        # CHECK EXISTING RIDER
+        # FIND EXISTING RIDER
         # ======================================================
 
         existing_rider = (
@@ -29501,16 +29723,293 @@ def approve_rider_application(application_id):
             .first()
         )
 
+        # ======================================================
+        # CASE 1:
+        # EXISTING RIDER
+        # ======================================================
+
         if existing_rider:
 
-            return jsonify({
-                "success": False,
+            print(
+                "=============================================="
+            )
+            print(
+                "EXISTING RIDER FOUND DURING APPROVAL"
+            )
+            print(
+                "Application ID:",
+                application.id
+            )
+            print(
+                "Existing Rider ID:",
+                existing_rider.id
+            )
+            print(
+                "Phone:",
+                phone
+            )
+            print(
+                "=============================================="
+            )
+
+            # --------------------------------------------------
+            # DO NOT CREATE ANOTHER DELIVERY PERSON
+            # --------------------------------------------------
+
+            rider = existing_rider
+
+            # ==================================================
+            # FIND EXISTING AUTH ACCOUNT
+            # ==================================================
+
+            existing_auth = (
+                RiderAuthAccount.query
+                .filter_by(phone=phone)
+                .first()
+            )
+
+            # ==================================================
+            # EXISTING AUTH ACCOUNT
+            # ==================================================
+
+            if existing_auth:
+
+                # Make absolutely sure it points to
+                # the existing DeliveryPerson.
+
+                if existing_auth.rider_id != rider.id:
+
+                    existing_auth.rider_id = rider.id
+
+                print(
+                    "Existing RiderAuthAccount found."
+                )
+
+                print(
+                    "Auth Account ID:",
+                    existing_auth.id
+                )
+
+                print(
+                    "Auth Rider ID:",
+                    existing_auth.rider_id
+                )
+
+                # ----------------------------------------------
+                # IMPORTANT
+                #
+                # We DO NOT create a new account.
+                #
+                # We also DO NOT generate a new activation code.
+                # ----------------------------------------------
+
+                activation_token = None
+
+            # ==================================================
+            # RIDER EXISTS BUT AUTH ACCOUNT DOES NOT
+            # ==================================================
+
+            else:
+
+                print(
+                    "Existing rider has NO RiderAuthAccount."
+                )
+
+                # ----------------------------------------------
+                # CREATE AUTH ACCOUNT FOR EXISTING RIDER
+                # ----------------------------------------------
+
+                activation_token = (
+                    f"{secrets.randbelow(1000000):06d}"
+                )
+
+                activation_token_hash = (
+                    hashlib.sha256(
+                        activation_token.encode(
+                            "utf-8"
+                        )
+                    ).hexdigest()
+                )
+
+                activation_expires_at = (
+                    datetime.utcnow()
+                    + timedelta(hours=24)
+                )
+
+                auth_account = RiderAuthAccount(
+
+                    rider_id=
+                        rider.id,
+
+                    phone=
+                        phone,
+
+                    password_hash=
+                        None,
+
+                    is_active=
+                        False,
+
+                    password_is_set=
+                        False,
+
+                    activation_token_hash=
+                        activation_token_hash,
+
+                    activation_expires_at=
+                        activation_expires_at
+                )
+
+                db.session.add(
+                    auth_account
+                )
+
+                print(
+                    "New RiderAuthAccount created "
+                    "for existing rider."
+                )
+
+            # ==================================================
+            # APPROVE APPLICATION
+            # ==================================================
+
+            application.status = "Approved"
+
+            application.rider_id = rider.id
+
+            application.reviewed_at = (
+                datetime.utcnow()
+            )
+
+            application.rejection_reason = None
+
+            # ==================================================
+            # SAVE
+            # ==================================================
+
+            db.session.commit()
+
+            # ==================================================
+            # SUCCESS LOG
+            # ==================================================
+
+            print(
+                "=============================================="
+            )
+            print(
+                "EXISTING RIDER APPLICATION APPROVED"
+            )
+            print(
+                "Application ID:",
+                application.id
+            )
+            print(
+                "Application Code:",
+                application.application_code
+            )
+            print(
+                "Existing Rider ID:",
+                rider.id
+            )
+            print(
+                "Phone:",
+                phone
+            )
+            print(
+                "NO DUPLICATE DELIVERY PERSON CREATED"
+            )
+
+            if activation_token:
+
+                print(
+                    "Activation Code:",
+                    activation_token
+                )
+
+            else:
+
+                print(
+                    "Existing Auth Account reused."
+                )
+
+            print(
+                "=============================================="
+            )
+
+            # ==================================================
+            # RESPONSE
+            # ==================================================
+
+            response = {
+
+                "success": True,
+
                 "message":
-                    "A delivery rider already exists with this phone number."
-            }), 400
+                    "Existing rider application approved successfully.",
+
+                "existing_rider":
+                    True,
+
+                "application_id":
+                    application.id,
+
+                "application_code":
+                    application.application_code,
+
+                "rider_id":
+                    rider.id,
+
+                "full_name":
+                    rider.name,
+
+                "phone":
+                    phone
+            }
+
+            # Only return activation token if a NEW auth
+            # account was created.
+
+            if activation_token:
+
+                response["activation_token"] = (
+                    activation_token
+                )
+
+                response["activation_expires_at"] = (
+                    activation_expires_at.isoformat()
+                )
+
+            return jsonify(response), 200
 
         # ======================================================
-        # CHECK EXISTING AUTH ACCOUNT
+        # CASE 2:
+        # NEW RIDER
+        # ======================================================
+
+        print(
+            "=============================================="
+        )
+        print(
+            "NEW RIDER APPROVAL"
+        )
+        print(
+            "Application ID:",
+            application.id
+        )
+        print(
+            "Phone:",
+            phone
+        )
+        print(
+            "=============================================="
+        )
+
+        # ======================================================
+        # CHECK AUTH ACCOUNT
+        #
+        # Normally this should not exist if there is no
+        # DeliveryPerson, but we check it to protect the
+        # unique phone constraint.
         # ======================================================
 
         existing_auth = (
@@ -29522,10 +30021,13 @@ def approve_rider_application(application_id):
         if existing_auth:
 
             return jsonify({
+
                 "success": False,
+
                 "message":
-                    "A rider authentication account already exists with this phone number."
-            }), 400
+                    "A rider authentication account already exists with this phone number, but no matching delivery rider was found. Please review this account before approving."
+
+            }), 409
 
         # ======================================================
         # CREATE UNIQUE USERNAME
@@ -29552,34 +30054,51 @@ def approve_rider_application(application_id):
 
         rider = DeliveryPerson(
 
-            name=application.full_name,
+            name=
+                application.full_name,
 
-            username=username,
+            username=
+                username,
 
-            phone=phone,
+            phone=
+                phone,
 
-            is_active=True,
+            is_active=
+                True,
 
-            is_online=False,
+            is_online=
+                False,
 
-            is_available=True,
+            is_available=
+                True,
 
-            latitude=None,
+            latitude=
+                None,
 
-            longitude=None,
+            longitude=
+                None,
 
-            last_seen=None,
+            last_seen=
+                None,
 
-            fcm_token=None,
+            fcm_token=
+                None,
 
-            push_subscription=None,
+            push_subscription=
+                None,
 
-            last_assignment=None
+            last_assignment=
+                None
         )
 
-        db.session.add(rider)
+        db.session.add(
+            rider
+        )
 
-        # Get rider.id before creating auth account
+        # ======================================================
+        # GET RIDER ID
+        # ======================================================
+
         db.session.flush()
 
         # ======================================================
@@ -29596,7 +30115,9 @@ def approve_rider_application(application_id):
 
         activation_token_hash = (
             hashlib.sha256(
-                activation_token.encode("utf-8")
+                activation_token.encode(
+                    "utf-8"
+                )
             ).hexdigest()
         )
 
@@ -29616,15 +30137,20 @@ def approve_rider_application(application_id):
 
         auth_account = RiderAuthAccount(
 
-            rider_id=rider.id,
+            rider_id=
+                rider.id,
 
-            phone=phone,
+            phone=
+                phone,
 
-            password_hash=None,
+            password_hash=
+                None,
 
-            is_active=False,
+            is_active=
+                False,
 
-            password_is_set=False,
+            password_is_set=
+                False,
 
             activation_token_hash=
                 activation_token_hash,
@@ -29633,7 +30159,9 @@ def approve_rider_application(application_id):
                 activation_expires_at
         )
 
-        db.session.add(auth_account)
+        db.session.add(
+            auth_account
+        )
 
         # ======================================================
         # UPDATE APPLICATION
@@ -29650,20 +30178,20 @@ def approve_rider_application(application_id):
         application.rejection_reason = None
 
         # ======================================================
-        # SAVE
+        # SAVE EVERYTHING
         # ======================================================
 
         db.session.commit()
 
         # ======================================================
-        # SUCCESS
+        # SUCCESS LOG
         # ======================================================
 
         print(
             "=============================================="
         )
         print(
-            "RIDЕR APPLICATION APPROVED"
+            "NEW RIDER APPLICATION APPROVED"
         )
         print(
             "Application ID:",
@@ -29686,6 +30214,10 @@ def approve_rider_application(application_id):
             phone
         )
         print(
+            "Username:",
+            rider.username
+        )
+        print(
             "Activation Code:",
             activation_token
         )
@@ -29697,12 +30229,19 @@ def approve_rider_application(application_id):
             "=============================================="
         )
 
+        # ======================================================
+        # SUCCESS RESPONSE
+        # ======================================================
+
         return jsonify({
 
             "success": True,
 
             "message":
                 "Rider approved successfully.",
+
+            "existing_rider":
+                False,
 
             "application_id":
                 application.id,
@@ -29730,6 +30269,10 @@ def approve_rider_application(application_id):
 
         }), 200
 
+    # ==========================================================
+    # ERROR
+    # ==========================================================
+
     except Exception as e:
 
         db.session.rollback()
@@ -29744,106 +30287,6 @@ def approve_rider_application(application_id):
 
             "message":
                 "Unable to approve rider.",
-
-            "error":
-                str(e)
-
-        }), 500
-# ==========================================================
-# RIDER APPLICATION STATUS
-# ==========================================================
-
-@app.route(
-    "/api/delivery/application-status",
-    methods=["GET"]
-)
-def api_delivery_application_status():
-
-    try:
-
-        phone = _normalize_phone(
-            request.args.get("phone")
-        )
-
-        if len(phone) != 10:
-
-            return jsonify({
-                "success": False,
-                "message":
-                    "Invalid mobile number."
-            }), 400
-
-        application = (
-            RiderApplication.query
-            .filter_by(
-                phone=phone
-            )
-            .order_by(
-                RiderApplication.id.desc()
-            )
-            .first()
-        )
-
-        if not application:
-
-            return jsonify({
-                "success": False,
-                "message":
-                    "No rider application found for this number."
-            }), 404
-
-        return jsonify({
-
-            "success": True,
-
-            "application": {
-
-                "id":
-                    application.id,
-
-                "application_code":
-                    application.application_code,
-
-                "full_name":
-                    application.full_name or "",
-
-                "phone":
-                    application.phone or "",
-
-                "status":
-                    application.status or "Pending",
-
-                "rejection_reason":
-                    application.rejection_reason or "",
-
-                "rider_id":
-                    application.rider_id,
-
-                "reviewed_at":
-                    application.reviewed_at.isoformat()
-                    if application.reviewed_at
-                    else None,
-
-                "applied_at":
-                    application.created_at.isoformat()
-                    if application.created_at
-                    else None
-            }
-
-        }), 200
-
-    except Exception as e:
-
-        app.logger.exception(
-            "Rider application status failed"
-        )
-
-        return jsonify({
-
-            "success": False,
-
-            "message":
-                "Unable to load application status.",
 
             "error":
                 str(e)
