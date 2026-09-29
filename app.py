@@ -676,17 +676,30 @@ def cleanup_orders():
 
     cancel_unpaid_orders()
 
-
 def send_new_order_notification(rider, order):
 
     # ========================================================
     # FCM TOKEN CHECK
     # ========================================================
 
+    print("========================================")
+    print("🔔 NEW ORDER NOTIFICATION")
+    print("RIDER ID:", rider.id)
+    print("RIDER:", rider.name)
+    print("FCM TOKEN EXISTS:", bool(rider.fcm_token))
+    print(
+        "FCM TOKEN:",
+        rider.fcm_token
+    )
+    print("ORDER:", order.order_id)
+    print("========================================")
+
     if not rider.fcm_token:
+
         print(
             f"❌ Rider {rider.name} has no FCM token."
         )
+
         return False
 
     # ========================================================
@@ -698,9 +711,13 @@ def send_new_order_notification(rider, order):
     assignment_expires_at = ""
 
     if order.assigned_at:
-        assigned_at = order.assigned_at.isoformat()
+
+        assigned_at = (
+            order.assigned_at.isoformat()
+        )
 
     if order.assignment_expires_at:
+
         assignment_expires_at = (
             order.assignment_expires_at.isoformat()
         )
@@ -716,6 +733,7 @@ def send_new_order_notification(rider, order):
     )
 
     if delivery_charge is None:
+
         delivery_charge = 0
 
     # ========================================================
@@ -729,6 +747,7 @@ def send_new_order_notification(rider, order):
     )
 
     if rider_earning is None:
+
         rider_earning = ""
 
     # ========================================================
@@ -760,9 +779,7 @@ def send_new_order_notification(rider, order):
             ),
 
         "total":
-            str(
-                order.final_total or 0
-            ),
+            str(order.final_total or 0),
 
         "payment_type":
             order.payment_type or "",
@@ -771,28 +788,13 @@ def send_new_order_notification(rider, order):
             order.address or "",
 
         "distance":
-            str(
-                order.distance_km or 0
-            ),
-
-        # ====================================================
-        # IMPORTANT
-        # DELIVERY CHARGE
-        # ====================================================
+            str(order.distance_km or 0),
 
         "delivery_charge":
             str(delivery_charge),
 
-        # ====================================================
-        # RIDER EARNING
-        # ====================================================
-
         "rider_earning":
             str(rider_earning),
-
-        # ====================================================
-        # SERVER TIMER
-        # ====================================================
 
         "assigned_at":
             assigned_at,
@@ -805,48 +807,31 @@ def send_new_order_notification(rider, order):
     # DEBUG
     # ========================================================
 
-    print(
-        "========================================"
-    )
-
-    print(
-        "🚚 SENDING NEW ORDER NOTIFICATION"
-    )
-
-    print(
-        "ORDER:",
-        order.order_id
-    )
-
+    print("========================================")
+    print("🚚 SENDING NEW ORDER NOTIFICATION")
+    print("ORDER:", order.order_id)
     print(
         "RIDER:",
         rider.id,
         rider.name
     )
-
     print(
         "DELIVERY CHARGE:",
         delivery_charge
     )
-
     print(
         "RIDER EARNING:",
         rider_earning
     )
-
     print(
         "ASSIGNED AT:",
         assigned_at
     )
-
     print(
         "EXPIRES AT:",
         assignment_expires_at
     )
-
-    print(
-        "========================================"
-    )
+    print("========================================")
 
     # ========================================================
     # SEND FCM
@@ -856,23 +841,23 @@ def send_new_order_notification(rider, order):
 
         response = send_push_notification(
 
-            title=
-                "🚚 New Delivery Order",
+            title="🚚 New Delivery Order",
 
             body=(
                 f"Order #{order.order_id} "
                 f"is waiting for your acceptance."
             ),
 
-            target_type=
-                "token",
+            target_type="token",
 
-            target_value=
-                rider.fcm_token,
+            target_value=rider.fcm_token,
 
-            data=
-                data
+            data=data
         )
+
+        # ====================================================
+        # SUCCESS
+        # ====================================================
 
         if response:
 
@@ -883,6 +868,10 @@ def send_new_order_notification(rider, order):
 
             return True
 
+        # ====================================================
+        # NORMAL FAILURE
+        # ====================================================
+
         print(
             f"❌ Notification sending failed "
             f"for {rider.name}"
@@ -890,12 +879,73 @@ def send_new_order_notification(rider, order):
 
         return False
 
+    # ========================================================
+    # INVALID / UNREGISTERED TOKEN
+    # ========================================================
+
+    except messaging.UnregisteredError:
+
+        print("========================================")
+        print("❌ INVALID / UNREGISTERED FCM TOKEN")
+        print("RIDER ID:", rider.id)
+        print("RIDER:", rider.name)
+        print("OLD TOKEN:", rider.fcm_token)
+        print("ORDER:", order.order_id)
+        print("========================================")
+
+        try:
+
+            # Remove only the invalid token
+            rider.fcm_token = None
+
+            # If you later add this column, this will also work.
+            if hasattr(
+                rider,
+                "fcm_token_updated_at"
+            ):
+                rider.fcm_token_updated_at = None
+
+            db.session.commit()
+
+            print("========================================")
+            print(
+                f"✅ INVALID FCM TOKEN CLEARED "
+                f"FOR RIDER {rider.id}"
+            )
+            print("========================================")
+
+        except Exception as db_error:
+
+            db.session.rollback()
+
+            print("========================================")
+            print(
+                "❌ FAILED TO CLEAR INVALID FCM TOKEN"
+            )
+            print(
+                "DB ERROR:",
+                db_error
+            )
+            print("========================================")
+
+        return False
+
+    # ========================================================
+    # OTHER ERROR
+    # ========================================================
+
     except Exception as e:
 
+        print("========================================")
         print(
             "❌ NEW ORDER NOTIFICATION ERROR:",
             e
         )
+        print(
+            "ERROR TYPE:",
+            type(e).__name__
+        )
+        print("========================================")
 
         return False
 # ------------------ ADMIN CONFIG ------------------
@@ -15768,7 +15818,6 @@ def firebase_sw():
 from firebase_admin import messaging 
 from firebase_admin import messaging
 
-
 def send_push_notification(
     title,
     body,
@@ -15790,20 +15839,14 @@ def send_push_notification(
         if value is not None
     }
 
-
     # ========================================================
     # CHECK IF THIS IS DELIVERY NEW ORDER
     # ========================================================
 
     is_delivery_new_order = (
-
         target_type == "token"
-
-        and safe_data.get("type")
-        == "new_order"
-
+        and safe_data.get("type") == "new_order"
     )
-
 
     # ========================================================
     # DELIVERY NEW ORDER
@@ -15812,18 +15855,9 @@ def send_push_notification(
 
     if is_delivery_new_order:
 
-        print(
-            "========================================"
-        )
-
-        print(
-            "🚚 SENDING DELIVERY DATA-ONLY PUSH"
-        )
-
-        print(
-            "ORDER ID:",
-            safe_data.get("order_id")
-        )
+        print("========================================")
+        print("🚚 SENDING DELIVERY DATA-ONLY PUSH")
+        print("ORDER ID:", safe_data.get("order_id"))
 
         print(
             "TARGET TOKEN:",
@@ -15832,31 +15866,19 @@ def send_push_notification(
             else "NONE"
         )
 
-        print(
-            "========================================"
-        )
-
+        print("========================================")
 
         message = messaging.Message(
 
-            # IMPORTANT:
-            # NO notification=messaging.Notification(...)
-            #
-            # Flutter delivery app will handle this itself.
-
+            # Data-only notification for delivery app
             data=safe_data,
 
             android=messaging.AndroidConfig(
-
-                # Important for urgent delivery assignment
                 priority="high"
-
             ),
 
             token=target_value
-
         )
-
 
     # ========================================================
     # NORMAL RUCHIGO NOTIFICATIONS
@@ -15866,22 +15888,17 @@ def send_push_notification(
 
         message_kwargs = {
 
-            "notification":
-                messaging.Notification(
-                    title=title,
-                    body=body
-                ),
+            "notification": messaging.Notification(
+                title=title,
+                body=body
+            ),
 
-            "data":
-                safe_data,
+            "data": safe_data,
 
-            "android":
-                messaging.AndroidConfig(
-                    priority="high"
-                )
-
+            "android": messaging.AndroidConfig(
+                priority="high"
+            )
         }
-
 
         # ====================================================
         # TARGET
@@ -15889,17 +15906,11 @@ def send_push_notification(
 
         if target_type == "topic":
 
-            message_kwargs["topic"] = (
-                target_value
-            )
-
+            message_kwargs["topic"] = target_value
 
         elif target_type == "token":
 
-            message_kwargs["token"] = (
-                target_value
-            )
-
+            message_kwargs["token"] = target_value
 
         else:
 
@@ -15910,20 +15921,15 @@ def send_push_notification(
 
             return None
 
-
         message = messaging.Message(
             **message_kwargs
         )
-
 
     # ========================================================
     # VALIDATE DELIVERY TARGET
     # ========================================================
 
-    if (
-        is_delivery_new_order
-        and not target_value
-    ):
+    if is_delivery_new_order and not target_value:
 
         print(
             "FCM ERROR: Delivery token missing"
@@ -15931,17 +15937,13 @@ def send_push_notification(
 
         return None
 
-
     # ========================================================
     # SEND
     # ========================================================
 
     try:
 
-        response = messaging.send(
-            message
-        )
-
+        response = messaging.send(message)
 
         if is_delivery_new_order:
 
@@ -15957,16 +15959,41 @@ def send_push_notification(
                 response
             )
 
-
         return response
 
+    # ========================================================
+    # INVALID / UNREGISTERED TOKEN
+    # ========================================================
+
+    except messaging.UnregisteredError as e:
+
+        print("========================================")
+        print("❌ FCM TOKEN UNREGISTERED")
+        print("FCM ERROR TYPE:", type(e).__name__)
+        print("FCM ERROR:", e)
+        print("========================================")
+
+        # VERY IMPORTANT:
+        # Do NOT swallow this error for delivery orders.
+        # send_new_order_notification() will catch it and
+        # remove the invalid rider token from the database.
+
+        if is_delivery_new_order:
+            raise
+
+        return None
+
+    # ========================================================
+    # OTHER FCM ERRORS
+    # ========================================================
 
     except Exception as e:
 
-        print(
-            "FCM ERROR:",
-            e
-        )
+        print("========================================")
+        print("❌ FCM SEND FAILED")
+        print("FCM ERROR TYPE:", type(e).__name__)
+        print("FCM ERROR:", e)
+        print("========================================")
 
         return None
 from flask import request, redirect, flash
