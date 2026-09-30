@@ -1096,6 +1096,8 @@ def assign_batch_order_to_rider(
 # ==========================================================
 
 def auto_assign_order(order):
+      # Always clean expired assignments first
+    cleanup_all_expired_assignments()
 
     if not order:
         return False
@@ -1362,7 +1364,127 @@ def cleanup_expired_assignments_for_rider(
 
     return released_count
 
+# ==========================================================
+# CLEAN ALL EXPIRED ASSIGNMENTS
+# SERVER-WIDE CLEANUP
+# ==========================================================
+# ==========================================================
+# SERVER-WIDE CLEAN EXPIRED ASSIGNMENTS
+# ==========================================================
 
+def cleanup_all_expired_assignments():
+
+    print("========================================")
+    print("🧹 SERVER-WIDE ASSIGNMENT CLEANUP")
+    print("========================================")
+
+    now = datetime.utcnow()
+
+    expired_orders = (
+        Order.query
+        .filter(
+            Order.status == ASSIGNMENT_PENDING_STATUS,
+
+            Order.rider_response.in_([
+                RIDER_PENDING_RESPONSE,
+                RIDER_EXPIRED_RESPONSE
+            ]),
+
+            Order.assignment_expires_at.isnot(None),
+
+            Order.assignment_expires_at <= now
+        )
+        .all()
+    )
+
+    if not expired_orders:
+
+        print("✅ No expired assignments found")
+        return 0
+
+    released_count = 0
+    affected_rider_ids = set()
+
+    for order in expired_orders:
+
+        print("----------------------------------------")
+        print("⏰ EXPIRED ASSIGNMENT")
+        print("ORDER:", order.order_id)
+        print("RIDER:", order.delivery_person_id)
+        print("RESPONSE:", order.rider_response)
+        print("EXPIRES:", order.assignment_expires_at)
+
+        if order.delivery_person_id is not None:
+            affected_rider_ids.add(
+                order.delivery_person_id
+            )
+
+        # Return order to Ready
+        order.status = READY_STATUS
+        order.rider_response = RIDER_EXPIRED_RESPONSE
+
+        # Release rider
+        order.delivery_person_id = None
+        order.assigned_at = None
+        order.assignment_expires_at = None
+
+        if hasattr(order, "delivery_boy_name"):
+            order.delivery_boy_name = None
+
+        if hasattr(order, "delivery_boy_phone"):
+            order.delivery_boy_phone = None
+
+        released_count += 1
+
+    # ----------------------------------------
+    # Recalculate rider availability
+    # ----------------------------------------
+
+    for rider_id in affected_rider_ids:
+
+        rider = DeliveryPerson.query.get(rider_id)
+
+        if not rider:
+            continue
+
+        remaining_active_orders = (
+            Order.query
+            .filter(
+                Order.delivery_person_id == rider.id,
+                Order.status.in_(
+                    ACTIVE_RIDER_ORDER_STATUSES
+                )
+            )
+            .count()
+        )
+
+        if remaining_active_orders == 0:
+
+            rider.is_available = True
+
+            print(
+                f"✅ RIDER {rider.id} RELEASED"
+            )
+
+        else:
+
+            rider.is_available = False
+
+            print(
+                f"🔒 RIDER {rider.id} STILL BUSY "
+                f"WITH {remaining_active_orders} ACTIVE ORDER(S)"
+            )
+
+    db.session.commit()
+
+    print("========================================")
+    print(
+        f"✅ RELEASED {released_count} "
+        f"EXPIRED ASSIGNMENT(S)"
+    )
+    print("========================================")
+
+    return released_count
 # ==========================================================
 # ASSIGN WAITING ORDER TO RIDER
 # ==========================================================
