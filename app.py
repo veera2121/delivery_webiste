@@ -206,7 +206,12 @@ app.config.update(
     REMEMBER_COOKIE_DURATION=timedelta(days=30),
 ) 
 
+import os
+import requests
 
+WHATSAPP_ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN")
+WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+WHATSAPP_API_VERSION = os.getenv("WHATSAPP_API_VERSION", "v25.0")
 import razorpay
 
 
@@ -676,6 +681,85 @@ def cleanup_orders():
 
     cancel_unpaid_orders()
 
+
+def send_whatsapp_text(recipient, message):
+    """
+    Send a normal WhatsApp text message through Meta Cloud API.
+
+    Normal text replies are appropriate when a customer-service
+    window is open for the recipient.
+    """
+
+    token = os.getenv("WHATSAPP_ACCESS_TOKEN")
+    phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+    api_version = os.getenv("WHATSAPP_API_VERSION", "v25.0")
+
+    if not token:
+        return {
+            "success": False,
+            "error": "WHATSAPP_ACCESS_TOKEN is not configured"
+        }
+
+    if not phone_number_id:
+        return {
+            "success": False,
+            "error": "WHATSAPP_PHONE_NUMBER_ID is not configured"
+        }
+
+    url = (
+        f"https://graph.facebook.com/"
+        f"{api_version}/"
+        f"{phone_number_id}/messages"
+    )
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": str(recipient),
+        "type": "text",
+        "text": {
+            "body": str(message)
+        }
+    }
+
+    try:
+        response = requests.post(
+            url,
+            headers=headers,
+            json=data,
+            timeout=20
+        )
+
+        try:
+            response_data = response.json()
+        except ValueError:
+            response_data = {
+                "raw_response": response.text
+            }
+
+        if response.ok:
+            return {
+                "success": True,
+                "status_code": response.status_code,
+                "data": response_data
+            }
+
+        return {
+            "success": False,
+            "status_code": response.status_code,
+            "error": response_data
+        }
+
+    except requests.RequestException as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
 def send_new_order_notification(rider, order):
 
     # ========================================================
@@ -33184,7 +33268,49 @@ def save_customer_fcm_token():
 # ==========================================================
 # RIDER APPLICATION ROUTE REGISTRATION
 # ==========================================================
+@app.route("/test-whatsapp-production")
+def test_whatsapp_production():
+    import os
+    import requests
 
+    token = os.getenv("WHATSAPP_ACCESS_TOKEN")
+    phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+
+    url = f"https://graph.facebook.com/v25.0/{phone_number_id}/messages"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": "919676382650",
+        "type": "text",
+        "text": {
+            "body": "Hello from RucHiGo local test 🚀"
+        }
+    }
+
+    try:
+        r = requests.post(
+            url,
+            headers=headers,
+            json=data,
+            timeout=20
+        )
+
+        return {
+            "status_code": r.status_code,
+            "response": r.json()
+        }
+
+    except Exception as e:
+        return {
+            "status_code": 500,
+            "error": str(e)
+        }
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN 
