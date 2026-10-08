@@ -34001,33 +34001,390 @@ def verify_whatsapp_webhook():
     print("❌ WhatsApp webhook verification failed")
     return "Verification failed", 403
 
+# ============================================================
+# 📱 WHATSAPP INCOMING MESSAGE WEBHOOK
+# ============================================================
+
+# ============================================================
+# 📱 WHATSAPP INCOMING MESSAGE WEBHOOK
+# ============================================================
 
 @app.route("/webhooks/whatsapp", methods=["POST"])
 def whatsapp_webhook():
     """
-    Receives incoming WhatsApp webhook events from Meta.
+    WhatsApp interactive confirmation handler.
 
-    For now this only logs the incoming event.
-    Button processing will be added in the next step.
+    YES:
+        RUCHIGO_CONFIRM_<order_id>
+
+    CANCEL:
+        RUCHIGO_CANCEL_<order_id>
+
+    Confirmation is valid only while:
+        whatsapp_confirmation_status == "pending"
+        AND
+        current time < whatsapp_confirmation_expires_at
     """
 
     try:
         data = request.get_json(silent=True)
 
-        print("\n" + "=" * 60)
+        print("\n" + "=" * 70)
         print("📱 WHATSAPP WEBHOOK RECEIVED")
-        print("=" * 60)
+        print("=" * 70)
+
+        if not data:
+            print("⚠️ Empty webhook payload")
+            return "EVENT_RECEIVED", 200
+
+        print("Webhook data:")
         print(data)
-        print("=" * 60)
+
+        # ----------------------------------------------------
+        # Basic WhatsApp webhook validation
+        # ----------------------------------------------------
+
+        if data.get("object") != "whatsapp_business_account":
+            print("⚠️ Not a WhatsApp Business Account webhook")
+            return "EVENT_RECEIVED", 200
+
+        entries = data.get("entry", [])
+
+        for entry in entries:
+
+            changes = entry.get("changes", [])
+
+            for change in changes:
+
+                value = change.get("value", {})
+
+                messages = value.get("messages", [])
+
+                if not messages:
+                    continue
+
+                for message in messages:
+
+                    print("\n📨 Incoming WhatsApp message")
+
+                    message_id = message.get("id")
+                    from_phone = message.get("from")
+                    message_type = message.get("type")
+
+                    print("Message ID:", message_id)
+                    print("Customer phone:", from_phone)
+                    print("Message type:", message_type)
+
+                    # ------------------------------------------------
+                    # We only need interactive button replies here
+                    # ------------------------------------------------
+
+                    if message_type != "interactive":
+                        continue
+
+                    interactive = message.get("interactive", {})
+
+                    interactive_type = interactive.get("type")
+
+                    print("Interactive type:", interactive_type)
+
+                    if interactive_type != "button_reply":
+                        continue
+
+                    button_reply = interactive.get(
+                        "button_reply",
+                        {}
+                    )
+
+                    button_id = button_reply.get("id")
+                    button_title = button_reply.get("title")
+
+                    print("\n" + "-" * 60)
+                    print("🔘 WHATSAPP BUTTON CLICK")
+                    print("-" * 60)
+                    print("Customer:", from_phone)
+                    print("Button ID:", button_id)
+                    print("Button title:", button_title)
+                    print("-" * 60)
+
+                    if not button_id:
+                        print("⚠️ Missing button ID")
+                        continue
+
+                    # ------------------------------------------------
+                    # Determine action
+                    # ------------------------------------------------
+
+                    action = None
+                    order_id = None
+
+                    if button_id.startswith("RUCHIGO_CONFIRM_"):
+
+                        action = "confirm"
+
+                        order_id = button_id.replace(
+                            "RUCHIGO_CONFIRM_",
+                            "",
+                            1
+                        )
+
+                    elif button_id.startswith("RUCHIGO_CANCEL_"):
+
+                        action = "cancel"
+
+                        order_id = button_id.replace(
+                            "RUCHIGO_CANCEL_",
+                            "",
+                            1
+                        )
+
+                    else:
+
+                        print(
+                            "⚠️ Unknown WhatsApp button ID:",
+                            button_id
+                        )
+
+                        continue
+
+                    print("Action:", action)
+                    print("Order ID:", order_id)
+
+                    # ------------------------------------------------
+                    # Find order
+                    # ------------------------------------------------
+
+                    order = Order.query.filter_by(
+                        order_id=order_id
+                    ).first()
+
+                    if not order:
+
+                        print(
+                            "❌ Order not found:",
+                            order_id
+                        )
+
+                        continue
+
+                    print(
+                        "✅ Order found:",
+                        order.order_id
+                    )
+
+                    # ------------------------------------------------
+                    # Normalize phone numbers
+                    # ------------------------------------------------
+
+                    webhook_phone = "".join(
+                        c for c in str(from_phone)
+                        if c.isdigit()
+                    )
+
+                    order_phone = "".join(
+                        c for c in str(order.phone or "")
+                        if c.isdigit()
+                    )
+
+                    # Convert Indian local number to 91 format
+                    if len(order_phone) == 10:
+                        order_phone = "91" + order_phone
+
+                    if len(webhook_phone) == 10:
+                        webhook_phone = "91" + webhook_phone
+
+                    print("Webhook phone:", webhook_phone)
+                    print("Order phone:", order_phone)
+
+                    # ------------------------------------------------
+                    # SECURITY:
+                    # Make sure the button was clicked by the
+                    # same phone number used for the order.
+                    # ------------------------------------------------
+
+                    if webhook_phone != order_phone:
+
+                        print("\n❌ PHONE MISMATCH")
+                        print(
+                            "WhatsApp phone does not match order phone."
+                        )
+
+                        continue
+
+                    print("✅ Phone verification passed")
+
+                    # ------------------------------------------------
+                    # Check confirmation status
+                    # ------------------------------------------------
+
+                    confirmation_status = (
+                        order.whatsapp_confirmation_status
+                    )
+
+                    print(
+                        "Current confirmation status:",
+                        confirmation_status
+                    )
+
+                    if confirmation_status != "pending":
+
+                        print(
+                            "⚠️ Confirmation already processed."
+                        )
+
+                        continue
+
+                    # ------------------------------------------------
+                    # Check expiry
+                    # ------------------------------------------------
+
+                    now = datetime.utcnow()
+
+                    expires_at = (
+                        order.whatsapp_confirmation_expires_at
+                    )
+
+                    if not expires_at:
+
+                        print(
+                            "⚠️ Confirmation expiry time missing."
+                        )
+
+                        continue
+
+                    print("Current UTC time:", now)
+                    print("Expires at:", expires_at)
+
+                    if now > expires_at:
+
+                        print(
+                            "⏰ WhatsApp confirmation window expired."
+                        )
+
+                        # Mark it expired so another button click
+                        # cannot change the order.
+                        order.whatsapp_confirmation_status = (
+                            "expired"
+                        )
+
+                        db.session.commit()
+
+                        continue
+
+                    # ------------------------------------------------
+                    # Prevent confirmation of an already completed/
+                    # cancelled order.
+                    # ------------------------------------------------
+
+                    if order.status in [
+                        "Cancelled",
+                        "Canceled",
+                        "Rejected",
+                        "Declined",
+                        "Delivered"
+                    ]:
+
+                        print(
+                            "⚠️ Order can no longer be confirmed."
+                        )
+
+                        order.whatsapp_confirmation_status = (
+                            "already_closed"
+                        )
+
+                        db.session.commit()
+
+                        continue
+
+                    # ------------------------------------------------
+                    # PROCESS YES
+                    # ------------------------------------------------
+
+                    if action == "confirm":
+
+                        print("\n" + "=" * 60)
+                        print("✅ WHATSAPP CONFIRMATION ACCEPTED")
+                        print("=" * 60)
+
+                        order.status = "Confirmed"
+
+                        order.whatsapp_confirmation_status = (
+                            "confirmed"
+                        )
+
+                        order.whatsapp_confirmation_responded_at = (
+                            datetime.utcnow()
+                        )
+
+                        db.session.commit()
+
+                        print(
+                            "Order status changed to:",
+                            order.status
+                        )
+
+                        print(
+                            "WhatsApp confirmation status:",
+                            order.whatsapp_confirmation_status
+                        )
+
+                        print("=" * 60)
+
+                    # ------------------------------------------------
+                    # PROCESS CANCEL
+                    # ------------------------------------------------
+
+                    elif action == "cancel":
+
+                        print("\n" + "=" * 60)
+                        print("❌ WHATSAPP ORDER CANCELLED")
+                        print("=" * 60)
+
+                        order.status = "Cancelled"
+
+                        order.whatsapp_confirmation_status = (
+                            "cancelled"
+                        )
+
+                        order.whatsapp_confirmation_responded_at = (
+                            datetime.utcnow()
+                        )
+
+                        db.session.commit()
+
+                        print(
+                            "Order status changed to:",
+                            order.status
+                        )
+
+                        print(
+                            "WhatsApp confirmation status:",
+                            order.whatsapp_confirmation_status
+                        )
+
+                        print("=" * 60)
+
+        print("\n" + "=" * 70)
+        print("✅ WhatsApp webhook processed")
+        print("=" * 70)
 
         return "EVENT_RECEIVED", 200
 
     except Exception as e:
-        print("❌ WhatsApp webhook error:", e)
 
-        # Always return 200 to Meta for a received webhook.
-        # We don't want Meta repeatedly retrying because of
-        # an internal processing error.
+        print("\n" + "=" * 70)
+        print("❌ WHATSAPP WEBHOOK ERROR")
+        print("=" * 70)
+
+        print(str(e))
+
+        import traceback
+        traceback.print_exc()
+
+        print("=" * 70)
+
+        # Always return 200 to Meta so it does not repeatedly
+        # resend the same webhook.
         return "EVENT_RECEIVED", 200
 # ------------------ DB INIT ------------------
 
