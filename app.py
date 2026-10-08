@@ -1073,6 +1073,234 @@ def send_whatsapp_order_update(order, status_text):
         )
 
         return False
+
+
+def send_whatsapp_first_order_confirmation(order):
+    """
+    Send WhatsApp confirmation for a customer's first order.
+
+    Template:
+        ruchigo_first_order_confirmation
+
+    Buttons:
+        1. Yes, Continue
+        2. Cancel
+    """
+
+    try:
+        # ----------------------------------------------------
+        # ENABLE / DISABLE
+        # ----------------------------------------------------
+
+        enabled = os.getenv(
+            "WHATSAPP_FIRST_ORDER_CONFIRMATION_ENABLED",
+            "true"
+        ).lower() == "true"
+
+        if not enabled:
+            print(
+                "ℹ️ WhatsApp first-order confirmation disabled."
+            )
+            return False
+
+        # ----------------------------------------------------
+        # ENVIRONMENT
+        # ----------------------------------------------------
+
+        access_token = os.getenv(
+            "WHATSAPP_ACCESS_TOKEN"
+        )
+
+        phone_number_id = os.getenv(
+            "WHATSAPP_PHONE_NUMBER_ID"
+        )
+
+        api_version = os.getenv(
+            "WHATSAPP_API_VERSION",
+            "v25.0"
+        )
+
+        template_name = os.getenv(
+            "WHATSAPP_FIRST_ORDER_TEMPLATE_NAME",
+            "ruchigo_first_order_confirmation"
+        )
+
+        template_language = os.getenv(
+            "WHATSAPP_FIRST_ORDER_TEMPLATE_LANGUAGE",
+            "en_US"
+        )
+
+        if not access_token:
+            print(
+                "❌ WhatsApp access token missing."
+            )
+            return False
+
+        if not phone_number_id:
+            print(
+                "❌ WhatsApp phone number ID missing."
+            )
+            return False
+
+        # ----------------------------------------------------
+        # CUSTOMER PHONE
+        # ----------------------------------------------------
+
+        customer_phone = getattr(
+            order,
+            "phone",
+            None
+        )
+
+        if not customer_phone:
+            customer_phone = getattr(
+                order,
+                "customer_phone",
+                None
+            )
+
+        customer_phone = _normalize_whatsapp_phone(
+            customer_phone
+        )
+
+        if not customer_phone:
+            print(
+                f"❌ WhatsApp: customer phone missing "
+                f"for order {order.order_id}"
+            )
+            return False
+
+        # ----------------------------------------------------
+        # WHATSAPP API URL
+        # ----------------------------------------------------
+
+        url = (
+            f"https://graph.facebook.com/"
+            f"{api_version}/"
+            f"{phone_number_id}/messages"
+        )
+
+        # ----------------------------------------------------
+        # TEMPLATE
+        # ----------------------------------------------------
+
+        payload = {
+            "messaging_product": "whatsapp",
+
+            "to": customer_phone,
+
+            "type": "template",
+
+            "template": {
+                "name": template_name,
+
+                "language": {
+                    "code": template_language
+                }
+            }
+        }
+
+        # ----------------------------------------------------
+        # SEND
+        # ----------------------------------------------------
+
+        response = requests.post(
+            url,
+
+            headers={
+                "Authorization":
+                    f"Bearer {access_token}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json=payload,
+
+            timeout=30
+        )
+
+        # ----------------------------------------------------
+        # SUCCESS
+        # ----------------------------------------------------
+
+        if response.status_code == 200:
+
+            result = response.json()
+
+            print(
+                "========================================"
+            )
+
+            print(
+                "✅ FIRST ORDER WHATSAPP CONFIRMATION SENT"
+            )
+
+            print(
+                "Order:",
+                order.order_id
+            )
+
+            print(
+                "Phone:",
+                customer_phone
+            )
+
+            print(
+                "WAMID:",
+                result.get(
+                    "messages",
+                    [{}]
+                )[0].get("id")
+            )
+
+            print(
+                "========================================"
+            )
+
+            return True
+
+        # ----------------------------------------------------
+        # ERROR
+        # ----------------------------------------------------
+
+        print(
+            "========================================"
+        )
+
+        print(
+            "❌ FIRST ORDER WHATSAPP CONFIRMATION FAILED"
+        )
+
+        print(
+            "Order:",
+            getattr(order, "order_id", None)
+        )
+
+        print(
+            "HTTP:",
+            response.status_code
+        )
+
+        print(
+            "Response:",
+            response.text
+        )
+
+        print(
+            "========================================"
+        )
+
+        return False
+
+    except Exception as e:
+
+        print(
+            "❌ FIRST ORDER WHATSAPP CONFIRMATION ERROR:",
+            e
+        )
+
+        return False
 def send_new_order_notification(rider, order):
 
     # ========================================================
@@ -33733,6 +33961,74 @@ def test_whatsapp_production():
             "status_code": 500,
             "error": str(e)
         }
+
+
+# ============================================================
+# 📱 WHATSAPP META WEBHOOK
+# ============================================================
+
+@app.route("/webhooks/whatsapp", methods=["GET"])
+def verify_whatsapp_webhook():
+    """
+    Meta WhatsApp webhook verification.
+
+    Meta sends:
+        hub.mode
+        hub.verify_token
+        hub.challenge
+
+    We return hub.challenge only when the verify token matches.
+    """
+
+    mode = request.args.get("hub.mode")
+    token = request.args.get("hub.verify_token")
+    challenge = request.args.get("hub.challenge")
+
+    verify_token = os.getenv("WHATSAPP_WEBHOOK_VERIFY_TOKEN")
+
+    print("📱 WhatsApp webhook verification request")
+    print("Mode:", mode)
+
+    if (
+        mode == "subscribe"
+        and token
+        and verify_token
+        and token == verify_token
+    ):
+        print("✅ WhatsApp webhook verification successful")
+        return challenge, 200
+
+    print("❌ WhatsApp webhook verification failed")
+    return "Verification failed", 403
+
+
+@app.route("/webhooks/whatsapp", methods=["POST"])
+def whatsapp_webhook():
+    """
+    Receives incoming WhatsApp webhook events from Meta.
+
+    For now this only logs the incoming event.
+    Button processing will be added in the next step.
+    """
+
+    try:
+        data = request.get_json(silent=True)
+
+        print("\n" + "=" * 60)
+        print("📱 WHATSAPP WEBHOOK RECEIVED")
+        print("=" * 60)
+        print(data)
+        print("=" * 60)
+
+        return "EVENT_RECEIVED", 200
+
+    except Exception as e:
+        print("❌ WhatsApp webhook error:", e)
+
+        # Always return 200 to Meta for a received webhook.
+        # We don't want Meta repeatedly retrying because of
+        # an internal processing error.
+        return "EVENT_RECEIVED", 200
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN 
