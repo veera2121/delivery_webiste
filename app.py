@@ -713,366 +713,265 @@ def _normalize_whatsapp_phone(phone):
     return phone
 
 
+
 def send_whatsapp_order_update(order, status_text):
     """
-    Send approved RucHiGo order-status template through
-    WhatsApp Cloud API.
+    Send WhatsApp order-status notifications using approved templates.
 
-    Template:
+    Accepted / Confirmed:
         ruchigo_order_upadte
-
-    Variables:
         {{1}} Customer name
         {{2}} Order ID
         {{3}} Restaurant name
         {{4}} Status
         {{5}} Total amount
+
+    Other statuses:
+        ruchigo_short_status
+        {{1}} Customer name
+        {{2}} Order ID
+        {{3}} Status
+
+    Delivered:
+        ruchigo_order_delivered
+        {{1}} Customer name
+        {{2}} Order ID
+        {{3}} Restaurant name
+        {{4}} Total amount
     """
 
     try:
-
         # ----------------------------------------------------
         # ENABLE / DISABLE
         # ----------------------------------------------------
-
         enabled = os.getenv(
             "WHATSAPP_AUTO_STATUS_ENABLED",
             "true"
-        ).lower() == "true"
+        ).strip().lower() == "true"
 
         if not enabled:
-            print(
-                "ℹ️ WhatsApp automatic order updates disabled."
-            )
+            print("ℹ️ WhatsApp automatic order updates disabled.")
             return False
 
-
         # ----------------------------------------------------
-        # ENVIRONMENT
+        # WHATSAPP ENVIRONMENT
         # ----------------------------------------------------
-
-        access_token = os.getenv(
-            "WHATSAPP_ACCESS_TOKEN"
-        )
-
-        phone_number_id = os.getenv(
-            "WHATSAPP_PHONE_NUMBER_ID"
-        )
-
-        api_version = os.getenv(
-            "WHATSAPP_API_VERSION",
-            "v25.0"
-        )
-
-        template_name = os.getenv(
-            "WHATSAPP_ORDER_TEMPLATE_NAME",
-            "ruchigo_order_upadte"
-        )
-
-        template_language = os.getenv(
-            "WHATSAPP_ORDER_TEMPLATE_LANGUAGE",
-            "en_US"
-        )
-
+        access_token = os.getenv("WHATSAPP_ACCESS_TOKEN")
+        phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+        api_version = os.getenv("WHATSAPP_API_VERSION", "v25.0")
 
         if not access_token:
-            print(
-                "❌ WhatsApp access token missing."
-            )
+            print("❌ WhatsApp access token missing.")
             return False
 
         if not phone_number_id:
-            print(
-                "❌ WhatsApp phone number ID missing."
-            )
+            print("❌ WhatsApp phone number ID missing.")
             return False
-
 
         # ----------------------------------------------------
         # CUSTOMER PHONE
         # ----------------------------------------------------
-
-        customer_phone = getattr(
-            order,
-            "phone",
-            None
+        customer_phone = (
+            getattr(order, "phone", None)
+            or getattr(order, "customer_phone", None)
         )
 
-        if not customer_phone:
-
-            customer_phone = getattr(
-                order,
-                "customer_phone",
-                None
-            )
-
-        customer_phone = _normalize_whatsapp_phone(
-            customer_phone
-        )
-
+        customer_phone = _normalize_whatsapp_phone(customer_phone)
 
         if not customer_phone:
-
             print(
-                f"❌ WhatsApp: customer phone missing "
+                f"❌ WhatsApp customer phone missing "
                 f"for order {order.order_id}"
             )
-
             return False
-
 
         # ----------------------------------------------------
         # CUSTOMER NAME
         # ----------------------------------------------------
-
         customer_name = (
-            getattr(
-                order,
-                "customer_name",
-                None
-            )
+            getattr(order, "customer_name", None)
             or "Customer"
         )
-
 
         # ----------------------------------------------------
         # RESTAURANT NAME
         # ----------------------------------------------------
-
         restaurant_name = "RucHiGo"
 
         try:
-
             if order.restaurant:
-
                 restaurant_name = (
-                    getattr(
-                        order.restaurant,
-                        "name",
-                        None
-                    )
+                    getattr(order.restaurant, "name", None)
                     or "RucHiGo"
                 )
-
         except Exception:
-
             restaurant_name = "RucHiGo"
-
 
         # ----------------------------------------------------
         # TOTAL AMOUNT
         # ----------------------------------------------------
-
         try:
-
             total_amount = order.get_final_total()
-
         except Exception:
-
-            total_amount = getattr(
-                order,
-                "final_total",
-                0
-            )
+            total_amount = getattr(order, "final_total", 0)
 
         if total_amount is None:
             total_amount = 0
 
+        # ----------------------------------------------------
+        # SELECT TEMPLATE BY STATUS
+        # ----------------------------------------------------
+        normalized_status = str(
+            status_text or ""
+        ).strip().lower()
+
+        if normalized_status == "delivered":
+            # Full delivery message
+            template_name = os.getenv(
+                "WHATSAPP_DELIVERED_TEMPLATE_NAME",
+                "ruchigo_order_delivered"
+            )
+            template_language = os.getenv(
+                "WHATSAPP_DELIVERED_TEMPLATE_LANGUAGE",
+                "en_GB"
+            )
+
+            template_parameters = [
+                customer_name,
+                str(order.order_id),
+                restaurant_name,
+                str(total_amount),
+            ]
+
+        elif normalized_status in ("accepted", "confirmed"):
+            # Existing approved five-variable template
+            template_name = os.getenv(
+                "WHATSAPP_ORDER_TEMPLATE_NAME",
+                "ruchigo_order_upadte"
+            )
+            template_language = os.getenv(
+                "WHATSAPP_ORDER_TEMPLATE_LANGUAGE",
+                "en_US"
+            )
+
+            template_parameters = [
+                customer_name,
+                str(order.order_id),
+                restaurant_name,
+                str(status_text),
+                str(total_amount),
+            ]
+
+        else:
+            # Short message for other statuses
+            template_name = os.getenv(
+                "WHATSAPP_SHORT_STATUS_TEMPLATE_NAME",
+                "ruchigo_short_status"
+            )
+            template_language = os.getenv(
+                "WHATSAPP_SHORT_STATUS_TEMPLATE_LANGUAGE",
+                "en_GB"
+            )
+
+            template_parameters = [
+                customer_name,
+                str(order.order_id),
+                str(status_text or "Updated"),
+            ]
 
         # ----------------------------------------------------
-        # WHATSAPP API
+        # WHATSAPP API URL
         # ----------------------------------------------------
-
         url = (
             f"https://graph.facebook.com/"
-            f"{api_version}/"
-            f"{phone_number_id}/messages"
+            f"{api_version}/{phone_number_id}/messages"
         )
 
-
         # ----------------------------------------------------
-        # APPROVED TEMPLATE
-        #
-        # {{1}} Customer name
-        # {{2}} Order ID
-        # {{3}} Restaurant
-        # {{4}} Status
-        # {{5}} Total
+        # BUILD TEMPLATE PAYLOAD
         # ----------------------------------------------------
-
         payload = {
-
             "messaging_product": "whatsapp",
-
             "to": customer_phone,
-
             "type": "template",
-
             "template": {
-
                 "name": template_name,
-
                 "language": {
                     "code": template_language
                 },
-
                 "components": [
-
                     {
                         "type": "body",
-
                         "parameters": [
-
                             {
                                 "type": "text",
-                                "text": str(
-                                    customer_name
-                                )
-                            },
-
-                            {
-                                "type": "text",
-                                "text": str(
-                                    order.order_id
-                                )
-                            },
-
-                            {
-                                "type": "text",
-                                "text": str(
-                                    restaurant_name
-                                )
-                            },
-
-                            {
-                                "type": "text",
-                                "text": str(
-                                    status_text
-                                )
-                            },
-
-                            {
-                                "type": "text",
-                                "text": str(
-                                    total_amount
-                                )
+                                "text": str(value)
                             }
-
+                            for value in template_parameters
                         ]
                     }
-
                 ]
             }
         }
 
-
         # ----------------------------------------------------
-        # SEND
+        # SEND WHATSAPP MESSAGE
         # ----------------------------------------------------
-
         response = requests.post(
-
             url,
-
             headers={
-                "Authorization":
-                    f"Bearer {access_token}",
-
-                "Content-Type":
-                    "application/json"
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
             },
-
             json=payload,
-
-            timeout=30
+            timeout=30,
         )
-
 
         # ----------------------------------------------------
         # SUCCESS
         # ----------------------------------------------------
-
         if response.status_code == 200:
-
             result = response.json()
+            messages = result.get("messages", [])
 
-            print(
-                "========================================"
+            wamid = (
+                messages[0].get("id")
+                if messages
+                else None
             )
 
-            print(
-                "✅ WHATSAPP CUSTOMER NOTIFICATION SENT"
-            )
-
-            print(
-                "Order:",
-                order.order_id
-            )
-
-            print(
-                "Customer:",
-                customer_name
-            )
-
-            print(
-                "Phone:",
-                customer_phone
-            )
-
-            print(
-                "Status:",
-                status_text
-            )
-
-            print(
-                "WAMID:",
-                result.get("messages", [{}])[0].get("id")
-            )
-
-            print(
-                "========================================"
-            )
+            print("========================================")
+            print("✅ WHATSAPP CUSTOMER NOTIFICATION SENT")
+            print("Order:", order.order_id)
+            print("Customer:", customer_name)
+            print("Status:", status_text)
+            print("Template:", template_name)
+            print("Language:", template_language)
+            print("WAMID:", wamid)
+            print("========================================")
 
             return True
 
-
         # ----------------------------------------------------
-        # ERROR
+        # API ERROR
         # ----------------------------------------------------
-
-        print(
-            "========================================"
-        )
-
-        print(
-            "❌ WHATSAPP CUSTOMER NOTIFICATION FAILED"
-        )
-
-        print(
-            "HTTP:",
-            response.status_code
-        )
-
-        print(
-            "Response:",
-            response.text
-        )
-
-        print(
-            "========================================"
-        )
+        print("========================================")
+        print("❌ WHATSAPP CUSTOMER NOTIFICATION FAILED")
+        print("Order:", order.order_id)
+        print("Status:", status_text)
+        print("Template:", template_name)
+        print("Language:", template_language)
+        print("HTTP:", response.status_code)
+        print("Response:", response.text)
+        print("========================================")
 
         return False
-
 
     except Exception as e:
-
-        print(
-            "❌ WHATSAPP ORDER UPDATE ERROR:",
-            e
-        )
-
+        print("❌ WHATSAPP ORDER UPDATE ERROR:", e)
         return False
+
+
 
 
 def send_whatsapp_first_order_confirmation(order):
@@ -10748,6 +10647,29 @@ def delivery_dashboard():
 
 
             db.session.commit()
+         
+            # =================================================
+            # WHATSAPP: ORDER DELIVERED
+            # =================================================
+            try:
+                whatsapp_sent = send_whatsapp_order_update(
+                    order=order,
+                    status_text="Delivered"
+                )
+
+                print(
+                    "📱 DELIVERED WHATSAPP:",
+                    order.order_id,
+                    "SENT" if whatsapp_sent else "FAILED"
+                )
+
+            except Exception as e:
+                print(
+                    "❌ DELIVERED WHATSAPP ERROR:",
+                    order.order_id,
+                    e
+                )
+
 
 
             # =================================================
@@ -12108,6 +12030,30 @@ def restaurant_assign_delivery(order_id):
 
     db.session.commit()
 
+    
+    # ========================================================
+    # WHATSAPP: OUT FOR DELIVERY
+    # ========================================================
+
+    try:
+        whatsapp_sent = send_whatsapp_order_update(
+            order=order,
+            status_text="Out for Delivery"
+        )
+
+        print(
+            "📱 OUT FOR DELIVERY WHATSAPP:",
+            order.order_id,
+            "SENT" if whatsapp_sent else "FAILED"
+        )
+
+    except Exception as e:
+        print(
+            "❌ OUT FOR DELIVERY WHATSAPP ERROR:",
+            order.order_id,
+            e
+        )
+
 
     # ========================================================
     # FIREBASE PUSH TO DELIVERY PERSON
@@ -12540,6 +12486,29 @@ def delivery_mark_delivered():
     # ========================================================
 
     db.session.commit()
+    
+    # ========================================================
+    # WHATSAPP: FULL DELIVERED NOTIFICATION
+    # ========================================================
+
+    try:
+        whatsapp_sent = send_whatsapp_order_update(
+            order=order,
+            status_text="Delivered"
+        )
+
+        print(
+            "📱 DELIVERED WHATSAPP:",
+            order.order_id,
+            "SENT" if whatsapp_sent else "FAILED"
+        )
+
+    except Exception as e:
+        print(
+            "❌ DELIVERED WHATSAPP ERROR:",
+            order.order_id,
+            e
+        )
 
     print("\n====================================")
     print("✅ ORDER DELIVERED")
