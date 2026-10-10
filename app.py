@@ -973,6 +973,125 @@ def send_whatsapp_order_update(order, status_text):
 
 
 
+def send_delivery_otp_whatsapp(order):
+    """Send RucHiGo authentication OTP with Copy Code button."""
+
+    try:
+        access_token = os.getenv("WHATSAPP_ACCESS_TOKEN")
+        phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+        api_version = os.getenv("WHATSAPP_API_VERSION", "v25.0")
+
+        if not access_token or not phone_number_id:
+            print("❌ WhatsApp credentials missing.")
+            return False
+
+        customer_phone = (
+            getattr(order, "phone", None)
+            or getattr(order, "customer_phone", None)
+        )
+
+        customer_phone = _normalize_whatsapp_phone(customer_phone)
+
+        if not customer_phone:
+            print(
+                "❌ Customer phone missing for order",
+                getattr(order, "order_id", None)
+            )
+            return False
+
+        otp = getattr(order, "otp", None)
+
+        if not otp:
+            print(
+                "❌ OTP missing for order",
+                getattr(order, "order_id", None)
+            )
+            return False
+
+        otp = str(otp)
+
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": customer_phone,
+            "type": "template",
+            "template": {
+                "name": "ruchigo_delivery1_otp",
+                "language": {
+                    "code": os.getenv(
+                        "WHATSAPP_DELIVERY_OTP_LANGUAGE",
+                        "en"
+                    )
+                },
+                "components": [
+                    # Body: {{1}} = OTP
+                    {
+                        "type": "body",
+                        "parameters": [
+                            {
+                                "type": "text",
+                                "text": otp
+                            }
+                        ]
+                    },
+
+                    # Copy Code button: pass the same OTP again.
+                    {
+                        "type": "button",
+                        "sub_type": "url",
+                        "index": "0",
+                        "parameters": [
+                            {
+                                "type": "text",
+                                "text": otp
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+
+        url = (
+            f"https://graph.facebook.com/"
+            f"{api_version}/{phone_number_id}/messages"
+        )
+
+        response = requests.post(
+            url,
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            },
+            json=payload,
+            timeout=30
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+            messages = result.get("messages") or []
+            message_id = (
+                messages[0].get("id")
+                if messages
+                else None
+            )
+
+            print(
+                "✅ DELIVERY OTP WHATSAPP ACCEPTED",
+                "Order:", order.order_id,
+                "WAMID:", message_id
+            )
+            return True
+
+        print(
+            "❌ DELIVERY OTP WHATSAPP FAILED",
+            "Order:", getattr(order, "order_id", None),
+            "HTTP:", response.status_code,
+            "Response:", response.text[:1500]
+        )
+        return False
+
+    except Exception as e:
+        print("❌ DELIVERY OTP WHATSAPP ERROR:", e)
+        return False
 
 def send_whatsapp_first_order_confirmation(order):
     """
@@ -12027,6 +12146,27 @@ def restaurant_assign_delivery(order_id):
     # ========================================================
     # SAVE BEFORE NOTIFICATIONS
     # ========================================================
+    
+    # ========================================================
+    # WHATSAPP: DELIVERY OTP
+    # ========================================================
+
+    try:
+        sent = send_delivery_otp_whatsapp(order)
+
+        if sent:
+            print(
+                "✅ DELIVERY OTP WHATSAPP SENT:",
+                order.order_id
+            )
+        else:
+            print(
+                "❌ DELIVERY OTP WHATSAPP FAILED:",
+                order.order_id
+            )
+
+    except Exception as e:
+        print("❌ DELIVERY OTP WHATSAPP ERROR:", e)
 
     db.session.commit()
 
@@ -17689,6 +17829,28 @@ def employee_assign_delivery(order_id):
     # ========================================================
     # SAVE FIRST
     # ========================================================
+    
+    # ========================================================
+    # WHATSAPP: DELIVERY OTP
+    # ========================================================
+
+
+    try:
+        sent = send_delivery_otp_whatsapp(order)
+
+        if sent:
+            print(
+                "✅ DELIVERY OTP WHATSAPP SENT:",
+                order.order_id
+            )
+        else:
+            print(
+                "❌ DELIVERY OTP WHATSAPP FAILED:",
+                order.order_id
+            )
+
+    except Exception as e:
+        print("❌ DELIVERY OTP WHATSAPP ERROR:", e)
 
     db.session.commit()
 
