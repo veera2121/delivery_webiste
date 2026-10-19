@@ -34517,6 +34517,17 @@ def whatsapp_webhook():
         # Always return 200 to Meta so it does not repeatedly
         # resend the same webhook.
         return "EVENT_RECEIVED", 200
+
+
+@app.route("/delivery-privacy-policy")
+def delivery_privacy_policy():
+    return render_template("delivery_privacy_policy.html")
+
+@app.route("/privacy-policy")
+def privacy_policy():
+    return render_template("privacy_policy.html")
+
+
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN 
