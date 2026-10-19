@@ -34527,7 +34527,9 @@ def delivery_privacy_policy():
 def privacy_policy():
     return render_template("privacy_policy.html")
 
-
+@app.route("/delete-account")
+def delete_account_page():
+    return render_template("delete_account.html")
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN 
