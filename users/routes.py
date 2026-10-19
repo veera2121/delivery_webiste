@@ -92,6 +92,11 @@ def save_token():
 
     return jsonify({"status": "success"}), 200
 
+@users_bp.route("/delete-account", methods=["GET"])
+def delete_account_page():
+    return render_template("delete_account.html")
+
+
 from firebase_admin import messaging
 from models import FCMToken
 
