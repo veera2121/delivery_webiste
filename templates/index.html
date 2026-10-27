@@ -6455,85 +6455,384 @@ CONTENT
         <small id="orderStatus">Tracking live activity</small>
     </div>
 </section>  
-<div class="ruchi3000-premium">
 
-    <div class="ruchi3000-glow glow-left"></div>
-    <div class="ruchi3000-glow glow-right"></div>
+<style>
 
-    <div class="ruchi3000-particles" id="ruchi3000Particles"></div>
+    
+/* ===== Compact RucHiGO 3500+ Milestone ===== */
+.ruchi3500 {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: 25px 16px;
+    border-radius: 22px;
+    background:
+        radial-gradient(ellipse at 50% 0%, #263c70 0%, transparent 52%),
+        linear-gradient(145deg, #080d1b, #101a32 55%, #080d1b);
+    color: #fff;
+    text-align: center;
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    box-shadow: 0 14px 35px rgba(5, 12, 35, .25);
+}
 
-    <div class="ruchi3000-content">
+.ruchi3500::before,
+.ruchi3500::after {
+    content: "";
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    filter: blur(55px);
+    opacity: .3;
+    z-index: -1;
+    pointer-events: none;
+}
 
-        <div class="ruchi3000-badge">
-            🎉 MILESTONE UNLOCKED
+.ruchi3500::before {
+    background: #00d5ff;
+    top: -100px;
+    left: -60px;
+}
+
+.ruchi3500::after {
+    background: #ff9d35;
+    bottom: -100px;
+    right: -60px;
+}
+
+.ruchi3500-particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.ruchi3500-particles i {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: var(--s);
+    height: var(--s);
+    border-radius: 50%;
+    background: var(--c);
+    box-shadow: 0 0 9px var(--c);
+    animation: ruchiFloat var(--d) ease-in-out infinite alternate;
+}
+
+@keyframes ruchiFloat {
+    from { transform: translateY(5px) scale(.7); opacity: .2; }
+    to   { transform: translateY(-14px) scale(1.1); opacity: .8; }
+}
+
+.ruchi3500-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 540px;
+    margin: auto;
+}
+
+.ruchi3500-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border: 1px solid rgba(91, 224, 255, .4);
+    border-radius: 50px;
+    background: rgba(14, 202, 255, .09);
+    color: #8eeaff;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+}
+
+.ruchi3500-visual {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: min(190px, 58vw);
+    aspect-ratio: 1;
+    margin: 8px auto 2px;
+}
+
+.ruchi3500-orbit {
+    position: absolute;
+    inset: 7px;
+    border: 1px solid rgba(91, 224, 255, .28);
+    border-radius: 50%;
+    animation: ruchiSpin 18s linear infinite;
+}
+
+.ruchi3500-orbit::before,
+.ruchi3500-orbit::after {
+    content: "";
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #7cecff;
+    box-shadow: 0 0 12px #22d8ff;
+}
+
+.ruchi3500-orbit::before {
+    top: 20px;
+    left: 26px;
+}
+
+.ruchi3500-orbit::after {
+    bottom: 20px;
+    right: 26px;
+    background: #ffb75d;
+    box-shadow: 0 0 12px #ff9d35;
+}
+
+.ruchi3500-orbit-two {
+    position: absolute;
+    inset: 22px;
+    border: 1px dashed rgba(255, 183, 93, .3);
+    border-radius: 50%;
+    animation: ruchiSpin 25s linear infinite reverse;
+}
+
+@keyframes ruchiSpin {
+    to { transform: rotate(360deg); }
+}
+
+.ruchi3500-number {
+    font-size: clamp(54px, 11vw, 76px);
+    line-height: 1;
+    font-weight: 950;
+    letter-spacing: -4px;
+    background: linear-gradient(
+        130deg, #fff 8%, #9ceeff 42%,
+        #4ed6ff 60%, #ffc16e 94%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 15px rgba(58, 205, 255, .25));
+    animation: ruchiGlow 3s ease-in-out infinite alternate;
+}
+
+.ruchi3500-number span {
+    font-size: .48em;
+    letter-spacing: -1px;
+}
+
+@keyframes ruchiGlow {
+    from { filter: drop-shadow(0 0 8px rgba(58,205,255,.18)); }
+    to   { filter: drop-shadow(0 0 18px rgba(58,205,255,.4)); }
+}
+
+.ruchi3500-label {
+    color: #eaf8ff;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.ruchi3500-line {
+    width: 48px;
+    height: 2px;
+    margin: 13px auto;
+    border-radius: 20px;
+    background: linear-gradient(90deg, #36d9ff, #ffb65c);
+}
+
+.ruchi3500-title {
+    margin: 0;
+    font-size: clamp(20px, 4vw, 27px);
+    font-weight: 900;
+    line-height: 1.3;
+}
+
+.ruchi3500-title span {
+    color: #ffbd69;
+}
+
+.ruchi3500-message {
+    max-width: 410px;
+    margin: 9px auto 0;
+    color: #b9c8df;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.ruchi3500-pill {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 9px 13px;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 12px;
+    background: rgba(255,255,255,.055);
+    color: #e7f3ff;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ruchi3500-brand {
+    margin-top: 17px;
+    font-size: 22px;
+    font-weight: 950;
+    letter-spacing: -1px;
+}
+
+.ruchi3500-brand span {
+    color: #70e69b;
+}
+
+.ruchi3500-footer {
+    margin-top: 4px;
+    color: #7f91ac;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+    .ruchi3500 {
+        padding: 22px 13px;
+        border-radius: 18px;
+    }
+
+    .ruchi3500-visual {
+        width: 165px;
+    }
+
+    .ruchi3500-label {
+        font-size: 13px;
+        letter-spacing: 1.5px;
+    }
+
+    .ruchi3500-message {
+        font-size: 11px;
+    }
+
+    .ruchi3500-pill {
+        font-size: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ruchi3500 *,
+    .ruchi3500 *::before,
+    .ruchi3500 *::after {
+        animation: none !important;
+    }
+}
+
+</style>
+
+<div class="ruchi3500">
+
+    <div class="ruchi3500-particles" aria-hidden="true">
+        <i style="--x:8%;--y:18%;--s:4px;--c:#51e2ff;--d:3s"></i>
+        <i style="--x:85%;--y:12%;--s:5px;--c:#ffbf70;--d:4s"></i>
+        <i style="--x:16%;--y:72%;--s:3px;--c:#ffffff;--d:3.5s"></i>
+        <i style="--x:91%;--y:68%;--s:4px;--c:#51e2ff;--d:4.5s"></i>
+        <i style="--x:75%;--y:38%;--s:3px;--c:#ffbf70;--d:2.8s"></i>
+        <i style="--x:26%;--y:40%;--s:4px;--c:#ffffff;--d:3.8s"></i>
+        <i style="--x:48%;--y:8%;--s:3px;--c:#51e2ff;--d:3.2s"></i>
+        <i style="--x:68%;--y:88%;--s:4px;--c:#ffbf70;--d:4.2s"></i>
+    </div>
+
+    <div class="ruchi3500-inner">
+
+        <div class="ruchi3500-badge">
+            ✦ A BIG MOMENT FOR RUCHIGO ✦
         </div>
 
-        <div class="ruchi3000-number">
-            3000<span>+</span>
+        <div class="ruchi3500-visual">
+            <div class="ruchi3500-orbit"></div>
+            <div class="ruchi3500-orbit-two"></div>
+            <div class="ruchi3500-number">
+                3500<span>+</span>
+            </div>
         </div>
 
-        <div class="ruchi3000-orders">
-            Orders Received
+        <div class="ruchi3500-label">Orders & Counting</div>
+
+        <div class="ruchi3500-line"></div>
+
+        <h2 class="ruchi3500-title">
+            Our Journey. <span>Your Love.</span>
+        </h2>
+
+        <div class="ruchi3500-message">
+            Thank you, Malikipuram and surrounding areas! ❤️
+            <br>
+            Every order, every returning customer, and every
+            recommendation helps RucHiGO grow stronger.
         </div>
 
-        <div class="ruchi3000-divider"></div>
-
-        <div class="ruchi3000-thanks">
-            Thank you Malikipuram & surrounding areas ❤️
+        <div class="ruchi3500-pill">
+            🙏 Thank you for being part of our journey
         </div>
 
-        <div class="ruchi3000-sub">
-            Every order, every repeat customer, every recommendation
-            helped us reach this moment.
-        </div>
-
-        <div class="ruchi3000-brand">
+        <div class="ruchi3500-brand">
             RucHi<span>Go</span>
         </div>
 
-    </div>
+        <div class="ruchi3500-footer">
+            Local Love · Growing Together
+        </div>
 
+    </div>
 </div>
-<!-- 🌧️ Rain Emergency Notice
+
+<!-- 🌪️ Cyclone Emergency Notice -->
 
 <div id="orderAlert" class="alert-overlay">
-
     <div class="alert-box">
 
-        <div class="alert-icon">🌧️🙏</div>
+        <div class="alert-icon">🌪️🙏</div>
 
-        <h2>Orders Closed Today</h2>
+        <h2>Cyclone Alert — Orders Temporarily Closed</h2>
 
         <p>
-            Due to <strong>heavy rain and weather conditions</strong>,
-            we are not accepting orders today,
-            <strong>22nd September 2026.</strong>
+            Due to the <strong>cyclone and severe weather conditions
+            in the Bay of Bengal</strong>, RucHiGO will not be accepting
+            orders on <strong>27th and 28th October 2026.</strong>
             <br><br>
+
             For the safety of our customers, restaurant partners,
-            and delivery partners, orders will remain closed today.
-            <br><br>
-            <strong>Orders will be available again from tomorrow,
-            23rd September 2026.</strong>
-        </p>
-
-        <p class="telugu">
-
-            భారీ వర్షాలు మరియు వాతావరణ పరిస్థితుల కారణంగా
-            <strong>ఈరోజు, 22 సెప్టెంబర్ 2026న ఆర్డర్లు స్వీకరించబడవు.</strong>
-
-            <br><br>
-
-            మా కస్టమర్లు, రెస్టారెంట్ భాగస్వాములు మరియు
-            డెలివరీ భాగస్వాముల భద్రత దృష్ట్యా
-            ఈరోజు ఆర్డర్లు నిలిపివేయబడ్డాయి.
-
+            and delivery partners, ordering will remain temporarily closed.
             <br><br>
 
             <strong>
-                రేపు, 23 సెప్టెంబర్ 2026 నుండి
-                ఆర్డర్లు మళ్లీ అందుబాటులో ఉంటాయి.
+                Orders are planned to resume as usual from
+                Thursday, 29th October 2026, subject to weather conditions.
             </strong>
+            <br><br>
 
+            If the weather affects our operations further,
+            we will inform you of any changes.
+            Thank you for your patience and understanding.
+        </p>
+
+        <p class="telugu">
+            <strong>
+                బంగాళాఖాతంలో తుఫాను మరియు తీవ్రమైన వాతావరణ
+                పరిస్థితుల కారణంగా, 2026 అక్టోబర్ 27 మరియు 28 తేదీలలో
+                RucHiGOలో ఆర్డర్లు స్వీకరించబడవు.
+            </strong>
+            <br><br>
+
+            మా కస్టమర్లు, రెస్టారెంట్ భాగస్వాములు మరియు
+            డెలివరీ భాగస్వాముల భద్రత దృష్ట్యా ఆర్డర్లను
+            తాత్కాలికంగా నిలిపివేస్తున్నాము.
+            <br><br>
+
+            <strong>
+                వాతావరణ పరిస్థితులు అనుకూలిస్తే,
+                గురువారం, 2026 అక్టోబర్ 29 నుండి ఆర్డర్లు
+                యథావిధిగా తిరిగి ప్రారంభమవుతాయి.
+            </strong>
+            <br><br>
+
+            వాతావరణ పరిస్థితుల కారణంగా మరిన్ని మార్పులు ఉంటే
+            మీకు తెలియజేస్తాము. మీ సహకారానికి ధన్యవాదాలు.
         </p>
 
         <button onclick="closeAlert()">
@@ -6541,10 +6840,10 @@ CONTENT
         </button>
 
     </div>
-
 </div>
 
- 🎉 Your Ugadi Banner --> 
+
+ <!--🎉 Your Ugadi Banner --> 
 
 <!-- 🔥 FOOD / GROCERY SWITCH 
 <div class="home-switch">
@@ -8334,6 +8633,203 @@ document.addEventListener("DOMContentLoaded", function () {
 
   </div>
 </div>
+
+<!-- RucHiGO AI 
+<style>
+#ruchigo-chat-button {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    background: #168545;
+    color: white;
+    font-size: 27px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px #0003;
+    z-index: 99999;
+}
+
+#ruchigo-chat-box {
+    display: none;
+    position: fixed;
+    right: 20px;
+    bottom: 92px;
+    width: 340px;
+    max-width: calc(100vw - 30px);
+    height: 430px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 5px 30px #0003;
+    z-index: 99999;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+#ruchigo-chat-header {
+    background: #168545;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+}
+
+#ruchigo-chat-messages {
+    height: 300px;
+    overflow-y: auto;
+    padding: 12px;
+    font-size: 14px;
+}
+
+.ruchigo-message {
+    background: #f0f2f0;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.ruchigo-user {
+    background: #e0f5e7;
+    text-align: right;
+}
+
+#ruchigo-chat-form {
+    display: flex;
+    border-top: 1px solid #ddd;
+    padding: 8px;
+    gap: 6px;
+}
+
+#ruchigo-chat-input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+}
+
+#ruchigo-chat-form button {
+    background: #168545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    cursor: pointer;
+}
+</style>
+
+<button id="ruchigo-chat-button"
+        type="button"
+        aria-label="Open RucHiGO AI support">💬</button>
+
+<div id="ruchigo-chat-box">
+    <div id="ruchigo-chat-header">
+        <span>🤖 RucHiGO Assistant</span>
+        <button id="ruchigo-chat-close"
+                type="button"
+                style="background:none;color:white;border:0;font-size:22px;cursor:pointer"
+                aria-label="Close chat">×</button>
+    </div>
+
+    <div id="ruchigo-chat-messages" aria-live="polite">
+        <div class="ruchigo-message">
+            Hi! Welcome to RucHiGO. How can I help you today?
+        </div>
+    </div>
+
+    <form id="ruchigo-chat-form">
+        <input id="ruchigo-chat-input"
+               type="text"
+               maxlength="1000"
+               placeholder="Ask me anything..."
+               autocomplete="off"
+               required>
+        <button type="submit" aria-label="Send message">➤</button>
+    </form>
+</div>
+
+<script>
+(() => {
+    const button = document.getElementById("ruchigo-chat-button");
+    const box = document.getElementById("ruchigo-chat-box");
+    const close = document.getElementById("ruchigo-chat-close");
+    const form = document.getElementById("ruchigo-chat-form");
+    const input = document.getElementById("ruchigo-chat-input");
+    const messages = document.getElementById("ruchigo-chat-messages");
+
+    button.addEventListener("click", () => {
+        box.style.display = "block";
+        input.focus();
+    });
+
+    close.addEventListener("click", () => {
+        box.style.display = "none";
+    });
+
+    function addMessage(text, isUser = false) {
+        const item = document.createElement("div");
+        item.className = "ruchigo-message" +
+            (isUser ? " ruchigo-user" : "");
+        item.textContent = text;
+        messages.appendChild(item);
+        messages.scrollTop = messages.scrollHeight;
+        return item;
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const message = input.value.trim();
+        if (!message) return;
+
+        addMessage(message, true);
+        input.value = "";
+        input.disabled = true;
+
+        const sendButton = form.querySelector("button");
+        sendButton.disabled = true;
+
+        const loading = addMessage("Thinking...");
+
+        try {
+            const response = await fetch("/api/customer/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "same-origin",
+                body: JSON.stringify({ message })
+            });
+
+            const data = await response.json();
+            loading.remove();
+
+            if (!response.ok) {
+                addMessage(data.error ||
+                    "Unable to respond right now. Please try again.");
+            } else {
+                addMessage(data.reply || "No response received.");
+            }
+        } catch (error) {
+            loading.remove();
+            addMessage("Connection problem. Please try again.");
+            console.error("RucHiGO chatbot error:", error);
+        } finally {
+            input.disabled = false;
+            sendButton.disabled = false;
+            input.focus();
+        }
+    });
+})();
+</script>
+ End RucHiGO AI Chatbot -->
 
 
 <div id="notification-banner" class="notify-banner">
