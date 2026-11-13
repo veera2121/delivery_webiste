@@ -449,7 +449,7 @@ a {
 .emp-table {
     width: 100%;
 
-    min-width: 1340px;
+    min-width: 1990px;
 
     border-collapse: separate;
     border-spacing: 0;
@@ -512,63 +512,69 @@ a {
    ========================================================= */
 
 .emp-table th:nth-child(1),
-.emp-table td:nth-child(1) {
-    width: 75px;
-}
-
+.emp-table td:nth-child(1) { width: 75px; }
 .emp-table th:nth-child(2),
-.emp-table td:nth-child(2) {
-    width: 125px;
-}
-
+.emp-table td:nth-child(2) { width: 125px; }
 .emp-table th:nth-child(3),
-.emp-table td:nth-child(3) {
-    width: 145px;
-}
-
+.emp-table td:nth-child(3) { width: 145px; }
 .emp-table th:nth-child(4),
-.emp-table td:nth-child(4) {
-    width: 195px;
-}
-
+.emp-table td:nth-child(4) { width: 195px; }
 .emp-table th:nth-child(5),
-.emp-table td:nth-child(5) {
-    width: 250px;
-}
-
+.emp-table td:nth-child(5) { width: 300px; }
 .emp-table th:nth-child(6),
-.emp-table td:nth-child(6) {
-    width: 80px;
-}
-
+.emp-table td:nth-child(6) { width: 160px; }
 .emp-table th:nth-child(7),
-.emp-table td:nth-child(7) {
-    width: 90px;
-}
-
+.emp-table td:nth-child(7) { width: 130px; }
 .emp-table th:nth-child(8),
-.emp-table td:nth-child(8) {
-    width: 125px;
-}
-
+.emp-table td:nth-child(8) { width: 225px; }
 .emp-table th:nth-child(9),
-.emp-table td:nth-child(9) {
-    width: 180px;
-}
-
+.emp-table td:nth-child(9) { width: 155px; }
 .emp-table th:nth-child(10),
-.emp-table td:nth-child(10) {
-    width: 120px;
-}
-
+.emp-table td:nth-child(10) { width: 115px; }
 .emp-table th:nth-child(11),
-.emp-table td:nth-child(11) {
-    width: 150px;
+.emp-table td:nth-child(11) { width: 150px; }
+.emp-table th:nth-child(12),
+.emp-table td:nth-child(12) { width: 165px; }
+.emp-table th:nth-child(13),
+.emp-table td:nth-child(13) { width: 150px; }
+
+
+/* =========================================================
+   STICKY ORDER NUMBER
+   Keep the ID visible when the wide orders table is scrolled
+   horizontally, so status/actions remain identifiable.
+   ========================================================= */
+
+.emp-table th:first-child,
+.emp-table td:first-child {
+    position: sticky;
+    left: 0;
+    width: 78px;
+    min-width: 78px;
+    max-width: 78px;
+    box-sizing: border-box;
+    border-right: 1px solid var(--border);
+    box-shadow: 4px 0 8px rgba(15, 23, 42, 0.06);
 }
 
-.emp-table th:nth-child(12),
-.emp-table td:nth-child(12) {
-    width: 130px;
+/* Keep the sticky header above all body cells. */
+.emp-table th:first-child {
+    z-index: 8;
+    background: #f8fafc;
+}
+
+/* Opaque cell backgrounds prevent scrolled columns showing through. */
+.emp-table td:first-child {
+    z-index: 2;
+    background: #ffffff;
+}
+
+.emp-table tbody tr:hover td:first-child {
+    background: #f8fffd;
+}
+
+.emp-table tbody tr.new-order td:first-child {
+    background: #f0fdf9;
 }
 
 
@@ -616,6 +622,83 @@ a {
 
 .new-order {
     animation: newOrderPulse 1.8s infinite;
+}
+
+
+/* =========================================================
+   RESTAURANT NAME + LOCATION BADGE
+   ========================================================= */
+
+
+/* Universal search: matching order location summary */
+.search-location-summary {
+    margin: 10px 0 16px;
+    padding: 12px 14px;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.search-location-summary strong {
+    font-weight: 800;
+}
+.search-location-summary .search-location-chip {
+    display: inline-block;
+    margin: 4px 5px 0 0;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.restaurant-order-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.restaurant-order-name {
+    color: #172033;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.5;
+}
+
+.restaurant-location-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    max-width: 180px;
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.restaurant-location-missing {
+    padding: 4px 7px;
+    border-radius: 7px;
+    background: #fff7ed;
+    color: #c2410c;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.muted-restaurant {
+    color: #98a2b3;
+    font-size: 10px;
 }
 
 
@@ -686,11 +769,29 @@ a {
 .item-line {
     display: flex;
     align-items: center;
-
     gap: 4px;
-    flex-wrap: wrap;
-
+    flex-wrap: nowrap;
+    height: 25px;
+    min-height: 25px;
     margin-bottom: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.item-line .food-name {
+    display: inline-block;
+    flex: 0 1 auto;
+    max-width: 125px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.item-line .tag {
+    flex: 0 1 auto;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .tag {
@@ -725,6 +826,165 @@ a {
 .price-tag {
     background: #fffbeb;
     color: #92400e;
+}
+
+/* Original price + R-Offer selling price in the employee order list */
+.item-price-stack {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-left: 2px;
+    white-space: nowrap;
+}
+
+.item-price-column {
+    min-width: 140px;
+    white-space: nowrap;
+}
+
+.item-price-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 5px;
+    height: 25px;
+    min-height: 25px;
+    margin-bottom: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.item-price-row:last-of-type {
+    margin-bottom: 0;
+}
+
+.price-original {
+    color: #98a2b3;
+    font-size: 9px;
+    font-weight: 650;
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+
+.price-discounted {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #ecfdf3;
+    color: #15803d;
+    font-size: 9.5px;
+    font-weight: 800;
+}
+
+.price-normal {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 9.5px;
+    font-weight: 750;
+}
+
+/* Delivery fee + customer delivery distance */
+.delivery-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    min-width: 92px;
+}
+.delivery-distance {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 6px;
+    border-radius: 7px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 10px;
+    font-weight: 750;
+    white-space: nowrap;
+}
+.delivery-fee {
+    color: #172033;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+/* Actual amount, order savings, and final payable in the Total column */
+.employee-total-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 190px;
+    padding: 9px;
+    border: 1px solid #e5eaf0;
+    border-radius: 10px;
+    background: #fbfdff;
+}
+.employee-total-title {
+    color: #667085;
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+.employee-total-line {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    color: #475467;
+    font-size: 10px;
+    line-height: 1.35;
+}
+.employee-total-line strong,
+.employee-total-line .money {
+    flex-shrink: 0;
+    color: #344054;
+    font-weight: 750;
+    white-space: nowrap;
+}
+.employee-total-saving {
+    color: #15803d;
+    font-weight: 750;
+}
+.employee-total-saving .money {
+    color: #15803d;
+}
+.employee-savings-details {
+    color: #667085;
+    font-size: 9px;
+    line-height: 1.45;
+}
+.employee-total-divider {
+    width: 100%;
+    margin: 1px 0;
+    border: 0;
+    border-top: 1px dashed #d0d5dd;
+}
+.employee-total-payable {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-top: 2px;
+}
+.employee-total-payable-label {
+    color: #344054;
+    font-size: 10px;
+    font-weight: 800;
+}
+.employee-total-payable-value {
+    color: #0f766e;
+    font-size: 17px;
+    font-weight: 900;
+    line-height: 1.2;
+    white-space: nowrap;
 }
 
 .more-items {
@@ -1251,7 +1511,7 @@ a {
     }
 
     .emp-table {
-        min-width: 1260px;
+        min-width: 1880px;
     }
 
     .stats-table {
@@ -1342,6 +1602,35 @@ a {
 
 </div>
 
+
+<div class="employee-location-info">
+    <strong>Assigned working locations:</strong>
+
+    {% for location in assigned_locations %}
+        <span class="location-tag">{{ location }}</span>
+    {% else %}
+        <span>No locations assigned. Contact your administrator.</span>
+    {% endfor %}
+</div>
+
+<style>
+.employee-location-info {
+    padding: 12px;
+    margin: 12px 0 20px;
+    background: #f1f8f4;
+    border-radius: 10px;
+}
+
+.location-tag {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 3px;
+    border-radius: 20px;
+    background: #d9f2e2;
+    color: #146c43;
+    font-size: 13px;
+}
+</style>
 
 <div class="emp-top-actions">
 
@@ -1450,7 +1739,7 @@ a {
     <input
         type="text"
         id="searchInput"
-        placeholder="🔍 Search Order / Name / Phone"
+        placeholder="🔍 Search Order / Customer / Phone / Location"
     >
 
 
@@ -1499,6 +1788,9 @@ a {
 
 </div>
 
+<div id="searchLocationSummary" class="search-location-summary" aria-live="polite" hidden></div>
+<div id="globalOrderSearchResults" class="search-location-summary" aria-live="polite" hidden></div>
+
 
 <!-- =========================================================
      ORDER ROW MACRO
@@ -1508,6 +1800,9 @@ a {
 
 <tr
     data-order-id="{{ order.id }}"
+    data-order-number="{{ order.order_id or '' }}"
+    data-location-name="{{ order.restaurant.location if order.restaurant and order.restaurant.location else '' }}"
+    data-restaurant-name="{{ order.restaurant.name if order.restaurant else '' }}"
     data-status="{{ order.status }}"
     class="{% if order.status == 'Pending' %}new-order{% endif %}"
 >
@@ -1524,18 +1819,33 @@ a {
 </td>
 
 
-<!-- RESTAURANT -->
+<!-- RESTAURANT + LOCATION -->
 
-<td data-label="Restaurant">
+<td data-label="Restaurant / Location">
 
     {% if order.restaurant %}
 
-        {{ order.restaurant.name }}
+        <div class="restaurant-order-info">
+
+            <strong class="restaurant-order-name">
+                🍽️ {{ order.restaurant.name }}
+            </strong>
+
+            {% if order.restaurant.location %}
+                <div class="restaurant-location-badge">
+                    <span>📍</span>
+                    <span>{{ order.restaurant.location }}</span>
+                </div>
+            {% else %}
+                <div class="restaurant-location-missing">
+                    Location not set
+                </div>
+            {% endif %}
+
+        </div>
 
     {% else %}
-
-        -
-
+        <span class="muted-restaurant">Restaurant unavailable</span>
     {% endif %}
 
 </td>
@@ -1622,11 +1932,6 @@ a {
             ×{{ item.quantity }}
         </span>
 
-
-        <span class="tag price-tag">
-            ₹{{ item.price }}
-        </span>
-
     </div>
 
     {% endfor %}
@@ -1646,23 +1951,114 @@ a {
 </td>
 
 
-<!-- DELIVERY CHARGE -->
+<!-- ITEM PRICE BREAKDOWN (separate column) -->
 
-<td data-label="Delivery">
+<td data-label="Item Price" class="item-price-column">
 
-    ₹{{ order.delivery_charge or 0 }}
+    {% for item in order.items[:3] %}
+
+        {% set item_final_price = item.price|default(0, true)|float %}
+        {% set item_original_price = item.mrp|default(0, true)|float %}
+
+        <div class="item-price-row" aria-label="Price for {{ item.item_name }}">
+            {% if item_original_price > item_final_price %}
+                <span class="price-original" title="Original price">
+                    ₹{{ "%.2f"|format(item_original_price) }}
+                </span>
+                <span class="price-discounted" title="Offer price">
+                    ₹{{ "%.2f"|format(item_final_price) }}
+                </span>
+            {% else %}
+                <span class="price-normal">
+                    ₹{{ "%.2f"|format(item_final_price) }}
+                </span>
+            {% endif %}
+        </div>
+
+    {% endfor %}
+
+    {% if order.items|length > 3 %}
+        <div class="more-items">+{{ order.items|length - 3 }} more</div>
+    {% endif %}
 
 </td>
 
 
-<!-- TOTAL -->
+<!-- DELIVERY CHARGE + CUSTOMER DISTANCE -->
+
+<td data-label="Delivery">
+    <div class="delivery-info">
+        {% if order.distance_km is defined and order.distance_km is not none %}
+            <span class="delivery-distance" title="Customer delivery distance">
+                📍 {{ "%.2f"|format(order.distance_km|float) }} km
+            </span>
+        {% else %}
+            <span class="delivery-distance" title="Delivery distance not saved">
+                📍 Distance N/A
+            </span>
+        {% endif %}
+        <span class="delivery-fee">₹{{ "%.2f"|format(order.delivery_charge|default(0, true)|float) }}</span>
+    </div>
+</td>
+
+
+<!-- TOTAL: ACTUAL PRICE + SAVINGS + FINAL PAYABLE -->
 
 <td data-label="Total">
+    {% set items_subtotal = order.items_total|default(0, true)|float %}
+    {% set delivery_amount = order.delivery_charge|default(0, true)|float %}
+    {% set extra_charge_amount = order.extra_charge|default(0, true)|float %}
+    {% set coupon_discount_amount = order.discount|default(0, true)|float %}
+    {% set r_offer_amount = order.restaurant_offer_discount|default(0, true)|float %}
+    {% set coins_discount_amount = order.coins_discount_amount|default(0, true)|float %}
+    {% set manual_discount_amount = order.manual_discount|default(0, true)|float %}
+    {% set actual_order_amount = items_subtotal + delivery_amount + extra_charge_amount %}
+    {% set total_savings = coupon_discount_amount + r_offer_amount + coins_discount_amount + manual_discount_amount %}
 
-    <strong>
-        ₹{{ order.final_total }}
-    </strong>
+    <div class="employee-total-card">
+        <div class="employee-total-title">Order price breakdown</div>
 
+        <div class="employee-total-line">
+            <span>Actual price</span>
+            <span class="money">₹{{ "%.2f"|format(actual_order_amount) }}</span>
+        </div>
+        <div class="employee-total-line">
+            <span>Items subtotal</span>
+            <span class="money">₹{{ "%.2f"|format(items_subtotal) }}</span>
+        </div>
+        <div class="employee-total-line">
+            <span>Delivery fee</span>
+            <span class="money">₹{{ "%.2f"|format(delivery_amount) }}</span>
+        </div>
+        {% if extra_charge_amount > 0 %}
+        <div class="employee-total-line">
+            <span>Extra charge</span>
+            <span class="money">₹{{ "%.2f"|format(extra_charge_amount) }}</span>
+        </div>
+        {% endif %}
+
+        <hr class="employee-total-divider">
+
+        <div class="employee-total-line employee-total-saving">
+            <span>💚 You save</span>
+            <span class="money">− ₹{{ "%.2f"|format(total_savings) }}</span>
+        </div>
+        {% if total_savings > 0 %}
+        <div class="employee-savings-details">
+            {% if r_offer_amount > 0 %}R-Offer: ₹{{ "%.2f"|format(r_offer_amount) }}{% endif %}
+            {% if coupon_discount_amount > 0 %}{% if r_offer_amount > 0 %} · {% endif %}Coupon: ₹{{ "%.2f"|format(coupon_discount_amount) }}{% endif %}
+            {% if coins_discount_amount > 0 %}{% if r_offer_amount > 0 or coupon_discount_amount > 0 %} · {% endif %}Coins: ₹{{ "%.2f"|format(coins_discount_amount) }}{% endif %}
+            {% if manual_discount_amount > 0 %}{% if r_offer_amount > 0 or coupon_discount_amount > 0 or coins_discount_amount > 0 %} · {% endif %}Manual: ₹{{ "%.2f"|format(manual_discount_amount) }}{% endif %}
+        </div>
+        {% endif %}
+
+        <hr class="employee-total-divider">
+
+        <div class="employee-total-payable">
+            <span class="employee-total-payable-label">Final payable</span>
+            <span class="employee-total-payable-value">₹{{ "%.2f"|format(order.final_total|default(0, true)|float) }}</span>
+        </div>
+    </div>
 </td>
 
 
@@ -2074,12 +2470,13 @@ a {
                 <tr>
 
                     <th>ID</th>
-                    <th>Restaurant</th>
+                    <th>Restaurant / Location</th>
                     <th>Customer</th>
                     <th>Address</th>
                     <th>Items</th>
-                    <th>Delivery ₹</th>
-                    <th>Total ₹</th>
+                    <th>Item Price ₹</th>
+                    <th>Delivery / Distance</th>
+                    <th>Total / Savings</th>
                     <th>Placed Time</th>
                     <th>Status</th>
                     <th>Delivery Boy</th>
@@ -2278,12 +2675,13 @@ a {
                 <tr>
 
                     <th>ID</th>
-                    <th>Restaurant</th>
+                    <th>Restaurant / Location</th>
                     <th>Customer</th>
                     <th>Address</th>
                     <th>Items</th>
-                    <th>Delivery ₹</th>
-                    <th>Total ₹</th>
+                    <th>Item Price ₹</th>
+                    <th>Delivery / Distance</th>
+                    <th>Total / Savings</th>
                     <th>Placed Time</th>
                     <th>Status</th>
                     <th>Delivery Boy</th>
@@ -2482,12 +2880,13 @@ a {
                 <tr>
 
                     <th>ID</th>
-                    <th>Restaurant</th>
+                    <th>Restaurant / Location</th>
                     <th>Customer</th>
                     <th>Address</th>
                     <th>Items</th>
-                    <th>Delivery ₹</th>
-                    <th>Total ₹</th>
+                    <th>Item Price ₹</th>
+                    <th>Delivery / Distance</th>
+                    <th>Total / Savings</th>
                     <th>Placed Time</th>
                     <th>Status</th>
                     <th>Delivery Boy</th>
@@ -2712,105 +3111,187 @@ a {
 
 function applyFilters() {
 
-    const searchInput =
-        document.getElementById("searchInput");
-
-    const statusFilter =
-        document.getElementById("statusFilter");
-
-
-    const search =
-        searchInput
-            ? searchInput.value.toLowerCase().trim()
-            : "";
-
-
-    const status =
-        statusFilter
-            ? statusFilter.value.toLowerCase().trim()
-            : "";
-
-
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const search = searchInput ? searchInput.value.toLowerCase().trim() : "";
+    const status = statusFilter ? statusFilter.value.toLowerCase().trim() : "";
+    const summary = document.getElementById("searchLocationSummary");
     let count = 0;
+    const matches = [];
 
+    document.querySelectorAll(".emp-table tbody tr").forEach(row => {
+        const text = (row.innerText || "").toLowerCase();
+        const rowStatus = (row.dataset.status || "").toLowerCase();
+        let show = true;
 
-    document
-        .querySelectorAll(".emp-table tbody tr")
-        .forEach(row => {
+        // The row text includes order number, customer, phone, restaurant,
+        // and the restaurant location displayed in the table.
+        if (search && !text.includes(search)) show = false;
+        if (status && rowStatus !== status) show = false;
 
-            const text =
-                row.innerText.toLowerCase();
+        row.style.display = show ? "" : "none";
+        if (show) {
+            count++;
+            if (search) matches.push(row);
+        }
+    });
 
-
-            const rowStatus =
-                (
-                    row.dataset.status || ""
-                ).toLowerCase();
-
-
-            let show = true;
-
-
-            if (
-                search &&
-                !text.includes(search)
-            ) {
-                show = false;
-            }
-
-
-            if (
-                status &&
-                rowStatus !== status
-            ) {
-                show = false;
-            }
-
-
-            row.style.display =
-                show ? "" : "none";
-
-
-            if (show) {
-                count++;
-            }
-
-        });
-
-
-    const countEl =
-        document.getElementById("orderCount");
-
-
+    const countEl = document.getElementById("orderCount");
     if (countEl) {
-
-        /*
-         * While filtering:
-         * show visible rows.
-         */
-
         if (search || status) {
-
-            countEl.innerText =
-                count;
-
+            countEl.innerText = count;
         } else {
-
-            /*
-             * Restore total database count.
-             */
-
-            countEl.innerText =
-                "{{ today_pagination.total
+            countEl.innerText = "{{ today_pagination.total
                  + yesterday_pagination.total
                  + older_pagination.total }}";
-
         }
-
     }
 
+    // Show the location beside search results so customer-care staff can
+    // immediately identify the branch for each matching visible order.
+    if (summary) {
+        if (search) {
+            summary.hidden = false;
+            if (!matches.length) {
+                summary.textContent = "No matching orders in the orders currently loaded on this page. Use the dashboard pagination or a database-backed universal search to find older orders.";
+            } else {
+                summary.innerHTML = "<strong>Matching orders and locations:</strong><div class=\"search-location-results\"></div>";
+                const results = summary.querySelector(".search-location-results");
+                matches.slice(0, 8).forEach(row => {
+                    const orderNo = row.dataset.orderNumber || row.querySelector("td")?.innerText.trim() || "Order";
+                    const restaurant = row.dataset.restaurantName || "Restaurant unavailable";
+                    const location = row.dataset.locationName || "Location not set";
+                    const line = document.createElement("div");
+                    line.style.marginTop = "5px";
+                    const orderStrong = document.createElement("strong");
+                    orderStrong.textContent = orderNo + " — ";
+                    const restaurantText = document.createTextNode(restaurant + " · ");
+                    const locationChip = document.createElement("span");
+                    locationChip.className = "search-location-chip";
+                    locationChip.textContent = "📍 " + location;
+                    line.append(orderStrong, restaurantText, locationChip);
+                    results.appendChild(line);
+                });
+                if (matches.length > 8) {
+                    const more = document.createElement("div");
+                    more.style.marginTop = "6px";
+                    more.textContent = `Showing first 8 of ${matches.length} matching loaded orders.`;
+                    results.appendChild(more);
+                }
+            }
+        } else {
+            summary.hidden = true;
+            summary.textContent = "";
+        }
+    }
 }
 
+/* =========================================================
+   DATABASE-BACKED SEARCH ACROSS ALL LOCATIONS
+   Requires Flask endpoint: /employee/api/order-location-search
+   ========================================================= */
+let globalSearchTimer = null;
+let lastGlobalSearchTerm = "";
+
+async function searchAllLocations(term) {
+    const resultsBox = document.getElementById("globalOrderSearchResults");
+    if (!resultsBox) return;
+
+    const query = (term || "").trim();
+    if (query.length < 2) {
+        resultsBox.hidden = true;
+        resultsBox.replaceChildren();
+        lastGlobalSearchTerm = "";
+        return;
+    }
+
+    lastGlobalSearchTerm = query;
+    resultsBox.hidden = false;
+    resultsBox.textContent = "Searching all locations…";
+
+    try {
+        const response = await fetch(
+            "/employee/api/order-location-search?q=" + encodeURIComponent(query),
+            { method: "GET", credentials: "same-origin", headers: { "Accept": "application/json" } }
+        );
+        const payload = await response.json();
+
+        // Ignore an older response if the user has already typed a new query.
+        if (lastGlobalSearchTerm !== query) return;
+
+        resultsBox.replaceChildren();
+        const heading = document.createElement("strong");
+        heading.textContent = "All-location database search";
+        resultsBox.appendChild(heading);
+
+        if (!response.ok || !payload.success) {
+            const error = document.createElement("div");
+            error.style.marginTop = "8px";
+            error.textContent = payload.message || "Unable to search orders right now.";
+            resultsBox.appendChild(error);
+            return;
+        }
+
+        if (!payload.results || payload.results.length === 0) {
+            const empty = document.createElement("div");
+            empty.style.marginTop = "8px";
+            empty.textContent = "No orders found across all locations for this search.";
+            resultsBox.appendChild(empty);
+            return;
+        }
+
+        payload.results.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "global-search-result";
+            card.style.marginTop = "9px";
+            card.style.padding = "10px";
+            card.style.border = "1px solid var(--border, #dbe3ea)";
+            card.style.borderRadius = "10px";
+
+            const orderLine = document.createElement("div");
+            const orderStrong = document.createElement("strong");
+            orderStrong.textContent = "#" + (item.order_id || "Unknown order");
+            orderLine.appendChild(orderStrong);
+            if (item.status) {
+                const status = document.createElement("span");
+                status.style.marginLeft = "8px";
+                status.textContent = "· " + item.status;
+                orderLine.appendChild(status);
+            }
+
+            const restaurantLine = document.createElement("div");
+            restaurantLine.style.marginTop = "4px";
+            restaurantLine.textContent = "Restaurant: " + (item.restaurant_name || "Unavailable");
+
+            const locationLine = document.createElement("div");
+            locationLine.style.marginTop = "4px";
+            locationLine.style.fontWeight = "800";
+            locationLine.textContent = "📍 Location: " + (item.location || "Location not set");
+
+            const dateLine = document.createElement("div");
+            dateLine.style.marginTop = "3px";
+            dateLine.style.fontSize = "12px";
+            dateLine.style.color = "var(--muted, #667085)";
+            dateLine.textContent = item.created_at ? "Placed: " + item.created_at : "";
+
+            card.append(orderLine, restaurantLine, locationLine, dateLine);
+            resultsBox.appendChild(card);
+        });
+
+        if (payload.truncated) {
+            const note = document.createElement("div");
+            note.style.marginTop = "8px";
+            note.textContent = "Showing the first 10 matches. Refine the search for more specific results.";
+            resultsBox.appendChild(note);
+        }
+    } catch (error) {
+        if (lastGlobalSearchTerm !== query) return;
+        resultsBox.replaceChildren();
+        const message = document.createElement("div");
+        message.textContent = "Global search could not connect. Make sure the Flask search route has been added to app.py.";
+        resultsBox.appendChild(message);
+    }
+}
 
 /* =========================================================
    FILTER EVENTS
@@ -2818,10 +3299,12 @@ function applyFilters() {
 
 document
     .getElementById("searchInput")
-    ?.addEventListener(
-        "input",
-        applyFilters
-    );
+    ?.addEventListener("input", function () {
+        applyFilters();
+        clearTimeout(globalSearchTimer);
+        const term = this.value;
+        globalSearchTimer = setTimeout(() => searchAllLocations(term), 300);
+    });
 
 
 document
