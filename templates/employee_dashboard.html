@@ -1901,7 +1901,7 @@ a {
 
 <td data-label="Items">
 
-    {% for item in order.items[:3] %}
+    {% for item in order.items %}
 
     <div class="item-line">
 
@@ -1909,24 +1909,17 @@ a {
             🍽️ {{ item.item_name }}
         </span>
 
-
         {% if item.category %}
-
         <span class="tag category-tag">
             {{ item.category }}
         </span>
-
         {% endif %}
 
-
         {% if item.weight %}
-
         <span class="tag weight-tag">
             {{ item.weight }}
         </span>
-
         {% endif %}
-
 
         <span class="tag qty-tag">
             ×{{ item.quantity }}
@@ -1935,18 +1928,6 @@ a {
     </div>
 
     {% endfor %}
-
-
-    {% if order.items|length > 3 %}
-
-    <div class="more-items">
-
-        +{{ order.items|length - 3 }}
-        more items
-
-    </div>
-
-    {% endif %}
 
 </td>
 

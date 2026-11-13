@@ -117,65 +117,53 @@
 
     <!-- ITEMS -->
 
-    <div class="mobile-order-section">
+<div class="mobile-order-section">
 
-        <span class="mobile-field-label">
-            Items
-        </span>
+    <span class="mobile-field-label">
+        Items
+    </span>
 
-        <div class="mobile-items-list">
+    <div class="mobile-items-list">
 
-            {% for item in order.items[:3] %}
+        {% for item in order.items %}
 
-            <div class="mobile-item-card">
+        <div class="mobile-item-card">
 
-                <strong class="food-name">
-                    🍽️ {{ item.item_name }}
-                </strong>
+            <strong class="food-name">
+                🍽️ {{ item.item_name }}
+            </strong>
 
-                <div class="mobile-item-tags">
+            <div class="mobile-item-tags">
 
-                    {% if item.category %}
+                {% if item.category %}
+                <span class="tag category-tag">
+                    {{ item.category }}
+                </span>
+                {% endif %}
 
-                    <span class="tag category-tag">
-                        {{ item.category }}
-                    </span>
+                {% if item.weight %}
+                <span class="tag weight-tag">
+                    {{ item.weight }}
+                </span>
+                {% endif %}
 
-                    {% endif %}
+                <span class="tag qty-tag">
+                    ×{{ item.quantity }}
+                </span>
 
-                    {% if item.weight %}
-
-                    <span class="tag weight-tag">
-                        {{ item.weight }}
-                    </span>
-
-                    {% endif %}
-
-                    <span class="tag qty-tag">
-                        ×{{ item.quantity }}
-                    </span>
-
-                    <span class="tag price-tag">
-                        ₹{{ item.price }}
-                    </span>
-
-                </div>
+                <span class="tag price-tag">
+                    ₹{{ item.price }}
+                </span>
 
             </div>
-
-            {% endfor %}
-
-            {% if order.items|length > 3 %}
-
-            <div class="more-items">
-                +{{ order.items|length - 3 }} more items
-            </div>
-
-            {% endif %}
 
         </div>
 
+        {% endfor %}
+
     </div>
+
+</div>
 
 
     <!-- PRICE DETAILS -->

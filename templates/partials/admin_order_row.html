@@ -45,54 +45,43 @@
     </td>
 
     <!-- ITEMS -->
+<!-- ITEMS -->
 
-    <td data-label="Items" class="items-cell">
+<td data-label="Items" class="items-cell">
 
-        {% for item in order.items[:3] %}
+    {% for item in order.items %}
 
-        <div class="item-line">
+    <div class="item-line">
 
-            <span class="food-name">
-                🍽️ {{ item.item_name }}
-            </span>
+        <span class="food-name">
+            🍽️ {{ item.item_name }}
+        </span>
 
-            {% if item.category %}
-
-            <span class="tag category-tag">
-                {{ item.category }}
-            </span>
-
-            {% endif %}
-
-            {% if item.weight %}
-
-            <span class="tag weight-tag">
-                {{ item.weight }}
-            </span>
-
-            {% endif %}
-
-            <span class="tag qty-tag">
-                ×{{ item.quantity }}
-            </span>
-
-            <span class="tag price-tag">
-                ₹{{ item.price }}
-            </span>
-
-        </div>
-
-        {% endfor %}
-
-        {% if order.items|length > 3 %}
-
-        <div class="more-items">
-            +{{ order.items|length - 3 }} more items
-        </div>
-
+        {% if item.category %}
+        <span class="tag category-tag">
+            {{ item.category }}
+        </span>
         {% endif %}
 
-    </td>
+        {% if item.weight %}
+        <span class="tag weight-tag">
+            {{ item.weight }}
+        </span>
+        {% endif %}
+
+        <span class="tag qty-tag">
+            ×{{ item.quantity }}
+        </span>
+
+        <span class="tag price-tag">
+            ₹{{ item.price }}
+        </span>
+
+    </div>
+
+    {% endfor %}
+
+</td>
 
     <!-- ACTIONS -->
 
