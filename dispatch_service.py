@@ -7,7 +7,8 @@ from models import (
     db,
     Order,
     DeliveryPerson,
-    DeliverySettings
+    DeliverySettings,
+    DeliveryAssignmentAttempt,
 )
 
 from notification_service import (
@@ -21,7 +22,8 @@ from notification_service import (
 
 ASSIGNMENT_TIMEOUT_SECONDS = 30
 
-REJECTION_COOLDOWN_MINUTES = 5
+# Previous Reject/Expired attempts are tracked per order+rider in the DB.
+# This prevents the same rider receiving the same order again.
 
 # ----------------------------------------------------------
 # Route batching
@@ -62,6 +64,168 @@ RIDER_ACCEPTED_RESPONSE = "Accepted"
 RIDER_REJECTED_RESPONSE = "Rejected"
 
 RIDER_EXPIRED_RESPONSE = "Expired"
+
+# Terminal outcomes that exclude a rider from future attempts on this order.
+TERMINAL_ATTEMPT_STATUSES = {
+    RIDER_REJECTED_RESPONSE,
+    RIDER_EXPIRED_RESPONSE,
+}
+
+
+# ==========================================================
+# PERSISTENT ORDER/RIDER ASSIGNMENT HISTORY
+# ==========================================================
+
+def _attempts_for_order(order_id):
+    return DeliveryAssignmentAttempt.query.filter_by(order_id=order_id)
+
+
+def _terminal_attempt_for_rider(order_id, rider_id):
+    """Return a prior rejected/expired attempt for this exact rider/order."""
+    return (
+        _attempts_for_order(order_id)
+        .filter(
+            DeliveryAssignmentAttempt.rider_id == rider_id,
+            DeliveryAssignmentAttempt.status.in_(TERMINAL_ATTEMPT_STATUSES),
+        )
+        .order_by(DeliveryAssignmentAttempt.id.desc())
+        .first()
+    )
+
+
+def attempted_rider_ids_for_order(order_id):
+    """Riders who already rejected or timed out on this order."""
+    rows = (
+        _attempts_for_order(order_id)
+        .filter(DeliveryAssignmentAttempt.status.in_(TERMINAL_ATTEMPT_STATUSES))
+        .with_entities(DeliveryAssignmentAttempt.rider_id)
+        .distinct()
+        .all()
+    )
+    return {row[0] for row in rows if row[0] is not None}
+
+
+def _sync_legacy_terminal_outcome(order):
+    """Backfill history if a legacy reject/expiry route cleared the rider ID.
+
+    The currently deployed reject route sets order.rider_response and clears
+    delivery_person_id. The assignment row retains the rider ID, so use the
+    latest still-pending attempt to reconcile it to Rejected/Expired.
+    """
+    if not order or order.delivery_person_id is not None:
+        return
+
+    outcome = (getattr(order, "rider_response", None) or "").strip()
+    if outcome not in TERMINAL_ATTEMPT_STATUSES:
+        return
+
+    attempt = (
+        _attempts_for_order(order.id)
+        .filter(DeliveryAssignmentAttempt.status == RIDER_PENDING_RESPONSE)
+        .order_by(DeliveryAssignmentAttempt.id.desc())
+        .first()
+    )
+    if attempt:
+        attempt.status = outcome
+        attempt.resolved_at = (
+            getattr(order, "rejected_at", None) or datetime.utcnow()
+        )
+        db.session.flush()
+        print(
+            f"🧾 HISTORY RECONCILED: order={order.id} "
+            f"rider={attempt.rider_id} outcome={outcome}"
+        )
+
+
+def record_assignment_attempt(order, rider, now=None):
+    """Create a Pending history row for a newly offered assignment.
+
+    Returns False if this rider has already rejected/timed out on the order,
+    or if a duplicate pending offer already exists for this order/rider.
+    Caller commits the order and history in the same transaction.
+    """
+    if not order or not rider:
+        return False
+
+    _sync_legacy_terminal_outcome(order)
+
+    terminal = _terminal_attempt_for_rider(order.id, rider.id)
+    if terminal:
+        print(
+            f"⛔ ASSIGNMENT HISTORY BLOCK: order={order.order_id} "
+            f"rider={rider.id} previous outcome={terminal.status}"
+        )
+        return False
+
+    pending = (
+        _attempts_for_order(order.id)
+        .filter(
+            DeliveryAssignmentAttempt.rider_id == rider.id,
+            DeliveryAssignmentAttempt.status == RIDER_PENDING_RESPONSE,
+        )
+        .order_by(DeliveryAssignmentAttempt.id.desc())
+        .first()
+    )
+    if pending:
+        print(
+            f"⛔ DUPLICATE OFFER BLOCK: order={order.order_id} "
+            f"rider={rider.id} already has a pending attempt"
+        )
+        return False
+
+    now = now or datetime.utcnow()
+    attempt = DeliveryAssignmentAttempt(
+        order_id=order.id,
+        rider_id=rider.id,
+        status=RIDER_PENDING_RESPONSE,
+        assigned_at=now,
+        expires_at=getattr(order, "assignment_expires_at", None),
+        resolved_at=None,
+    )
+    db.session.add(attempt)
+    db.session.flush()
+    return True
+
+
+def record_assignment_outcome(order_id, rider_id, status, resolved_at=None):
+    """Record Rejected/Expired/Accepted for a rider/order from a Flask route.
+
+    Call this before clearing order.delivery_person_id in the accept/reject
+    route. It intentionally does not commit; the route's transaction commits.
+    """
+    status = (status or "").strip().title()
+    allowed = {RIDER_PENDING_RESPONSE, RIDER_REJECTED_RESPONSE,
+               RIDER_EXPIRED_RESPONSE, RIDER_ACCEPTED_RESPONSE}
+    if status not in allowed:
+        raise ValueError(f"Unsupported assignment outcome: {status}")
+
+    attempt = (
+        _attempts_for_order(order_id)
+        .filter(
+            DeliveryAssignmentAttempt.rider_id == rider_id,
+            DeliveryAssignmentAttempt.status == RIDER_PENDING_RESPONSE,
+        )
+        .order_by(DeliveryAssignmentAttempt.id.desc())
+        .first()
+    )
+
+    now = resolved_at or datetime.utcnow()
+    if attempt is None:
+        # Fallback for assignments made before history rows were introduced.
+        attempt = DeliveryAssignmentAttempt(
+            order_id=order_id,
+            rider_id=rider_id,
+            status=status,
+            assigned_at=now,
+            resolved_at=now if status != RIDER_PENDING_RESPONSE else None,
+        )
+        db.session.add(attempt)
+    else:
+        attempt.status = status
+        attempt.resolved_at = now if status != RIDER_PENDING_RESPONSE else None
+
+    db.session.flush()
+    return attempt
 
 
 # ==========================================================
@@ -334,72 +498,22 @@ def find_available_riders():
 # ==========================================================
 
 def find_nearest_rider(order):
-
-    restaurant = getattr(
+    """Find the nearest eligible rider who has not rejected/timed out on this order."""
+    if not order:
+        return None
+    _sync_legacy_terminal_outcome(order)
+    excluded_rider_ids = attempted_rider_ids_for_order(order.id)
+    return find_nearest_rider_excluding(
         order,
-        "restaurant",
-        None
+        excluded_rider_ids=excluded_rider_ids,
     )
-
-    if not restaurant:
-        return None
-
-    settings = DeliverySettings.query.first()
-
-    if not settings:
-        return None
-
-    search_radius = float(
-        settings.rider_search_radius
-        or 5
-    )
-
-    riders = find_available_riders()
-
-    nearest = None
-
-    nearest_distance = float(
-        "inf"
-    )
-
-    for rider in riders:
-
-        if (
-            rider.latitude is None
-            or rider.longitude is None
-        ):
-            continue
-
-        distance = haversine(
-            restaurant.latitude,
-            restaurant.longitude,
-            rider.latitude,
-            rider.longitude
-        )
-
-        print(
-            f"Rider {rider.id} "
-            f"{rider.name}: "
-            f"{distance:.2f} KM"
-        )
-
-        if distance > search_radius:
-            continue
-
-        if distance < nearest_distance:
-
-            nearest = rider
-
-            nearest_distance = distance
-
-    return nearest
 
 
 # ==========================================================
 # ROUTE BATCHING
 # ==========================================================
 
-def find_route_batch_rider(order):
+def find_route_batch_rider(order, excluded_rider_ids=None):
     """
     Find a rider who is already delivering one order and
     whose current delivery destination is close to the
@@ -452,14 +566,17 @@ def find_route_batch_rider(order):
 
         return None
 
-    riders = (
-        DeliveryPerson.query
-        .filter(
-            DeliveryPerson.is_active.is_(True),
-            DeliveryPerson.is_online.is_(True)
-        )
-        .all()
+    excluded_rider_ids = set(excluded_rider_ids or [])
+
+    riders_query = DeliveryPerson.query.filter(
+        DeliveryPerson.is_active.is_(True),
+        DeliveryPerson.is_online.is_(True),
     )
+    if excluded_rider_ids:
+        riders_query = riders_query.filter(
+            ~DeliveryPerson.id.in_(excluded_rider_ids)
+        )
+    riders = riders_query.all()
 
     best_rider = None
     best_distance = float("inf")
@@ -634,6 +751,14 @@ def assign_delivery_to_order(
 
         return False
 
+    _sync_legacy_terminal_outcome(order)
+    if _terminal_attempt_for_rider(order.id, rider.id):
+        print(
+            f"⛔ BLOCKED REPEAT RIDER: order={order.order_id} "
+            f"rider={rider.id} already rejected/expired this order."
+        )
+        return False
+
     # ======================================================
     # RIDER VALIDATION
     # ======================================================
@@ -716,6 +841,11 @@ def assign_delivery_to_order(
         rider.is_available = False
 
         rider.last_assignment = now
+
+        # Persist assignment history atomically with the order assignment.
+        if not record_assignment_attempt(order, rider, now=now):
+            db.session.rollback()
+            return False
 
         db.session.commit()
 
@@ -858,6 +988,14 @@ def assign_batch_order_to_rider(
 
         return False
 
+    _sync_legacy_terminal_outcome(order)
+    if _terminal_attempt_for_rider(order.id, rider.id):
+        print(
+            f"⛔ BATCH HISTORY BLOCK: order={order.order_id} "
+            f"rider={rider.id} already rejected/expired this order."
+        )
+        return False
+
     # ======================================================
     # RIDER VALIDATION
     # ======================================================
@@ -991,6 +1129,10 @@ def assign_batch_order_to_rider(
 
         rider.last_assignment = now
 
+        if not record_assignment_attempt(order, rider, now=now):
+            db.session.rollback()
+            return False
+
         db.session.commit()
 
         print(
@@ -1096,7 +1238,7 @@ def assign_batch_order_to_rider(
 # ==========================================================
 
 def auto_assign_order(order):
-      # Always clean expired assignments first
+    # Clean expired assignments and persist their rider history first.
     cleanup_all_expired_assignments()
 
     if not order:
@@ -1122,6 +1264,14 @@ def auto_assign_order(order):
 
         return False
 
+    _sync_legacy_terminal_outcome(order)
+    excluded_rider_ids = attempted_rider_ids_for_order(order.id)
+    if excluded_rider_ids:
+        print(
+            f"🧾 AUTO-ASSIGN HISTORY: order={order.order_id} "
+            f"excluding prior riders={sorted(excluded_rider_ids)}"
+        )
+
     settings = DeliverySettings.query.first()
 
     if not settings:
@@ -1145,7 +1295,7 @@ def auto_assign_order(order):
     # ======================================================
 
     batch_rider = find_route_batch_rider(
-        order
+        order, excluded_rider_ids=excluded_rider_ids
     )
 
     if batch_rider:
@@ -1199,8 +1349,8 @@ def auto_assign_order(order):
     # 2. NORMAL NEAREST RIDER
     # ======================================================
 
-    rider = find_nearest_rider(
-        order
+    rider = find_nearest_rider_excluding(
+        order, excluded_rider_ids=excluded_rider_ids
     )
 
     if not rider:
@@ -1288,14 +1438,23 @@ def cleanup_expired_assignments_for_rider(
         )
 
         # --------------------------------------------------
+        # Record this rider's timeout before clearing assignment fields.
+        # --------------------------------------------------
+        record_assignment_outcome(
+            order.id, rider.id, RIDER_EXPIRED_RESPONSE,
+            resolved_at=order.assignment_expires_at or now,
+        )
+
+        # --------------------------------------------------
         # Return order to Ready
         # --------------------------------------------------
 
         order.status = READY_STATUS
 
-        order.rider_response = (
-            RIDER_EXPIRED_RESPONSE
-        )
+        order.rider_response = RIDER_EXPIRED_RESPONSE
+        # Preserve the timeout time so the order does not immediately
+        # return to the same dispatch loop as a fresh order.
+        order.rejected_at = now
 
         order.delivery_person_id = None
 
@@ -1415,13 +1574,17 @@ def cleanup_all_expired_assignments():
         print("EXPIRES:", order.assignment_expires_at)
 
         if order.delivery_person_id is not None:
-            affected_rider_ids.add(
-                order.delivery_person_id
+            affected_rider_ids.add(order.delivery_person_id)
+            record_assignment_outcome(
+                order.id, order.delivery_person_id, RIDER_EXPIRED_RESPONSE,
+                resolved_at=order.assignment_expires_at or now,
             )
 
         # Return order to Ready
         order.status = READY_STATUS
         order.rider_response = RIDER_EXPIRED_RESPONSE
+        # Store expiry time for the retry cooldown.
+        order.rejected_at = now
 
         # Release rider
         order.delivery_person_id = None
@@ -1610,17 +1773,6 @@ def assign_waiting_order_to_rider(
     )
 
     # ======================================================
-    # REJECTION COOLDOWN
-    # ======================================================
-
-    now = datetime.utcnow()
-
-    rejection_cooldown = timedelta(
-        minutes=
-            REJECTION_COOLDOWN_MINUTES
-    )
-
-    # ======================================================
     # READY ORDERS
     # ======================================================
 
@@ -1630,89 +1782,40 @@ def assign_waiting_order_to_rider(
             Order.status == READY_STATUS,
             Order.delivery_person_id.is_(None)
         )
-        .order_by(
-            Order.created_at.asc(),
-            Order.id.asc()
-        )
+        .order_by(Order.created_at.asc(), Order.id.asc())
         .all()
     )
 
-    fresh_orders = []
-
-    retry_orders = []
+    # ======================================================
+    # CHECK ORDERS: exclude only riders with a prior terminal attempt.
+    # Other eligible riders can receive the order immediately.
+    # ======================================================
 
     for order in ready_orders:
-
-        if (
-            getattr(
-                order,
-                "rider_response",
-                None
-            ) == RIDER_REJECTED_RESPONSE
-        ):
-
-            retry_orders.append(
-                order
+        _sync_legacy_terminal_outcome(order)
+        previous_attempt = _terminal_attempt_for_rider(order.id, rider.id)
+        if previous_attempt:
+            print(
+                f"⏭️ SKIP RIDER {rider.id} FOR {order.order_id}: "
+                f"already {previous_attempt.status.lower()} this order."
             )
+            continue
 
-        else:
-
-            fresh_orders.append(
-                order
+        pending_attempt = (
+            _attempts_for_order(order.id)
+            .filter(
+                DeliveryAssignmentAttempt.rider_id == rider.id,
+                DeliveryAssignmentAttempt.status == RIDER_PENDING_RESPONSE,
             )
-
-    ordered_candidates = (
-        fresh_orders
-        + retry_orders
-    )
-
-    # ======================================================
-    # CHECK ORDERS
-    # ======================================================
-
-    for order in ordered_candidates:
-
-        # --------------------------------------------------
-        # RECENT REJECTION
-        # --------------------------------------------------
-
-        if (
-            getattr(
-                order,
-                "rider_response",
-                None
-            ) == RIDER_REJECTED_RESPONSE
-        ):
-
-            rejected_at = getattr(
-                order,
-                "rejected_at",
-                None
+            .order_by(DeliveryAssignmentAttempt.id.desc())
+            .first()
+        )
+        if pending_attempt:
+            print(
+                f"⏭️ SKIP DUPLICATE: rider={rider.id} "
+                f"order={order.order_id} already has a pending history row."
             )
-
-            if rejected_at:
-
-                retry_after = (
-                    rejected_at
-                    + rejection_cooldown
-                )
-
-                if now < retry_after:
-
-                    seconds_left = int(
-                        (
-                            retry_after
-                            - now
-                        ).total_seconds()
-                    )
-
-                    print(
-                        f"SKIP rejected "
-                        f"{order.order_id}: "
-                        f"{seconds_left}s cooldown"
-                    )
-
-                    continue
+            continue
 
         # --------------------------------------------------
         # RESTAURANT

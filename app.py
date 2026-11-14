@@ -49,6 +49,8 @@ import firebase_admin
 from firebase_admin import credentials
 import os
 import firebase_admin
+
+from users.restaurant_control import get_restaurant_order_control
 from firebase_admin import credentials, messaging
 from dispatch_service import haversine 
 from dispatch_service import assign_delivery_to_order,assign_waiting_order_to_rider,find_nearest_rider_excluding
