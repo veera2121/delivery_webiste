@@ -1,0 +1,751 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+
+<style>
+    .control-page {
+        padding: 24px;
+        background: #f6f7fb;
+        min-height: 100vh;
+    }
+
+    .control-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .control-header h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #111827;
+    }
+
+    .control-header p {
+        margin: 6px 0 0;
+        color: #6b7280;
+    }
+
+    .status-card {
+        background: white;
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 22px;
+        box-shadow: 0 8px 30px rgba(0,0,0,.06);
+    }
+
+    .global-grid {
+        display: grid;
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(220px, 1fr)
+        );
+        gap: 16px;
+    }
+
+    .global-item {
+        padding: 18px;
+        border-radius: 14px;
+        background: #f8fafc;
+    }
+
+    .global-item strong {
+        display: block;
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 8px;
+    }
+
+    .status {
+        font-weight: 700;
+    }
+
+    .status.on {
+        color: #16a34a;
+    }
+
+    .status.off {
+        color: #dc2626;
+    }
+
+    .button-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+    }
+
+    button,
+    .btn {
+        border: 0;
+        border-radius: 10px;
+        padding: 11px 16px;
+        cursor: pointer;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-danger {
+        background: #dc2626;
+        color: white;
+    }
+
+    .btn-success {
+        background: #16a34a;
+        color: white;
+    }
+
+    .btn-primary {
+        background: #111827;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #e5e7eb;
+        color: #111827;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(160px, 1fr)
+        );
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+
+    .stat {
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0,0,0,.05);
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 13px;
+    }
+
+    .stat-value {
+        margin-top: 8px;
+        font-size: 28px;
+        font-weight: 800;
+    }
+
+    .section {
+        background: white;
+        padding: 22px;
+        border-radius: 18px;
+        margin-bottom: 22px;
+        box-shadow: 0 8px 30px rgba(0,0,0,.06);
+    }
+
+    .section h2 {
+        margin-top: 0;
+        font-size: 20px;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        padding: 13px;
+        text-align: left;
+        border-bottom: 1px solid #eef0f3;
+        white-space: nowrap;
+    }
+
+    th {
+        color: #6b7280;
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+
+    .location-grid {
+        display: grid;
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(250px, 1fr)
+        );
+        gap: 16px;
+    }
+
+    .location-card {
+        border: 1px solid #e5e7eb;
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .location-card h3 {
+        margin-top: 0;
+    }
+
+    .mini-row {
+        display: flex;
+        justify-content: space-between;
+        margin: 8px 0;
+        color: #4b5563;
+    }
+
+    .flash {
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+        background: #dcfce7;
+        color: #166534;
+    }
+</style>
+
+
+<div class="control-page">
+
+    <div class="control-header">
+
+        <div>
+            <h1>Restaurant Control Center</h1>
+            <p>
+                Central control for all RucHiGo restaurants.
+            </p>
+        </div>
+
+    </div>
+
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+
+    <!-- ===================================================== -->
+    <!-- GLOBAL CONTROL -->
+    <!-- ===================================================== -->
+
+    <div class="status-card">
+
+        <h2>🌐 Global Restaurant Ordering</h2>
+
+        <div class="global-grid">
+
+            <div class="global-item">
+
+                <strong>Platform</strong>
+
+                {% if platform.platform_enabled %}
+                    <span class="status on">
+                        ● ENABLED
+                    </span>
+                {% else %}
+                    <span class="status off">
+                        ● DISABLED
+                    </span>
+                {% endif %}
+
+            </div>
+
+
+            <div class="global-item">
+
+                <strong>Restaurant Ordering</strong>
+
+                {% if platform.restaurant_ordering_enabled %}
+
+                    <span class="status on">
+                        ● ON
+                    </span>
+
+                {% else %}
+
+                    <span class="status off">
+                        ● OFF
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="global-item">
+
+                <strong>Delivery</strong>
+
+                {% if platform.delivery_enabled %}
+
+                    <span class="status on">
+                        ● ON
+                    </span>
+
+                {% else %}
+
+                    <span class="status off">
+                        ● OFF
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="global-item">
+
+                <strong>Maintenance</strong>
+
+                {% if platform.maintenance_mode %}
+
+                    <span class="status off">
+                        ● ACTIVE
+                    </span>
+
+                {% else %}
+
+                    <span class="status on">
+                        ● OFF
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <div class="button-row">
+
+            {% if platform.restaurant_ordering_enabled %}
+
+                <form
+                    method="POST"
+                    action="{{ url_for(
+                        'restaurant_control_global_stop'
+                    ) }}"
+                    onsubmit="
+                        return confirm(
+                            'STOP ordering for ALL restaurants?'
+                        );
+                    "
+                >
+
+                    <input
+                        type="hidden"
+                        name="reason"
+                        value="Stopped from Super Admin"
+                    >
+
+                    <button
+                        type="submit"
+                        class="btn-danger"
+                    >
+                        🛑 STOP ALL RESTAURANTS
+                    </button>
+
+                </form>
+
+            {% else %}
+
+                <form
+                    method="POST"
+                    action="{{ url_for(
+                        'restaurant_control_global_start'
+                    ) }}"
+                >
+
+                    <button
+                        type="submit"
+                        class="btn-success"
+                    >
+                        🟢 START ALL RESTAURANTS
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+        </div>
+
+        {% if platform.restaurant_ordering_stop_reason %}
+
+            <p style="margin-top:15px;color:#6b7280;">
+                Reason:
+                {{ platform.restaurant_ordering_stop_reason }}
+            </p>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- STATS -->
+    <!-- ===================================================== -->
+
+    {% set active_count = namespace(value=0) %}
+    {% set accepting_count = namespace(value=0) %}
+    {% set suspended_count = namespace(value=0) %}
+
+    {% for restaurant in restaurants %}
+
+        {% if restaurant.status == "active" %}
+            {% set active_count.value =
+                active_count.value + 1 %}
+        {% endif %}
+
+        {% if restaurant.can_accept_orders %}
+            {% set accepting_count.value =
+                accepting_count.value + 1 %}
+        {% endif %}
+
+        {% if restaurant.status == "suspended" %}
+            {% set suspended_count.value =
+                suspended_count.value + 1 %}
+        {% endif %}
+
+    {% endfor %}
+
+
+    <div class="stats">
+
+        <div class="stat">
+            <div class="stat-label">
+                Total Restaurants
+            </div>
+
+            <div class="stat-value">
+                {{ restaurants|length }}
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-label">
+                Active
+            </div>
+
+            <div class="stat-value">
+                {{ active_count.value }}
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-label">
+                Accepting Orders
+            </div>
+
+            <div class="stat-value">
+                {{ accepting_count.value }}
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-label">
+                Suspended
+            </div>
+
+            <div class="stat-value">
+                {{ suspended_count.value }}
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- LOCATION CONTROL -->
+    <!-- ===================================================== -->
+
+    <div class="section">
+
+        <h2>📍 Location Control</h2>
+
+        <div class="location-grid">
+
+            {% for location in locations %}
+
+                {% set location_count =
+                    location.restaurants|length %}
+
+                <div class="location-card">
+
+                    <h3>
+                        {{ location.location }}
+                    </h3>
+
+                    <div class="mini-row">
+                        <span>Restaurants</span>
+                        <strong>
+                            {{ location_count }}
+                        </strong>
+                    </div>
+
+
+                    <div class="mini-row">
+                        <span>Location</span>
+
+                        {% if location.is_active %}
+                            <span class="status on">
+                                ON
+                            </span>
+                        {% else %}
+                            <span class="status off">
+                                OFF
+                            </span>
+                        {% endif %}
+                    </div>
+
+
+                    <div class="mini-row">
+                        <span>Ordering</span>
+
+                        {% if location.restaurant_ordering_enabled %}
+                            <span class="status on">
+                                ON
+                            </span>
+                        {% else %}
+                            <span class="status off">
+                                OFF
+                            </span>
+                        {% endif %}
+                    </div>
+
+
+                    <div class="mini-row">
+                        <span>Delivery</span>
+
+                        {% if location.delivery_enabled %}
+                            <span class="status on">
+                                ON
+                            </span>
+                        {% else %}
+                            <span class="status off">
+                                OFF
+                            </span>
+                        {% endif %}
+                    </div>
+
+
+                    <div class="button-row">
+
+                        <a
+                            class="btn btn-primary"
+                            href="{{ url_for(
+                                'restaurant_control_location',
+                                location_id=location.id
+                            ) }}"
+                        >
+                            Manage
+                        </a>
+
+
+                        {% if location.restaurant_ordering_enabled %}
+
+                            <form
+                                method="POST"
+                                action="{{ url_for(
+                                    'restaurant_control_location_stop_orders',
+                                    location_id=location.id
+                                ) }}"
+                            >
+
+                                <button
+                                    class="btn-danger"
+                                    type="submit"
+                                >
+                                    Stop Orders
+                                </button>
+
+                            </form>
+
+                        {% else %}
+
+                            <form
+                                method="POST"
+                                action="{{ url_for(
+                                    'restaurant_control_location_start_orders',
+                                    location_id=location.id
+                                ) }}"
+                            >
+
+                                <button
+                                    class="btn-success"
+                                    type="submit"
+                                >
+                                    Start Orders
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            {% else %}
+
+                <p>
+                    No delivery locations configured.
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- RESTAURANTS -->
+    <!-- ===================================================== -->
+
+    <div class="section">
+
+        <h2>🍽️ Restaurants</h2>
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Restaurant</th>
+                        <th>Location</th>
+                        <th>Override</th>
+                        <th>Order Status</th>
+                        <th>Restaurant Status</th>
+                        <th>Action</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for restaurant in restaurants %}
+
+                        {% set control =
+                            restaurant.order_control_status %}
+
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    {{ restaurant.name }}
+                                </strong>
+                            </td>
+
+
+                            <td>
+
+                                {% if restaurant.delivery_location_settings %}
+
+                                    {{
+                                        restaurant
+                                        .delivery_location_settings
+                                        .location
+                                    }}
+
+                                {% else %}
+
+                                    —
+                                    
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if restaurant.admin_order_override
+                                      == "force_on" %}
+
+                                    🟢 Force ON
+
+                                {% elif restaurant.admin_order_override
+                                      == "force_off" %}
+
+                                    🔴 Force OFF
+
+                                {% else %}
+
+                                    ⚪ Inherit
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if control.allowed %}
+
+                                    <span class="status on">
+                                        ● ON
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="status off">
+                                        ● OFF
+                                    </span>
+
+                                    <br>
+
+                                    <small>
+                                        {{ control.message }}
+                                    </small>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+                                {{ restaurant.status }}
+                            </td>
+
+
+                            <td>
+
+                                <a
+                                    class="btn btn-primary"
+                                    href="{{ url_for(
+                                        'restaurant_control_restaurant',
+                                        restaurant_id=restaurant.id
+                                    ) }}"
+                                >
+                                    Manage
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

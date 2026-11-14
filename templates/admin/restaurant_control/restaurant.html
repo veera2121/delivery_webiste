@@ -1,0 +1,515 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+
+<style>
+
+.control-page {
+    padding: 24px;
+    background: #f6f7fb;
+    min-height: 100vh;
+}
+
+.card {
+    background: white;
+    border-radius: 18px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.06);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.header h1 {
+    margin: 0;
+}
+
+.status-box {
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.on {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+.off {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: white;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkbox-row input {
+    width: auto;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 0;
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.btn-primary {
+    background: #111827;
+    color: white;
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+</style>
+
+
+<div class="control-page">
+
+    <div class="card header">
+
+        <div>
+
+            <h1>
+                {{ restaurant.name }}
+            </h1>
+
+            <p>
+                Restaurant Control
+            </p>
+
+        </div>
+
+
+        <div class="status-box">
+
+            {% if control_status.allowed %}
+
+                <span class="on">
+                    ● ACCEPTING ORDERS
+                </span>
+
+            {% else %}
+
+                <span class="off">
+                    ● NOT ACCEPTING
+                </span>
+
+                <br>
+
+                <small>
+                    {{ control_status.message }}
+                </small>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <form
+        method="POST"
+        action="{{ url_for(
+            'restaurant_control_restaurant_update',
+            restaurant_id=restaurant.id
+        ) }}"
+    >
+
+
+        <!-- ================================================= -->
+        <!-- ORDER CONTROL -->
+        <!-- ================================================= -->
+
+        <div class="card">
+
+            <h2>🛒 Order Control</h2>
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Super Admin Override
+                    </label>
+
+                    <select
+                        name="admin_order_override"
+                    >
+
+                        <option
+                            value="inherit"
+                            {% if restaurant.admin_order_override
+                               == "inherit" %}
+                            selected
+                            {% endif %}
+                        >
+                            Inherit Restaurant Rules
+                        </option>
+
+                        <option
+                            value="force_on"
+                            {% if restaurant.admin_order_override
+                               == "force_on" %}
+                            selected
+                            {% endif %}
+                        >
+                            Force ON
+                        </option>
+
+                        <option
+                            value="force_off"
+                            {% if restaurant.admin_order_override
+                               == "force_off" %}
+                            selected
+                            {% endif %}
+                        >
+                            Force OFF
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Restaurant Accepting Orders
+                    </label>
+
+                    <select
+                        name="is_accepting_orders"
+                    >
+
+                        <option
+                            value="1"
+                            {% if restaurant.is_accepting_orders %}
+                            selected
+                            {% endif %}
+                        >
+                            ON
+                        </option>
+
+                        <option
+                            value="0"
+                            {% if not restaurant.is_accepting_orders %}
+                            selected
+                            {% endif %}
+                        >
+                            OFF
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Restaurant Status
+                    </label>
+
+                    <select
+                        name="status"
+                    >
+
+                        <option
+                            value="active"
+                            {% if restaurant.status == "active" %}
+                            selected
+                            {% endif %}
+                        >
+                            Active
+                        </option>
+
+                        <option
+                            value="coming_soon"
+                            {% if restaurant.status == "coming_soon" %}
+                            selected
+                            {% endif %}
+                        >
+                            Coming Soon
+                        </option>
+
+                        <option
+                            value="suspended"
+                            {% if restaurant.status == "suspended" %}
+                            selected
+                            {% endif %}
+                        >
+                            Suspended
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- HOURS -->
+        <!-- ================================================= -->
+
+        <div class="card">
+
+            <h2>🕒 Restaurant Hours</h2>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Opening Time
+                    </label>
+
+                    <input
+                        type="time"
+                        name="opening_time"
+                        value="{{
+                            restaurant.opening_time.strftime('%H:%M')
+                            if restaurant.opening_time
+                            else ''
+                        }}"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Closing Time
+                    </label>
+
+                    <input
+                        type="time"
+                        name="closing_time"
+                        value="{{
+                            restaurant.closing_time.strftime('%H:%M')
+                            if restaurant.closing_time
+                            else ''
+                        }}"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Accept Orders Until
+                    </label>
+
+                    <input
+                        type="time"
+                        name="accept_orders_until"
+                        value="{{
+                            restaurant.accept_orders_until.strftime('%H:%M')
+                            if restaurant.accept_orders_until
+                            else ''
+                        }}"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- DELIVERY -->
+        <!-- ================================================= -->
+
+        <div class="card">
+
+            <h2>🚚 Delivery</h2>
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Delivery Radius (KM)
+                    </label>
+
+                    <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        name="delivery_radius_km"
+                        value="{{
+                            restaurant.delivery_radius_km
+                            or ''
+                        }}"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Delivery Pricing Location
+                    </label>
+
+                    <select
+                        name="delivery_location_id"
+                    >
+
+                        <option value="">
+                            No Location
+                        </option>
+
+                        {% for location in locations %}
+
+                            <option
+                                value="{{ location.id }}"
+                                {% if restaurant.delivery_location_id
+                                   == location.id %}
+                                selected
+                                {% endif %}
+                            >
+                                {{ location.location }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- HOMEPAGE -->
+        <!-- ================================================= -->
+
+        <div class="card">
+
+            <h2>🏠 Homepage</h2>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Homepage Position
+                    </label>
+
+                    <input
+                        type="number"
+                        name="homepage_position"
+                        min="1"
+                        value="{{
+                            restaurant.homepage_position
+                            or 999
+                        }}"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- REASON -->
+        <!-- ================================================= -->
+
+        <div class="card">
+
+            <div class="form-group">
+
+                <label>
+                    Admin Change Reason
+                </label>
+
+                <textarea
+                    name="reason"
+                    rows="3"
+                    placeholder="Optional reason for this change..."
+                ></textarea>
+
+            </div>
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="btn btn-primary"
+        >
+            Save Restaurant Controls
+        </button>
+
+
+        <a
+            href="{{ url_for('restaurant_control') }}"
+            class="btn btn-secondary"
+        >
+            Back
+        </a>
+
+
+    </form>
+
+</div>
+
+{% endblock %}

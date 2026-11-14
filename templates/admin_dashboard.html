@@ -1761,7 +1761,45 @@ color:#b91c1c;
         <small>Review and approve rider applications</small>
     </span>
 </a>
+<a href="{{ url_for('homepage_restaurant_ranking') }}"
+   class="admin-card">
+    🍽️ Homepage Ranking
+</a>
 
+<a href="{{ url_for('admin_menu_alerts') }}"
+   class="admin-card">
+    <span>⚠️</span>
+    <span>Menu Alerts</span>
+</a>
+<a
+    href="{{ url_for('restaurant_control') }}"
+    class="admin-card"
+>
+    <div class="admin-card">
+       Central Controll🏢
+    </div>
+
+
+</a>
+
+<!-- Restaurant Settlements -->
+<!-- Restaurant Settlements -->
+<a href="{{ url_for('admin_settlements') }}" class="admin-card">
+    💰 Restaurant Settlements
+</a>
+
+<!-- Settlement Reports & Payment History -->
+<a href="{{ url_for('admin_settlement_reports') }}" class="admin-card">
+    📊 Settlement Reports & Payment History
+</a>
+<a href="{{ url_for('admin_cod_handover') }}"
+   class="admin-card">
+    💰 COD Bulk Handover
+</a>
+<a class="btn btn-light"
+   href="{{ url_for('admin_settlement_reports') }}">
+   View Settlement Reports
+</a>
 <a
     href="{{ url_for('admin_rider_settlements') }}"
     style="
@@ -1770,7 +1808,7 @@ color:#b91c1c;
         gap:10px;
         padding:15px 18px;
         border-radius:14px;
-        background:#ffffff;
+        background:#19bade;
         color:#111827;
         text-decoration:none;
         font-weight:800;
