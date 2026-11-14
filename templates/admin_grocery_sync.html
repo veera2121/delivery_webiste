@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}
+Grocery Sync | RucHiGo Admin
+{% endblock %}
+
+
+{% block content %}
+
+<div class="grocery-sync-page">
+
+    <div class="sync-page-header">
+
+        <a
+            href="{{ url_for('admin_dashboard') }}"
+            class="sync-back-btn"
+        >
+            ←
+        </a>
+
+        <div>
+            <h1>Grocery Sync</h1>
+            <p>
+                Sync Google Sheet items with PostgreSQL
+            </p>
+        </div>
+
+    </div>
+
+
+    {% if grocery_stores %}
+
+        <div class="sync-store-list">
+
+            {% for store in grocery_stores %}
+
+            <div class="sync-store-card">
+
+                <div class="sync-store-info">
+
+                    <div class="sync-store-icon">
+                        🛒
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            {{ store.name }}
+                        </h3>
+
+                        <p>
+                            Store ID: {{ store.id }}
+                        </p>
+
+                        <small>
+                            {{ store.location or "Location not set" }}
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="sync-grocery-btn"
+                    data-store-id="{{ store.id }}"
+                >
+                    🔄 Sync Grocery
+                </button>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="sync-empty">
+
+            <div>🛒</div>
+
+            <h3>
+                No grocery stores found
+            </h3>
+
+            <p>
+                Grocery stores will appear here automatically.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<style>
+
+.grocery-sync-page{
+    max-width:900px;
+    margin:auto;
+    padding:20px 15px 100px;
+}
+
+
+/* HEADER */
+
+.sync-page-header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+    margin-bottom:22px;
+}
+
+
+.sync-page-header h1{
+    margin:0;
+    font-size:24px;
+    font-weight:900;
+    color:#14532d;
+}
+
+
+.sync-page-header p{
+    margin:3px 0 0;
+    font-size:13px;
+    color:#64748b;
+}
+
+
+.sync-back-btn{
+    width:42px;
+    height:42px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:12px;
+
+    background:#fff;
+    color:#111827;
+
+    text-decoration:none;
+
+    box-shadow:
+        0 4px 14px rgba(0,0,0,.08);
+
+    font-size:20px;
+}
+
+
+/* STORE LIST */
+
+.sync-store-list{
+    display:grid;
+    gap:14px;
+}
+
+
+.sync-store-card{
+    background:#fff;
+
+    border-radius:18px;
+
+    padding:16px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    gap:15px;
+
+    box-shadow:
+        0 5px 18px rgba(0,0,0,.07);
+
+    border:
+        1px solid #eef2f7;
+}
+
+
+/* STORE DETAILS */
+
+.sync-store-info{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+
+.sync-store-icon{
+    width:48px;
+    height:48px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:#dcfce7;
+
+    border-radius:14px;
+
+    font-size:23px;
+}
+
+
+.sync-store-info h3{
+    margin:0;
+
+    font-size:16px;
+    font-weight:800;
+
+    color:#111827;
+}
+
+
+.sync-store-info p{
+    margin:3px 0;
+
+    font-size:12px;
+    color:#64748b;
+}
+
+
+.sync-store-info small{
+    color:#94a3b8;
+}
+
+
+/* SYNC BUTTON */
+
+.sync-grocery-btn{
+    border:none;
+
+    padding:10px 15px;
+
+    border-radius:11px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #15803d,
+            #22c55e
+        );
+
+    color:#fff;
+
+    font-size:13px;
+    font-weight:800;
+
+    cursor:pointer;
+
+    white-space:nowrap;
+
+    transition:.2s ease;
+}
+
+
+.sync-grocery-btn:hover{
+    transform:translateY(-1px);
+}
+
+
+.sync-grocery-btn:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+    transform:none;
+}
+
+
+/* EMPTY */
+
+.sync-empty{
+    text-align:center;
+
+    padding:60px 20px;
+
+    background:#fff;
+
+    border-radius:18px;
+
+    color:#64748b;
+}
+
+
+.sync-empty > div{
+    font-size:45px;
+}
+
+
+.sync-empty h3{
+    color:#111827;
+}
+
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+    .sync-store-card{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .sync-grocery-btn{
+        width:100%;
+    }
+}
+
+</style>
+
+
+<script>
+
+document.addEventListener(
+    "click",
+    async function (event) {
+
+        const btn =
+            event.target.closest(
+                ".sync-grocery-btn"
+            );
+
+        if (!btn) return;
+
+
+        const storeId =
+            btn.dataset.storeId;
+
+        if (!storeId) return;
+
+
+        const originalText =
+            btn.innerHTML;
+
+
+        btn.disabled = true;
+
+        btn.innerHTML =
+            "⏳ Syncing...";
+
+
+        try {
+
+            const response =
+                await fetch(
+
+                    `/admin/grocery/${storeId}/sync`,
+
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        }
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+
+                throw new Error(
+                    data.message ||
+                    "Sync failed"
+                );
+            }
+
+
+            btn.innerHTML =
+                "✅ Synced";
+
+
+            alert(
+
+                `Grocery Sync Completed\n\n` +
+
+                `Added: ${data.added}\n` +
+
+                `Updated: ${data.updated}\n` +
+
+                `Skipped: ${data.skipped}\n` +
+
+                `Total Items: ${data.total_sheet_items}`
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "SYNC ERROR:",
+                error
+            );
+
+            btn.innerHTML =
+                "❌ Failed";
+
+
+            alert(
+                "Sync failed: " +
+                error.message
+            );
+        }
+
+
+        setTimeout(
+            function () {
+
+                btn.innerHTML =
+                    originalText;
+
+                btn.disabled =
+                    false;
+
+            },
+            1800
+        );
+
+    }
+);
+
+</script>
+
+{% endblock %}

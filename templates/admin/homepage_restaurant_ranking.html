@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Homepage Management</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    padding:30px;
+    font-family:Arial, sans-serif;
+    background:#f4f6f8;
+    color:#1f2937;
+}
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+
+.container{
+    max-width:1500px;
+    margin:auto;
+    background:#fff;
+    padding:28px;
+    border-radius:18px;
+    box-shadow:0 5px 25px rgba(0,0,0,.08);
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    margin-bottom:25px;
+}
+
+.header h2{
+    margin:0;
+    font-size:24px;
+}
+
+.header p{
+    margin:6px 0 0;
+    color:#6b7280;
+    font-size:14px;
+}
+
+/* =========================================================
+   LOCATION
+========================================================= */
+
+.location-box{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:16px;
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    margin-bottom:25px;
+}
+
+.location-box label{
+    font-weight:600;
+}
+
+.location-box select{
+    min-width:240px;
+}
+
+/* =========================================================
+   FLASH
+========================================================= */
+
+.flash{
+    padding:13px 16px;
+    margin-bottom:18px;
+    border-radius:10px;
+    background:#ecfdf5;
+    color:#166534;
+    border:1px solid #bbf7d0;
+    font-size:14px;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.table-wrapper{
+    width:100%;
+    overflow-x:auto;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+}
+
+table{
+    width:100%;
+    min-width:1250px;
+    border-collapse:collapse;
+}
+
+thead th{
+    background:#f8fafc;
+    color:#374151;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    padding:14px 12px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:left;
+    white-space:nowrap;
+}
+
+tbody td{
+    padding:16px 12px;
+    border-bottom:1px solid #f0f0f0;
+    vertical-align:top;
+}
+
+tbody tr:hover{
+    background:#fafafa;
+}
+
+tbody tr:last-child td{
+    border-bottom:none;
+}
+
+/* =========================================================
+   RESTAURANT
+========================================================= */
+
+.restaurant-cell{
+    min-width:190px;
+}
+
+.restaurant-name{
+    font-weight:700;
+    font-size:15px;
+}
+
+.restaurant-id{
+    display:block;
+    margin-top:4px;
+    color:#9ca3af;
+    font-size:11px;
+}
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+input[type="number"],
+input[type="text"],
+input[type="url"],
+input[type="datetime-local"],
+select{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    background:white;
+    font-size:13px;
+    outline:none;
+}
+
+input:focus,
+select:focus{
+    border-color:#6366f1;
+    box-shadow:0 0 0 3px rgba(99,102,241,.10);
+}
+
+.position-input{
+    width:105px !important;
+}
+
+.position-select{
+    width:105px !important;
+    padding:9px 10px;
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    background:#fff;
+    font-size:13px;
+    cursor:pointer;
+}
+
+.position-select option:disabled{
+    color:#9ca3af;
+    background:#f3f4f6;
+}
+
+.position-hint{
+    display:block;
+    margin-top:5px;
+    color:#9ca3af;
+    font-size:10px;
+}
+
+/* =========================================================
+   SPONSORED BOX
+========================================================= */
+
+.sponsored-box{
+    min-width:260px;
+}
+
+.enable-sponsored{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:12px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.enable-sponsored input{
+    width:17px;
+    height:17px;
+}
+
+/* =========================================================
+   LABEL
+========================================================= */
+
+.small-label{
+    display:block;
+    margin-top:9px;
+    margin-bottom:4px;
+    color:#6b7280;
+    font-size:11px;
+    font-weight:600;
+}
+
+/* =========================================================
+   BANNER
+========================================================= */
+
+.banner-cell{
+    min-width:250px;
+}
+
+.banner-preview{
+    display:block;
+    width:180px;
+    height:80px;
+    object-fit:cover;
+    margin-top:9px;
+    border-radius:10px;
+    border:1px solid #e5e7eb;
+    background:#f3f4f6;
+}
+
+/* =========================================================
+   PAYMENT STATUS
+========================================================= */
+
+.payment-paid{
+    border-color:#86efac;
+    background:#f0fdf4;
+}
+
+.payment-pending{
+    border-color:#fcd34d;
+    background:#fffbeb;
+}
+
+.payment-failed{
+    border-color:#fca5a5;
+    background:#fef2f2;
+}
+
+/* =========================================================
+   SAVE
+========================================================= */
+
+.save-cell{
+    min-width:130px;
+}
+
+.save-btn{
+    width:100%;
+    padding:10px 15px;
+    border:none;
+    border-radius:9px;
+    background:#111827;
+    color:white;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.save-btn:hover{
+    background:#374151;
+    transform:translateY(-1px);
+}
+
+.save-btn:active{
+    transform:translateY(0);
+}
+
+/* =========================================================
+   STATUS BADGES
+========================================================= */
+
+.badge{
+    display:inline-block;
+    margin-top:8px;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:700;
+}
+
+.badge-on{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.badge-off{
+    background:#f3f4f6;
+    color:#6b7280;
+}
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.service-header-row td{
+    padding:0 !important;
+    border-bottom:0 !important;
+}
+
+.service-header-row:hover{
+    background:transparent !important;
+}
+
+.service-header-row + tr td{
+    border-top:none;
+}
+
+.empty{
+    padding:45px 20px;
+    text-align:center;
+    color:#6b7280;
+}
+
+.empty-icon{
+    font-size:35px;
+    margin-bottom:10px;
+}
+
+
+/* =========================================================
+   STICKY SERVICE SELECTOR
+========================================================= */
+
+.service-selector-wrap{
+    position:sticky;
+    top:0;
+    z-index:50;
+    margin:0 0 18px;
+    padding:12px;
+    background:rgba(255,255,255,.96);
+    backdrop-filter:blur(10px);
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    box-shadow:0 6px 18px rgba(15,23,42,.07);
+}
+
+.service-selector-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:10px;
+}
+
+.service-selector-title strong{
+    font-size:13px;
+    color:#111827;
+}
+
+.service-selector-title span{
+    font-size:11px;
+    color:#6b7280;
+}
+
+.service-selector{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+}
+
+.service-selector::-webkit-scrollbar{
+    display:none;
+}
+
+.service-tab{
+    flex:0 0 auto;
+    min-width:130px;
+    padding:10px 14px;
+    border:1px solid #e5e7eb;
+    border-radius:11px;
+    background:#fff;
+    color:#374151;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.18s ease;
+}
+
+.service-tab:hover{
+    border-color:#c7d2fe;
+    background:#f8fafc;
+}
+
+.service-tab.active{
+    background:#111827;
+    color:#fff;
+    border-color:#111827;
+    box-shadow:0 4px 12px rgba(17,24,39,.15);
+}
+
+.service-tab .service-count{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:22px;
+    height:20px;
+    margin-left:5px;
+    padding:0 6px;
+    border-radius:999px;
+    background:#f3f4f6;
+    color:#374151;
+    font-size:10px;
+}
+
+.service-tab.active .service-count{
+    background:rgba(255,255,255,.16);
+    color:#fff;
+}
+
+.restaurant-search{
+    margin-top:10px;
+    position:relative;
+}
+
+.restaurant-search input{
+    width:100%;
+    padding:11px 13px 11px 38px;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    background:#fff;
+    font-size:13px;
+}
+
+.restaurant-search-icon{
+    position:absolute;
+    left:13px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#9ca3af;
+    pointer-events:none;
+}
+
+.restaurant-row-hidden{
+    display:none !important;
+}
+
+.service-header-row.hidden-by-filter{
+    display:none !important;
+}
+
+@media(max-width:700px){
+    .service-selector-wrap{
+        top:0;
+        margin-left:-4px;
+        margin-right:-4px;
+        border-radius:12px;
+    }
+
+    .service-tab{
+        min-width:115px;
+        padding:9px 12px;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:700px){
+
+    body{
+        padding:12px;
+    }
+
+    .container{
+        padding:16px;
+        border-radius:12px;
+    }
+
+    .header{
+        display:block;
+    }
+
+    .location-box{
+        display:block;
+    }
+
+    .location-box select{
+        margin-top:8px;
+        width:100%;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="header">
+
+        <div>
+
+            <h2>
+                🍽️ Homepage Management
+            </h2>
+
+            <p>
+                Manage normal restaurant ranking and sponsored
+                restaurant campaigns by location.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FLASH MESSAGES
+    ====================================================== -->
+
+    {% with messages = get_flashed_messages() %}
+
+        {% if messages %}
+
+            {% for message in messages %}
+
+                <div class="flash">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- =====================================================
+         LOCATION SELECTOR
+    ====================================================== -->
+
+    <form
+        method="GET"
+        action="{{ url_for('homepage_restaurant_ranking') }}"
+        class="location-box"
+    >
+
+        <label>
+            📍 Location
+        </label>
+
+        <select
+            name="location"
+            onchange="this.form.submit()"
+        >
+
+            <option value="">
+                -- Select Location --
+            </option>
+
+            {% for loc in locations %}
+
+                <option
+                    value="{{ loc.id }}"
+                    {% if loc.id == selected_location %}
+                        selected
+                    {% endif %}
+                >
+
+                    {{ loc.location }}
+
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+
+    </form>
+
+
+    {% if selected_location %}
+
+        <!-- =====================================================
+             STICKY SERVICE / CATEGORY SELECTOR
+        ====================================================== -->
+
+        <div class="service-selector-wrap">
+
+            <div class="service-selector-title">
+                <strong>🏪 Select Business Category</strong>
+                <span id="serviceResultText">All businesses</span>
+            </div>
+
+            <div class="service-selector">
+
+                <button
+                    type="button"
+                    class="service-tab active"
+                    data-service="all"
+                >
+                    📋 All
+                    <span class="service-count" id="count-all">0</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="service-tab"
+                    data-service="restaurant"
+                >
+                    🍽️ Food
+                    <span class="service-count" id="count-restaurant">0</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="service-tab"
+                    data-service="bakery"
+                >
+                    🥐 Bakery
+                    <span class="service-count" id="count-bakery">0</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="service-tab"
+                    data-service="grocery"
+                >
+                    🛒 Grocery
+                    <span class="service-count" id="count-grocery">0</span>
+                </button>
+
+            </div>
+
+            <div class="restaurant-search">
+
+                <span class="restaurant-search-icon">🔍</span>
+
+                <input
+                    type="search"
+                    id="restaurantSearch"
+                    placeholder="Search restaurant, bakery or grocery..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- =====================================================
+         NO LOCATION
+    ====================================================== -->
+
+    {% if not selected_location %}
+
+        <div class="empty">
+
+            <div class="empty-icon">
+                📍
+            </div>
+
+            <strong>
+                Select a location
+            </strong>
+
+            <p>
+                Choose a location above to manage homepage
+                restaurant positions and sponsored campaigns.
+            </p>
+
+        </div>
+
+
+    {% else %}
+
+
+        <!-- =================================================
+             LOCATION SELECTED
+        ================================================== -->
+
+        {% if restaurants %}
+
+            <div style="margin-bottom:12px; padding:10px 12px; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; font-size:12px; color:#6b7280;">
+                <strong style="color:#374151;">Position rules:</strong> Each normal position can be assigned to only one restaurant.
+                Already-used positions are faded and cannot be selected. Sponsored positions work independently.
+            </div>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Restaurant
+                            </th>
+
+                            <th>
+                                Normal Position
+                            </th>
+
+                            <th>
+                                Sponsored
+                            </th>
+
+                            <th>
+                                Sponsored Position
+                            </th>
+
+                            <th>
+                                Banner
+                            </th>
+
+                            <th>
+                                Campaign
+                            </th>
+
+                            <th>
+                                Save
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                    {# =====================================================
+                       SERVICE-WISE RANKING
+                       Positions are independent for Food / Bakery / Grocery
+                    ====================================================== #}
+
+                    {% set service_groups = [
+                        ('restaurant', '🍽️ Food / Restaurants'),
+                        ('bakery', '🥐 Bakery'),
+                        ('grocery', '🛒 Grocery')
+                    ] %}
+
+                    {% for service_type, service_label in service_groups %}
+
+                        {% set service_restaurants = restaurants
+                            |selectattr('category_type', 'equalto', service_type)
+                            |list %}
+
+                        {% if service_restaurants %}
+
+                            <tr
+                                class="service-header-row"
+                                data-service-header="{{ service_type }}"
+                            >
+                                <td colspan="7">
+                                    <div style="
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:space-between;
+                                        gap:12px;
+                                        padding:12px 14px;
+                                        background:#f8fafc;
+                                        border-top:1px solid #e5e7eb;
+                                        border-bottom:1px solid #e5e7eb;
+                                        font-size:14px;
+                                        font-weight:800;
+                                        color:#111827;
+                                    ">
+                                        <span>{{ service_label }}</span>
+                                        <span style="
+                                            font-size:11px;
+                                            font-weight:700;
+                                            color:#6b7280;
+                                            background:#fff;
+                                            border:1px solid #e5e7eb;
+                                            padding:4px 8px;
+                                            border-radius:999px;
+                                        ">
+                                            {{ service_restaurants|length }} stores
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            {% for r in service_restaurants %}
+
+                                {% set ranking =
+                                    rankings_by_restaurant.get(r.id)
+                                %}
+
+                                {% set form_id = 'ranking-form-' ~ r.id %}
+                                {% set current_position = ranking.position if ranking else 999 %}
+                                {% set current_sponsored_position = ranking.sponsored_position if ranking else 999 %}
+
+                                {# Only positions from THIS service are occupied #}
+                                {% set occupied_positions = [] %}
+
+                                {% for rr in service_restaurants %}
+                                    {% set other = rankings_by_restaurant.get(rr.id) %}
+                                    {% if other
+                                          and other.position
+                                          and other.position > 0
+                                          and other.position != 999
+                                          and rr.id != r.id %}
+                                        {% set _ = occupied_positions.append(other.position) %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% set occupied_sponsored_positions = [] %}
+
+                                {% for rr in service_restaurants %}
+                                    {% set other = rankings_by_restaurant.get(rr.id) %}
+                                    {% if other
+                                          and other.sponsored_enabled
+                                          and other.sponsored_position
+                                          and other.sponsored_position > 0
+                                          and other.sponsored_position != 999
+                                          and rr.id != r.id %}
+                                        {% set _ = occupied_sponsored_positions.append(other.sponsored_position) %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                <tr
+                                    class="restaurant-data-row"
+                                    data-service="{{ service_type }}"
+                                    data-restaurant-name="{{ r.name|lower }}"
+                                >
+
+                                    <!-- RESTAURANT -->
+
+                                    <td class="restaurant-cell">
+
+                                        <div style="display:flex;align-items:center;gap:12px;">
+
+                                            <div style="
+                                                width:58px;
+                                                height:58px;
+                                                border-radius:14px;
+                                                overflow:hidden;
+                                                background:#f3f4f6;
+                                                flex:0 0 58px;
+                                                border:1px solid #e5e7eb;
+                                            ">
+                                                <img
+                                                    src="{{ r.image_url if r.image_url else url_for('static', filename='images/restaurants/' ~ r.id ~ '.webp') }}"
+                                                    alt="{{ r.name }}"
+                                                    style="width:100%;height:100%;object-fit:cover;display:block;"
+                                                    onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/restaurants/' ~ r.id ~ '.jpg') }}';"
+                                                >
+                                            </div>
+
+                                            <div>
+
+                                                <div class="restaurant-name">
+                                                    {{ r.name }}
+                                                </div>
+
+                                                <span class="restaurant-id">
+                                                    Restaurant ID: {{ r.id }}
+                                                </span>
+
+                                                <span class="badge badge-off" style="margin-top:5px;">
+                                                    {{ service_type|capitalize }}
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                        <form
+                                            id="{{ form_id }}"
+                                            method="POST"
+                                            action="{{ url_for('update_homepage_ranking') }}"
+                                        >
+                                            <input
+                                                type="hidden"
+                                                name="restaurant_id"
+                                                value="{{ r.id }}"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="location_id"
+                                                value="{{ selected_location }}"
+                                            >
+                                        </form>
+
+                                    </td>
+
+
+                                    <!-- NORMAL POSITION -->
+
+                                    <td>
+
+                                        <select
+                                            form="{{ form_id }}"
+                                            class="position-select"
+                                            name="position"
+                                        >
+
+                                            <option
+                                                value="999"
+                                                {% if current_position == 999 %}selected{% endif %}
+                                            >
+                                                Not ranked
+                                            </option>
+
+                                            {% for pos in range(1, service_restaurants|length + 1) %}
+
+                                                <option
+                                                    value="{{ pos }}"
+                                                    {% if current_position == pos %}selected{% endif %}
+                                                    {% if pos in occupied_positions and current_position != pos %}disabled{% endif %}
+                                                >
+                                                    {{ pos }}
+                                                    {% if pos in occupied_positions %}
+                                                        — already used
+                                                    {% endif %}
+                                                </option>
+
+                                            {% endfor %}
+
+                                        </select>
+
+                                        <span class="position-hint">
+                                            {{ service_type|capitalize }} position
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- SPONSORED -->
+
+                                    <td class="sponsored-box">
+
+                                        <label class="enable-sponsored">
+
+                                            <input
+                                                type="checkbox"
+                                                name="sponsored_enabled"
+                                                form="{{ form_id }}"
+
+                                                {% if ranking
+                                                      and ranking.sponsored_enabled %}
+                                                    checked
+                                                {% endif %}
+                                            >
+
+                                            Enable Sponsored
+
+                                        </label>
+
+
+                                        {% if ranking
+                                              and ranking.sponsored_enabled %}
+
+                                            <span class="badge badge-on">
+                                                ACTIVE
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge badge-off">
+                                                OFF
+                                            </span>
+
+                                        {% endif %}
+
+
+                                        <label class="small-label">
+                                            Sponsored Title
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            name="sponsored_title"
+                                            form="{{ form_id }}"
+
+                                            value="{{
+                                                ranking.sponsored_title
+                                                if ranking
+                                                and ranking.sponsored_title
+                                                else ''
+                                            }}"
+
+                                            placeholder="Weekend Special"
+                                        >
+
+
+                                        <label class="small-label">
+                                            Sponsored Subtitle
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            name="sponsored_subtitle"
+                                            form="{{ form_id }}"
+
+                                            value="{{
+                                                ranking.sponsored_subtitle
+                                                if ranking
+                                                and ranking.sponsored_subtitle
+                                                else ''
+                                            }}"
+
+                                            placeholder="Order now"
+                                        >
+
+                                    </td>
+
+
+                                    <!-- SPONSORED POSITION -->
+
+                                    <td>
+
+                                        <select
+                                            form="{{ form_id }}"
+                                            class="position-select"
+                                            name="sponsored_position"
+                                        >
+
+                                            <option
+                                                value="999"
+                                                {% if current_sponsored_position == 999 %}selected{% endif %}
+                                            >
+                                                Not ranked
+                                            </option>
+
+                                            {% for pos in range(1, [service_restaurants|length, 10]|min + 1) %}
+
+                                                <option
+                                                    value="{{ pos }}"
+                                                    {% if current_sponsored_position == pos %}selected{% endif %}
+                                                    {% if pos in occupied_sponsored_positions and current_sponsored_position != pos %}disabled{% endif %}
+                                                >
+                                                    {{ pos }}
+                                                    {% if pos in occupied_sponsored_positions %}
+                                                        — already used
+                                                    {% endif %}
+                                                </option>
+
+                                            {% endfor %}
+
+                                        </select>
+
+                                        <span class="position-hint">
+                                            Sponsored position for {{ service_type|capitalize }}
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- BANNER -->
+
+                                    <td class="banner-cell">
+
+                                        <label class="small-label">
+                                            Banner URL
+                                        </label>
+
+                                        <input
+                                            type="url"
+                                            name="sponsored_banner_url"
+                                            form="{{ form_id }}"
+
+                                            value="{{
+                                                ranking.sponsored_banner_url
+                                                if ranking
+                                                and ranking.sponsored_banner_url
+                                                else ''
+                                            }}"
+
+                                            placeholder="https://..."
+                                        >
+
+
+                                        {% if ranking
+                                              and ranking.sponsored_banner_url %}
+
+                                            <img
+                                                class="banner-preview"
+                                                src="{{ ranking.sponsored_banner_url }}"
+                                                alt="Sponsored Banner"
+
+                                                onerror="
+                                                    this.style.display='none';
+                                                "
+                                            >
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- CAMPAIGN -->
+
+                                    <td class="sponsored-box">
+
+                                        <label class="small-label">
+                                            Payment Status
+                                        </label>
+
+                                        <select
+                                            name="sponsored_payment_status"
+                                            form="{{ form_id }}"
+                                        >
+
+                                            <option
+                                                value="pending"
+                                                {% if not ranking
+                                                      or ranking.sponsored_payment_status == 'pending' %}
+                                                    selected
+                                                {% endif %}
+                                            >
+                                                Pending
+                                            </option>
+
+                                            <option
+                                                value="paid"
+                                                {% if ranking
+                                                      and ranking.sponsored_payment_status == 'paid' %}
+                                                    selected
+                                                {% endif %}
+                                            >
+                                                Paid
+                                            </option>
+
+                                            <option
+                                                value="failed"
+                                                {% if ranking
+                                                      and ranking.sponsored_payment_status == 'failed' %}
+                                                    selected
+                                                {% endif %}
+                                            >
+                                                Failed
+                                            </option>
+
+                                            <option
+                                                value="refunded"
+                                                {% if ranking
+                                                      and ranking.sponsored_payment_status == 'refunded' %}
+                                                    selected
+                                                {% endif %}
+                                            >
+                                                Refunded
+                                            </option>
+
+                                        </select>
+
+
+                                        <label class="small-label">
+                                            Campaign Start
+                                        </label>
+
+                                        <input
+                                            type="datetime-local"
+                                            name="sponsored_start_at"
+                                            form="{{ form_id }}"
+
+                                            value="{%
+                                                if ranking
+                                                and ranking.sponsored_start_at
+                                            %}{{
+                                                ranking.sponsored_start_at.strftime(
+                                                    '%Y-%m-%dT%H:%M'
+                                                )
+                                            }}{% endif %}"
+                                        >
+
+
+                                        <label class="small-label">
+                                            Campaign End
+                                        </label>
+
+                                        <input
+                                            type="datetime-local"
+                                            name="sponsored_end_at"
+                                            form="{{ form_id }}"
+
+                                            value="{%
+                                                if ranking
+                                                and ranking.sponsored_end_at
+                                            %}{{
+                                                ranking.sponsored_end_at.strftime(
+                                                    '%Y-%m-%dT%H:%M'
+                                                )
+                                            }}{% endif %}"
+                                        >
+
+                                    </td>
+
+
+                                    <!-- SAVE -->
+
+                                    <td class="save-cell">
+
+                                        <button
+                                            type="submit"
+                                            form="{{ form_id }}"
+                                            class="save-btn"
+                                        >
+                                            💾 Save
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+        {% else %}
+
+            <div class="empty">
+
+                <div class="empty-icon">
+                    🏪
+                </div>
+
+                <strong>
+                    No active restaurants
+                </strong>
+
+                <p>
+                    There are no active restaurants assigned
+                    to this location.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    {% endif %}
+
+</div>
+
+
+
+<script>
+/* =========================================================
+   STICKY SERVICE SELECTOR + RESTAURANT SEARCH
+========================================================= */
+
+(function(){
+
+    const tabs = document.querySelectorAll('.service-tab');
+    const rows = document.querySelectorAll('.restaurant-data-row');
+    const headers = document.querySelectorAll('.service-header-row');
+    const searchInput = document.getElementById('restaurantSearch');
+    const resultText = document.getElementById('serviceResultText');
+
+    if(!tabs.length || !rows.length){
+        return;
+    }
+
+    let activeService = 'all';
+
+    function updateCounts(){
+
+        const counts = {
+            all: 0,
+            restaurant: 0,
+            bakery: 0,
+            grocery: 0
+        };
+
+        rows.forEach(function(row){
+
+            const service = row.dataset.service || '';
+
+            counts.all++;
+
+            if(Object.prototype.hasOwnProperty.call(counts, service)){
+                counts[service]++;
+            }
+
+        });
+
+        Object.keys(counts).forEach(function(key){
+
+            const el = document.getElementById('count-' + key);
+
+            if(el){
+                el.textContent = counts[key];
+            }
+
+        });
+
+    }
+
+    function applyFilter(){
+
+        const query = (searchInput ? searchInput.value : '')
+            .trim()
+            .toLowerCase();
+
+        let visibleCount = 0;
+
+        rows.forEach(function(row){
+
+            const service = row.dataset.service || '';
+            const name = row.dataset.restaurantName || '';
+
+            const serviceMatch =
+                activeService === 'all' ||
+                service === activeService;
+
+            const searchMatch =
+                !query ||
+                name.includes(query);
+
+            const visible = serviceMatch && searchMatch;
+
+            row.classList.toggle(
+                'restaurant-row-hidden',
+                !visible
+            );
+
+            if(visible){
+                visibleCount++;
+            }
+
+        });
+
+        headers.forEach(function(header){
+
+            const service = header.dataset.serviceHeader || '';
+
+            const hasVisibleRows = Array.from(rows).some(function(row){
+
+                return (
+                    row.dataset.service === service &&
+                    !row.classList.contains('restaurant-row-hidden')
+                );
+
+            });
+
+            header.classList.toggle(
+                'hidden-by-filter',
+                !hasVisibleRows
+            );
+
+        });
+
+        if(resultText){
+
+            const labels = {
+                all: 'All businesses',
+                restaurant: 'Food / Restaurants',
+                bakery: 'Bakery',
+                grocery: 'Grocery'
+            };
+
+            resultText.textContent =
+                labels[activeService] +
+                ' • ' +
+                visibleCount +
+                ' business' +
+                (visibleCount === 1 ? '' : 'es');
+
+        }
+
+    }
+
+    tabs.forEach(function(tab){
+
+        tab.addEventListener('click', function(){
+
+            activeService =
+                tab.dataset.service || 'all';
+
+            tabs.forEach(function(item){
+
+                item.classList.toggle(
+                    'active',
+                    item === tab
+                );
+
+            });
+
+            applyFilter();
+
+        });
+
+    });
+
+    if(searchInput){
+
+        searchInput.addEventListener(
+            'input',
+            applyFilter
+        );
+
+    }
+
+    updateCounts();
+    applyFilter();
+
+})();
+
+</script>
+
+
+<script>
+
+/*
+ * Automatically change payment select styling
+ */
+
+document
+    .querySelectorAll(
+        'select[name="sponsored_payment_status"]'
+    )
+    .forEach(function(select){
+
+        function updateStatus(){
+
+            select.classList.remove(
+                "payment-paid",
+                "payment-pending",
+                "payment-failed"
+            );
+
+            if(select.value === "paid"){
+
+                select.classList.add(
+                    "payment-paid"
+                );
+
+            }
+
+            else if(select.value === "pending"){
+
+                select.classList.add(
+                    "payment-pending"
+                );
+
+            }
+
+            else if(
+                select.value === "failed"
+            ){
+
+                select.classList.add(
+                    "payment-failed"
+                );
+
+            }
+
+        }
+
+        select.addEventListener(
+            "change",
+            updateStatus
+        );
+
+        updateStatus();
+
+    });
+
+</script>
+
+
+</body>
+</html>

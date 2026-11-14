@@ -1,247 +1,839 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Employee Management | RucHiGO</title>
+
 <style>
-    /* 🌌 Page Background */
-body {
+* {
+    box-sizing: border-box;
     margin: 0;
-    padding: 20px;
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    color: #fff;
+    padding: 0;
 }
 
-/* 🧑‍💼 Heading */
-h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    font-weight: 600;
-    letter-spacing: 1px;
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6fb;
+    color: #172033;
+    padding: 22px;
 }
 
-/* 💎 Glass Form */
-.emp-form {
-    max-width: 700px;
+.container {
+    max-width: 1300px;
     margin: auto;
-    padding: 25px;
-    border-radius: 15px;
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(15px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+
+/* HEADER */
+
+.header {
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
     justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
 }
 
-/* ✏️ Inputs */
-.emp-form input,
-.emp-form select {
-    flex: 1 1 30%;
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    outline: none;
-    background: rgba(255,255,255,0.15);
-    color: #000000;
-    transition: 0.3s;
+.header h1 {
+    font-size: 26px;
+    font-weight: 800;
 }
 
-/* Focus Glow */
-.emp-form input:focus,
-.emp-form select:focus {
-    background: rgba(255,255,255,0.25);
-    box-shadow: 0 0 8px #00f2ff;
+.header p {
+    color: #788397;
+    font-size: 13px;
+    margin-top: 7px;
 }
 
-/* ➕ Button */
-.emp-form button {
-    flex: 1 1 100%;
-    padding: 12px;
-    border: none;
+.header-actions {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+}
+
+.header-btn {
+    display: inline-block;
+    padding: 11px 15px;
     border-radius: 10px;
-    background: linear-gradient(45deg, #00f2ff, #0072ff);
-    color: #333333;
-    font-size: 16px;
-    cursor: pointer;
-    transition: 0.3s;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
 }
 
-/* Hover Effect */
-.emp-form button:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 15px #00f2ff;
+.dashboard-btn {
+    background: #172554;
+    color: white;
 }
 
-/* 📊 Table Container */
-.emp-table {
+.admin-logout-btn {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* CARDS */
+
+.card {
+    background: white;
+    padding: 24px;
+    border-radius: 19px;
+    box-shadow: 0 5px 25px rgba(0,0,0,.045);
+    margin-bottom: 22px;
+}
+
+.card-title {
+    font-size: 19px;
+    font-weight: 800;
+    margin-bottom: 21px;
+}
+
+/* FORM */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.full {
+    grid-column: 1 / -1;
+}
+
+label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #344054;
+}
+
+input[type="text"],
+input[type="tel"],
+select {
     width: 100%;
-    margin-top: 30px;
-    border-collapse: collapse;
-    border-radius: 15px;
-    overflow: hidden;
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-}
-
-/* 🧾 Table Head */
-.emp-table thead {
-    background: rgba(0, 0, 0, 0.6);
-}
-
-.emp-table th {
-    padding: 12px;
-    text-align: center;
-    font-weight: 500;
-}
-
-/* 📄 Table Body */
-.emp-table td {
-    padding: 12px;
-    text-align: center;
+    padding: 13px;
+    border: 1px solid #dce1eb;
+    border-radius: 10px;
+    outline: none;
+    background: white;
     font-size: 14px;
 }
 
-/* 🧊 Row Hover */
-.emp-table tbody tr {
-    transition: 0.3s;
+input:focus, select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px #2563eb15;
 }
 
-.emp-table tbody tr:hover {
-    background: rgba(255,255,255,0.1);
-    transform: scale(1.01);
+/* LOCATIONS */
+
+.location-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
-/* 🔘 Buttons */
-.btn {
-    padding: 6px 12px;
-    border-radius: 6px;
-    text-decoration: none;
+.location-actions {
+    display: flex;
+    gap: 7px;
+}
+
+.small-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #2563eb;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.location-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.location-option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 12px;
+    border: 1px solid #e4e8f0;
+    border-radius: 10px;
+    cursor: pointer;
     font-size: 13px;
-    margin: 2px;
+    background: white;
+}
+
+.location-option:hover {
+    border-color: #2563eb;
+    background: #f8faff;
+}
+
+.location-option input {
+    width: 17px;
+    height: 17px;
+    accent-color: #2563eb;
+}
+
+.selected-info {
+    color: #64748b;
+    font-size: 12px;
+    margin-top: 12px;
+}
+
+/* BUTTONS */
+
+.submit-btn {
+    width: 100%;
+    margin-top: 23px;
+    padding: 15px;
+    border: none;
+    border-radius: 11px;
+    background: #2563eb;
+    color: white;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+    background: #1d4ed8;
+}
+
+/* FLASH */
+
+.flash {
+    padding: 13px 16px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.flash.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.flash.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.flash.info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.flash.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* TABLE */
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1000px;
+}
+
+th {
+    padding: 15px 12px;
+    background: #f8fafc;
+    color: #758197;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    white-space: nowrap;
+}
+
+td {
+    padding: 15px 12px;
+    border-bottom: 1px solid #edf0f5;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.employee-name {
+    font-weight: 800;
+    color: #172033;
+}
+
+.employee-phone {
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.role-badge {
     display: inline-block;
-    transition: 0.3s;
+    padding: 6px 10px;
+    border-radius: 20px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 11px;
+    font-weight: 700;
 }
 
-/* 🚫 Logout Button */
-.logout {
-    background: linear-gradient(45deg, #ff7e5f, #ff3f34);
-    color: #fff;
+.active-badge {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
 }
 
-.logout:hover {
-    box-shadow: 0 0 10px #ff3f34;
-    transform: scale(1.05);
+.inactive-badge {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
 }
 
-/* ❌ Delete Button */
-.delete {
-    background: linear-gradient(45deg, #ff416c, #ff0000);
-    color: #fff;
+.online-badge {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
-.delete:hover {
-    box-shadow: 0 0 10px #ff0000;
-    transform: scale(1.05);
+.offline-badge {
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
-/* 🟢 Status Colors */
-span {
-    font-weight: bold;
+.location-tag {
+    display: inline-block;
+    padding: 5px 8px;
+    margin: 3px;
+    border-radius: 7px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 11px;
 }
 
-/* Divider */
-hr {
-    margin: 30px 0;
-    border: 1px solid rgba(255,255,255,0.1);
-} 
-.back-btn {
-            display: inline-block;
-            margin-bottom: 15px;
-            padding: 8px 14px;
-            background: #333;
-            color: white;
-            border-radius: 8px;
-            text-decoration: none;
-        }
+/* EMPLOYEE ACTIONS */
+
+.employee-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    display: inline-block;
+    text-decoration: none;
+    border: none;
+    padding: 9px 11px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.edit-location-btn {
+    color: #1d4ed8;
+    background: #dbeafe;
+}
+
+.force-logout-btn {
+    color: #b45309;
+    background: #fef3c7;
+}
+
+.delete-btn {
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+.action-btn:hover {
+    opacity: .8;
+}
+
+.empty {
+    text-align: center;
+    padding: 35px;
+    color: #8993a5;
+}
+
+/* RESPONSIVE */
+
+@media(max-width: 750px) {
+    body {
+        padding: 13px;
+    }
+
+    .card {
+        padding: 17px;
+        border-radius: 15px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .location-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .header h1 {
+        font-size: 22px;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+}
+
+@media(max-width: 380px) {
+    .location-grid {
+        grid-template-columns: 1fr;
+    }
+}
 </style>
+</head>
 
-<h2>👨‍💼 Manage Employees</h2>
-<div>
-    <a href="/admin/dashboard" class="back-btn">← Back</a>
+<body>
 
-<!-- ✅ ADD EMPLOYEE FORM -->
-<form method="POST" class="emp-form">
-    <input type="text" name="name" placeholder="Employee Name" required>
-    <input type="text" name="phone" placeholder="Phone Number" required>
+<div class="container">
 
-    <select name="role">
-        <option value="staff">Staff</option>
-        <option value="manager">Manager</option>
-        <option value="support">Support</option>
-        <option value="ops">Operations</option>
-    </select>
+    <!-- HEADER -->
 
-    <button type="submit">➕ Add Employee</button>
-</form>
+    <div class="header">
+
+        <div>
+            <h1>👥 Employee Management</h1>
+            <p>Manage employees, locations and account access.</p>
+        </div>
+
+        <div class="header-actions">
+
+            <a href="{{ url_for('admin_dashboard') }}"
+               class="header-btn dashboard-btn">
+                ← Dashboard
+            </a>
+
+            <a href="{{ url_for('admin_logout') }}"
+               class="header-btn admin-logout-btn"
+               onclick="return confirm('Logout from admin account?');">
+                ⎋ Admin Logout
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- FLASH MESSAGES -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash {{ category }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+
+    <!-- ADD EMPLOYEE -->
+
+    <div class="card">
+
+        <h2 class="card-title">➕ Add New Employee</h2>
+
+        <form method="POST"
+              action="{{ url_for('admin_employees') }}">
+
+            {% if csrf_token is defined %}
+                <input type="hidden"
+                       name="csrf_token"
+                       value="{{ csrf_token() }}">
+            {% endif %}
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label>Employee Name *</label>
+
+                    <input type="text"
+                           name="name"
+                           placeholder="Enter employee name"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label>Mobile Number *</label>
+
+                    <input type="tel"
+                           name="phone"
+                           placeholder="Enter mobile number"
+                           required>
+                </div>
+
+                <div class="form-group full">
+                    <label>Employee Role</label>
+
+                    <select name="role">
+                        <option value="staff">Staff</option>
+                        <option value="manager">Manager</option>
+                        <option value="supervisor">Supervisor</option>
+                        <option value="accountant">Accountant</option>
+                        <option value="delivery">Delivery Staff</option>
+                    </select>
+                </div>
+
+                <!-- LOCATION ASSIGNMENT -->
+
+                <div class="form-group full">
+
+                    <div class="location-header">
+
+                        <label>Assign Working Locations *</label>
+
+                        <div class="location-actions">
+
+                            <button type="button"
+                                    class="small-btn"
+                                    onclick="selectAllLocations()">
+                                Select All
+                            </button>
+
+                            <button type="button"
+                                    class="small-btn"
+                                    onclick="clearLocations()">
+                                Clear
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <input type="text"
+                           id="locationSearch"
+                           placeholder="🔍 Search locations..."
+                           oninput="filterLocations()">
+
+                    <div class="location-grid" id="locationGrid">
+
+                        {% for location in locations %}
+
+                            <label class="location-option"
+                                   data-location="{{ location|lower }}">
+
+                                <input type="checkbox"
+                                       name="locations"
+                                       value="{{ location }}">
+
+                                <span>{{ location }}</span>
+
+                            </label>
+
+                        {% else %}
+
+                            <div class="empty">
+                                No restaurant locations available.
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                    <div class="selected-info" id="selectedCount">
+                        0 locations selected
+                    </div>
+
+                </div>
+
+            </div>
+
+            <button type="submit" class="submit-btn">
+                + Create Employee
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <!-- EMPLOYEE LIST -->
+
+    <div class="card">
+
+        <h2 class="card-title">
+            📋 Registered Employees ({{ employees|length }})
+        </h2>
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Employee</th>
+                        <th>Phone</th>
+                        <th>Role</th>
+                        <th>Assigned Locations</th>
+                        <th>Account</th>
+                        <th>Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for emp in employees %}
+
+                    <tr>
+
+                        <td>#{{ emp.id }}</td>
+
+                        <td>
+                            <span class="employee-name">
+                                {{ emp.name }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="employee-phone">
+                                {{ emp.phone }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="role-badge">
+                                {{ emp.role|title }}
+                            </span>
+                        </td>
+
+                        <!-- LOCATIONS -->
+
+                        <td>
+
+                            {% set emp_locations =
+                                employee_locations.get(emp.id, []) %}
+
+                            {% for loc in emp_locations %}
+
+                                <span class="location-tag">
+                                    {{ loc }}
+                                </span>
+
+                            {% else %}
+
+                                <span style="color:#999;">
+                                    No locations
+                                </span>
+
+                            {% endfor %}
+
+                        </td>
+
+                        <!-- ACCOUNT STATUS -->
+
+                        <td>
+
+                            {% if emp.is_active %}
+                                <span class="active-badge">
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="inactive-badge">
+                                    Inactive
+                                </span>
+                            {% endif %}
+
+                        </td>
+
+                        <!-- LOGIN STATUS -->
+
+                        <td>
+
+                            {% if emp.is_logged_in %}
+                                <span class="online-badge">
+                                    ● Online
+                                </span>
+                            {% else %}
+                                <span class="offline-badge">
+                                    ● Offline
+                                </span>
+                            {% endif %}
+
+                        </td>
+
+                        <!-- ACTIONS -->
+
+                        <td>
+
+                            <div class="employee-actions">
+
+                                <!-- EDIT LOCATIONS -->
+
+                                <a href="{{ url_for(
+                                    'admin_employee_locations',
+                                    employee_id=emp.id
+                                ) }}"
+                                   class="action-btn edit-location-btn">
+                                    📍 Edit Locations
+                                </a>
+
+                                <!-- FORCE LOGOUT -->
+
+                                {% if emp.is_logged_in %}
+
+                                    <a href="{{ url_for(
+                                        'logout_employee',
+                                        id=emp.id
+                                    ) }}"
+                                       class="action-btn force-logout-btn"
+                                       onclick="return confirm('Force logout {{ emp.name|e }}?');">
+                                        🚫 Logout
+                                    </a>
+
+                                {% endif %}
+
+                                <!-- DELETE EMPLOYEE -->
+
+                                <a href="{{ url_for(
+                                    'delete_employee',
+                                    id=emp.id
+                                ) }}"
+                                   class="action-btn delete-btn"
+                                   onclick="return confirm('Permanently delete {{ emp.name|e }}?');">
+                                    🗑 Delete
+                                </a>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+                        <td colspan="8" class="empty">
+                            👥 No employees registered yet.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
 </div>
-<hr>
 
-<!-- ✅ EMPLOYEE TABLE -->
-<table class="emp-table">
-<thead>
-<tr>
-    <th>ID</th>
-    <th>Name</th>
-    <th>Phone</th>
-    <th>Role</th>
-    <th>Status</th>
-    <th>Login</th>
-    <th>Actions</th>
-</tr>
-</thead>
 
-<tbody>
-{% for emp in employees %}
-<tr>
+<script>
 
-<td>#{{ emp.id }}</td>
-<td>{{ emp.name }}</td>
-<td>{{ emp.phone }}</td>
-<td>{{ emp.role }}</td>
+function updateSelectedCount() {
 
-<td>
-    {% if emp.is_active %}
-        <span style="color:green;">Active</span>
-    {% else %}
-        <span style="color:red;">Inactive</span>
-    {% endif %}
-</td>
+    const selected = document.querySelectorAll(
+        'input[name="locations"]:checked'
+    ).length;
 
-<td>
-    {% if emp.is_logged_in %}
-        <span style="color:green;">Online</span>
-    {% else %}
-        <span style="color:gray;">Offline</span>
-    {% endif %}
-</td>
+    document.getElementById('selectedCount').textContent =
+        selected + (
+            selected === 1
+                ? ' location selected'
+                : ' locations selected'
+        );
+}
 
-<td>
 
-    <!-- 🔒 FORCE LOGOUT -->
-    <a href="{{ url_for('logout_employee', id=emp.id) }}" class="btn logout">
-        🚫 Logout
-    </a>
+function selectAllLocations() {
 
-    <!-- ❌ DELETE -->
-    <a href="{{ url_for('delete_employee', id=emp.id) }}" class="btn delete"
-       onclick="return confirm('Delete employee?')">
-        ❌ Delete
-    </a>
+    document.querySelectorAll('.location-option').forEach(option => {
 
-</td>
+        if (option.style.display !== 'none') {
 
-</tr>
-{% endfor %}
-</tbody>
+            option.querySelector(
+                'input[type="checkbox"]'
+            ).checked = true;
 
-</table>
+        }
+
+    });
+
+    updateSelectedCount();
+}
+
+
+function clearLocations() {
+
+    document.querySelectorAll(
+        'input[name="locations"]'
+    ).forEach(input => {
+        input.checked = false;
+    });
+
+    updateSelectedCount();
+}
+
+
+function filterLocations() {
+
+    const search = document.getElementById(
+        'locationSearch'
+    ).value.toLowerCase().trim();
+
+    document.querySelectorAll('.location-option').forEach(option => {
+
+        const location = option.dataset.location || '';
+
+        option.style.display =
+            location.includes(search) ? 'flex' : 'none';
+
+    });
+
+}
+
+
+document.querySelectorAll(
+    'input[name="locations"]'
+).forEach(input => {
+
+    input.addEventListener('change', updateSelectedCount);
+
+});
+
+updateSelectedCount();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Delivery Person Control - Admin</title>
+
+<style>
+
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    overflow-x: hidden;
+}
+
+body {
+
+    margin: 0;
+
+    padding: 20px;
+
+    font-family:
+        'Poppins',
+        'Inter',
+        Arial,
+        sans-serif;
+
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(20,184,166,.08),
+            transparent 25%
+        ),
+        #f4f7f9;
+
+    color: #172033;
+}
+
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+
+.page-container {
+
+    width: 100%;
+
+    max-width: 1450px;
+
+    margin: auto;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 18px 20px;
+
+    margin-bottom: 18px;
+
+    background: rgba(
+        255,
+        255,
+        255,
+        .88
+    );
+
+    border: 1px solid #e4e9ef;
+
+    border-radius: 17px;
+
+    box-shadow:
+        0 8px 25px
+        rgba(15,23,42,.06);
+
+    backdrop-filter:
+        blur(16px);
+}
+
+.header h2 {
+
+    margin: 0;
+
+    font-size: 22px;
+
+    font-weight: 750;
+}
+
+.back-btn {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 5px;
+
+    padding: 9px 14px;
+
+    background: #ffffff;
+
+    color: #475467;
+
+    text-decoration: none;
+
+    border:
+        1px solid #dfe5ec;
+
+    border-radius: 9px;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+.back-btn:hover {
+
+    background: #f8fafc;
+}
+
+
+/* =========================================================
+   STATS
+   ========================================================= */
+
+.stats {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 14px;
+
+    margin-bottom: 18px;
+}
+
+.stat-card {
+
+    padding: 18px;
+
+    background: #ffffff;
+
+    border:
+        1px solid #e5eaf0;
+
+    border-radius: 15px;
+
+    box-shadow:
+        0 6px 20px
+        rgba(15,23,42,.05);
+}
+
+.stat-title {
+
+    color: #667085;
+
+    font-size: 12px;
+
+    font-weight: 650;
+
+    margin-bottom: 8px;
+}
+
+.stat-value {
+
+    font-size: 25px;
+
+    font-weight: 800;
+}
+
+.stat-active .stat-value {
+
+    color: #16a34a;
+}
+
+.stat-suspended .stat-value {
+
+    color: #dc2626;
+}
+
+.stat-online .stat-value {
+
+    color: #2563eb;
+}
+
+
+/* =========================================================
+   FILTER BAR
+   ========================================================= */
+
+.filter-bar {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    padding: 12px;
+
+    margin-bottom: 14px;
+
+    background: #ffffff;
+
+    border:
+        1px solid #e5eaf0;
+
+    border-radius: 13px;
+
+    box-shadow:
+        0 5px 17px
+        rgba(15,23,42,.04);
+}
+
+.filter-bar input,
+.filter-bar select {
+
+    height: 39px;
+
+    padding:
+        8px 11px;
+
+    border:
+        1px solid #dfe5ec;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: #344054;
+
+    outline: none;
+
+    font-size: 12px;
+}
+
+.filter-bar input {
+
+    width: 300px;
+
+    max-width: 100%;
+}
+
+.filter-bar input:focus,
+.filter-bar select:focus {
+
+    border-color: #70c9c0;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(20,184,166,.08);
+}
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.table-wrapper {
+
+    width: 100%;
+
+    overflow-x: auto;
+
+    background: #ffffff;
+
+    border:
+        1px solid #e5eaf0;
+
+    border-radius: 15px;
+
+    box-shadow:
+        0 8px 25px
+        rgba(15,23,42,.06);
+}
+
+table {
+
+    width: 100%;
+
+    min-width: 950px;
+
+    border-collapse: collapse;
+}
+
+thead {
+
+    background: #f8fafc;
+}
+
+th {
+
+    padding: 13px 12px;
+
+    border-bottom:
+        1px solid #e5eaf0;
+
+    color: #667085;
+
+    text-align: left;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+}
+
+td {
+
+    padding: 13px 12px;
+
+    border-bottom:
+        1px solid #eef1f5;
+
+    color: #475467;
+
+    font-size: 12px;
+
+    vertical-align: middle;
+}
+
+tbody tr:hover {
+
+    background: #f8fffd;
+}
+
+tbody tr:last-child td {
+
+    border-bottom: none;
+}
+
+
+/* =========================================================
+   STATUS BADGE
+   ========================================================= */
+
+.status-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    font-size: 10px;
+
+    font-weight: 750;
+}
+
+.status-active {
+
+    background: #ecfdf3;
+
+    color: #15803d;
+}
+
+.status-suspended {
+
+    background: #fef2f2;
+
+    color: #dc2626;
+}
+
+
+/* =========================================================
+   ONLINE
+   ========================================================= */
+
+.online {
+
+    color: #16a34a;
+
+    font-size: 10px;
+
+    font-weight: 700;
+}
+
+.offline {
+
+    color: #98a2b3;
+
+    font-size: 10px;
+
+    font-weight: 650;
+}
+
+
+/* =========================================================
+   CONTROL BUTTON
+   ========================================================= */
+
+.control-btn {
+
+    min-width: 110px;
+
+    padding: 8px 11px;
+
+    border-radius: 9px;
+
+    border: none;
+
+    cursor: pointer;
+
+    font-size: 11px;
+
+    font-weight: 750;
+
+    transition:
+        .18s ease;
+}
+
+.suspend-btn {
+
+    background: #fff1f2;
+
+    color: #dc2626;
+
+    border:
+        1px solid #fecdd3;
+}
+
+.suspend-btn:hover {
+
+    background: #ffe4e6;
+}
+
+.activate-btn {
+
+    background: #ecfdf3;
+
+    color: #15803d;
+
+    border:
+        1px solid #bbf7d0;
+}
+
+.activate-btn:hover {
+
+    background: #dcfce7;
+}
+
+.control-btn.loading {
+
+    opacity: .5;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   RESULT MESSAGE
+   ========================================================= */
+
+.message-box {
+
+    position: fixed;
+
+    right: 20px;
+
+    bottom: 20px;
+
+    z-index: 99999;
+
+    display: none;
+
+    max-width: 330px;
+
+    padding: 13px 16px;
+
+    background: #ffffff;
+
+    border:
+        1px solid #dfe5ec;
+
+    border-left:
+        4px solid #0f766e;
+
+    border-radius: 11px;
+
+    box-shadow:
+        0 15px 35px
+        rgba(15,23,42,.12);
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   EMPTY
+   ========================================================= */
+
+.empty {
+
+    padding: 35px;
+
+    text-align: center;
+
+    color: #667085;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (
+    max-width: 768px
+) {
+
+    body {
+        padding: 10px;
+    }
+
+    .header {
+
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+    .back-btn {
+
+        width: 100%;
+    }
+
+    .stats {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    .filter-bar input,
+    .filter-bar select {
+
+        width: 100%;
+
+        min-width: 0;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="page-container">
+
+
+<!-- =====================================================
+     HEADER
+     ===================================================== -->
+
+<div class="header">
+
+    <h2>
+        🚴 Delivery Person Control
+    </h2>
+
+
+    <a
+        href="{{ url_for('admin_dashboard') }}"
+        class="back-btn"
+    >
+        ← Admin Dashboard
+    </a>
+
+</div>
+
+
+<!-- =====================================================
+     STATS
+     ===================================================== -->
+
+<div class="stats">
+
+
+    <div class="stat-card stat-active">
+
+        <div class="stat-title">
+            Active Riders
+        </div>
+
+        <div
+            class="stat-value"
+            id="activeCount"
+        >
+            {{ active_count }}
+        </div>
+
+    </div>
+
+
+    <div class="stat-card stat-suspended">
+
+        <div class="stat-title">
+            Suspended Riders
+        </div>
+
+        <div
+            class="stat-value"
+            id="suspendedCount"
+        >
+            {{ suspended_count }}
+        </div>
+
+    </div>
+
+
+    <div class="stat-card stat-online">
+
+        <div class="stat-title">
+            Currently Online
+        </div>
+
+        <div
+            class="stat-value"
+            id="onlineCount"
+        >
+            {{ online_count }}
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     FILTER
+     ===================================================== -->
+
+<div class="filter-bar">
+
+
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="🔍 Search rider name / phone / username"
+    >
+
+
+    <select id="statusFilter">
+
+        <option value="">
+            All Riders
+        </option>
+
+        <option value="active">
+            Active
+        </option>
+
+        <option value="suspended">
+            Suspended
+        </option>
+
+        <option value="online">
+            Online
+        </option>
+
+    </select>
+
+
+</div>
+
+
+<!-- =====================================================
+     TABLE
+     ===================================================== -->
+
+<div class="table-wrapper">
+
+<table>
+
+<thead>
+
+<tr>
+
+    <th>
+        ID
+    </th>
+
+    <th>
+        Delivery Person
+    </th>
+
+    <th>
+        Phone
+    </th>
+
+    <th>
+        Username
+    </th>
+
+    <th>
+        Restaurant
+    </th>
+
+    <th>
+        Account Status
+    </th>
+
+    <th>
+        Online
+    </th>
+
+    <th>
+        Available
+    </th>
+
+    <th>
+        Control
+    </th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="riderTableBody">
+
+
+{% for dp in delivery_persons %}
+
+
+<tr
+    data-rider-name="{{ dp.name|lower }}"
+    data-phone="{{ dp.phone|lower }}"
+    data-username="{{ (dp.username or '')|lower }}"
+    data-active="{{ 'active' if dp.is_active else 'suspended' }}"
+    data-online="{{ 'online' if dp.is_online else 'offline' }}"
+>
+
+
+    <!-- ID -->
+
+    <td>
+        #{{ dp.id }}
+    </td>
+
+
+    <!-- NAME -->
+
+    <td>
+
+        <strong>
+            {{ dp.name }}
+        </strong>
+
+    </td>
+
+
+    <!-- PHONE -->
+
+    <td>
+        {{ dp.phone or '-' }}
+    </td>
+
+
+    <!-- USERNAME -->
+
+    <td>
+        {{ dp.username or '-' }}
+    </td>
+
+
+    <!-- RESTAURANT -->
+
+    <td>
+
+        {% if dp.restaurant_id %}
+
+            Restaurant #{{ dp.restaurant_id }}
+
+        {% else %}
+
+            -
+
+        {% endif %}
+
+    </td>
+
+
+    <!-- ACCOUNT STATUS -->
+
+    <td class="account-status">
+
+        {% if dp.is_active %}
+
+            <span
+                class="status-badge status-active"
+            >
+                ● Active
+            </span>
+
+        {% else %}
+
+            <span
+                class="status-badge status-suspended"
+            >
+                🚫 Suspended
+            </span>
+
+        {% endif %}
+
+    </td>
+
+
+    <!-- ONLINE -->
+
+    <td class="online-status">
+
+        {% if dp.is_online %}
+
+            <span class="online">
+                ● Online
+            </span>
+
+        {% else %}
+
+            <span class="offline">
+                ● Offline
+            </span>
+
+        {% endif %}
+
+    </td>
+
+
+    <!-- AVAILABLE -->
+
+    <td class="available-status">
+
+        {% if dp.is_available %}
+
+            <span class="online">
+                Yes
+            </span>
+
+        {% else %}
+
+            <span class="offline">
+                No
+            </span>
+
+        {% endif %}
+
+    </td>
+
+
+    <!-- CONTROL -->
+
+    <td>
+
+        {% if dp.is_active %}
+
+        <button
+            type="button"
+            class="control-btn suspend-btn"
+            data-id="{{ dp.id }}"
+            data-active="true"
+        >
+            🚫 Suspend
+        </button>
+
+        {% else %}
+
+        <button
+            type="button"
+            class="control-btn activate-btn"
+            data-id="{{ dp.id }}"
+            data-active="false"
+        >
+            ✅ Activate
+        </button>
+
+        {% endif %}
+
+    </td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+</table>
+
+</div>
+
+
+</div>
+
+
+<!-- =====================================================
+     MESSAGE
+     ===================================================== -->
+
+<div
+    id="messageBox"
+    class="message-box"
+></div>
+
+
+<script>
+
+/* =========================================================
+   MESSAGE
+   ========================================================= */
+
+let messageTimer = null;
+
+
+function showMessage(
+    message,
+    success = true
+) {
+
+    const box =
+        document.getElementById(
+            "messageBox"
+        );
+
+
+    box.innerText =
+        message;
+
+
+    box.style.borderLeftColor =
+        success
+            ? "#16a34a"
+            : "#dc2626";
+
+
+    box.style.display =
+        "block";
+
+
+    clearTimeout(
+        messageTimer
+    );
+
+
+    messageTimer =
+        setTimeout(
+            () => {
+
+                box.style.display =
+                    "none";
+
+            },
+            3500
+        );
+
+}
+
+
+/* =========================================================
+   UPDATE STATS
+   ========================================================= */
+
+function updateStats() {
+
+    let active = 0;
+    let suspended = 0;
+    let online = 0;
+
+
+    document
+        .querySelectorAll(
+            "#riderTableBody tr"
+        )
+        .forEach(row => {
+
+            if (
+                row.dataset.active ===
+                "active"
+            ) {
+
+                active++;
+
+            } else {
+
+                suspended++;
+
+            }
+
+
+            if (
+                row.dataset.online ===
+                "online"
+            ) {
+
+                online++;
+
+            }
+
+        });
+
+
+    document.getElementById(
+        "activeCount"
+    ).innerText = active;
+
+
+    document.getElementById(
+        "suspendedCount"
+    ).innerText = suspended;
+
+
+    document.getElementById(
+        "onlineCount"
+    ).innerText = online;
+
+}
+
+
+/* =========================================================
+   SUSPEND / ACTIVATE
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    async function(e) {
+
+
+        const button =
+            e.target.closest(
+                ".control-btn"
+            );
+
+
+        if (!button) {
+            return;
+        }
+
+
+        const id =
+            button.dataset.id;
+
+
+        const currentlyActive =
+            button.dataset.active ===
+            "true";
+
+
+        const actionText =
+            currentlyActive
+                ? "suspend"
+                : "activate";
+
+
+        const confirmAction =
+            confirm(
+                `Are you sure you want to ${actionText} this delivery person?`
+            );
+
+
+        if (!confirmAction) {
+            return;
+        }
+
+
+        button.classList.add(
+            "loading"
+        );
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    `/admin/delivery-person/${id}/toggle-status`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        }
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+
+                throw new Error(
+                    data.error ||
+                    "Unable to update status"
+                );
+
+            }
+
+
+            const row =
+                button.closest("tr");
+
+
+            if (!row) {
+                return;
+            }
+
+
+            /* =====================================
+               UPDATE DATA
+               ===================================== */
+
+            row.dataset.active =
+                data.is_active
+                    ? "active"
+                    : "suspended";
+
+
+            row.dataset.online =
+                data.is_online
+                    ? "online"
+                    : "offline";
+
+
+            /* =====================================
+               ACCOUNT STATUS
+               ===================================== */
+
+            const accountCell =
+                row.querySelector(
+                    ".account-status"
+                );
+
+
+            if (accountCell) {
+
+                accountCell.innerHTML =
+                    data.is_active
+
+                        ? `
+                        <span
+                            class="status-badge status-active"
+                        >
+                            ● Active
+                        </span>
+                        `
+
+                        : `
+                        <span
+                            class="status-badge status-suspended"
+                        >
+                            🚫 Suspended
+                        </span>
+                        `;
+
+            }
+
+
+            /* =====================================
+               ONLINE
+               ===================================== */
+
+            const onlineCell =
+                row.querySelector(
+                    ".online-status"
+                );
+
+
+            if (onlineCell) {
+
+                onlineCell.innerHTML =
+                    data.is_online
+
+                        ? `
+                        <span class="online">
+                            ● Online
+                        </span>
+                        `
+
+                        : `
+                        <span class="offline">
+                            ● Offline
+                        </span>
+                        `;
+
+            }
+
+
+            /* =====================================
+               AVAILABLE
+               ===================================== */
+
+            const availableCell =
+                row.querySelector(
+                    ".available-status"
+                );
+
+
+            if (availableCell) {
+
+                availableCell.innerHTML =
+                    data.is_available
+
+                        ? `
+                        <span class="online">
+                            Yes
+                        </span>
+                        `
+
+                        : `
+                        <span class="offline">
+                            No
+                        </span>
+                        `;
+
+            }
+
+
+            /* =====================================
+               CONTROL BUTTON
+               ===================================== */
+
+            const controlCell =
+                button.parentElement;
+
+
+            if (controlCell) {
+
+                controlCell.innerHTML =
+                    data.is_active
+
+                        ? `
+                        <button
+                            type="button"
+                            class="
+                                control-btn
+                                suspend-btn
+                            "
+                            data-id="${data.id}"
+                            data-active="true"
+                        >
+                            🚫 Suspend
+                        </button>
+                        `
+
+                        : `
+                        <button
+                            type="button"
+                            class="
+                                control-btn
+                                activate-btn
+                            "
+                            data-id="${data.id}"
+                            data-active="false"
+                        >
+                            ✅ Activate
+                        </button>
+                        `;
+
+            }
+
+
+            updateStats();
+
+
+            applyFilters();
+
+
+            showMessage(
+                data.message,
+                true
+            );
+
+        }
+
+        catch(error) {
+
+            console.error(
+                "Status update error:",
+                error
+            );
+
+
+            showMessage(
+                error.message ||
+                "Unable to update rider",
+                false
+            );
+
+        }
+
+        finally {
+
+            button.classList.remove(
+                "loading"
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   FILTER
+   ========================================================= */
+
+function applyFilters() {
+
+    const search =
+        document
+            .getElementById(
+                "searchInput"
+            )
+            .value
+            .toLowerCase()
+            .trim();
+
+
+    const filter =
+        document
+            .getElementById(
+                "statusFilter"
+            )
+            .value;
+
+
+    document
+        .querySelectorAll(
+            "#riderTableBody tr"
+        )
+        .forEach(row => {
+
+
+            const name =
+                row.dataset.riderName ||
+                "";
+
+
+            const phone =
+                row.dataset.phone ||
+                "";
+
+
+            const username =
+                row.dataset.username ||
+                "";
+
+
+            const active =
+                row.dataset.active ||
+                "";
+
+
+            const online =
+                row.dataset.online ||
+                "";
+
+
+            const matchesSearch =
+                !search ||
+
+                name.includes(search) ||
+
+                phone.includes(search) ||
+
+                username.includes(search);
+
+
+            let matchesFilter = true;
+
+
+            if (
+                filter === "active"
+            ) {
+
+                matchesFilter =
+                    active === "active";
+
+            }
+
+            else if (
+                filter === "suspended"
+            ) {
+
+                matchesFilter =
+                    active === "suspended";
+
+            }
+
+            else if (
+                filter === "online"
+            ) {
+
+                matchesFilter =
+                    online === "online";
+
+            }
+
+
+            row.style.display =
+                matchesSearch &&
+                matchesFilter
+                    ? ""
+                    : "none";
+
+        });
+
+}
+
+
+document
+    .getElementById(
+        "searchInput"
+    )
+    .addEventListener(
+        "input",
+        applyFilters
+    );
+
+
+document
+    .getElementById(
+        "statusFilter"
+    )
+    .addEventListener(
+        "change",
+        applyFilters
+    );
+
+
+/* Initial */
+
+applyFilters();
+
+</script>
+
+
+</body>
+</html>

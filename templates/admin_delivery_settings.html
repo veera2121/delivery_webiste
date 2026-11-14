@@ -1,32 +1,974 @@
-<form method="POST">
-  <h3>Base Delivery</h3>
-  <p>Distance: 0 km → {{ settings.base_distance }} km</p>
-  <input type="number" step="0.1" name="base_distance" value="{{ settings.base_distance }}" placeholder="Base distance (km)">
-  <input type="number" name="base_charge" value="{{ settings.base_charge }}" placeholder="Base charge">
+<!DOCTYPE html>
+<html lang="en">
 
-  <h3>Slabs</h3>
-  <p>Slab 1: {{ settings.base_distance }} km → {{ settings.slab_1_upto }} km</p>
-  <input type="number" step="0.1" name="slab_1_upto" value="{{ settings.slab_1_upto }}">
-  <input type="number" name="slab_1_charge" value="{{ settings.slab_1_charge }}">
+<head>
 
-  <p>Slab 2: {{ settings.slab_1_upto }} km → {{ settings.slab_2_upto }} km</p>
-  <input type="number" step="0.1" name="slab_2_upto" value="{{ settings.slab_2_upto }}">
-  <input type="number" name="slab_2_charge" value="{{ settings.slab_2_charge }}">
+    <meta charset="UTF-8">
 
-  <p>Slab 3: {{ settings.slab_2_upto }} km → {{ settings.slab_3_upto }} km</p>
-  <input type="number" step="0.1" name="slab_3_upto" value="{{ settings.slab_3_upto }}">
-  <input type="number" name="slab_3_charge" value="{{ settings.slab_3_charge }}">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-  <h3>Max & Free Delivery</h3>
-  <input type="number" name="max_charge" value="{{ settings.max_charge }}">
-  <input type="number" name="free_delivery_min_order" value="{{ settings.free_delivery_min_order }}">
+    <title>Delivery Settings</title>
 
-  <h3>Night Surge</h3>
-  <input type="number" name="night_surge" value="{{ settings.night_surge }}">
-  <label>
-    <input type="checkbox" name="is_night_surge_active" {% if settings.is_night_surge_active %}checked{% endif %}>
-    Night Surge Active
-  </label>
+    <style>
 
-  <button type="submit">Save</button>
-</form>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .page {
+            max-width: 1150px;
+            margin: auto;
+            padding: 30px 20px;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin: 0 0 5px;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 0;
+            color: #6b7280;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 22px;
+
+            box-shadow:
+                0 4px 20px
+                rgba(0, 0, 0, .06);
+        }
+
+        h2,
+        h3 {
+            margin-top: 0;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field label {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+
+            border: 1px solid #d1d5db;
+
+            border-radius: 10px;
+
+            padding: 11px 12px;
+
+            font-size: 14px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #111827;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 11px 16px;
+
+            background: #111827;
+            color: #ffffff;
+
+            font-size: 14px;
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: .9;
+        }
+
+        .location-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .location-item {
+            text-decoration: none;
+            color: #374151;
+
+            border-radius: 10px;
+            padding: 12px;
+
+            background: #f8fafc;
+        }
+
+        .location-item.active {
+            background: #111827;
+            color: white;
+        }
+
+        .location-name {
+            font-weight: 700;
+        }
+
+        .location-status {
+            font-size: 12px;
+            margin-top: 3px;
+            opacity: .7;
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+
+            gap: 15px;
+
+            margin-bottom: 15px;
+        }
+
+        .location-header h2 {
+            margin-bottom: 5px;
+        }
+
+        .meta {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .badge {
+            display: inline-block;
+
+            padding: 6px 10px;
+
+            border-radius: 999px;
+
+            font-size: 11px;
+
+            font-weight: 800;
+        }
+
+        .badge.active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge.inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .section {
+            border-top: 1px solid #e5e7eb;
+
+            padding-top: 22px;
+
+            margin-top: 22px;
+        }
+
+        .section-description {
+            margin-top: 4px;
+            margin-bottom: 15px;
+
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .slab-card {
+            border: 1px solid #e5e7eb;
+
+            border-radius: 13px;
+
+            padding: 15px;
+
+            margin-bottom: 12px;
+
+            background: #fafafa;
+        }
+
+        .slab-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            margin-bottom: 13px;
+        }
+
+        .slab-title {
+            font-weight: 800;
+        }
+
+        .remove-slot {
+            background: #fee2e2;
+            color: #991b1b;
+
+            padding: 7px 10px;
+
+            font-size: 12px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .checkbox input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .add-slot {
+            background: #eef2ff;
+            color: #3730a3;
+
+            border: 1px solid #c7d2fe;
+        }
+
+        .save {
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .flash {
+            border-radius: 10px;
+            padding: 12px 15px;
+
+            margin-bottom: 15px;
+
+            font-size: 14px;
+        }
+
+        .flash-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .flash-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .flash-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .empty {
+            text-align: center;
+            color: #6b7280;
+
+            padding: 70px 20px;
+        }
+
+        @media (max-width: 800px) {
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .row {
+                grid-template-columns: 1fr;
+            }
+
+            .location-header {
+                flex-direction: column;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="header">
+
+        <h1>
+            Delivery Settings
+        </h1>
+
+        <p>
+            Manage location-wise delivery pricing.
+        </p>
+
+    </div>
+
+
+    <!-- =====================================================
+         FLASH
+    ====================================================== -->
+
+    {% with messages = get_flashed_messages(
+        with_categories=true
+    ) %}
+
+        {% for category, message in messages %}
+
+            <div
+                class="flash flash-{{ category }}"
+            >
+                {{ message }}
+            </div>
+
+        {% endfor %}
+
+    {% endwith %}
+
+
+    <div class="grid">
+
+        <!-- =================================================
+             LEFT
+        ================================================== -->
+
+        <div>
+
+            <div class="card">
+
+                <h3>
+                    Add Location
+                </h3>
+
+                <form method="POST">
+
+                    <input
+                        type="hidden"
+                        name="action"
+                        value="create_location"
+                    >
+
+                    <div class="field">
+
+                        <label>
+                            Location Name
+                        </label>
+
+                        <input
+                            type="text"
+                            name="location"
+                            placeholder="Machilipatnam"
+                            required
+                        >
+
+                    </div>
+
+                    <br>
+
+                    <button type="submit">
+                        + Add Location
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <div
+                class="card"
+                style="margin-top:20px"
+            >
+
+                <h3>
+                    Locations
+                </h3>
+
+                {% if locations %}
+
+                    <div class="location-list">
+
+                        {% for location in locations %}
+
+                            <a
+                                href="{{ url_for(
+                                    'admin_delivery_settings',
+                                    location_id=location.id
+                                ) }}"
+                                class="
+                                    location-item
+                                    {% if settings
+                                       and settings.id
+                                       == location.id %}
+                                       active
+                                    {% endif %}
+                                "
+                            >
+
+                                <div class="location-name">
+                                    {{ location.location }}
+                                </div>
+
+                                <div class="location-status">
+
+                                    {% if location.is_active %}
+                                        Active
+                                    {% else %}
+                                        Inactive
+                                    {% endif %}
+
+                                </div>
+
+                            </a>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <p>
+                        No locations created.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             RIGHT
+        ================================================== -->
+
+        <div>
+
+            {% if settings %}
+
+                <div class="card">
+
+                    <div class="location-header">
+
+                        <div>
+
+                            <h2>
+                                {{ settings.location }}
+                            </h2>
+
+                            <div class="meta">
+
+                                Restaurants using this pricing:
+                                <strong>
+                                    {{ restaurant_count }}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        {% if settings.is_active %}
+
+                            <span class="badge active">
+                                ACTIVE
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge inactive">
+                                INACTIVE
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <form method="POST">
+
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="update"
+                        >
+
+                        <input
+                            type="hidden"
+                            name="location_id"
+                            value="{{ settings.id }}"
+                        >
+
+
+                        <!-- =================================
+                             DELIVERY SLOTS
+                        ================================== -->
+
+                        <div class="section">
+
+                            <h3>
+                                Delivery Distance Slots
+                            </h3>
+
+                            <div class="section-description">
+
+                                Start with 4 slots.
+                                Add more later without
+                                changing the database.
+
+                            </div>
+
+
+                            <div id="delivery-slabs">
+
+                                {% for slab in settings.delivery_slabs %}
+
+                                    <div
+                                        class="slab-card"
+                                    >
+
+                                        <div
+                                            class="slab-header"
+                                        >
+
+                                            <div class="slab-title">
+
+                                                Slot
+                                                {{ loop.index }}
+
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                class="remove-slot"
+                                                onclick="removeSlot(this)"
+                                            >
+                                                Remove
+                                            </button>
+
+                                        </div>
+
+
+                                        <div class="row">
+
+                                            <div class="field">
+
+                                                <label>
+                                                    Up To Distance (km)
+                                                </label>
+
+                                                <input
+                                                    type="number"
+                                                    step="0.1"
+                                                    min="0.1"
+                                                    name="slab_upto[]"
+                                                    value="{{ slab.upto }}"
+                                                    required
+                                                >
+
+                                            </div>
+
+
+                                            <div class="field">
+
+                                                <label>
+                                                    Delivery Charge (₹)
+                                                </label>
+
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    name="slab_charge[]"
+                                                    value="{{ slab.charge }}"
+                                                    required
+                                                >
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+
+                            <button
+                                type="button"
+                                class="add-slot"
+                                onclick="addDeliverySlot()"
+                            >
+                                + Add Delivery Slot
+                            </button>
+
+                        </div>
+
+
+                        <!-- =================================
+                             MAX CHARGE
+                        ================================== -->
+
+                        <div class="section">
+
+                            <h3>
+                                Maximum Distance Charge
+                            </h3>
+
+                            <div class="section-description">
+
+                                This charge is used when the
+                                customer is farther than the
+                                last configured slot.
+
+                            </div>
+
+                            <div class="field">
+
+                                <label>
+                                    Maximum Charge (₹)
+                                </label>
+
+                                <input
+                                    type="number"
+                                    min="0"
+                                    name="max_charge"
+                                    value="{{ settings.max_charge }}"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================
+                             FREE DELIVERY
+                        ================================== -->
+
+                        <div class="section">
+
+                            <h3>
+                                Free Delivery Configuration
+                            </h3>
+
+                            <div class="section-description">
+
+                                Reserved for delivery-offer
+                                configuration. Your current
+                                charge calculation does not
+                                automatically make orders free.
+
+                            </div>
+
+                            <div class="field">
+
+                                <label>
+                                    Free Delivery Minimum Order (₹)
+                                </label>
+
+                                <input
+                                    type="number"
+                                    min="0"
+                                    name="free_delivery_min_order"
+                                    value="{{ settings.free_delivery_min_order }}"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================
+                             NIGHT SURGE
+                        ================================== -->
+
+                        <div class="section">
+
+                            <h3>
+                                Night Surge
+                            </h3>
+
+                            <div class="field">
+
+                                <label>
+                                    Night Surge Amount (₹)
+                                </label>
+
+                                <input
+                                    type="number"
+                                    min="0"
+                                    name="night_surge"
+                                    value="{{ settings.night_surge }}"
+                                    required
+                                >
+
+                            </div>
+
+                            <br>
+
+                            <label class="checkbox">
+
+                                <input
+                                    type="checkbox"
+                                    name="is_night_surge_active"
+
+                                    {% if settings.is_night_surge_active %}
+                                        checked
+                                    {% endif %}
+                                >
+
+                                Enable Night Surge
+
+                            </label>
+
+                        </div>
+
+
+                        <!-- =================================
+                             STATUS
+                        ================================== -->
+
+                        <div class="section">
+
+                            <h3>
+                                Location Status
+                            </h3>
+
+                            <label class="checkbox">
+
+                                <input
+                                    type="checkbox"
+                                    name="is_active"
+
+                                    {% if settings.is_active %}
+                                        checked
+                                    {% endif %}
+                                >
+
+                                Delivery Pricing Active
+
+                            </label>
+
+                        </div>
+
+
+                        <!-- =================================
+                             SAVE
+                        ================================== -->
+
+                        <button
+                            type="submit"
+                            class="save"
+                        >
+                            Save {{ settings.location }}
+                            Delivery Settings
+                        </button>
+
+                    </form>
+
+                </div>
+
+            {% else %}
+
+                <div class="card empty">
+
+                    <h2>
+                        No Delivery Location
+                    </h2>
+
+                    <p>
+                        Create a delivery location first.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+function updateSlotNumbers() {
+
+    const slots =
+        document.querySelectorAll(
+            '#delivery-slabs .slab-card'
+        );
+
+    slots.forEach(
+        (slot, index) => {
+
+            const title =
+                slot.querySelector(
+                    '.slab-title'
+                );
+
+            if (title) {
+
+                title.textContent =
+                    'Slot ' + (index + 1);
+
+            }
+
+        }
+    );
+}
+
+
+function addDeliverySlot() {
+
+    const container =
+        document.getElementById(
+            'delivery-slabs'
+        );
+
+    const slotCount =
+        container.querySelectorAll(
+            '.slab-card'
+        ).length;
+
+    const slot =
+        document.createElement(
+            'div'
+        );
+
+    slot.className =
+        'slab-card';
+
+    slot.innerHTML = `
+
+        <div class="slab-header">
+
+            <div class="slab-title">
+                Slot ${slotCount + 1}
+            </div>
+
+            <button
+                type="button"
+                class="remove-slot"
+                onclick="removeSlot(this)"
+            >
+                Remove
+            </button>
+
+        </div>
+
+        <div class="row">
+
+            <div class="field">
+
+                <label>
+                    Up To Distance (km)
+                </label>
+
+                <input
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    name="slab_upto[]"
+                    placeholder="Example: 15"
+                    required
+                >
+
+            </div>
+
+            <div class="field">
+
+                <label>
+                    Delivery Charge (₹)
+                </label>
+
+                <input
+                    type="number"
+                    min="0"
+                    name="slab_charge[]"
+                    placeholder="Example: 85"
+                    required
+                >
+
+            </div>
+
+        </div>
+    `;
+
+    container.appendChild(
+        slot
+    );
+
+    updateSlotNumbers();
+}
+
+
+function removeSlot(button) {
+
+    const container =
+        document.getElementById(
+            'delivery-slabs'
+        );
+
+    const slots =
+        container.querySelectorAll(
+            '.slab-card'
+        );
+
+    if (slots.length <= 1) {
+
+        alert(
+            'At least one delivery slot is required.'
+        );
+
+        return;
+    }
+
+    button
+        .closest('.slab-card')
+        .remove();
+
+    updateSlotNumbers();
+}
+
+</script>
+
+</body>
+</html>
