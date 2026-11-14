@@ -41,7 +41,7 @@ from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, current_user
 from time import perf_counter
-from users.restaurant_control import get_restaurant_order_control
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from push import VAPID_PUBLIC_KEY, register_subscription, send_push, subscriptions
 from functools import wraps
@@ -49,8 +49,6 @@ import firebase_admin
 from firebase_admin import credentials
 import os
 import firebase_admin
-
-from users.restaurant_control import get_restaurant_order_control
 from firebase_admin import credentials, messaging
 from dispatch_service import haversine 
 from dispatch_service import assign_delivery_to_order,assign_waiting_order_to_rider,find_nearest_rider_excluding
@@ -93,26 +91,11 @@ from models import (
     OrderPickupVerification,
     CategoryLocation,
     HomeAnnouncement,
-    HomeAnnouncementTarget,
-    DeliveryLocationSettings,
-    AdminControlLog,
-    PlatformControl,
-    RestaurantHomepageRanking,
-    Location,
-    RestaurantMenuAlert,
-    EmployeeLocationAssignment,
-    RestaurantReview
-
-)
-from models import SettlementLine, RestaurantSettlementTerms
-
-from settlement_service import (
-    create_settlement_line,
-    get_restaurant_commission_percent,
+    HomeAnnouncementTarget
 )
 import os
 import secrets
-from settlement_routes import register_settlement_routes
+
 from datetime import datetime, timedelta
 from functools import wraps
 
@@ -213,24 +196,6 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 # ================= BLUEPRINTS =================
 app.register_blueprint(users_bp, url_prefix="/users")
 
-from ratings_reviews_routes import ratings_reviews_bp
-app.register_blueprint(ratings_reviews_bp)
-from chatbot_routes import chatbot_bp
-
-app.register_blueprint(chatbot_bp)
-
-
-
-# ================= RESTAURANT PARTNERS FLUTTER API =================
-
-from restaurant_partner_api import register_restaurant_partner_api
-
-register_restaurant_partner_api(app, socketio, csrf)
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 from datetime import timedelta
 
 app.config.update(
@@ -241,11 +206,12 @@ app.config.update(
     REMEMBER_COOKIE_DURATION=timedelta(days=30),
 ) 
 
+import os
+import requests
+
 WHATSAPP_ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN")
 WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
 WHATSAPP_API_VERSION = os.getenv("WHATSAPP_API_VERSION", "v25.0")
-
-
 import razorpay
 
 
@@ -337,26 +303,10 @@ if not firebase_admin._apps:
     print("🔥 FIREBASE ABSOLUTE PATH:",
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "firebase_key.json"))
 
-from cod_handover_routes import register_cod_handover_routes
 
-register_cod_handover_routes(
-    app,
-    db,
-    Order,
-    DeliveryPerson
-)
 # ============================================================
 # FIREBASE ADMIN SDK INITIALIZATION
 # ============================================================
-# ================= RESTAURANT SETTLEMENT SYSTEM =================
-register_settlement_routes(
-    app,
-    db,
-    Order,
-    OrderItem,
-    Restaurant
-)
-
 
 import os
 import json
@@ -625,29 +575,6 @@ def _admin_required(fn):
         return fn(*args, **kwargs)
 
     return wrapper
-
-from sqlalchemy import func
-
-
-def get_delivery_location_settings(
-    location_name
-):
-    if not location_name:
-        return None
-
-    normalized = " ".join(
-        location_name.strip().split()
-    )
-
-    if not normalized:
-        return None
-
-    return DeliveryLocationSettings.query.filter(
-        func.lower(
-            DeliveryLocationSettings.location
-        ) == normalized.lower()
-    ).first()
-
 # ------------------ UTILS ------------------
 def generate_otp():
     return str(secrets.randbelow(900000) + 100000)
@@ -669,115 +596,12 @@ def haversine(lat1, lon1, lat2, lon2):
 
     c = 2 * math.asin(math.sqrt(a))
     return R * c 
+import math
 
+import math
+import requests
+import math
 
-from sqlalchemy import func
-
-
-DEFAULT_DELIVERY_SLABS = [
-    {
-        "upto": 3,
-        "charge": 30
-    },
-    {
-        "upto": 6,
-        "charge": 40
-    },
-    {
-        "upto": 9,
-        "charge": 55
-    },
-    {
-        "upto": 12,
-        "charge": 70
-    }
-]
-
-
-def get_or_create_delivery_location(location_name):
-    """
-    Find the delivery pricing configuration for a location.
-
-    If it does not exist, create it with the default
-    4 delivery slots.
-
-    Later, additional slots can be added from the admin
-    delivery-settings page without changing the database.
-    """
-
-    if not location_name:
-        return None
-
-    location_name = " ".join(
-        location_name.strip().split()
-    )
-
-    if not location_name:
-        return None
-
-    location_name = location_name.title()
-
-    # Find existing location
-    settings = (
-        DeliveryLocationSettings.query
-        .filter(
-            func.lower(
-                DeliveryLocationSettings.location
-            ) == location_name.lower()
-        )
-        .first()
-    )
-
-    # Already exists
-    if settings:
-        return settings
-
-    # Create new pricing configuration
-    settings = DeliveryLocationSettings(
-
-        location=location_name,
-
-        is_active=True,
-
-        delivery_slabs=[
-            {
-                "upto": 3,
-                "charge": 30
-            },
-            {
-                "upto": 6,
-                "charge": 40
-            },
-            {
-                "upto": 9,
-                "charge": 55
-            },
-            {
-                "upto": 12,
-                "charge": 70
-            }
-        ],
-
-        max_charge=90,
-
-        free_delivery_min_order=499,
-
-        night_surge=0,
-
-        is_night_surge_active=False
-    )
-
-    db.session.add(settings)
-
-    # Gives settings.id without committing yet
-    db.session.flush()
-
-    print(
-        "Created new delivery pricing location:",
-        location_name
-    )
-
-    return settings
 
 
 def calculate_distance_km(lat1, lng1, lat2, lng2):
@@ -787,106 +611,40 @@ def calculate_distance_km(lat1, lng1, lat2, lng2):
     if None in (lat1, lng1, lat2, lng2):
         return 0
 
-    lat1, lng1, lat2, lng2 = map(
-        float,
-        (lat1, lng1, lat2, lng2)
-    )
+    lat1, lng1, lat2, lng2 = map(float, (lat1, lng1, lat2, lng2))
 
-    # ==============================
-    # GOOGLE MAPS ROUTES API
-    # ==============================
-
-    google_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
-
-    if not google_api_key:
-        print("GOOGLE_MAPS_API_KEY is missing")
-        return None
-
-    url = "https://routes.googleapis.com/directions/v2:computeRoutes"
-
-    payload = {
-        "origin": {
-            "location": {
-                "latLng": {
-                    "latitude": lat1,
-                    "longitude": lng1
-                }
-            }
-        },
-        "destination": {
-            "location": {
-                "latLng": {
-                    "latitude": lat2,
-                    "longitude": lng2
-                }
-            }
-        },
-        "travelMode": "DRIVE",
-        "routingPreference": "TRAFFIC_UNAWARE",
-        "computeAlternativeRoutes": False,
-        "routeModifiers": {
-            "avoidTolls": False,
-            "avoidHighways": False,
-            "avoidFerries": False
-        },
-        "languageCode": "en-US",
-        "units": "METRIC"
-    }
-
-    headers = {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": google_api_key,
-        "X-Goog-FieldMask": "routes.distanceMeters"
-    }
+    url = f"https://router.project-osrm.org/route/v1/driving/{lng1},{lat1};{lng2},{lat2}?overview=false"
 
     try:
+        r = requests.get(url, timeout=3)
+        data = r.json()
 
-        response = requests.post(
-            url,
-            json=payload,
-            headers=headers,
-            timeout=5
-        )
+        if "routes" not in data or len(data["routes"]) == 0:
+            print("OSRM failed, using haversine fallback")
 
-        print("GOOGLE ROUTES STATUS:", response.status_code)
+            km = haversine(lat1, lng1, lat2, lng2)
+            km = km * 1.35
+            km = math.ceil(km * 2) / 2
+            return km
 
-        data = response.json()
+        meters = data["routes"][0]["distance"]
 
-        if response.status_code != 200:
-            print("GOOGLE ROUTES ERROR:", data)
-            return None
-
-        routes = data.get("routes", [])
-
-        if not routes:
-            print("GOOGLE ROUTES: No route found")
-            return None
-
-        meters = routes[0].get("distanceMeters")
-
-        if meters is None:
-            print("GOOGLE ROUTES: distanceMeters missing")
-            return None
-
-        # Convert meters → km
         km = meters / 1000
-
-        # Round UP to nearest 0.5 km
+        km = km * 1.07
         km = math.ceil(km * 2) / 2
-
-        print("GOOGLE ROAD DISTANCE:", km, "km")
 
         return km
 
-    except requests.RequestException as e:
-
-        print("GOOGLE ROUTES REQUEST ERROR:", e)
-        return None
-
     except Exception as e:
+        print("DISTANCE ERROR:", e)
+        print("Using haversine fallback")
 
-        print("GOOGLE DISTANCE ERROR:", e)
-        return None
+        km = haversine(lat1, lng1, lat2, lng2)
+        km = km * 1.35
+        km = math.ceil(km * 2) / 2
+
+        return km
+
 def cancel_unpaid_orders():
 
     cutoff = (
@@ -918,14 +676,14 @@ def cancel_unpaid_orders():
         )
 
     db.session.commit()
-
-
-
-
 @app.before_request
 def cleanup_orders():
 
     cancel_unpaid_orders()
+
+# ============================================================
+# WHATSAPP CUSTOMER ORDER UPDATE
+# ============================================================
 
 def _normalize_whatsapp_phone(phone):
     """
@@ -953,86 +711,8 @@ def _normalize_whatsapp_phone(phone):
         return "91" + phone
 
     return phone
-import os
-import requests
 
-def send_rider_whatsapp_otp(phone, otp):
-    token = os.environ["WHATSAPP_ACCESS_TOKEN"]
-    phone_id = os.environ["WHATSAPP_PHONE_NUMBER_ID"]
-    api_version = os.environ["WHATSAPP_GRAPH_API_VERSION"]
 
-    template_name = os.environ.get(
-        "WHATSAPP_OTP_TEMPLATE",
-        "ruchigo_rider_password_otp"
-    )
-    language = os.environ.get("WHATSAPP_OTP_LANGUAGE", "en")
-
-    phone = "".join(ch for ch in str(phone) if ch.isdigit())
-
-    if len(phone) == 10:
-        phone = "91" + phone
-
-    if len(phone) != 12 or not phone.startswith("91"):
-        raise ValueError("Invalid Indian mobile number.")
-
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": phone,
-        "type": "template",
-        "template": {
-            "name": template_name,
-            "language": {"code": language},
-            "components": [
-                {
-                    "type": "body",
-                    "parameters": [
-                        {
-                            "type": "text",
-                            "text": str(otp)
-                        }
-                    ]
-                },
-                {
-                    "type": "button",
-                    "sub_type": "url",
-                    "index": "0",
-                    "parameters": [
-                        {
-                            "type": "text",
-                            "text": str(otp)
-                        }
-                    ]
-                }
-            ]
-        }
-    }
-
-    response = requests.post(
-        f"https://graph.facebook.com/{api_version}/{phone_id}/messages",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        },
-        json=payload,
-        timeout=20
-    )
-
-    if not response.ok:
-        app.logger.error(
-            "WhatsApp OTP failed: HTTP %s; %s",
-            response.status_code,
-            response.text[:1000]
-        )
-        raise RuntimeError("WhatsApp could not send the OTP.")
-
-    result = response.json()
-
-    app.logger.info(
-        "WhatsApp OTP request accepted by Meta; message ID: %s",
-        (result.get("messages") or [{}])[0].get("id", "unknown")
-    )
-
-    return result
 
 def send_whatsapp_order_update(order, status_text):
     """
@@ -1415,40 +1095,43 @@ def send_delivery_otp_whatsapp(order):
 
 def send_whatsapp_first_order_confirmation(order):
     """
-    Send the approved first-order WhatsApp confirmation template.
+    Send WhatsApp confirmation for a customer's first order.
 
-    Template: ruchigo_first_order_confirmation
-    Language: en_GB
+    Template:
+        ruchigo_first_order_confirmation
 
-    Body parameters:
-        1. Customer name
-        2. Order ID
-        3. Restaurant name
-        4. Total amount
-
-    Returns True if Meta accepts the message, otherwise False.
+    Buttons:
+        1. Yes, Continue
+        2. Cancel
     """
 
     try:
         # ----------------------------------------------------
         # ENABLE / DISABLE
         # ----------------------------------------------------
-        enabled = (
-            os.getenv(
-                "WHATSAPP_FIRST_ORDER_CONFIRMATION_ENABLED",
-                "true"
-            ).strip().lower() == "true"
-        )
+
+        enabled = os.getenv(
+            "WHATSAPP_FIRST_ORDER_CONFIRMATION_ENABLED",
+            "true"
+        ).lower() == "true"
 
         if not enabled:
-            print("WhatsApp first-order confirmation disabled.")
+            print(
+                "ℹ️ WhatsApp first-order confirmation disabled."
+            )
             return False
 
         # ----------------------------------------------------
         # ENVIRONMENT
         # ----------------------------------------------------
-        access_token = os.getenv("WHATSAPP_ACCESS_TOKEN")
-        phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+
+        access_token = os.getenv(
+            "WHATSAPP_ACCESS_TOKEN"
+        )
+
+        phone_number_id = os.getenv(
+            "WHATSAPP_PHONE_NUMBER_ID"
+        )
 
         api_version = os.getenv(
             "WHATSAPP_API_VERSION",
@@ -1462,73 +1145,53 @@ def send_whatsapp_first_order_confirmation(order):
 
         template_language = os.getenv(
             "WHATSAPP_FIRST_ORDER_TEMPLATE_LANGUAGE",
-            "en_GB"
+            "en_US"
         )
 
-        if not access_token or not phone_number_id:
+        if not access_token:
             print(
-                "WhatsApp error: access token or phone number ID missing."
+                "❌ WhatsApp access token missing."
+            )
+            return False
+
+        if not phone_number_id:
+            print(
+                "❌ WhatsApp phone number ID missing."
             )
             return False
 
         # ----------------------------------------------------
         # CUSTOMER PHONE
         # ----------------------------------------------------
-        customer_phone = (
-            getattr(order, "phone", None)
-            or getattr(order, "customer_phone", None)
+
+        customer_phone = getattr(
+            order,
+            "phone",
+            None
         )
 
-        customer_phone = _normalize_whatsapp_phone(customer_phone)
+        if not customer_phone:
+            customer_phone = getattr(
+                order,
+                "customer_phone",
+                None
+            )
+
+        customer_phone = _normalize_whatsapp_phone(
+            customer_phone
+        )
 
         if not customer_phone:
             print(
-                "WhatsApp error: customer phone missing for order",
-                getattr(order, "order_id", None)
+                f"❌ WhatsApp: customer phone missing "
+                f"for order {order.order_id}"
             )
             return False
 
         # ----------------------------------------------------
-        # CUSTOMER NAME
+        # WHATSAPP API URL
         # ----------------------------------------------------
-        customer_name = (
-            getattr(order, "customer_name", None)
-            or getattr(order, "name", None)
-            or "Customer"
-        )
 
-        # ----------------------------------------------------
-        # RESTAURANT NAME
-        # ----------------------------------------------------
-        restaurant_name = None
-        restaurant = getattr(order, "restaurant", None)
-
-        if restaurant:
-            restaurant_name = (
-                getattr(restaurant, "name", None)
-                or getattr(restaurant, "restaurant_name", None)
-            )
-
-        restaurant_name = restaurant_name or "RucHiGo"
-
-        # ----------------------------------------------------
-        # TOTAL AMOUNT
-        # Use the actual Order model fields.
-        # final_total includes the final order total.
-        # ----------------------------------------------------
-        total_amount = getattr(order, "final_total", None)
-
-        if total_amount is None:
-            total_amount = getattr(order, "items_total", None)
-
-        if total_amount is None:
-            total_amount = 0
-
-        total_amount = f"{float(total_amount):.2f}"
-
-        # ----------------------------------------------------
-        # META GRAPH API URL
-        # ----------------------------------------------------
         url = (
             f"https://graph.facebook.com/"
             f"{api_version}/"
@@ -1536,223 +1199,126 @@ def send_whatsapp_first_order_confirmation(order):
         )
 
         # ----------------------------------------------------
-        # TEMPLATE PAYLOAD
+        # TEMPLATE
         # ----------------------------------------------------
+
         payload = {
             "messaging_product": "whatsapp",
+
             "to": customer_phone,
+
             "type": "template",
+
             "template": {
                 "name": template_name,
+
                 "language": {
                     "code": template_language
-                },
-                "components": [
-                    {
-                        "type": "body",
-                        "parameters": [
-                            {
-                                "type": "text",
-                                "text": str(customer_name)
-                            },
-                            {
-                                "type": "text",
-                                "text": str(order.order_id)
-                            },
-                            {
-                                "type": "text",
-                                "text": str(restaurant_name)
-                            },
-                            {
-                                "type": "text",
-                                "text": total_amount
-                            }
-                        ]
-                    }
-                ]
+                }
             }
         }
 
         # ----------------------------------------------------
-        # SEND TO META
+        # SEND
         # ----------------------------------------------------
+
         response = requests.post(
             url,
+
             headers={
-                "Authorization": f"Bearer {access_token}",
-                "Content-Type": "application/json"
+                "Authorization":
+                    f"Bearer {access_token}",
+
+                "Content-Type":
+                    "application/json"
             },
+
             json=payload,
+
             timeout=30
         )
 
         # ----------------------------------------------------
         # SUCCESS
         # ----------------------------------------------------
+
         if response.status_code == 200:
+
             result = response.json()
 
-            messages = result.get("messages") or []
-            message_id = (
-                messages[0].get("id")
-                if messages
-                else None
+            print(
+                "========================================"
             )
 
             print(
-                "First-order WhatsApp template accepted by Meta.",
+                "✅ FIRST ORDER WHATSAPP CONFIRMATION SENT"
+            )
+
+            print(
                 "Order:",
-                order.order_id,
+                order.order_id
+            )
+
+            print(
+                "Phone:",
+                customer_phone
+            )
+
+            print(
                 "WAMID:",
-                message_id
+                result.get(
+                    "messages",
+                    [{}]
+                )[0].get("id")
+            )
+
+            print(
+                "========================================"
             )
 
             return True
 
         # ----------------------------------------------------
-        # API ERROR
+        # ERROR
         # ----------------------------------------------------
+
         print(
-            "First-order WhatsApp message failed.",
+            "========================================"
+        )
+
+        print(
+            "❌ FIRST ORDER WHATSAPP CONFIRMATION FAILED"
+        )
+
+        print(
             "Order:",
-            getattr(order, "order_id", None),
+            getattr(order, "order_id", None)
+        )
+
+        print(
             "HTTP:",
-            response.status_code,
+            response.status_code
+        )
+
+        print(
             "Response:",
-            response.text[:1500]
+            response.text
+        )
+
+        print(
+            "========================================"
         )
 
         return False
 
     except Exception as e:
+
         print(
-            "First-order WhatsApp confirmation error:",
-            str(e)
+            "❌ FIRST ORDER WHATSAPP CONFIRMATION ERROR:",
+            e
         )
+
         return False
-
-def get_active_menu_alert(restaurant_id, category=None):
-    """
-    Returns the highest-priority active menu alert.
-
-    Priority:
-    1. Category-specific alert
-    2. Restaurant-wide alert
-    """
-
-    now = datetime.utcnow()
-
-    alerts = (
-        RestaurantMenuAlert.query
-        .filter(
-            RestaurantMenuAlert.restaurant_id == restaurant_id,
-            RestaurantMenuAlert.enabled == True,
-            db.or_(
-                RestaurantMenuAlert.expires_at.is_(None),
-                RestaurantMenuAlert.expires_at > now
-            )
-        )
-        .order_by(
-            RestaurantMenuAlert.updated_at.desc()
-        )
-        .all()
-    )
-
-    if not alerts:
-        return None
-
-    # First check category-specific alert
-    if category:
-        category_clean = category.strip().lower()
-
-        for alert in alerts:
-            if (
-                alert.scope == "category"
-                and alert.category
-                and alert.category.strip().lower()
-                == category_clean
-            ):
-                return alert
-
-    # Then restaurant-wide alert
-    for alert in alerts:
-        if alert.scope == "restaurant":
-            return alert
-
-    return None
-
-def menu_alert_json(alert):
-    if not alert:
-        return None
-
-    return {
-        "id": alert.id,
-        "enabled": bool(alert.enabled),
-        "scope": alert.scope,
-        "category": alert.category,
-        "title": alert.title,
-        "message": alert.message,
-        "severity": alert.severity,
-        "expires_at": (
-            alert.expires_at.isoformat()
-            if alert.expires_at
-            else None
-        ),
-    }
-
-def is_first_customer_order(order):
-    """
-    Return True only if this is the customer's first order
-    based on their phone number.
-    """
-    from sqlalchemy import func
-
-    phone = str(order.phone or "").strip()
-    if not phone:
-        return False
-
-    # Normalize Indian phone numbers to their last 10 digits.
-    phone_digits = "".join(ch for ch in phone if ch.isdigit())
-    phone_digits = phone_digits[-10:]
-
-    if len(phone_digits) != 10:
-        return False
-
-    previous_orders = Order.query.filter(
-        Order.id != order.id,
-        Order.phone.isnot(None),
-        func.right(
-            func.regexp_replace(Order.phone, r"\D", "", "g"),
-            10
-        ) == phone_digits
-    ).count()
-
-    return previous_orders == 0
-
-def get_active_menu_alerts(restaurant_id):
-    now = datetime.utcnow()
-
-    alerts = (
-        RestaurantMenuAlert.query
-        .filter(
-            RestaurantMenuAlert.restaurant_id == restaurant_id,
-            RestaurantMenuAlert.enabled == True,
-            db.or_(
-                RestaurantMenuAlert.expires_at.is_(None),
-                RestaurantMenuAlert.expires_at > now
-            )
-        )
-        .order_by(
-            RestaurantMenuAlert.updated_at.desc()
-        )
-        .all()
-    )
-
-    return [
-        menu_alert_json(alert)
-        for alert in alerts
-    ]
-
 def send_new_order_notification(rider, order):
 
     # ========================================================
@@ -2759,128 +2325,131 @@ def build_rider_daily_settlement(rider_id):
     return current_settlement
 
 
-
-
 def sync_restaurant_menu(restaurant):
 
     if not restaurant.sheet_url:
-        print(restaurant.name, "skipped: no sheet URL")
-        return False
+        return
 
     try:
-        df = pd.read_csv(
-            restaurant.sheet_url,
-            engine="python",
-            on_bad_lines="skip"
-        ).fillna("")
 
-        synced = 0
-        added = 0
+        df = pd.read_csv(
+
+            restaurant.sheet_url,
+
+            engine="python",
+
+            on_bad_lines="skip"
+
+        )
+
+        df = df.fillna("")
+
+        new_items = []
 
         for _, row in df.iterrows():
 
-            name = str(row.get("name", "")).strip()
-            if not name:
-                continue
+            raw_price = str(
+
+                row.get("price", "")
+
+            ).strip()
 
             try:
-                price = float(str(row.get("price", "")).strip())
-            except (ValueError, TypeError):
+
+                price = float(raw_price)
+
+            except:
+
                 price = 0
 
-            raw_mrp = str(row.get("original_price", "")).strip()
-            try:
-                mrp = float(raw_mrp) if raw_mrp else None
-            except (ValueError, TypeError):
-                mrp = None
+            item = MenuItem(
 
-            # Match existing item by restaurant and name.
-            # Preserve its ID and existing database references.
-            item = MenuItem.query.filter_by(
                 restaurant_id=restaurant.id,
-                name=name
-            ).first()
 
-            if item is None:
-                item = MenuItem(
-                    restaurant_id=restaurant.id,
-                    name=name
-                )
-                db.session.add(item)
-                added += 1
+                name=row.get("name", ""),
 
-            item.description = str(
-                row.get("description", "")
-            ).strip()
+                description=row.get(
 
-            item.category = str(
-                row.get("category", "")
-            ).strip()
+                    "description", ""
 
-            item.price = price
-            item.mrp = mrp
+                ),
 
-            item.image_url = str(
-                row.get("image_url", "")
-            ).strip()
+                category=row.get(
 
-            item.availability = (
-                str(row.get("availability", "yes")).strip().lower()
-                or "yes"
+                    "category", ""
+
+                ),
+
+                price=price,
+
+                image_url=row.get(
+
+                    "image_url", ""
+
+                ),
+
+                availability=row.get(
+
+                    "availability",
+
+                    "yes"
+
+                ),
+
+                item_type=restaurant.category_type,
+
+                extra_data=dict(row)
+
             )
 
-            item.item_type = (
-                str(row.get("type", "")).strip()
-                or restaurant.category_type
-            )
+            new_items.append(item)
 
-            # Preserve spreadsheet metadata.
-            # Keep is_addon if it exists in existing extra_data
-            # but is not included in the spreadsheet.
-            extra_data = dict(item.extra_data or {})
-            extra_data.update(row.to_dict())
-            item.extra_data = extra_data
+        MenuItem.query.filter_by(
 
-            synced += 1
+            restaurant_id=restaurant.id
+
+        ).delete()
+
+        for item in new_items:
+
+            db.session.add(item)
 
         db.session.commit()
+   
+        print(
+
+            restaurant.name,
+
+            "synced"
+        
+        )
+        
+    except Exception as e:
 
         print(
+
             restaurant.name,
-            "synced:", synced,
-            "| added:", added
+
+            e
+
         )
-        return True
-
-    except Exception as e:
-        db.session.rollback()
-        print(restaurant.name, "sync failed:", str(e))
-        return False
-
-
 def sync_all_restaurants():
 
     restaurants = Restaurant.query.all()
-    success = 0
-    failed = 0
 
     for restaurant in restaurants:
-        if sync_restaurant_menu(restaurant):
-            success += 1
-        else:
-            failed += 1
 
-    print(
-        "Sync completed | Successful:", success,
-        "| Failed/skipped:", failed
-    )
-
+        sync_restaurant_menu(
+            restaurant
+        )
+    
+    print("Done") 
 
 def scheduled_sync():
 
     with app.app_context():
-        sync_all_restaurants()
 
+        sync_all_restaurants()
 import os
 import json
 import firebase_admin
@@ -3016,6 +2585,7 @@ def restaurant_open(restaurant):
 # ============================================================
 # PROCESS RESTAURANT / STORE STATUS
 # ============================================================
+
 def process_store(
     store,
     user_lat,
@@ -3028,26 +2598,19 @@ def process_store(
     # DEFAULT DELIVERY STATE
     # ========================================================
 
-    # IMPORTANT:
-    # Home page should NOT block restaurants based on radius.
-    # Actual delivery-radius validation is handled later
-    # during delivery calculation / checkout.
-
     store.deliverable = True
     store.distance = None
 
 
     # ========================================================
-    # DISTANCE CALCULATION
+    # DELIVERY DISTANCE CHECK
     # ========================================================
-
-    # We still calculate distance so Home can display it
-    # or use it for other non-blocking purposes.
 
     if (
         user_location_set
         and store.latitude is not None
         and store.longitude is not None
+        and store.delivery_radius_km
     ):
 
         try:
@@ -3062,19 +2625,20 @@ def process_store(
 
             )
 
+
             store.distance = round(
                 dist,
                 1
             )
 
-            # DO NOT DO THIS:
-            #
-            # store.deliverable = (
-            #     dist <= float(store.delivery_radius_km)
-            # )
-            #
-            # Restaurant remains deliverable=True on Home.
-            # Radius is checked during delivery calculation.
+
+            store.deliverable = (
+                dist
+                <= float(
+                    store.delivery_radius_km
+                )
+            )
+
 
         except Exception as e:
 
@@ -3085,8 +2649,6 @@ def process_store(
             )
 
             store.distance = None
-
-            # Keep restaurant visible on Home
             store.deliverable = True
 
 
@@ -3118,6 +2680,7 @@ def process_store(
 
             )
 
+
         # ----------------------------------------------------
         # OVERNIGHT HOURS
         # Example:
@@ -3138,6 +2701,7 @@ def process_store(
 
             )
 
+
     else:
 
         store.is_open = True
@@ -3153,6 +2717,8 @@ def process_store(
 
 
     return store
+
+
 
 import time
 from flask import request
@@ -4680,7 +4246,6 @@ def get_active_home_announcements(
 #   RewardBadge, FoodItem
 # ============================================================
 
-
 @app.route("/api/app/home", methods=["GET"])
 def api_app_home():
     """
@@ -4724,16 +4289,6 @@ def api_app_home():
         .strip()
     )
 
-    selected_service = (
-        request.args.get("service", "all")
-        .strip()
-        .lower()
-    )
-
-    allowed_services = {"all", "restaurant", "bakery", "grocery"}
-    if selected_service not in allowed_services:
-        selected_service = "all"
-
     if selected_location:
         session["selected_location"] = selected_location
     else:
@@ -4772,27 +4327,6 @@ def api_app_home():
         user_lat is not None
         and user_lng is not None
     )
-
-    # --------------------------------------------------------
-    # RESOLVE SELECTED LOCATION ID
-    # --------------------------------------------------------
-
-    selected_location_id = None
-
-    if selected_location:
-        selected_location_row = (
-            DeliveryLocationSettings.query
-            .filter(
-                DeliveryLocationSettings.location.ilike(
-                    selected_location
-                ),
-                DeliveryLocationSettings.is_active.is_(True),
-            )
-            .first()
-        )
-
-        if selected_location_row:
-            selected_location_id = selected_location_row.id
 
     # --------------------------------------------------------
     # REWARDS
@@ -4957,72 +4491,35 @@ def api_app_home():
                 Restaurant.categories
             )
         )
+        .filter(
+            Restaurant.category_type.in_(
+                [
+                    "restaurant",
+                    "bakery",
+                ]
+            )
+        )
     )
 
-    if selected_service == "restaurant":
-        restaurant_query = restaurant_query.filter(
-            Restaurant.category_type == "restaurant"
-        )
-    elif selected_service == "bakery":
-        restaurant_query = restaurant_query.filter(
-            Restaurant.category_type == "bakery"
-        )
-    elif selected_service == "grocery":
-        restaurant_query = restaurant_query.filter(
-            db.literal(False)
-        )
-    else:
-        restaurant_query = restaurant_query.filter(
-            Restaurant.category_type.in_(
-                ["restaurant", "bakery"]
-            )
-        )
+    if selected_location:
 
-    if selected_location_id:
-        restaurant_query = restaurant_query.filter(
-            Restaurant.delivery_location_id
-            == selected_location_id
-        )
-    elif selected_location:
-        restaurant_query = restaurant_query.filter(
-            Restaurant.location == selected_location
-        )
-
-    restaurants = restaurant_query.all()
-
-    # Normal homepage ranking for the selected location.
-    ranking_by_restaurant = {}
-
-    if selected_location_id:
-        ranking_rows = (
-            RestaurantHomepageRanking.query
+        restaurant_query = (
+            restaurant_query
             .filter(
-                RestaurantHomepageRanking.location_id
-                == selected_location_id
+                Restaurant.location
+                == selected_location
             )
-            .all()
         )
 
-        ranking_by_restaurant = {
-            row.restaurant_id: (
-                row.position
-                if row.position and row.position > 0
-                else 999
-            )
-            for row in ranking_rows
-        }
-
-    restaurants.sort(
-        key=lambda r: (
-            ranking_by_restaurant.get(r.id, 999),
-            r.name.lower() if r.name else "",
-        )
+    restaurants = (
+        restaurant_query
+        .all()
     )
 
     print(
         "HOME restaurants query: "
         f"{(perf_counter() - restaurants_started) * 1000:.0f} ms "
-        f"({len(restaurants)} stores, service={selected_service})"
+        f"({len(restaurants)} stores)"
     )
 
     # --------------------------------------------------------
@@ -5033,27 +4530,21 @@ def api_app_home():
 
     grocery_shops = []
 
-    if selected_service == "grocery":
-        grocery_query = Restaurant.query.filter(
-            Restaurant.category_type == "grocery"
+    if selected_location:
+
+        grocery_shops = (
+            Restaurant.query
+            .filter(
+                Restaurant.location
+                == selected_location,
+
+                Restaurant.category_type
+                == "grocery",
+            )
+            .all()
         )
 
-        if selected_location_id:
-            grocery_query = grocery_query.filter(
-                Restaurant.delivery_location_id
-                == selected_location_id
-            )
-        elif selected_location:
-            grocery_query = grocery_query.filter(
-                Restaurant.location == selected_location
-            )
-
-        grocery_shops = grocery_query.all()
-
-    elif selected_location:
-        grocery_shops = []
-
-    elif user_location_set and selected_service in {"all", "grocery"}:
+    elif user_location_set:
 
         all_grocery = (
             Restaurant.query
@@ -5127,13 +4618,6 @@ def api_app_home():
             user_location_set,
             now,
         )
-
-    grocery_shops.sort(
-        key=lambda g: (
-            ranking_by_restaurant.get(g.id, 999),
-            g.name.lower() if g.name else "",
-        )
-    )
 
     print(
         "HOME process_store: "
@@ -5221,15 +4705,7 @@ def api_app_home():
                 )
             ),
         }
-    def serialize_store_time(value):
-            
-        if value is None:
-            return None
 
-        if hasattr(value, "strftime"):
-            return value.strftime("%H:%M:%S")
-
-        return str(value).strip() or None
     def restaurant_json(r):
 
         return {
@@ -5244,11 +4720,6 @@ def api_app_home():
             "category_type":
                 r.category_type
                 or "restaurant",
-
-            "position": int(
-                ranking_by_restaurant.get(r.id, 999)
-                or 999
-            ),
 
             "delivery_charge":
                 float(
@@ -5325,35 +4796,7 @@ def api_app_home():
                 bool(
                     is_new_restaurant(r)
                 ),
-            
-            "is_best_seller": bool(
-                getattr(r, "is_best_seller", False)
-            ),
 
-            "is_fast_delivery": bool(
-                getattr(r, "is_fast_delivery", False)
-            ),
-                        # Normal business hours
-            "opening_time": serialize_store_time(
-                getattr(r, "opening_time", None)
-            ),
-
-            "closing_time": serialize_store_time(
-                getattr(r, "closing_time", None)
-            ),
-
-            # Scheduled break
-            "break_enabled": bool(
-                getattr(r, "break_enabled", False)
-            ),
-
-            "break_start_time": serialize_store_time(
-                getattr(r, "break_start_time", None)
-            ),
-
-            "break_end_time": serialize_store_time(
-                getattr(r, "break_end_time", None)
-            ),
             "categories": [
                 category_json(c)
                 for c in (
@@ -5417,7 +4860,7 @@ def api_app_home():
         category_json(c)
         for c in home_categories
     ]
-    
+
     # --------------------------------------------------------
     # SEPARATE HOME SECTIONS
     # --------------------------------------------------------
@@ -5471,7 +4914,7 @@ def api_app_home():
         f"food={len(food_categories)} "
         f"snacks={len(snacks_categories)}"
     )
-    
+
     # --------------------------------------------------------
     # GROCERY CATEGORY ITEMS
     # --------------------------------------------------------
@@ -6019,16 +5462,7 @@ def api_app_home():
         )
     )
 
-    if selected_location_id:
-
-        top_query = (
-            top_query
-            .filter(
-                Restaurant.delivery_location_id
-                == selected_location_id
-            )
-        )
-    elif selected_location:
+    if selected_location:
 
         top_query = (
             top_query
@@ -6036,11 +5470,6 @@ def api_app_home():
                 Restaurant.location
                 == selected_location
             )
-        )
-
-    if selected_service in {"restaurant", "bakery", "grocery"}:
-        top_query = top_query.filter(
-            Restaurant.category_type == selected_service
         )
 
     top_rows = (
@@ -6086,16 +5515,7 @@ def api_app_home():
             )
         )
 
-        if selected_location_id:
-
-            fallback_query = (
-                fallback_query
-                .filter(
-                    Restaurant.delivery_location_id
-                    == selected_location_id
-                )
-            )
-        elif selected_location:
+        if selected_location:
 
             fallback_query = (
                 fallback_query
@@ -6103,11 +5523,6 @@ def api_app_home():
                     Restaurant.location
                     == selected_location
                 )
-            )
-
-        if selected_service in {"restaurant", "bakery", "grocery"}:
-            fallback_query = fallback_query.filter(
-                Restaurant.category_type == selected_service
             )
 
         top_rows = (
@@ -6164,27 +5579,23 @@ def api_app_home():
                 ),
         })
 
-    # --------------------------------------------------------
-    # MOST ORDERED RESTAURANTS
-    # --------------------------------------------------------
-    #
-    # Keep the "orders_count" value for display/analytics, but
-    # use the same admin homepage position as the other
-    # restaurant sections.
-    #
-    # This prevents the Most Ordered carousel from showing a
-    # restaurant in a different position from the main Home
-    # restaurant section.
-    # --------------------------------------------------------
-
     top_restaurants.sort(
         key=lambda x: (
-            ranking_by_restaurant.get(
-                x["restaurant"]["id"],
-                999999,
+            not (
+                x["restaurant"][
+                    "can_accept_orders"
+                ]
+
+                and x["restaurant"][
+                    "is_open"
+                ]
+
+                and x["restaurant"][
+                    "deliverable"
+                ]
             ),
-            (x["restaurant"]["name"] or "").strip().lower(),
-            x["restaurant"]["id"],
+
+            -x["orders_count"],
         )
     )
 
@@ -6401,44 +5812,54 @@ def api_app_home():
     )
 
     # --------------------------------------------------------
-    # FINAL STORE SORT
-    # ADMIN HOMEPAGE POSITION IS THE PRIMARY ORDER
-    # --------------------------------------------------------
-    #
-    # IMPORTANT:
-    # Do not sort restaurants again by "new", "open", or
-    # created_at here. Doing that would overwrite the admin
-    # homepage ranking that was loaded above.
-    #
-    # Position 1 -> first
-    # Position 2 -> second
-    # Position 3 -> third
-    # ...
-    # Unranked restaurants -> after ranked restaurants
-    #
-    # The same ranking is used for restaurants, grocery shops,
-    # and limited restaurants.
+    # SORT STORES
     # --------------------------------------------------------
 
-    def homepage_store_sort_key(r):
-        position = ranking_by_restaurant.get(r.id, 999999)
+    def store_sort_key(r):
+
+        if (
+            is_new_restaurant(r)
+
+            and r.deliverable
+
+            and r.is_open
+
+            and r.can_accept_orders
+        ):
+
+            priority = 0
+
+        elif (
+            r.deliverable
+
+            and r.is_open
+
+            and r.can_accept_orders
+        ):
+
+            priority = 1
+
+        else:
+
+            priority = 2
+
+        created_timestamp = (
+            r.created_at.timestamp()
+            if r.created_at
+            else 0
+        )
 
         return (
-            position,
-            (r.name or "").strip().lower(),
-            r.id,
+            priority,
+            -created_timestamp,
         )
 
     restaurants.sort(
-        key=homepage_store_sort_key
+        key=store_sort_key
     )
 
     grocery_shops.sort(
-        key=homepage_store_sort_key
-    )
-
-    limited_restaurants.sort(
-        key=homepage_store_sort_key
+        key=store_sort_key
     )
      
 
@@ -6643,25 +6064,7 @@ def api_app_home():
         f"({len(active_announcements)} active)"
     )
 
-    # --------------------------------------------------------
-    # LOCATION OPTIONS
-    # selected_location_id was resolved near the start of the request.
-    # --------------------------------------------------------
 
-    location_rows = (
-        DeliveryLocationSettings.query
-        .filter_by(is_active=True)
-        .order_by(DeliveryLocationSettings.location.asc())
-        .all()
-    )
-
-    location_options = [
-        {
-            "id": row.id,
-            "name": row.location,
-        }
-        for row in location_rows
-    ]
     # --------------------------------------------------------
     # BUILD RESPONSE DATA
     # --------------------------------------------------------
@@ -6681,35 +6084,6 @@ def api_app_home():
 
         "all_locations":
             get_all_locations(),
-        "selected_location_id":
-            selected_location_id,
-
-        "service":
-            selected_service,
-
-        "location_options":
-            location_options,
-
-        # ----------------------------------------------------
-        # HOMEPAGE RESTAURANT POSITIONS
-        # ----------------------------------------------------
-        #
-        # Explicit mapping for Flutter:
-        # {
-        #   "12": 1,
-        #   "18": 2,
-        #   "25": 3
-        # }
-        #
-        # This is especially useful for sections whose items
-        # contain a nested restaurant object.
-        # ----------------------------------------------------
-
-        "restaurant_positions": {
-            str(restaurant_id): int(position)
-            for restaurant_id, position
-            in ranking_by_restaurant.items()
-        },
 
         # ----------------------------------------------------
         # STORES
@@ -6717,22 +6091,6 @@ def api_app_home():
 
         "restaurants": [
             restaurant_json(r)
-            for r in restaurants
-        ],
-
-        # Backend final order, useful for debugging and Flutter
-        # verification. This follows the exact same admin ranking.
-        "restaurant_home_order": [
-            {
-                "id": r.id,
-                "name": r.name or "",
-                "position": int(
-                    ranking_by_restaurant.get(
-                        r.id,
-                        999999,
-                    )
-                ),
-            }
             for r in restaurants
         ],
 
@@ -6842,11 +6200,6 @@ def api_app_home():
     )
 
     print(
-        "HOME SERVICE:",
-        selected_service,
-    )
-
-    print(
         "HOME RESTAURANTS:",
         len(restaurants),
     )
@@ -6906,9 +6259,6 @@ def api_app_home():
     )
 
     return result, 200
-
-
-
 from flask import jsonify, request
 from datetime import datetime
 @app.route("/api/city/<city_slug>")
@@ -8412,7 +7762,6 @@ def safe_float(val):
         return float(val)
     except (ValueError, TypeError):
         return None
-    
 def generate_map_link(lat, lng, house_no=None, landmark=None, city=None, state=None, pincode=None):
     if lat and lng:
         return f"https://www.google.com/maps?q={lat},{lng}"
@@ -8424,442 +7773,252 @@ def generate_map_link(lat, lng, house_no=None, landmark=None, city=None, state=N
             return f"https://www.google.com/maps/search/?api=1&query={address}"
     return None
 # Assume order_time is in UTC
-
+from flask import request, flash, redirect, url_for, session
+from datetime import datetime
+import pytz
+from sqlalchemy import func 
+from reward_engine import add_coins
+from datetime import datetime
+import pytz
 
 
 @app.route("/place_order", methods=["POST"])
-
 def place_order():
 
     # ========================================================
-
     # BASIC DETAILS
-
     # ========================================================
 
     name = request.form.get("name")
-
     phone = request.form.get("phone")
-
     email = request.form.get("email")
-
     alt_phone = request.form.get("alt_phone")
 
     payment_type = request.form.get("payment_type")
 
     address_type = request.form.get("address_type")
-
     house_no = request.form.get("house_no")
-
     landmark = request.form.get("landmark")
-
     city = request.form.get("city")
-
     state = request.form.get("state")
-
     pincode = request.form.get("pincode")
-
     delivery_note = request.form.get("delivery_note")
 
     restaurant_id = int(
-
         request.form.get("restaurant_id")
-
     )
 
     device_fingerprint = request.form.get(
-
         "device_fingerprint"
-
     )
 
     order_type = request.form.get(
-
         "order_type"
-
     )
 
+
     # ========================================================
-
     # LOCATION
-
     # ========================================================
 
     customer_lat = safe_float(
-
         request.form.get("customer_lat")
-
         or request.form.get("lat")
-
     )
 
     customer_lng = safe_float(
-
         request.form.get("customer_lng")
-
         or request.form.get("lng")
-
     )
 
+
     # ========================================================
-
     # ITEMS
-
     # ========================================================
 
     item_names = request.form.getlist(
-
         "item_name[]"
-
     )
 
     quantities = request.form.getlist(
-
         "quantity[]"
-
     )
 
     prices = request.form.getlist(
-
         "price[]"
-
     )
 
     weights = request.form.getlist(
-
         "weight[]"
-
     )
 
     categories = request.form.getlist(
-
         "category[]"
-
     )
+
 
     if not item_names:
 
         flash(
-
             "Cart is empty",
-
             "danger"
-
         )
 
         return redirect("/")
 
+
     # ========================================================
-
     # RESTAURANT
-
     # ========================================================
 
     restaurant = Restaurant.query.get_or_404(
-
         restaurant_id
-
     )
 
+
     # ========================================================
-
     # RESTAURANT STATUS
-
     # ========================================================
 
     if not restaurant.can_accept_orders:
 
         flash(
-
             f"{restaurant.name} is closed now",
-
             "warning"
-
         )
 
         return redirect(
-
             request.referrer
-
             or url_for("home")
-
         )
 
+
     # ========================================================
-
     # ITEMS TOTAL
-
     # ========================================================
 
     items_total = 0
 
+
     for i in range(len(item_names)):
 
         qty = int(
-
             quantities[i]
-
         )
 
         price = float(
-
             prices[i]
-
         )
 
         items_total += (
-
             qty * price
-
         )
 
+
     # ========================================================
-
     # LOCATION VALIDATION
-
     # ========================================================
 
     if (
-
         customer_lat is None
-
         or customer_lng is None
-
     ):
 
         flash(
-
             "Please select delivery location",
-
             "danger"
-
         )
 
         return redirect(
-
             request.referrer
-
             or url_for("home")
-
         )
 
-    # ========================================================
 
+    # ========================================================
     # DISTANCE
-
     # ========================================================
-
-    # Restaurant coordinates are required
-
-    if restaurant.latitude is None or restaurant.longitude is None:
-
-        return jsonify({
-
-            "success": False,
-
-            "message": "Restaurant delivery location is unavailable."
-
-        }), 400
 
     distance_km = calculate_distance_km(
 
         restaurant.latitude,
-
         restaurant.longitude,
 
         customer_lat,
-
         customer_lng
 
     )
 
-    # Google Routes API failed
-
-    if distance_km is None:
-
-        return jsonify({
-
-            "success": False,
-
-            "distance_km": None,
-
-            "delivery_charge": None,
-
-            "message": "Unable to calculate delivery distance. Please try again."
-
-        }), 503
 
     # ========================================================
-
-    # DELIVERY RADIUS
-
-    # ========================================================
-
-    # ========================================================
-
-    # DELIVERY RADIUS CHECK
-
-    # ========================================================
-
-    if (
-
-        restaurant.delivery_radius_km is not None
-
-        and distance_km > restaurant.delivery_radius_km
-
-    ):
-
-        return jsonify({
-
-            "success": False,
-
-            "distance_km": round(
-
-                distance_km,
-
-                2
-
-            ),
-
-            "delivery_charge": None,
-
-            "max_delivery_km": float(
-
-                restaurant.delivery_radius_km
-
-            ),
-
-            "message": (
-
-                "🚫 This restaurant is not delivering "
-
-                "to your location.\n"
-
-                f"Delivery is available up to "
-
-                f"{restaurant.delivery_radius_km:g} km.\n"
-
-                "Please move the map pin inside the "
-
-                "delivery area.\n"
-
-                "Need help? Please contact "
-
-                "RucHiGo Management."
-
-            )
-
-        }), 400
-
-    # ========================================================
-
     # DELIVERY CHARGE
-
     # ========================================================
 
-    delivery_charge, delivery_msg = calculate_delivery_charge(
+    delivery_charge, delivery_msg = (
+        calculate_delivery_charge(
 
-        distance_km=distance_km,
+            distance_km,
+            items_total,
+            restaurant
 
-        items_total=items_total,
-
-        restaurant=restaurant
-
+        )
     )
 
-    # Delivery pricing unavailable
-
-    if delivery_charge is None:
-
-        return jsonify({
-
-            "success": False,
-
-            "distance_km": round(distance_km, 2),
-
-            "delivery_charge": None,
-
-            "message": delivery_msg or "Delivery is currently unavailable."
-
-        }), 400
 
     # ========================================================
-
     # NORMALIZE PHONE
-
     # ========================================================
 
     if phone:
 
         phone = (
-
             phone
-
             .replace("+91", "")
-
             .replace(" ", "")
-
             .strip()
-
         )
 
+
     # ========================================================
-
     # COMBINED DELIVERY
-
     # ========================================================
 
     from datetime import timedelta
 
+
     combined_delivery = False
 
+
     if (
-
         phone
-
         and house_no
-
         and pincode
-
     ):
 
         print(
-
             "\n========== COMBINED DELIVERY DEBUG =========="
-
         )
 
         print(
-
             "Normalized Phone:",
-
             phone
-
         )
 
         print(
-
             "House No:",
-
             house_no
-
         )
 
         print(
-
             "Pincode:",
-
             pincode
-
         )
 
         print(
-
             "Restaurant ID:",
-
             restaurant_id
-
         )
+
 
         existing_order = (
 
@@ -8868,674 +8027,428 @@ def place_order():
             .filter(
 
                 Order.phone.contains(
-
                     phone
-
                 ),
 
                 Order.house_no
-
                 == house_no,
 
                 Order.pincode
-
                 == pincode,
 
                 Order.restaurant_id
-
                 != restaurant_id,
 
                 Order.created_at
-
                 >= (
-
                     datetime.utcnow()
-
                     - timedelta(
-
                         minutes=10
-
                     )
-
                 )
 
             )
 
             .order_by(
-
                 Order.created_at.desc()
-
             )
 
             .first()
 
         )
 
+
         print(
-
             "Existing Order:",
-
             existing_order
-
         )
+
 
         if existing_order:
 
             time_diff = (
 
                 datetime.utcnow()
-
                 - existing_order.created_at
 
             )
 
+
             existing_status = (
-
                 existing_order.status
-
                 or ""
-
             ).lower()
 
+
             if (
-
                 time_diff.total_seconds()
-
                 <= 600
 
                 and existing_status
-
                 not in [
-
                     "delivered",
-
                     "cancelled",
-
                     "refunded"
-
                 ]
-
             ):
 
                 print(
-
                     "✅ Combined delivery activated"
-
                 )
+
 
                 print(
-
                     "Old delivery charge:",
-
                     delivery_charge
-
                 )
+
 
                 delivery_charge = max(
 
                     10,
 
                     round(
-
                         delivery_charge
-
                         * 0.3
-
                     )
 
                 )
 
+
                 delivery_msg = (
-
                     "Combined delivery applied"
-
                 )
+
 
                 combined_delivery = True
 
+
                 print(
-
                     "New delivery charge:",
-
                     delivery_charge
-
                 )
 
+
     # ========================================================
-
     # FINAL TOTAL
-
     # ========================================================
 
     final_total = round(
-
         items_total
-
         + delivery_charge,
-
         2
-
     )
 
+
     # ========================================================
-
     # MAP LINK
-
     # ========================================================
 
     map_link = generate_map_link(
 
         customer_lat,
-
         customer_lng,
 
         house_no,
-
         landmark,
-
         city,
-
         state,
-
         pincode
 
     )
 
+
     # ========================================================
-
     # PAYMENT STATE
-
     # ========================================================
 
     if payment_type == "Online":
 
         order_status = (
-
             "Pending Payment"
-
         )
 
         payment_source = (
-
             "Checkout"
-
         )
 
     else:
 
         order_status = (
-
             "Pending"
-
         )
 
         payment_source = (
-
             "COD"
-
         )
 
+
     # ========================================================
-
     # CREATE ORDER
-
     # ========================================================
 
     new_order = Order(
 
         restaurant_id=
-
             restaurant_id,
 
-        delivery_location_id=restaurant.delivery_location_id,
-
         customer_id=(
-
             current_user.id
-
             if current_user.is_authenticated
-
             else None
-
         ),
 
         customer_name=
-
             name,
 
         phone=
-
             phone,
 
         email=
-
             email,
 
         alt_phone=
-
             alt_phone,
 
         house_no=
-
             house_no,
 
         landmark=
-
             landmark,
 
         city=
-
             city,
 
         state=
-
             state,
 
         pincode=
-
             pincode,
 
         address_type=
-
             address_type,
 
         delivery_note=
-
             delivery_note,
 
         payment_type=
-
             payment_type,
 
+
         # PAYMENT
-
         payment_status=
-
             "Pending",
 
         payment_verified=
-
             False,
 
         status=
-
             order_status,
 
         payment_source=
-
             payment_source,
 
+
         # OTHER
-
         device_fingerprint=
-
             device_fingerprint,
 
         order_type=
-
             order_type,
 
         items_total=
-
             items_total,
 
         delivery_charge=
-
             delivery_charge,
 
         final_total=
-
             final_total,
 
         latitude=
-
             customer_lat,
 
         longitude=
-
             customer_lng,
 
         distance_km=
-
             round(
-
                 distance_km,
-
                 2
-
             ),
 
         map_link=
-
             map_link,
 
         otp=
-
             generate_otp(),
 
         created_at=
-
             datetime.utcnow()
 
     )
 
+
     # ========================================================
-
     # SAVE ORDER FIRST
-
     # ========================================================
 
     db.session.add(
-
         new_order
-
     )
 
     db.session.commit()
 
-    print(
 
+    print(
         "PAYMENT RECEIVED:",
-
         payment_type
-
     )
 
     print(
-
         request.form.to_dict(
-
             flat=False
-
         )
-
     )
+
 
     # ========================================================
-
     # COINS REDEMPTION
-
     # ========================================================
 
     coins_to_redeem = int(
 
         request.form.get(
-
             "redeem_coins"
-
         )
 
         or 0
 
     )
 
+
     if (
-
         coins_to_redeem > 0
-
         and session.get(
-
             "customer_id"
-
         )
-
     ):
 
         success, msg, redeem_amount = (
-
             redeem_coins(
 
                 customer_id=
-
                     session.get(
-
                         "customer_id"
-
                     ),
 
                 coins_to_redeem=
-
                     coins_to_redeem,
 
                 order_id=
-
                     new_order.id,
 
                 order_total=(
-
                     new_order.items_total
-
                     + new_order.delivery_charge
-
                 )
 
             )
-
         )
+
 
         if success:
 
             new_order.final_total -= (
-
                 redeem_amount
-
             )
 
             db.session.commit()
 
             flash(
-
                 msg,
-
                 "success"
-
             )
+
 
         else:
 
             flash(
-
                 msg,
-
                 "warning"
-
             )
 
+
     # ========================================================
-
     # ORDER CODE
-
     # ========================================================
 
     new_order.order_id = (
-
         generate_order_code(
-
             new_order.id
-
         )
-
     )
 
     db.session.commit()
 
-    # ========================================================
 
+    # ========================================================
     # ORDER ITEMS
-
-   
     # ========================================================
-    # ORDER ITEMS + SETTLEMENT SNAPSHOTS
-    # ========================================================
-    from models import MenuItem, SettlementLine, RestaurantSettlementTerms
-    from settlement_service import (
-        create_settlement_line,
-        DEFAULT_COMMISSION_PERCENT,
-    )
 
-    for i in range(len(item_names)):
-        qty = int(quantities[i])
+    for i in range(
+        len(item_names)
+    ):
+
+        qty = int(
+            quantities[i]
+        )
+
+
         if qty <= 0:
             continue
 
-        item_price = round(float(prices[i]), 2)
 
-        # Resolve the menu item for this restaurant.
-        menu_item = MenuItem.query.filter_by(
-            restaurant_id=restaurant_id,
-            name=item_names[i],
-        ).first()
+        db.session.add(
 
-        if menu_item:
-            extra = menu_item.extra_data or {}
+            OrderItem(
 
-            # Use the restaurant's menu price as the original price.
-            # MRP is a display/reference price and must not be assumed
-            # to be the restaurant's settlement price.
-            original_unit_price = float(
-                extra.get("original_price")
-                or menu_item.price
-                or item_price
+                order_id=
+                    new_order.id,
+
+                item_name=
+                    item_names[i],
+
+                quantity=
+                    qty,
+
+                price=
+                    float(
+                        prices[i]
+                    ),
+
+                weight=(
+                    weights[i]
+                    if i < len(weights)
+                    else ""
+                ),
+
+                category=(
+                    categories[i]
+                    if i < len(categories)
+                    else ""
+                )
+
             )
-            saved_mrp = float(
-                menu_item.mrp
-                or extra.get("mrp")
-                or original_unit_price
-            )
-            food_item_id = menu_item.id
-        else:
-            original_unit_price = item_price
-            saved_mrp = item_price
-            food_item_id = None
 
-        discount = (
-            round(
-                max(0.0, original_unit_price - item_price)
-                / original_unit_price * 100,
-                2,
-            )
-            if original_unit_price > 0
-            else 0.0
         )
 
-        order_item = OrderItem(
-            order_id=new_order.id,
-            item_name=item_names[i],
-            quantity=qty,
-            price=item_price,
-            food_item_id=food_item_id,
-            original_unit_price=original_unit_price,
-            mrp=saved_mrp,
-            discount=discount,
-            weight=weights[i] if i < len(weights) else "",
-            category=categories[i] if i < len(categories) else "",
-        )
-        db.session.add(order_item)
-        db.session.flush()  # ensures order_item.id exists
-
-        # SettlementLine has no separate discount column. Use the actual
-        # discounted amount as the effective settlement price so the
-        # current calculation helper accepts discounted items and applies
-        # commission to the actual item amount charged.
-        create_settlement_line(
-            db,
-            SettlementLine,
-            new_order,
-            order_item,
-            restaurant_unit_price=item_price,
-            customer_unit_price=item_price,
-            commission_percent=(
-                db.session.query(RestaurantSettlementTerms.commission_percent)
-                .filter_by(restaurant_id=restaurant_id)
-                .scalar()
-                or DEFAULT_COMMISSION_PERCENT
-            ),
-        )
 
     db.session.commit()
 
 
     # ========================================================
-    # RESTAURANT PARTNER PUSH NOTIFICATION — COD ORDERS
-    # Send only after the order and its items are committed.
-    # Online orders are still Pending Payment here; send their
-    # partner notification after successful payment confirmation.
-    # A push failure must never cancel an already-saved order.
-    # ========================================================
-    if str(new_order.payment_type or "").strip().lower() == "cod" and str(
-        new_order.status or ""
-    ).strip().lower() in {"pending", "placed"}:
-        try:
-            from restaurant_partner_api import (
-                send_restaurant_partner_new_order_notification,
-            )
-
-            sent_count = send_restaurant_partner_new_order_notification(
-                new_order.restaurant_id,
-                new_order,
-            )
-            print(
-                "RESTAURANT PARTNER PUSH:",
-                new_order.order_id,
-                "sent to",
-                sent_count,
-                "device(s)",
-            )
-        except Exception:
-            # The order is already saved; notification errors must not
-            # interrupt the customer checkout flow.
-            import traceback
-            traceback.print_exc()
-
-    # ========================================================
-    # FIRST-ORDER WHATSAPP CONFIRMATION — WEBSITE COD ORDERS
-    # ========================================================
-    if (
-        str(new_order.payment_type or "").strip().lower() == "cod"
-        and str(new_order.status or "").strip().lower() == "pending"
-    ):
-        try:
-            if is_first_customer_order(new_order):
-                
-
-                # Keep sent_at empty until Meta accepts the message.
-                new_order.whatsapp_confirmation_status = "pending"
-                new_order.whatsapp_confirmation_sent_at = None
-                new_order.whatsapp_confirmation_expires_at = (
-                    datetime.utcnow() + timedelta(minutes=5)
-                )
-                new_order.whatsapp_confirmation_responded_at = None
-                db.session.commit()
-
-                sent = send_whatsapp_first_order_confirmation(new_order)
-
-                if sent:
-                    new_order.whatsapp_confirmation_sent_at = datetime.utcnow()
-                    db.session.commit()
-                    print(
-                        "📱 FIRST-ORDER WHATSAPP SENT:",
-                        new_order.order_id,
-                    )
-                else:
-                    new_order.whatsapp_confirmation_status = "send_failed"
-                    new_order.whatsapp_confirmation_sent_at = None
-                    db.session.commit()
-                    print(
-                        "❌ FIRST-ORDER WHATSAPP SEND FAILED:",
-                        new_order.order_id,
-                    )
-            else:
-                print(
-                    "FIRST-ORDER WHATSAPP SKIPPED: repeat customer",
-                    new_order.order_id,
-                )
-        except Exception as e:
-            db.session.rollback()
-            print("❌ WEBSITE FIRST-ORDER WHATSAPP ERROR:", e)
-
-
     # ONLINE PAYMENT
-
     # ========================================================
 
     if payment_type == "Online":
@@ -9547,28 +8460,26 @@ def place_order():
                 "payment_page",
 
                 order_id=
-
                     new_order.id
 
             )
 
         )
 
+
     # ========================================================
-
     # COD
-
     # ========================================================
 
     flash(
 
         f"Order placed successfully! "
-
         f"Order ID: {new_order.order_id}",
 
         "success"
 
     )
+
 
     return redirect(
 
@@ -9577,13 +8488,11 @@ def place_order():
             "order_placed",
 
             order_id=
-
                 new_order.order_id
 
         )
 
     )
-
 
 @app.route("/order-placed/<order_id>")
 def order_placed(order_id):
@@ -10448,6 +9357,7 @@ def auto_assign_order(order):
 # + AUTO ASSIGN DELIVERY RIDER
 # ============================================================
 
+from flask_socketio import emit
 @app.route(
     "/restaurant/update_status/<int:order_id>",
     methods=["POST"]
@@ -11026,7 +9936,6 @@ def admin_required(f):
             return redirect(url_for("admin_login"))
         return f(*args, **kwargs)
     return decorated_function
-
 # ------------------ RESTAURANT OWNER ------------------
 @app.route("/restaurant/login", methods=["GET", "POST"])
 def restaurant_login():
@@ -11056,22 +9965,24 @@ from datetime import datetime, timedelta
 
 @app.route("/restaurant/dashboard")
 def restaurant_dashboard():
+
     restaurant_id = session.get("restaurant_id")
 
     if not restaurant_id:
         return redirect(url_for("restaurant_login"))
 
-    restaurant = Restaurant.query.get_or_404(restaurant_id)
     today = datetime.utcnow().date()
     yesterday = today - timedelta(days=1)
     week_ago = today - timedelta(days=7)
 
     # ---------------------------------------------------------
-    # PAGINATION: 10 ORDERS PER PAGE FOR EVERY SECTION
+    # PAGINATION
+    # 10 ORDERS PER PAGE FOR EVERY SECTION
     # ---------------------------------------------------------
     today_page = request.args.get("today_page", 1, type=int)
     yesterday_page = request.args.get("yesterday_page", 1, type=int)
     older_page = request.args.get("older_page", 1, type=int)
+
     PER_PAGE = 10
 
     # ---------------------------------------------------------
@@ -11079,145 +9990,177 @@ def restaurant_dashboard():
     # ---------------------------------------------------------
     today_start = datetime.combine(today, datetime.min.time())
     tomorrow_start = today_start + timedelta(days=1)
-    yesterday_start = datetime.combine(yesterday, datetime.min.time())
-    week_start = datetime.combine(week_ago, datetime.min.time())
+
+    yesterday_start = datetime.combine(
+        yesterday,
+        datetime.min.time()
+    )
+
+    week_start = datetime.combine(
+        week_ago,
+        datetime.min.time()
+    )
 
     # ---------------------------------------------------------
-    # TODAY ORDERS
+    # TODAY ORDERS - 10 PER PAGE
     # ---------------------------------------------------------
     today_pagination = (
         Order.query
         .filter(
             Order.restaurant_id == restaurant_id,
             Order.created_at >= today_start,
-            Order.created_at < tomorrow_start,
+            Order.created_at < tomorrow_start
         )
         .order_by(Order.created_at.desc())
-        .paginate(page=today_page, per_page=PER_PAGE, error_out=False)
+        .paginate(
+            page=today_page,
+            per_page=PER_PAGE,
+            error_out=False
+        )
     )
+
     today_orders = today_pagination.items
 
     for order in today_orders:
         order.day_category = "Today"
 
     # ---------------------------------------------------------
-    # YESTERDAY ORDERS
+    # YESTERDAY ORDERS - 10 PER PAGE
     # ---------------------------------------------------------
     yesterday_pagination = (
         Order.query
         .filter(
             Order.restaurant_id == restaurant_id,
             Order.created_at >= yesterday_start,
-            Order.created_at < today_start,
+            Order.created_at < today_start
         )
         .order_by(Order.created_at.desc())
-        .paginate(page=yesterday_page, per_page=PER_PAGE, error_out=False)
+        .paginate(
+            page=yesterday_page,
+            per_page=PER_PAGE,
+            error_out=False
+        )
     )
+
     yesterday_orders = yesterday_pagination.items
 
     for order in yesterday_orders:
         order.day_category = "Yesterday"
 
     # ---------------------------------------------------------
-    # OLDER ORDERS
+    # OLDER ORDERS - 10 PER PAGE
     # ---------------------------------------------------------
     older_pagination = (
         Order.query
         .filter(
             Order.restaurant_id == restaurant_id,
-            Order.created_at < yesterday_start,
+            Order.created_at < yesterday_start
         )
         .order_by(Order.created_at.desc())
-        .paginate(page=older_page, per_page=PER_PAGE, error_out=False)
+        .paginate(
+            page=older_page,
+            per_page=PER_PAGE,
+            error_out=False
+        )
     )
+
     older_orders = older_pagination.items
 
     for order in older_orders:
         order.day_category = "Older"
 
     # ---------------------------------------------------------
-    # DISPLAY ORDERS + SAVED R-OFFER DISCOUNT
-    # The discount must be stored by the order-placement route.
+    # DISPLAY ORDERS
     # ---------------------------------------------------------
-    orders = today_orders + yesterday_orders + older_orders
-
-    for order in orders:
-        try:
-            order.r_offer_amount = round(
-                float(getattr(order, "restaurant_offer_discount", 0) or 0),
-                2,
-            )
-        except (TypeError, ValueError):
-            order.r_offer_amount = 0.0
+    orders = (
+        today_orders
+        + yesterday_orders
+        + older_orders
+    )
 
     # ---------------------------------------------------------
-    # DASHBOARD STATISTICS (DB COUNTS, NOT PAGINATED ITEMS)
+    # DASHBOARD STATISTICS
+    # IMPORTANT:
+    # These are calculated from DATABASE, NOT PAGINATED ORDERS
     # ---------------------------------------------------------
+
+    # Today's total orders
     today_orders_count = (
         Order.query
         .filter(
             Order.restaurant_id == restaurant_id,
             Order.created_at >= today_start,
-            Order.created_at < tomorrow_start,
+            Order.created_at < tomorrow_start
         )
         .count()
     )
 
+    # Today's delivered orders
     delivered_today_orders = (
         Order.query
         .filter(
             Order.restaurant_id == restaurant_id,
             Order.created_at >= today_start,
             Order.created_at < tomorrow_start,
-            Order.status == "Delivered",
+            Order.status == "Delivered"
         )
         .all()
     )
 
+    # Today's pending
     pending_today = (
         Order.query
         .filter(
             Order.restaurant_id == restaurant_id,
             Order.created_at >= today_start,
             Order.created_at < tomorrow_start,
-            Order.status == "Pending",
+            Order.status == "Pending"
         )
         .count()
     )
 
+    # Today's cancelled
     cancelled_today = (
         Order.query
         .filter(
             Order.restaurant_id == restaurant_id,
             Order.created_at >= today_start,
             Order.created_at < tomorrow_start,
-            Order.status == "Cancelled",
+            Order.status == "Cancelled"
         )
         .count()
     )
 
+    # Active orders
     active_orders_count = (
         Order.query
         .filter(
             Order.restaurant_id == restaurant_id,
             Order.status.in_([
-                "Confirmed",
                 "Accepted",
                 "Preparing",
                 "Ready",
                 "Assignment Pending",
-                "Out for Delivery",
-            ]),
+                "Out for Delivery"
+            ])
         )
         .count()
     )
 
-    today_earnings = sum(order.get_final_total() for order in delivered_today_orders)
+    # ---------------------------------------------------------
+    # TODAY EARNINGS
+    # ---------------------------------------------------------
+    today_earnings = sum(
+        order.get_final_total()
+        for order in delivered_today_orders
+    )
+
     today_cod_amount = sum(
         order.get_final_total()
         for order in delivered_today_orders
         if order.payment_type == "COD"
     )
+
     today_online_amount = sum(
         order.get_final_total()
         for order in delivered_today_orders
@@ -11225,13 +10168,13 @@ def restaurant_dashboard():
     )
 
     # ---------------------------------------------------------
-    # WEEKLY ORDERS / EARNINGS
+    # WEEKLY ORDERS
     # ---------------------------------------------------------
     weekly_orders_count = (
         Order.query
         .filter(
             Order.restaurant_id == restaurant_id,
-            Order.created_at >= week_start,
+            Order.created_at >= week_start
         )
         .count()
     )
@@ -11241,31 +10184,79 @@ def restaurant_dashboard():
         .filter(
             Order.restaurant_id == restaurant_id,
             Order.created_at >= week_start,
-            Order.status == "Delivered",
+            Order.status == "Delivered"
         )
         .all()
     )
 
-    weekly_delivered_count = len(weekly_delivered_orders)
-    weekly_earnings = sum(order.get_final_total() for order in weekly_delivered_orders)
+    weekly_delivered_count = len(
+        weekly_delivered_orders
+    )
 
+    weekly_earnings = sum(
+        order.get_final_total()
+        for order in weekly_delivered_orders
+    )
+
+    # ---------------------------------------------------------
+    # STATS
+    # ---------------------------------------------------------
     stats = {
         "today_orders": today_orders_count,
-        "delivered_today": len(delivered_today_orders),
+
+        "delivered_today": len(
+            delivered_today_orders
+        ),
+
         "pending_today": pending_today,
+
         "cancelled_today": cancelled_today,
+
         "active_orders": active_orders_count,
+
         "today_earnings": today_earnings,
+
         "today_cod_amount": today_cod_amount,
+
         "today_online_amount": today_online_amount,
+
         "weekly_orders": weekly_orders_count,
+
         "weekly_earnings": weekly_earnings,
+
         "weekly_delivered_orders": weekly_delivered_count,
     }
 
     # ---------------------------------------------------------
     # RIDER OFFLINE TIMEOUT
     # ---------------------------------------------------------
+    threshold = datetime.utcnow() - timedelta(minutes=5)
+
+    inactive_delivery_persons = (
+        DeliveryPerson.query
+        .filter(
+            DeliveryPerson.is_online.is_(True),
+            DeliveryPerson.last_seen.isnot(None),
+            DeliveryPerson.last_seen < threshold,
+        )
+        .all()
+    )
+
+    for dp in inactive_delivery_persons:
+
+        print(
+            "⚠️ RIDER OFFLINE TIMEOUT:",
+            dp.id,
+            dp.name,
+            "last_seen:",
+            dp.last_seen
+        )
+
+        dp.is_online = False
+
+    if inactive_delivery_persons:
+        db.session.commit()
+
     # ---------------------------------------------------------
     # RESTAURANT DELIVERY PERSONS
     # ---------------------------------------------------------
@@ -11279,19 +10270,27 @@ def restaurant_dashboard():
         .all()
     )
 
+    # ---------------------------------------------------------
+    # RENDER DASHBOARD
+    # ---------------------------------------------------------
     return render_template(
         "restaurant_dashboard.html",
+
         stats=stats,
+
+        # Orders
         orders=orders,
         today_orders=today_orders,
         yesterday_orders=yesterday_orders,
         older_orders=older_orders,
+
+        # Pagination
         today_pagination=today_pagination,
         yesterday_pagination=yesterday_pagination,
         older_pagination=older_pagination,
-        delivery_persons=delivery_persons,
-        restaurant=restaurant,
-        restaurant_id=restaurant_id,
+
+        # Delivery persons
+        delivery_persons=delivery_persons
     )
 
 
@@ -12081,7 +11080,6 @@ def add_delivery_person():
     # GET request
     restaurants = Restaurant.query.all()
     return render_template("add_delivery_person.html", restaurants=restaurants)
-
 @app.route("/admin/add_restaurant", methods=["GET", "POST"])
 def add_restaurant():
 
@@ -12090,7 +11088,10 @@ def add_restaurant():
     # ========================================================
 
     if not session.get("admin_logged_in"):
-        return redirect(url_for("admin_login"))
+        return redirect(
+            url_for("admin_login")
+        )
+
 
     # ========================================================
     # POST
@@ -12104,40 +11105,68 @@ def add_restaurant():
             # FORM DATA
             # =================================================
 
-            name = request.form.get("name", "").strip()
-            phone = request.form.get("phone", "").strip()
-            email = request.form.get("email", "").strip()
-            address = request.form.get("address", "").strip()
-            sheet_url = request.form.get("sheet_url", "").strip()
-            location = request.form.get("location", "").strip()
+            name = request.form.get(
+                "name",
+                ""
+            ).strip()
+
+            phone = request.form.get(
+                "phone",
+                ""
+            ).strip()
+
+            email = request.form.get(
+                "email",
+                ""
+            ).strip()
+
+            address = request.form.get(
+                "address",
+                ""
+            ).strip()
+
+            sheet_url = request.form.get(
+                "sheet_url",
+                ""
+            ).strip()
+
+            location = request.form.get(
+                "location",
+                ""
+            ).strip()
 
             category_type = request.form.get(
-                "category_type", ""
+                "category_type",
+                ""
             ).strip().lower()
 
-            # =================================================
-            # NORMALIZE LOCATION
-            # =================================================
 
-            location = " ".join(location.split())
+            # Normalize values like:
+            # "Food Court" -> "food_court"
+            category_type = (
+                category_type
+                .replace(" ", "_")
+            )
 
-            if location:
-                location = location.title()
-
-            # =================================================
-            # NORMALIZE CATEGORY
-            # =================================================
-
-            category_type = category_type.replace(" ", "_")
 
             # =================================================
             # DEBUG
             # =================================================
 
-            print("\n===== ADD RESTAURANT FORM =====")
-            print("RAW FORM:", request.form)
-            print("CATEGORY TYPE:", category_type)
-            print("LOCATION:", location)
+            print(
+                "\n===== ADD RESTAURANT FORM ====="
+            )
+
+            print(
+                "RAW FORM:",
+                request.form
+            )
+
+            print(
+                "CATEGORY TYPE:",
+                category_type
+            )
+
 
             # =================================================
             # REQUIRED FIELDS
@@ -12148,15 +11177,19 @@ def add_restaurant():
                 or not phone
                 or not email
                 or not sheet_url
-                or not location
             ):
 
                 flash(
-                    "Name, phone, email, Google Sheet URL, and location are required!",
+                    "Name, phone, email, and Google Sheet URL are required!",
                     "danger"
                 )
 
-                return redirect(url_for("add_restaurant"))
+                return redirect(
+                    url_for(
+                        "add_restaurant"
+                    )
+                )
+
 
             # =================================================
             # BUSINESS TYPE
@@ -12168,6 +11201,7 @@ def add_restaurant():
                 "grocery"
             ]
 
+
             if category_type not in allowed_types:
 
                 flash(
@@ -12175,94 +11209,36 @@ def add_restaurant():
                     "danger"
                 )
 
-                return redirect(url_for("add_restaurant"))
+                return redirect(
+                    url_for(
+                        "add_restaurant"
+                    )
+                )
+
 
             # =================================================
             # DUPLICATE RESTAURANT
             # =================================================
 
-            existing_restaurant = Restaurant.query.filter_by(
-                name=name
-            ).first()
-
-            if existing_restaurant:
+            if (
+                Restaurant.query
+                .filter_by(
+                    name=name
+                )
+                .first()
+            ):
 
                 flash(
                     "Restaurant already exists!",
                     "danger"
                 )
 
-                return redirect(url_for("add_restaurant"))
-
-            # =================================================
-            # FIND / CREATE DELIVERY LOCATION
-            # =================================================
-
-            location_settings = (
-                DeliveryLocationSettings.query
-                .filter(
-                    func.lower(
-                        DeliveryLocationSettings.location
-                    ) == location.lower()
-                )
-                .first()
-            )
-
-            # =================================================
-            # CREATE NEW LOCATION IF NOT EXISTS
-            # =================================================
-
-            if not location_settings:
-
-                location_settings = DeliveryLocationSettings(
-
-                    location=location,
-
-                    is_active=True,
-
-                    delivery_slabs=[
-                        {
-                            "upto": 3,
-                            "charge": 30
-                        },
-                        {
-                            "upto": 6,
-                            "charge": 40
-                        },
-                        {
-                            "upto": 9,
-                            "charge": 55
-                        },
-                        {
-                            "upto": 12,
-                            "charge": 70
-                        }
-                    ],
-
-                    max_charge=90,
-
-                    free_delivery_min_order=499,
-
-                    night_surge=0,
-
-                    is_night_surge_active=False
+                return redirect(
+                    url_for(
+                        "add_restaurant"
+                    )
                 )
 
-                db.session.add(location_settings)
-
-                db.session.flush()
-
-                print(
-                    "NEW DELIVERY LOCATION CREATED:",
-                    location
-                )
-
-            else:
-
-                print(
-                    "EXISTING DELIVERY LOCATION:",
-                    location
-                )
 
             # =================================================
             # CREATE RESTAURANT
@@ -12270,63 +11246,81 @@ def add_restaurant():
 
             restaurant = Restaurant(
 
-                name=name,
+                name=
+                    name,
 
-                phone=phone,
+                phone=
+                    phone,
 
-                email=email,
+                email=
+                    email,
 
-                address=address,
+                address=
+                    address,
 
-                sheet_url=sheet_url,
+                sheet_url=
+                    sheet_url,
 
-                location=location,
+                location=
+                    location,
 
-                category_type=category_type,
+                category_type=
+                    category_type
 
-                delivery_location_id=location_settings.id
             )
 
-            # =================================================
-            # ADD RESTAURANT
-            # =================================================
 
-            db.session.add(restaurant)
+            db.session.add(
+                restaurant
+            )
 
-            db.session.flush()
+            db.session.commit()
+
 
             # =================================================
             # OPTIONAL RESTAURANT ADMIN USER
             # =================================================
 
             admin_username = request.form.get(
-                "admin_username", ""
+                "admin_username",
+                ""
             ).strip()
 
             admin_password = request.form.get(
-                "admin_password", ""
+                "admin_password",
+                ""
             )
 
-            if admin_username and admin_password:
+
+            if (
+                admin_username
+                and admin_password
+            ):
 
                 # ---------------------------------------------
                 # CHECK USERNAME
                 # ---------------------------------------------
 
-                existing_user = RestaurantUser.query.filter_by(
-                    username=admin_username
-                ).first()
-
-                if existing_user:
+                if (
+                    RestaurantUser.query
+                    .filter_by(
+                        username=
+                            admin_username
+                    )
+                    .first()
+                ):
 
                     flash(
                         "Admin username already exists!",
                         "danger"
                     )
 
-                    db.session.rollback()
+                    return redirect(
+                        url_for(
+                            "add_restaurant"
+                        )
+                    )
 
-                    return redirect(url_for("add_restaurant"))
 
                 # ---------------------------------------------
                 # CREATE RESTAURANT USER
@@ -12334,72 +11328,29 @@ def add_restaurant():
 
                 admin_user = RestaurantUser(
 
-                    username=admin_username,
+                    username=
+                        admin_username,
 
-                    restaurant_id=restaurant.id
+                    restaurant_id=
+                        restaurant.id
 
                 )
 
-                admin_user.set_password(admin_password)
 
-                db.session.add(admin_user)
-
-            # =================================================
-            # SAVE RESTAURANT FIRST
-            # =================================================
-
-            db.session.commit()
-
-            print(
-                "RESTAURANT CREATED:",
-                restaurant.id
-            )
-
-            print(
-                "RESTAURANT LOCATION:",
-                restaurant.location
-            )
-
-            print(
-                "DELIVERY LOCATION ID:",
-                restaurant.delivery_location_id
-            )
-
-            print(
-                "DELIVERY LOCATION SETTINGS:",
-                location_settings.location
-            )
-
-            # =================================================
-            # AUTOMATIC GOOGLE SHEET MENU SYNC
-            # =================================================
-
-            sync_success = False
-
-            if restaurant.sheet_url:
-
-                print(
-                    "\n===== AUTOMATIC MENU SYNC STARTED ====="
+                admin_user.set_password(
+                    admin_password
                 )
 
-                sync_success = sync_restaurant_menu(restaurant)
 
-                if sync_success:
+                db.session.add(
+                    admin_user
+                )
 
-                    print(
-                        "MENU AUTO SYNC SUCCESS:",
-                        restaurant.name
-                    )
+                db.session.commit()
 
-                else:
-
-                    print(
-                        "MENU AUTO SYNC FAILED:",
-                        restaurant.name
-                    )
 
             # =================================================
-            # SUCCESS MESSAGE
+            # SUCCESS
             # =================================================
 
             display_type = (
@@ -12408,21 +11359,19 @@ def add_restaurant():
                 .title()
             )
 
-            if sync_success:
 
-                flash(
-                    f"{display_type} '{name}' added and menu synced successfully!",
-                    "success"
+            flash(
+                f"{display_type} '{name}' added successfully!",
+                "success"
+            )
+
+
+            return redirect(
+                url_for(
+                    "admin_dashboard"
                 )
+            )
 
-            else:
-
-                flash(
-                    f"{display_type} '{name}' added successfully, but menu sync failed. Please check the Google Sheet.",
-                    "warning"
-                )
-
-            return redirect(url_for("admin_dashboard"))
 
         # =====================================================
         # ERROR
@@ -12432,24 +11381,33 @@ def add_restaurant():
 
             db.session.rollback()
 
+
             print(
                 "ADD RESTAURANT ERROR:",
-                str(e)
+                e
             )
+
 
             flash(
                 "Error while adding restaurant. Check server logs.",
                 "danger"
             )
 
-            return redirect(url_for("add_restaurant"))
+
+            return redirect(
+                url_for(
+                    "add_restaurant"
+                )
+            )
+
 
     # ========================================================
     # GET
     # ========================================================
 
-    return render_template("add_restaurant.html")
-
+    return render_template(
+        "add_restaurant.html"
+    )
 from sqlalchemy import func
 from flask_login import current_user
 import re, unicodedata
@@ -12765,13 +11723,7 @@ def menu(restaurant_id):
             item.price
             or 0
         )
-        data["mrp"] = (
-            getattr(item, "mrp", None)
-            or data.get("mrp")
-            or data.get("original_price")
-            or item.price
-            or 0
-        )
+
         data["category"] = (
             item.category
             or "Other"
@@ -13065,7 +12017,6 @@ def menu(restaurant_id):
             active_offer
 
     )
-
 @app.route(
     "/restaurant/assign_delivery/<int:order_id>",
     methods=["POST"]
@@ -13191,10 +12142,15 @@ def restaurant_assign_delivery(order_id):
         "Out for Delivery"
     )
 
+
+    # ========================================================
+    # SAVE BEFORE NOTIFICATIONS
+    # ========================================================
+    
     # ========================================================
     # WHATSAPP: DELIVERY OTP
     # ========================================================
-    
+
     try:
         sent = send_delivery_otp_whatsapp(order)
 
@@ -13212,11 +12168,8 @@ def restaurant_assign_delivery(order_id):
     except Exception as e:
         print("❌ DELIVERY OTP WHATSAPP ERROR:", e)
 
-    # ========================================================
-    # SAVE BEFORE NOTIFICATIONS
-    # ========================================================
-
     db.session.commit()
+
     
     # ========================================================
     # WHATSAPP: OUT FOR DELIVERY
@@ -13240,7 +12193,6 @@ def restaurant_assign_delivery(order_id):
             order.order_id,
             e
         )
-
 
 
     # ========================================================
@@ -13583,7 +12535,6 @@ def delivery_history():
         totals=totals,
         all_totals=all_totals
     )
-
 @app.route("/delivery/mark-delivered", methods=["POST"])
 def delivery_mark_delivered():
 
@@ -13675,7 +12626,7 @@ def delivery_mark_delivered():
     # ========================================================
 
     db.session.commit()
-  
+    
     # ========================================================
     # WHATSAPP: FULL DELIVERED NOTIFICATION
     # ========================================================
@@ -15106,9 +14057,6 @@ def edit_restaurant_card(restaurant_id):
 
     categories = Category.query.all()
 
-    # ========================================================
-    # POST
-    # ========================================================
 
     if request.method == "POST":
 
@@ -15127,6 +14075,7 @@ def edit_restaurant_card(restaurant_id):
                 selected_ids
             )
 
+
             if selected_ids:
 
                 selected_categories = (
@@ -15143,9 +14092,11 @@ def edit_restaurant_card(restaurant_id):
 
                 selected_categories = []
 
+
             restaurant.categories = (
                 selected_categories
             )
+
 
             # =================================================
             # BASIC INFO
@@ -15157,90 +14108,17 @@ def edit_restaurant_card(restaurant_id):
             ).strip()
 
             restaurant.address = request.form.get(
-                "address",
-                ""
-            ).strip()
-
-            restaurant.phone = request.form.get(
-                "phone",
-                ""
-            ).strip()
-
-            restaurant.email = request.form.get(
-                "email",
-                ""
-            ).strip()
-
-            # =================================================
-            # LOCATION
-            # =================================================
-
-            location = request.form.get(
-                "location",
-                ""
-            ).strip()
-
-            # Clean extra spaces
-            location = " ".join(
-                location.split()
+                "address"
             )
 
-            # Standardize location
-            if location:
-                location = location.title()
+            restaurant.phone = request.form.get(
+                "phone"
+            )
 
-            restaurant.location = location
+            restaurant.email = request.form.get(
+                "email"
+            )
 
-            # =================================================
-            # LOCATION-WISE DELIVERY PRICING
-            # =================================================
-            #
-            # Example:
-            #
-            # Restaurant location = Machilipatnam
-            #
-            # Find:
-            # DeliveryLocationSettings
-            # location = Machilipatnam
-            #
-            # Then:
-            # restaurant.delivery_location_id = that ID
-            #
-            # If location does not exist, it is automatically
-            # created with the default 4 delivery slots.
-            # =================================================
-
-            if location:
-
-                location_settings = (
-                    get_or_create_delivery_location(
-                        location
-                    )
-                )
-
-                if location_settings:
-
-                    restaurant.delivery_location_id = (
-                        location_settings.id
-                    )
-
-                    print(
-                        "DELIVERY LOCATION:",
-                        location_settings.location
-                    )
-
-                    print(
-                        "DELIVERY LOCATION ID:",
-                        location_settings.id
-                    )
-
-            else:
-
-                restaurant.delivery_location_id = None
-
-                print(
-                    "WARNING: Restaurant has no delivery pricing location."
-                )
 
             # =================================================
             # CATEGORY TYPE
@@ -15254,12 +14132,14 @@ def edit_restaurant_card(restaurant_id):
                 "meat"
             ]
 
+
             category = request.form.get(
                 "category_type",
                 ""
             ).strip().lower()
 
-            # Only update when category supplied
+
+            # Only update when a category is supplied
             if category:
 
                 if category not in allowed:
@@ -15273,9 +14153,11 @@ def edit_restaurant_card(restaurant_id):
                         request.url
                     )
 
+
                 restaurant.category_type = (
                     category
                 )
+
 
             # =================================================
             # CARD DETAILS
@@ -15287,11 +14169,13 @@ def edit_restaurant_card(restaurant_id):
                 ) == "yes"
             )
 
+
             restaurant.rating = float(
                 request.form.get(
                     "rating"
                 ) or 4.0
             )
+
 
             restaurant.price_level = (
                 request.form.get(
@@ -15299,11 +14183,13 @@ def edit_restaurant_card(restaurant_id):
                 )
             )
 
+
             restaurant.delivery_time = (
                 request.form.get(
                     "delivery_time"
                 )
             )
+
 
             restaurant.popular_items = (
                 request.form.get(
@@ -15311,19 +14197,10 @@ def edit_restaurant_card(restaurant_id):
                 )
             )
 
+
             # =================================================
             # DELIVERY
             # =================================================
-
-            # -------------------------------------------------
-            # OLD FIELDS
-            #
-            # Keep them for backward compatibility.
-            # New delivery calculation uses:
-            #
-            # restaurant.delivery_location_settings
-            #
-            # -------------------------------------------------
 
             restaurant.delivery_charge = float(
                 request.form.get(
@@ -15331,64 +14208,43 @@ def edit_restaurant_card(restaurant_id):
                 ) or 30
             )
 
+
             restaurant.free_delivery_limit = float(
                 request.form.get(
                     "free_delivery_limit"
                 ) or 0
             )
 
-            # -------------------------------------------------
-            # RESTAURANT COORDINATES
-            # -------------------------------------------------
-
-            latitude_raw = request.form.get(
-                "latitude"
-            )
-
-            longitude_raw = request.form.get(
-                "longitude"
-            )
 
             restaurant.latitude = (
-                latitude_raw.strip()
-                if latitude_raw
-                else None
+                request.form.get(
+                    "latitude"
+                )
+                or None
             )
+
 
             restaurant.longitude = (
-                longitude_raw.strip()
-                if longitude_raw
-                else None
+                request.form.get(
+                    "longitude"
+                )
+                or None
             )
 
-            # -------------------------------------------------
-            # DELIVERY RADIUS
-            # -------------------------------------------------
 
-            try:
+            restaurant.delivery_radius_km = float(
+                request.form.get(
+                    "delivery_radius_km"
+                ) or 5
+            )
 
-                restaurant.delivery_radius_km = float(
-                    request.form.get(
-                        "delivery_radius_km"
-                    ) or 5
-                )
-
-            except (
-                TypeError,
-                ValueError
-            ):
-
-                restaurant.delivery_radius_km = 5
-
-            # -------------------------------------------------
-            # FORCE DELIVERY CHARGE
-            # -------------------------------------------------
 
             restaurant.force_delivery_charge = (
                 request.form.get(
                     "force_delivery_charge"
                 ) == "1"
             )
+
 
             # =================================================
             # OPEN / CLOSE
@@ -15402,6 +14258,7 @@ def edit_restaurant_card(restaurant_id):
                 "closing_time"
             )
 
+
             restaurant.opening_time = (
                 datetime.strptime(
                     opening_time,
@@ -15411,6 +14268,7 @@ def edit_restaurant_card(restaurant_id):
                 else None
             )
 
+
             restaurant.closing_time = (
                 datetime.strptime(
                     closing_time,
@@ -15419,6 +14277,7 @@ def edit_restaurant_card(restaurant_id):
                 if closing_time
                 else None
             )
+
 
             # =================================================
             # ACCEPT ORDERS
@@ -15430,9 +14289,13 @@ def edit_restaurant_card(restaurant_id):
                 ) == "1"
             )
 
-            accept_orders_until = request.form.get(
-                "accept_orders_until"
+
+            accept_orders_until = (
+                request.form.get(
+                    "accept_orders_until"
+                )
             )
+
 
             restaurant.accept_orders_until = (
                 datetime.strptime(
@@ -15443,52 +14306,6 @@ def edit_restaurant_card(restaurant_id):
                 else None
             )
 
-            # =================================================
-            # RESTAURANT BREAK SCHEDULE
-            # =================================================
-
-            restaurant.break_enabled = (
-                request.form.get("break_enabled") == "1"
-            )
-
-            break_start_raw = (
-                request.form.get("break_start_time") or ""
-            ).strip()
-
-            break_end_raw = (
-                request.form.get("break_end_time") or ""
-            ).strip()
-
-            if restaurant.break_enabled:
-                if not break_start_raw or not break_end_raw:
-                    flash(
-                        "Please set both break start and end times.",
-                        "danger"
-                    )
-                    return redirect(request.url)
-
-                break_start = datetime.strptime(
-                    break_start_raw,
-                    "%H:%M"
-                ).time()
-
-                break_end = datetime.strptime(
-                    break_end_raw,
-                    "%H:%M"
-                ).time()
-
-                if break_start == break_end:
-                    flash(
-                        "Break start and end times cannot be the same.",
-                        "danger"
-                    )
-                    return redirect(request.url)
-
-                restaurant.break_start_time = break_start
-                restaurant.break_end_time = break_end
-            else:
-                restaurant.break_start_time = None
-                restaurant.break_end_time = None
 
             # =================================================
             # START DATE
@@ -15497,6 +14314,7 @@ def edit_restaurant_card(restaurant_id):
             start_date = request.form.get(
                 "start_date"
             )
+
 
             restaurant.start_date = (
                 datetime.strptime(
@@ -15507,6 +14325,7 @@ def edit_restaurant_card(restaurant_id):
                 else None
             )
 
+
             # =================================================
             # STATUS
             # =================================================
@@ -15515,17 +14334,17 @@ def edit_restaurant_card(restaurant_id):
                 "status"
             )
 
+
             if status in [
                 "active",
                 "coming_soon",
                 "suspended"
             ]:
 
-                restaurant.status = status
+                restaurant.status = (
+                    status
+                )
 
-            # =================================================
-            # COMING SOON VALIDATION
-            # =================================================
 
             if (
                 restaurant.status
@@ -15542,6 +14361,7 @@ def edit_restaurant_card(restaurant_id):
                     request.url
                 )
 
+
             # =================================================
             # LIMITED DROP
             # =================================================
@@ -15552,6 +14372,7 @@ def edit_restaurant_card(restaurant_id):
                 ) == "1"
             )
 
+
             restaurant.limited_item_name = (
                 request.form.get(
                     "limited_item_name"
@@ -15559,35 +14380,20 @@ def edit_restaurant_card(restaurant_id):
                 or None
             )
 
-            try:
 
-                restaurant.limited_total_qty = int(
-                    request.form.get(
-                        "limited_total_qty"
-                    ) or 0
-                )
+            restaurant.limited_total_qty = int(
+                request.form.get(
+                    "limited_total_qty"
+                ) or 0
+            )
 
-            except (
-                TypeError,
-                ValueError
-            ):
 
-                restaurant.limited_total_qty = 0
+            restaurant.limited_remaining_qty = int(
+                request.form.get(
+                    "limited_remaining_qty"
+                ) or 0
+            )
 
-            try:
-
-                restaurant.limited_remaining_qty = int(
-                    request.form.get(
-                        "limited_remaining_qty"
-                    ) or 0
-                )
-
-            except (
-                TypeError,
-                ValueError
-            ):
-
-                restaurant.limited_remaining_qty = 0
 
             start_raw = request.form.get(
                 "limited_start_datetime"
@@ -15596,6 +14402,7 @@ def edit_restaurant_card(restaurant_id):
             end_raw = request.form.get(
                 "limited_end_datetime"
             )
+
 
             # =================================================
             # LIMITED DROP TIME → UTC
@@ -15622,10 +14429,12 @@ def edit_restaurant_card(restaurant_id):
                     restaurant.limited_start_datetime = None
                     restaurant.limited_end_datetime = None
 
+
             else:
 
                 restaurant.limited_start_datetime = None
                 restaurant.limited_end_datetime = None
+
 
             # =================================================
             # LIMITED DROP VALIDATION
@@ -15644,6 +14453,7 @@ def edit_restaurant_card(restaurant_id):
                         request.url
                     )
 
+
                 if (
                     restaurant.limited_total_qty
                     <= 0
@@ -15657,6 +14467,7 @@ def edit_restaurant_card(restaurant_id):
                     return redirect(
                         request.url
                     )
+
 
                 if (
                     not restaurant.limited_start_datetime
@@ -15673,6 +14484,7 @@ def edit_restaurant_card(restaurant_id):
                         request.url
                     )
 
+
                 if (
                     restaurant.limited_end_datetime
                     <=
@@ -15688,42 +14500,10 @@ def edit_restaurant_card(restaurant_id):
                         request.url
                     )
 
+
             # =================================================
             # DEBUG
             # =================================================
-
-            print(
-                "\n===== EDIT RESTAURANT ====="
-            )
-
-            print(
-                "RESTAURANT ID:",
-                restaurant.id
-            )
-
-            print(
-                "RESTAURANT NAME:",
-                restaurant.name
-            )
-
-            print(
-                "LOCATION:",
-                restaurant.location
-            )
-
-            print(
-                "DELIVERY LOCATION ID:",
-                restaurant.delivery_location_id
-            )
-
-            if restaurant.delivery_location_settings:
-
-                print(
-                    "DELIVERY PRICING LOCATION:",
-                    restaurant
-                    .delivery_location_settings
-                    .location
-                )
 
             print(
                 "RAW FORM START:",
@@ -15745,9 +14525,6 @@ def edit_restaurant_card(restaurant_id):
                 restaurant.limited_end_datetime
             )
 
-            # =================================================
-            # HOURS DEBUG
-            # =================================================
 
             if (
                 restaurant.limited_start_datetime
@@ -15756,19 +14533,24 @@ def edit_restaurant_card(restaurant_id):
             ):
 
                 hours = (
+
                     restaurant.limited_end_datetime
                     -
                     restaurant.limited_start_datetime
+
                 ).total_seconds() / 3600
+
 
             else:
 
                 hours = 0
 
+
             print(
                 "HOURS:",
                 hours
             )
+
 
             # =================================================
             # SAVE EVERYTHING ONCE
@@ -15776,66 +14558,31 @@ def edit_restaurant_card(restaurant_id):
 
             db.session.commit()
 
-            # =================================================
-            # AFTER COMMIT DEBUG
-            # =================================================
 
             print(
-                "AFTER COMMIT:"
-            )
-
-            print(
-                "Restaurant:",
-                restaurant.id,
-                restaurant.name
-            )
-
-            print(
-                "Location:",
-                restaurant.location
-            )
-
-            print(
-                "Delivery Location ID:",
-                restaurant.delivery_location_id
-            )
-
-            print(
-                "BREAK SCHEDULE:",
-                {
-                    "enabled": restaurant.break_enabled,
-                    "start": str(restaurant.break_start_time),
-                    "end": str(restaurant.break_end_time),
-                }
-            )
-
-            print(
-                "Categories:",
+                "AFTER COMMIT:",
                 [
                     (c.id, c.name)
-                    for c in restaurant.categories
+                    for c
+                    in restaurant.categories
                 ]
             )
 
-            # =================================================
-            # SUCCESS
-            # =================================================
 
             flash(
                 "Restaurant updated successfully!",
                 "success"
             )
 
+
             return redirect(
                 url_for(
                     "restaurant_dashboard",
-                    restaurant_id=restaurant.id
+                    restaurant_id=
+                        restaurant.id
                 )
             )
 
-        # =====================================================
-        # ERROR
-        # =====================================================
 
         except Exception as e:
 
@@ -15855,6 +14602,7 @@ def edit_restaurant_card(restaurant_id):
                 request.url
             )
 
+
     # ========================================================
     # DISPLAY FORM
     # ========================================================
@@ -15867,13 +14615,17 @@ def edit_restaurant_card(restaurant_id):
         restaurant.limited_end_datetime
     )
 
+
     return render_template(
 
         "dashboard/edit_restaurant_card.html",
 
-        restaurant=restaurant,
+        restaurant=
+            restaurant,
 
-        categories=categories
+        categories=
+            categories
+
     )
 
 
@@ -15897,7 +14649,6 @@ def toggle_offer_status(offer_id):
     return redirect(request.referrer)
 
 from datetime import datetime
-
 def get_active_offer_for_restaurant(restaurant_id, device_fingerprint=None):
     now = datetime.utcnow()
     offer = RestaurantOffer.query.filter(
@@ -16310,918 +15061,151 @@ def update_feedback_status(feedback_id):
     db.session.commit()
     flash("Status updated successfully", "success")
     return redirect(url_for("admin_feedback")) 
-
-
-
-
 def calculate_delivery_charge(
     distance_km,
     items_total,
     restaurant
 ):
-    """
-    Calculate location-wise delivery charge.
 
-    Flexible slots are stored in:
-
-        restaurant.delivery_location_settings.delivery_slabs
-
-    Example:
-
-        [
-            {"upto": 3, "charge": 30},
-            {"upto": 6, "charge": 40},
-            {"upto": 9, "charge": 55},
-            {"upto": 12, "charge": 70}
-        ]
-
-    Additional slots can be added later without
-    changing this function or the database schema.
-
-    IMPORTANT:
-    Free delivery is NOT calculated here.
-    Your current business rule is that free delivery
-    comes from an active offer.
-    """
+    s = DeliverySettings.query.first()
 
     # ========================================================
-    # NORMALIZE INPUT
+    # FALLBACK
     # ========================================================
 
-    try:
-        distance_km = float(
-            distance_km or 0
-        )
-    except (
-        TypeError,
-        ValueError
-    ):
-        distance_km = 0
-
-    try:
-        items_total = float(
-            items_total or 0
-        )
-    except (
-        TypeError,
-        ValueError
-    ):
-        items_total = 0
-
-    distance_km = max(
-        0,
-        distance_km
-    )
-
-    items_total = max(
-        0,
-        items_total
-    )
-
-    # ========================================================
-    # LOCATION SETTINGS
-    # ========================================================
-
-    location_settings = (
-        restaurant.delivery_location_settings
-    )
-
-    # ========================================================
-    # TEMPORARY LEGACY FALLBACK
-    # ========================================================
-
-    if not location_settings:
-
-        legacy = DeliverySettings.query.first()
-
-        if not legacy:
-
-            return (
-                30,
-                "🚚 Delivery charge ₹30"
-            )
-
-        # ----------------------------------------------
-        # OLD SLABS
-        # ----------------------------------------------
-
-        if distance_km <= legacy.base_distance:
-
-            charge = legacy.base_charge
-
-        elif distance_km <= legacy.slab_1_upto:
-
-            charge = legacy.slab_1_charge
-
-        elif distance_km <= legacy.slab_2_upto:
-
-            charge = legacy.slab_2_charge
-
-        elif distance_km <= legacy.slab_3_upto:
-
-            charge = legacy.slab_3_charge
-
-        else:
-
-            charge = legacy.max_charge
-
-        # ----------------------------------------------
-        # NIGHT SURGE
-        # ----------------------------------------------
-
-        if legacy.is_night_surge_active:
-
-            charge += legacy.night_surge
-
-            message = (
-                f"🌙 Night delivery charge ₹{charge}"
-            )
-
-        else:
-
-            message = (
-                f"🚚 Delivery charge ₹{charge}"
-            )
+    if not s:
 
         return (
-            int(charge),
-            message
-        )
-
-    # ========================================================
-    # LOCATION DISABLED
-    # ========================================================
-    # ========================================================
-    # GLOBAL DELIVERY CONTROL
-    # ========================================================
-
-    platform_control = PlatformControl.query.first()
-
-    if (
-        platform_control
-        and not platform_control.delivery_enabled
-    ):
-        return (
-            None,
-            platform_control.delivery_disabled_message
-            or
-            "🚫 Delivery service is currently unavailable."
+            30,
+            "🚚 Delivery charge ₹30"
         )
 
 
     # ========================================================
-    # LOCATION DELIVERY CONTROL
+    # NORMAL RESTAURANT FREE DELIVERY
+    # DISABLED
     # ========================================================
 
-    if not location_settings.is_active:
+    # Restaurant free-delivery threshold is no longer used.
+    # Free delivery should only come from an active offer.
 
-        return (
-            None,
-            "🚫 Delivery is currently unavailable "
-            "for this location."
-        )
-
-
-    if not location_settings.delivery_enabled:
-
-        return (
-            None,
-            location_settings.delivery_disabled_message
-            or
-            f"🚫 Delivery is currently unavailable "
-            f"in {location_settings.location}."
-        )
 
     # ========================================================
-    # GET JSON SLOTS
+    # DISTANCE SLAB
     # ========================================================
 
-    slabs = (
-        location_settings.delivery_slabs
-        or []
-    )
+    if distance_km <= s.base_distance:
 
-    valid_slabs = []
+        charge = s.base_charge
 
-    for slab in slabs:
 
-        if not isinstance(slab, dict):
-            continue
+    elif distance_km <= s.slab_1_upto:
 
-        try:
+        charge = s.slab_1_charge
 
-            upto = float(
-                slab.get("upto")
-            )
 
-            charge = int(
-                slab.get("charge")
-            )
+    elif distance_km <= s.slab_2_upto:
 
-        except (
-            TypeError,
-            ValueError
-        ):
+        charge = s.slab_2_charge
 
-            continue
 
-        if upto <= 0:
-            continue
+    elif distance_km <= s.slab_3_upto:
 
-        if charge < 0:
-            charge = 0
+        charge = s.slab_3_charge
 
-        valid_slabs.append({
-            "upto": upto,
-            "charge": charge
-        })
-
-    # ========================================================
-    # SORT BY DISTANCE
-    # ========================================================
-
-    valid_slabs.sort(
-        key=lambda x: x["upto"]
-    )
-
-    # ========================================================
-    # CALCULATE
-    # ========================================================
-
-    if not valid_slabs:
-
-        charge = location_settings.max_charge
 
     else:
 
-        charge = location_settings.max_charge
+        charge = s.max_charge
 
-        for slab in valid_slabs:
-
-            if distance_km <= slab["upto"]:
-
-                charge = slab["charge"]
-
-                break
 
     # ========================================================
     # NIGHT SURGE
     # ========================================================
 
-    if location_settings.is_night_surge_active:
+    if s.is_night_surge_active:
 
-        charge += (
-            location_settings.night_surge
-        )
+        charge += s.night_surge
 
-        message = (
+        msg = (
             f"🌙 Night delivery charge ₹{charge}"
         )
 
+
     else:
 
-        message = (
+        msg = (
             f"🚚 Delivery charge ₹{charge}"
         )
 
-    # ========================================================
-    # SAFETY
-    # ========================================================
-
-    charge = max(
-        0,
-        int(charge)
-    )
 
     return (
         charge,
-        message
+        msg
+    )
+@app.route("/calculate_delivery", methods=["POST"])
+def calculate_delivery():
+    data = request.get_json()
+
+    restaurant_id = int(data["restaurant_id"])
+    customer_lat = float(data["customer_lat"])
+    customer_lng = float(data["customer_lng"])
+    items_total = float(data["items_total"])
+
+    restaurant = Restaurant.query.get_or_404(restaurant_id)
+
+    distance_km = calculate_distance_km(
+        restaurant.latitude,
+        restaurant.longitude,
+        customer_lat,
+        customer_lng
     )
 
-@app.route(
-    "/calculate_delivery",
-    methods=["POST"]
-)
-def calculate_delivery():
+    delivery_charge, message =calculate_delivery_charge(distance_km, items_total, restaurant)
 
-    try:
+    
 
-        data = request.get_json(
-            silent=True
-        ) or {}
+    return jsonify({
+        "distance_km": round(distance_km, 2),
+        "delivery_charge": delivery_charge,
+        "message": message
+    })
 
-        # ====================================================
-        # INPUT
-        # ====================================================
-
-        restaurant_id = int(
-            data["restaurant_id"]
-        )
-
-        customer_lat = float(
-            data["customer_lat"]
-        )
-
-        customer_lng = float(
-            data["customer_lng"]
-        )
-
-        items_total = float(
-            data["items_total"]
-        )
-
-        # ====================================================
-        # RESTAURANT
-        # ====================================================
-
-        restaurant = Restaurant.query.get_or_404(
-            restaurant_id
-        )
-
-        # ====================================================
-        # RESTAURANT LOCATION CHECK
-        # ====================================================
-
-        if (
-            restaurant.latitude is None
-            or restaurant.longitude is None
-        ):
-
-            return jsonify({
-                "success": False,
-                "message":
-                    "Restaurant location is unavailable"
-            }), 400
-
-        # ====================================================
-        # DISTANCE
-        # ====================================================
-
-        distance_km = calculate_distance_km(
-            restaurant.latitude,
-            restaurant.longitude,
-            customer_lat,
-            customer_lng
-        )
-
-        # ====================================================
-        # RESTAURANT DELIVERY RADIUS
-        # IMPORTANT:
-        # This check happens during delivery calculation itself.
-        # The Flutter checkout can therefore immediately show the
-        # "not serving your area" popup before the customer tries
-        # to place the order.
-        # ====================================================
-
-        restaurant_radius = getattr(
-            restaurant,
-            "delivery_radius_km",
-            None
-        )
-
-        if (
-            restaurant_radius is not None
-            and distance_km > float(restaurant_radius)
-        ):
-            max_delivery_km = float(restaurant_radius)
-
-            return jsonify({
-                "success": False,
-                "distance_km": round(distance_km, 2),
-                "delivery_charge": None,
-                "max_delivery_km": max_delivery_km,
-                "message": (
-                    "🚫 This restaurant is not serving your area.\n"
-                    f"You are {distance_km:.2f} km away. "
-                    f"Delivery is available only up to "
-                    f"{max_delivery_km:g} km.\n"
-                    "Please change your delivery location."
-                )
-            }), 400
-
-        # ====================================================
-        # RESTAURANT DELIVERY RADIUS CHECK
-        # ====================================================
-
-        if (
-            restaurant.delivery_radius_km is not None
-            and distance_km > float(restaurant.delivery_radius_km)
-        ):
-
-            return jsonify({
-                "success": False,
-                "distance_km": round(distance_km, 2),
-                "delivery_charge": None,
-                "max_delivery_km": float(
-                    restaurant.delivery_radius_km
-                ),
-                "message": (
-                    "🚫 This restaurant is not delivering "
-                    "to your location. "
-                    f"Delivery is available up to "
-                    f"{float(restaurant.delivery_radius_km):g} km."
-                )
-            }), 400
-        # ====================================================
-        # DELIVERY CHARGE
-        # ====================================================
-
-        delivery_charge, message = (
-            calculate_delivery_charge(
-                distance_km=distance_km,
-                items_total=items_total,
-                restaurant=restaurant
-            )
-        )
-
-        # ====================================================
-        # DELIVERY UNAVAILABLE
-        # ====================================================
-
-        if delivery_charge is None:
-
-            return jsonify({
-                "success": False,
-                "distance_km": round(
-                    distance_km,
-                    2
-                ),
-                "delivery_charge": None,
-                "message": message
-            }), 400
-
-        # ====================================================
-        # RESPONSE
-        # ====================================================
-
-        return jsonify({
-
-            "success": True,
-
-            "distance_km": round(
-                distance_km,
-                2
-            ),
-
-            "delivery_charge": delivery_charge,
-
-            "message": message
-
-        })
-
-    except KeyError as e:
-
-        return jsonify({
-            "success": False,
-            "message": (
-                f"Missing field: {str(e)}"
-            )
-        }), 400
-
-    except (
-        TypeError,
-        ValueError
-    ) as e:
-
-        return jsonify({
-            "success": False,
-            "message": (
-                f"Invalid delivery data: {str(e)}"
-            )
-        }), 400
-
-    except Exception:
-
-        app.logger.exception(
-            "DELIVERY CALCULATION ERROR"
-        )
-
-        return jsonify({
-            "success": False,
-            "message":
-                "Unable to calculate delivery charge"
-        }), 500
-
-@app.route(
-    "/admin/delivery-settings",
-    methods=["GET", "POST"]
-)
+@app.route("/admin/delivery-settings", methods=["GET", "POST"])
 def admin_delivery_settings():
-
-    # ========================================================
-    # POST
-    # ========================================================
+    settings = DeliverySettings.query.first()
 
     if request.method == "POST":
-
-        action = request.form.get(
-            "action",
-            "update"
-        )
-
-        # ====================================================
-        # CREATE LOCATION
-        # ====================================================
-
-        if action == "create_location":
-
-            location_name = (
-                request.form.get("location")
-                or ""
-            ).strip()
-
-            location_name = " ".join(
-                location_name.split()
-            )
-
-            if not location_name:
-
-                flash(
-                    "Please enter a location name.",
-                    "danger"
-                )
-
-                return redirect(
-                    url_for(
-                        "admin_delivery_settings"
-                    )
-                )
-
-            location_name = (
-                location_name.title()
-            )
-
-            existing = (
-                DeliveryLocationSettings.query
-                .filter(
-                    func.lower(
-                        DeliveryLocationSettings.location
-                    ) == location_name.lower()
-                )
-                .first()
-            )
-
-            if existing:
-
-                flash(
-                    "This location already exists.",
-                    "warning"
-                )
-
-                return redirect(
-                    url_for(
-                        "admin_delivery_settings",
-                        location_id=existing.id
-                    )
-                )
-
-            new_location = (
-                DeliveryLocationSettings(
-                    location=location_name,
-
-                    is_active=True,
-
-                    delivery_slabs=[
-                        {
-                            "upto": 3,
-                            "charge": 30
-                        },
-                        {
-                            "upto": 6,
-                            "charge": 40
-                        },
-                        {
-                            "upto": 9,
-                            "charge": 55
-                        },
-                        {
-                            "upto": 12,
-                            "charge": 70
-                        }
-                    ],
-
-                    max_charge=90,
-
-                    free_delivery_min_order=499,
-
-                    night_surge=0,
-
-                    is_night_surge_active=False
-                )
-            )
-
-            db.session.add(
-                new_location
-            )
-
-            db.session.commit()
-
-            flash(
-                f"Delivery pricing created for "
-                f"{location_name}.",
-                "success"
-            )
-
-            return redirect(
-                url_for(
-                    "admin_delivery_settings",
-                    location_id=new_location.id
-                )
-            )
-
-        # ====================================================
-        # UPDATE LOCATION
-        # ====================================================
-
-        location_id = request.form.get(
-            "location_id",
-            type=int
-        )
-
-        if not location_id:
-
-            flash(
-                "Location not selected.",
-                "danger"
-            )
-
-            return redirect(
-                url_for(
-                    "admin_delivery_settings"
-                )
-            )
-
-        settings = (
-            DeliveryLocationSettings.query.get(
-                location_id
-            )
-        )
-
         if not settings:
+            settings = DeliverySettings()  # create new if not exists
+            db.session.add(settings)
 
-            flash(
-                "Delivery location not found.",
-                "danger"
-            )
+        # Safe update using helper functions
+        settings.base_distance = safe_float(request.form.get("base_distance"), settings.base_distance)
+        settings.base_charge = safe_int(request.form.get("base_charge"), settings.base_charge)
 
-            return redirect(
-                url_for(
-                    "admin_delivery_settings"
-                )
-            )
+        settings.slab_1_upto = safe_float(request.form.get("slab_1_upto"), settings.slab_1_upto)
+        settings.slab_1_charge = safe_int(request.form.get("slab_1_charge"), settings.slab_1_charge)
 
-        # ====================================================
-        # READ ALL SLOTS
-        # ====================================================
+        settings.slab_2_upto = safe_float(request.form.get("slab_2_upto"), settings.slab_2_upto)
+        settings.slab_2_charge = safe_int(request.form.get("slab_2_charge"), settings.slab_2_charge)
 
-        slab_uptos = request.form.getlist(
-            "slab_upto[]"
-        )
+        settings.slab_3_upto = safe_float(request.form.get("slab_3_upto"), settings.slab_3_upto)
+        settings.slab_3_charge = safe_int(request.form.get("slab_3_charge"), settings.slab_3_charge)
 
-        slab_charges = request.form.getlist(
-            "slab_charge[]"
-        )
+        settings.max_charge = safe_int(request.form.get("max_charge"), settings.max_charge)
+        settings.free_delivery_min_order = safe_int(request.form.get("free_delivery_min_order"), settings.free_delivery_min_order)
 
-        delivery_slabs = []
-
-        # ====================================================
-        # BUILD JSON
-        # ====================================================
-
-        for upto, charge in zip(
-            slab_uptos,
-            slab_charges
-        ):
-
-            try:
-
-                upto_value = float(
-                    upto
-                )
-
-                charge_value = int(
-                    charge
-                )
-
-            except (
-                TypeError,
-                ValueError
-            ):
-
-                continue
-
-            if upto_value <= 0:
-                continue
-
-            if charge_value < 0:
-                charge_value = 0
-
-            delivery_slabs.append({
-                "upto": upto_value,
-                "charge": charge_value
-            })
-
-        # ====================================================
-        # MUST HAVE AT LEAST ONE SLOT
-        # ====================================================
-
-        if not delivery_slabs:
-
-            flash(
-                "At least one delivery slot is required.",
-                "danger"
-            )
-
-            return redirect(
-                url_for(
-                    "admin_delivery_settings",
-                    location_id=settings.id
-                )
-            )
-
-        # ====================================================
-        # SORT
-        # ====================================================
-
-        delivery_slabs.sort(
-            key=lambda x: x["upto"]
-        )
-
-        # ====================================================
-        # VALIDATE DISTANCES
-        # ====================================================
-
-        previous_upto = 0
-
-        for slab in delivery_slabs:
-
-            if slab["upto"] <= previous_upto:
-
-                flash(
-                    "Delivery slot distances must "
-                    "increase continuously.",
-                    "danger"
-                )
-
-                return redirect(
-                    url_for(
-                        "admin_delivery_settings",
-                        location_id=settings.id
-                    )
-                )
-
-            previous_upto = slab["upto"]
-
-        # ====================================================
-        # SAVE SLOTS
-        # ====================================================
-
-        settings.delivery_slabs = (
-            delivery_slabs
-        )
-
-        # ====================================================
-        # MAX CHARGE
-        # ====================================================
-
-        max_charge = safe_int(
-            request.form.get(
-                "max_charge"
-            ),
-            settings.max_charge
-        )
-
-        settings.max_charge = max(
-            0,
-            max_charge
-        )
-
-        # ====================================================
-        # FREE DELIVERY CONFIG
-        # ====================================================
-
-        free_delivery = safe_int(
-            request.form.get(
-                "free_delivery_min_order"
-            ),
-            settings.free_delivery_min_order
-        )
-
-        settings.free_delivery_min_order = max(
-            0,
-            free_delivery
-        )
-
-        # ====================================================
-        # NIGHT SURGE
-        # ====================================================
-
-        night_surge = safe_int(
-            request.form.get(
-                "night_surge"
-            ),
-            settings.night_surge
-        )
-
-        settings.night_surge = max(
-            0,
-            night_surge
-        )
-
-        settings.is_night_surge_active = (
-            request.form.get(
-                "is_night_surge_active"
-            ) == "on"
-        )
-
-        # ====================================================
-        # LOCATION ACTIVE
-        # ====================================================
-
-        settings.is_active = (
-            request.form.get(
-                "is_active"
-            ) == "on"
-        )
+        settings.night_surge = safe_int(request.form.get("night_surge"), settings.night_surge)
+        settings.is_night_surge_active = request.form.get("is_night_surge_active") == "on"
 
         settings.updated_at = datetime.utcnow()
 
-        # ====================================================
-        # SAVE
-        # ====================================================
-
         db.session.commit()
+        flash("Delivery settings updated successfully", "success")
+        return redirect(url_for("admin_delivery_settings"))
 
-        flash(
-            f"Delivery settings updated for "
-            f"{settings.location}.",
-            "success"
-        )
-
-        return redirect(
-            url_for(
-                "admin_delivery_settings",
-                location_id=settings.id
-            )
-        )
-
-    # ========================================================
-    # GET
-    # ========================================================
-
-    locations = (
-        DeliveryLocationSettings.query
-        .order_by(
-            DeliveryLocationSettings.location.asc()
-        )
-        .all()
-    )
-
-    selected_id = request.args.get(
-        "location_id",
-        type=int
-    )
-
-    settings = None
-
-    if selected_id:
-
-        settings = (
-            DeliveryLocationSettings.query.get(
-                selected_id
-            )
-        )
-
-    if not settings and locations:
-
-        settings = locations[0]
-
-    # ========================================================
-    # RESTAURANT COUNT
-    # ========================================================
-
-    restaurant_count = 0
-
-    if settings:
-
-        restaurant_count = (
-            Restaurant.query
-            .filter(
-                Restaurant.delivery_location_id
-                == settings.id
-            )
-            .count()
-        )
-
-    return render_template(
-        "admin_delivery_settings.html",
-
-        locations=locations,
-
-        settings=settings,
-
-        restaurant_count=restaurant_count
-    )
+    return render_template("admin_delivery_settings.html", settings=settings)
 def safe_float(value, default=0.0):
     try:
         return float(value)
@@ -17623,261 +15607,9 @@ def protect_bakery(mapper, connection, target):
 def api_restaurant_menu(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
 
-    # ============================================================
-    # MENU ITEMS
-    # ============================================================
-
-    items = (
-        MenuItem.query
-        .filter_by(restaurant_id=restaurant.id)
-        .all()
-    )
-
-    # ============================================================
-    # ACTIVE RESTAURANT OFFERS
-    # ============================================================
-
-    now = datetime.utcnow()
-
-    active_offers = (
-        RestaurantOffer.query
-        .filter(
-            RestaurantOffer.restaurant_id == restaurant.id,
-            RestaurantOffer.is_active == True,
-            db.or_(
-                RestaurantOffer.start_date.is_(None),
-                RestaurantOffer.start_date <= now,
-            ),
-            db.or_(
-                RestaurantOffer.end_date.is_(None),
-                RestaurantOffer.end_date >= now,
-            ),
-        )
-        .all()
-    )
-
-    # ============================================================
-    # ACTIVE MENU ALERTS
-    # ============================================================
-
-    menu_alerts = (
-        RestaurantMenuAlert.query
-        .filter(
-            RestaurantMenuAlert.restaurant_id == restaurant.id,
-            RestaurantMenuAlert.enabled == True,
-            db.or_(
-                RestaurantMenuAlert.expires_at.is_(None),
-                RestaurantMenuAlert.expires_at > now,
-            ),
-        )
-        .order_by(RestaurantMenuAlert.updated_at.desc())
-        .all()
-    )
-
-    # ============================================================
-    # WEIGHT PRICE HELPER
-    # Supports model field and extra_data storage.
-    # Flutter expects: "500gm:80,1000gm:130"
-    # ============================================================
-
-    def get_weight_prices(item):
-        extra_data = item.extra_data
-
-        if not isinstance(extra_data, dict):
-            extra_data = {}
-
-        # First try a dedicated model attribute.
-        raw = getattr(item, "weight_prices", None)
-
-        # Fall back to extra_data if missing or empty.
-        if raw is None or (
-            isinstance(raw, str) and not raw.strip()
-        ):
-            raw = extra_data.get("weight_prices")
-
-        if raw is None or (
-            isinstance(raw, str) and not raw.strip()
-        ):
-            raw = extra_data.get("weight_options")
-
-        if raw is None:
-            return ""
-
-        # Already in the string format expected by Flutter.
-        if isinstance(raw, str):
-            return raw.strip()
-
-        # Support dictionary formats:
-        # {"500gm": 80, "1000gm": 130}
-        if isinstance(raw, dict):
-            parts = []
-
-            for label, price in raw.items():
-                if label is None or price is None:
-                    continue
-
-                parts.append(f"{str(label).strip()}:{price}")
-
-            return ",".join(parts)
-
-        # Support list formats:
-        # [{"label": "500gm", "price": 80}, ...]
-        if isinstance(raw, list):
-            parts = []
-
-            for option in raw:
-                if not isinstance(option, dict):
-                    continue
-
-                label = (
-                    option.get("label")
-                    or option.get("weight")
-                    or option.get("name")
-                )
-
-                price = option.get("price")
-
-                if label is None or price is None:
-                    continue
-
-                parts.append(f"{str(label).strip()}:{price}")
-
-            return ",".join(parts)
-
-        return ""
-
-    # ============================================================
-    # ITEM OFFER CALCULATOR
-    # ============================================================
-
-    def get_item_offer(item):
-        for offer in active_offers:
-
-            # Free delivery is not an item-price discount.
-            if offer.offer_type == "free_delivery":
-                continue
-
-            # Offer applies to all items.
-            if offer.offer_scope == "all_items":
-                return offer
-
-            # Offer applies only to selected items.
-            if offer.offer_scope == "selected_items":
-                selected_ids = {
-                    selected_item.id
-                    for selected_item in offer.selected_items
-                }
-
-                if item.id in selected_ids:
-                    return offer
-
-        return None
-
-    # ============================================================
-    # BUILD MENU RESPONSE
-    # ============================================================
-
-    menu_items = []
-
-    for item in items:
-        original_price = float(item.price or 0)
-
-        # FIX: Read weight prices from the correct storage location.
-        weight_prices = get_weight_prices(item)
-
-        offer = get_item_offer(item)
-
-        offer_price = None
-        offer_percent = 0
-        offer_discount = 0
-
-        # ========================================================
-        # CALCULATE OFFER PRICE
-        # This preserves your existing base-price offer logic.
-        # ========================================================
-
-        if offer:
-            offer_value = float(offer.offer_value or 0)
-
-            if offer.offer_type == "percent":
-                offer_discount = (
-                    original_price * offer_value / 100
-                )
-
-                offer_discount = min(
-                    offer_discount,
-                    original_price,
-                )
-
-                offer_price = original_price - offer_discount
-
-                if original_price > 0:
-                    offer_percent = round(
-                        offer_discount / original_price * 100
-                    )
-
-            elif offer.offer_type == "flat":
-                offer_discount = min(
-                    offer_value,
-                    original_price,
-                )
-
-                offer_price = original_price - offer_discount
-
-                if original_price > 0:
-                    offer_percent = round(
-                        offer_discount / original_price * 100
-                    )
-
-        # ========================================================
-        # RESPONSE ITEM
-        # ========================================================
-
-        menu_items.append({
-            "id": item.id,
-            "name": item.name,
-            "category": item.category,
-
-            # Original base price.
-            "price": original_price,
-
-            # Offer information.
-            "offer_price": (
-                round(offer_price, 2)
-                if offer_price is not None
-                else None
-            ),
-            "offer_percent": offer_percent,
-            "offer_discount": round(offer_discount, 2),
-            "has_offer": bool(
-                offer_price is not None
-                and offer_price < original_price
-            ),
-            "offer_id": offer.id if offer else None,
-            "offer_title": offer.title if offer else None,
-
-            # Corrected weight/pack pricing.
-            "weight_prices": weight_prices,
-
-            # Existing fields.
-            "availability": item.availability,
-            "description": getattr(item, "description", None),
-            "image_url": getattr(item, "image_url", None),
-            "item_type": getattr(item, "item_type", None),
-        })
-
-        print(
-            "MENU ITEM:",
-            item.name,
-            "| BASE PRICE:",
-            original_price,
-            "| WEIGHT PRICES:",
-            weight_prices,
-        )
-
-    # ============================================================
-    # FINAL RESPONSE
-    # ============================================================
+    items = MenuItem.query.filter_by(
+        restaurant_id=restaurant.id
+    ).all()
 
     return jsonify({
         "restaurant": {
@@ -17888,28 +15620,42 @@ def api_restaurant_menu(restaurant_id):
             "free_delivery_limit": restaurant.free_delivery_limit,
         },
 
-        "items": menu_items,
-
-        "menu_alerts": [
+        "items": [
             {
-                "id": alert.id,
-                "enabled": bool(alert.enabled),
-                "scope": alert.scope,
-                "category": alert.category,
-                "title": alert.title,
-                "message": alert.message,
-                "severity": alert.severity,
-                "expires_at": (
-                    alert.expires_at.isoformat()
-                    if alert.expires_at
-                    else None
-                ),
-                "created_by": alert.created_by,
-            }
-            for alert in menu_alerts
-        ],
-    })
+                "id": item.id,
+                "name": item.name,
+                "category": item.category,
+                "price": item.price,
 
+                "weight_prices": getattr(
+                    item,
+                    "weight_prices",
+                    None
+                ),
+
+                "availability": item.availability,
+
+                "description": getattr(
+                    item,
+                    "description",
+                    None
+                ),
+
+                "image_url": getattr(
+                    item,
+                    "image_url",
+                    None
+                ),
+
+                "item_type": getattr(
+                    item,
+                    "item_type",
+                    None
+                ),
+            }
+            for item in items
+        ]
+    })           
 @app.route("/restaurant/<int:restaurant_id>/menu", methods=["GET", "POST"])
 def manage_menu(restaurant_id):
     restaurant = Restaurant.query.get_or_404(restaurant_id)
@@ -17948,47 +15694,14 @@ def build_category_index(menu_items):
                 category_index[clean_cat].add(item.restaurant_id)
 
     return {k: sorted(list(v)) for k, v in category_index.items()}
-
-from sqlalchemy import func
-from datetime import datetime
-from flask import request, jsonify
-
 @app.route("/api/live-order-count")
 def live_order_count():
-    location = (request.args.get("location") or "").strip()
+    total_orders = db.session.query(Order).count()
 
-    # Website: count all orders, as your existing route does.
-    if not location:
-        total_orders = db.session.query(Order).count()
-
-        return jsonify({
-            "count": total_orders,
-            "visible": True,
-            "location": "",
-            "timestamp": datetime.utcnow().isoformat()
-        })
-
-    # Flutter: count orders belonging to the selected location.
-    query = (
-        db.session.query(func.count(Order.id))
-        .join(Restaurant, Restaurant.id == Order.restaurant_id)
-        .filter(
-            func.lower(func.trim(Restaurant.location))
-            == location.lower()
-        )
-    )
-
-    total_orders = int(query.scalar() or 0)
-
-    # Display the momentum count only when the location has 10+ orders.
-    visible = total_orders >= 10
-
-    return jsonify({
-        "count": total_orders if visible else 0,
-        "visible": visible,
-        "location": location,
+    return {
+        "count": total_orders,
         "timestamp": datetime.utcnow().isoformat()
-    })
+    }
 @app.route("/redeem_checkout", methods=["POST"])
 def redeem_checkout():
     customer_id = session.get("customer_id")
@@ -18860,54 +16573,6 @@ def firebase_sw():
 from firebase_admin import messaging 
 from firebase_admin import messaging
 
-def get_delivery_push_ttl(data):
-    """
-    Calculate how long FCM may retain a delivery assignment.
-
-    Timestamps without a timezone are assumed to be UTC,
-    consistent with the current Flutter notification code.
-    """
-    raw_expiry = str(
-        data.get("assignment_expires_at") or ""
-    ).strip()
-
-    # Preserve compatibility with the current 30-second fallback.
-    if not raw_expiry:
-        print("WARNING: Assignment expiry is missing; using 30s TTL")
-        return 30
-
-    try:
-        normalized = raw_expiry
-
-        if normalized.endswith("Z"):
-            normalized = normalized[:-1] + "+00:00"
-
-        expiry = datetime.fromisoformat(normalized)
-
-        if expiry.tzinfo is None:
-            expiry = expiry.replace(tzinfo=timezone.utc)
-
-        remaining = math.ceil(
-            (
-                expiry.astimezone(timezone.utc)
-                - datetime.now(timezone.utc)
-            ).total_seconds()
-        )
-
-        if remaining <= 0:
-            return 0
-
-        # FCM Android maximum TTL is 28 days.
-        return min(remaining, 28 * 24 * 60 * 60)
-
-    except (TypeError, ValueError) as exc:
-        print("INVALID ASSIGNMENT EXPIRY:", exc)
-
-        # Compatibility fallback; fix invalid timestamps
-        # in the database rather than relying on this fallback.
-        return 30
-
-
 def send_push_notification(
     title,
     body,
@@ -18915,135 +16580,177 @@ def send_push_notification(
     target_value="all_users",
     data=None
 ):
-    # --------------------------------------------------------
+
+    # ========================================================
     # PREPARE DATA
-    # --------------------------------------------------------
+    # ========================================================
 
     raw_data = data or {}
 
-    # FCM data values must be strings.
+    # FCM data values MUST be strings
     safe_data = {
         str(key): str(value)
         for key, value in raw_data.items()
         if value is not None
     }
 
+    # ========================================================
+    # CHECK IF THIS IS DELIVERY NEW ORDER
+    # ========================================================
+
     is_delivery_new_order = (
         target_type == "token"
         and safe_data.get("type") == "new_order"
     )
 
-    # --------------------------------------------------------
-    # VALIDATE TARGET
-    # --------------------------------------------------------
-
-    if target_type not in ("token", "topic"):
-        print("FCM ERROR: Invalid target type:", target_type)
-        return None
-
-    if not target_value:
-        print("FCM ERROR: Target value is missing")
-        return None
-
-    # --------------------------------------------------------
-    # DELIVERY ORDER: DATA-ONLY, HIGH PRIORITY
-    # --------------------------------------------------------
+    # ========================================================
+    # DELIVERY NEW ORDER
+    # DATA-ONLY + HIGH PRIORITY
+    # ========================================================
 
     if is_delivery_new_order:
-        ttl_seconds = get_delivery_push_ttl(safe_data)
-
-        if ttl_seconds <= 0:
-            print(
-                "FCM SKIPPED: Assignment already expired:",
-                safe_data.get("order_id")
-            )
-            return None
 
         print("========================================")
-        print("SENDING DELIVERY DATA-ONLY PUSH")
+        print("🚚 SENDING DELIVERY DATA-ONLY PUSH")
         print("ORDER ID:", safe_data.get("order_id"))
-        print("TTL SECONDS:", ttl_seconds)
-        print("TARGET TOKEN PREFIX:", str(target_value)[:12])
+
+        print(
+            "TARGET TOKEN:",
+            str(target_value)[:20] + "..."
+            if target_value
+            else "NONE"
+        )
+
         print("========================================")
 
         message = messaging.Message(
-            token=target_value,
+
+            # Data-only notification for delivery app
             data=safe_data,
+
             android=messaging.AndroidConfig(
-                priority="high",
-                ttl=timedelta(seconds=ttl_seconds)
-            )
+                priority="high"
+            ),
+
+            token=target_value
         )
 
-    # --------------------------------------------------------
-    # NORMAL CUSTOMER / OTHER NOTIFICATIONS
-    # --------------------------------------------------------
+    # ========================================================
+    # NORMAL RUCHIGO NOTIFICATIONS
+    # ========================================================
 
     else:
+
         message_kwargs = {
+
             "notification": messaging.Notification(
                 title=title,
                 body=body
             ),
+
             "data": safe_data,
+
             "android": messaging.AndroidConfig(
                 priority="high"
             )
         }
 
+        # ====================================================
+        # TARGET
+        # ====================================================
+
         if target_type == "topic":
+
             message_kwargs["topic"] = target_value
-        else:
+
+        elif target_type == "token":
+
             message_kwargs["token"] = target_value
 
-        message = messaging.Message(**message_kwargs)
+        else:
 
-    # --------------------------------------------------------
+            print(
+                "FCM ERROR: Invalid target type:",
+                target_type
+            )
+
+            return None
+
+        message = messaging.Message(
+            **message_kwargs
+        )
+
+    # ========================================================
+    # VALIDATE DELIVERY TARGET
+    # ========================================================
+
+    if is_delivery_new_order and not target_value:
+
+        print(
+            "FCM ERROR: Delivery token missing"
+        )
+
+        return None
+
+    # ========================================================
     # SEND
-    # --------------------------------------------------------
+    # ========================================================
 
     try:
+
         response = messaging.send(message)
 
         if is_delivery_new_order:
+
             print(
-                "DELIVERY FCM ACCEPTED BY FIREBASE:",
+                "✅ DELIVERY DATA PUSH SENT:",
                 response
             )
+
         else:
-            print("FCM Response:", response)
+
+            print(
+                "FCM Response:",
+                response
+            )
 
         return response
 
-    # --------------------------------------------------------
+    # ========================================================
     # INVALID / UNREGISTERED TOKEN
-    # --------------------------------------------------------
+    # ========================================================
 
-    except messaging.UnregisteredError as exc:
+    except messaging.UnregisteredError as e:
+
         print("========================================")
-        print("FCM TOKEN UNREGISTERED")
-        print("ERROR:", exc)
+        print("❌ FCM TOKEN UNREGISTERED")
+        print("FCM ERROR TYPE:", type(e).__name__)
+        print("FCM ERROR:", e)
         print("========================================")
 
-        # Let the delivery sender clear the invalid token.
+        # VERY IMPORTANT:
+        # Do NOT swallow this error for delivery orders.
+        # send_new_order_notification() will catch it and
+        # remove the invalid rider token from the database.
+
         if is_delivery_new_order:
             raise
 
         return None
 
-    # --------------------------------------------------------
-    # OTHER ERRORS
-    # --------------------------------------------------------
+    # ========================================================
+    # OTHER FCM ERRORS
+    # ========================================================
 
-    except Exception as exc:
+    except Exception as e:
+
         print("========================================")
-        print("FCM SEND FAILED")
-        print("ERROR TYPE:", type(exc).__name__)
-        print("ERROR:", exc)
+        print("❌ FCM SEND FAILED")
+        print("FCM ERROR TYPE:", type(e).__name__)
+        print("FCM ERROR:", e)
         print("========================================")
 
         return None
-
 from flask import request, redirect, flash
 from flask import request, redirect, flash
 from firebase_admin import messaging
@@ -19298,7 +17005,6 @@ from datetime import datetime, timedelta
 from sqlalchemy import func
 
 
-
 @app.route("/employee/dashboard")
 def employee_dashboard():
 
@@ -19307,10 +17013,11 @@ def employee_dashboard():
     # ========================================================
 
     if not session.get("employee_id"):
-        return redirect(url_for("employee_login"))
+        return redirect(
+            url_for("employee_login")
+        )
 
-    emp = db.session.get(
-        Employee,
+    emp = Employee.query.get(
         session.get("employee_id")
     )
 
@@ -19318,41 +17025,34 @@ def employee_dashboard():
     # FORCE LOGOUT CHECK
     # ========================================================
 
-    if not emp or not emp.is_active or not emp.is_logged_in:
+    if not emp or not emp.is_logged_in:
+
         session.clear()
-        return redirect(url_for("employee_login"))
 
-    # ========================================================
-    # ACTIVE EMPLOYEE LOCATIONS
-    # ========================================================
-
-    assigned_locations = [
-        row[0]
-        for row in (
-            db.session.query(
-                EmployeeLocationAssignment.location
-            )
-            .filter(
-                EmployeeLocationAssignment.employee_id == emp.id,
-                EmployeeLocationAssignment.is_active.is_(True)
-            )
-            .all()
+        return redirect(
+            url_for("employee_login")
         )
-    ]
 
     # ========================================================
     # DATES
     # ========================================================
 
     today = datetime.utcnow().date()
+
     yesterday = today - timedelta(days=1)
 
     today_start = datetime.combine(
-        today, datetime.min.time()
+        today,
+        datetime.min.time()
     )
-    tomorrow_start = today_start + timedelta(days=1)
+
+    tomorrow_start = (
+        today_start + timedelta(days=1)
+    )
+
     yesterday_start = datetime.combine(
-        yesterday, datetime.min.time()
+        yesterday,
+        datetime.min.time()
     )
 
     # ========================================================
@@ -19361,18 +17061,26 @@ def employee_dashboard():
 
     PER_PAGE = 10
 
-    today_page = max(
-        1, request.args.get("today_page", 1, type=int)
+    today_page = request.args.get(
+        "today_page",
+        1,
+        type=int
     )
-    yesterday_page = max(
-        1, request.args.get("yesterday_page", 1, type=int)
+
+    yesterday_page = request.args.get(
+        "yesterday_page",
+        1,
+        type=int
     )
-    older_page = max(
-        1, request.args.get("older_page", 1, type=int)
+
+    older_page = request.args.get(
+        "older_page",
+        1,
+        type=int
     )
 
     # ========================================================
-    # ORDER STATUSES
+    # ALLOWED ORDER STATUSES
     # ========================================================
 
     allowed_statuses = [
@@ -19386,66 +17094,59 @@ def employee_dashboard():
         "Cancelled"
     ]
 
-    active_statuses = [
-        "Accepted",
-        "Preparing",
-        "Ready",
-        "Out for Delivery",
-        "Started"
-    ]
-
     # ========================================================
     # COMMON ORDER OPTIONS
     # ========================================================
 
     order_options = [
-        db.joinedload(Order.restaurant),
-        db.joinedload(Order.items),
-        db.joinedload(Order.delivery_person)
+
+        db.joinedload(
+            Order.restaurant
+        ),
+
+        db.joinedload(
+            Order.items
+        ),
+
+        db.joinedload(
+            Order.delivery_person
+        )
+
     ]
 
     # ========================================================
-    # LOCATION-WISE BASE QUERY
-    #
-    # Assumes:
-    # 1. Order.restaurant is a SQLAlchemy relationship.
-    # 2. Restaurant.location stores the order's relevant area.
-    # ========================================================
-
-    def location_order_query():
-        query = (
-            Order.query
-            .join(Order.restaurant)
-            .filter(
-                Order.status.in_(allowed_statuses)
-            )
-        )
-
-        if not assigned_locations:
-            # No assignment means no orders.
-            return query.filter(db.false())
-
-        return query.filter(
-            Restaurant.location.in_(assigned_locations)
-        )
-
-    # ========================================================
     # TODAY ORDERS
+    # 10 PER PAGE
     # ========================================================
 
     today_pagination = (
-        location_order_query()
+
+        Order.query
+
         .filter(
+            Order.status.in_(
+                allowed_statuses
+            ),
+
             Order.created_at >= today_start,
+
             Order.created_at < tomorrow_start
         )
-        .options(*order_options)
-        .order_by(Order.created_at.desc())
+
+        .options(
+            *order_options
+        )
+
+        .order_by(
+            Order.created_at.desc()
+        )
+
         .paginate(
             page=today_page,
             per_page=PER_PAGE,
             error_out=False
         )
+
     )
 
     today_orders = today_pagination.items
@@ -19455,47 +17156,82 @@ def employee_dashboard():
 
     # ========================================================
     # YESTERDAY ORDERS
+    # 10 PER PAGE
     # ========================================================
 
     yesterday_pagination = (
-        location_order_query()
+
+        Order.query
+
         .filter(
+            Order.status.in_(
+                allowed_statuses
+            ),
+
             Order.created_at >= yesterday_start,
+
             Order.created_at < today_start
         )
-        .options(*order_options)
-        .order_by(Order.created_at.desc())
+
+        .options(
+            *order_options
+        )
+
+        .order_by(
+            Order.created_at.desc()
+        )
+
         .paginate(
             page=yesterday_page,
             per_page=PER_PAGE,
             error_out=False
         )
+
     )
 
-    yesterday_orders = yesterday_pagination.items
+    yesterday_orders = (
+        yesterday_pagination.items
+    )
 
     for order in yesterday_orders:
         order.day_category = "Yesterday"
 
     # ========================================================
     # OLDER ORDERS
+    # 10 PER PAGE
     # ========================================================
 
     older_pagination = (
-        location_order_query()
+
+        Order.query
+
         .filter(
+            Order.status.in_(
+                allowed_statuses
+            ),
+
             Order.created_at < yesterday_start
         )
-        .options(*order_options)
-        .order_by(Order.created_at.desc())
+
+        .options(
+            *order_options
+        )
+
+        .order_by(
+            Order.created_at.desc()
+        )
+
         .paginate(
             page=older_page,
             per_page=PER_PAGE,
             error_out=False
         )
+
     )
 
-    older_orders = older_pagination.items
+    older_orders = (
+        older_pagination.items
+    )
 
     for order in older_orders:
         order.day_category = "Older"
@@ -19512,77 +17248,173 @@ def employee_dashboard():
 
     # ========================================================
     # TODAY STATISTICS
-    # All orders matching assigned locations
+    #
+    # IMPORTANT:
+    # These use ALL today's orders, not just the 10 visible
+    # orders on the current page.
     # ========================================================
 
     today_all_orders = (
-        location_order_query()
+
+        Order.query
+
         .filter(
+            Order.status.in_(
+                allowed_statuses
+            ),
+
             Order.created_at >= today_start,
+
             Order.created_at < tomorrow_start
         )
+
         .options(
             db.joinedload(Order.items)
         )
+
         .all()
+
     )
 
+    # ========================================================
+    # DELIVERED ORDERS
+    # ========================================================
+
     delivered_orders = [
+
         order
+
         for order in today_all_orders
+
         if order.status == "Delivered"
+
     ]
 
     # ========================================================
-    # LOCATION-WISE STATS
+    # ACTIVE STATUSES
+    # ========================================================
+
+    active_statuses = [
+
+        "Accepted",
+        "Preparing",
+        "Ready",
+        "Out for Delivery",
+        "Started"
+
+    ]
+
+    # ========================================================
+    # TODAY STATS
     # ========================================================
 
     stats = {
-        "today_orders": len(today_all_orders),
 
-        "today_delivered": len(delivered_orders),
+        "today_orders":
+            len(today_all_orders),
 
-        "today_cancelled": sum(
-            1 for order in today_all_orders
-            if order.status == "Cancelled"
-        ),
+        "today_delivered":
+            len(delivered_orders),
 
-        "today_pending": sum(
-            1 for order in today_all_orders
-            if order.status == "Pending"
-        ),
+        "today_cancelled":
+            len([
 
-        "today_active": sum(
-            1 for order in today_all_orders
-            if order.status in active_statuses
-        ),
+                order
 
-        "today_revenue": sum(
-            order.final_total or 0
-            for order in delivered_orders
-        ),
+                for order in today_all_orders
 
-        "today_delivery_charges": sum(
-            order.delivery_charge or 0
-            for order in delivered_orders
-        ),
+                if order.status == "Cancelled"
 
-        "today_items": sum(
-            sum(item.quantity for item in order.items)
-            for order in delivered_orders
-        )
+            ]),
+
+        "today_pending":
+            len([
+
+                order
+
+                for order in today_all_orders
+
+                if order.status == "Pending"
+
+            ]),
+
+        "today_active":
+            len([
+
+                order
+
+                for order in today_all_orders
+
+                if order.status in active_statuses
+
+            ]),
+
+        # ----------------------------------------------------
+        # Delivered revenue only
+        # ----------------------------------------------------
+
+        "today_revenue":
+            sum(
+
+                order.final_total or 0
+
+                for order in delivered_orders
+
+            ),
+
+        # ----------------------------------------------------
+        # Delivered delivery charges only
+        # ----------------------------------------------------
+
+        "today_delivery_charges":
+            sum(
+
+                order.delivery_charge or 0
+
+                for order in delivered_orders
+
+            ),
+
+        # ----------------------------------------------------
+        # Delivered items only
+        # ----------------------------------------------------
+
+        "today_items":
+            sum(
+
+                sum(
+                    item.quantity
+                    for item in order.items
+                )
+
+                for order in delivered_orders
+
+            )
+
     }
 
     # ========================================================
-    # OTHER DASHBOARD DATA
+    # RESTAURANTS
     # ========================================================
 
-    restaurants = Restaurant.query.all()
+    restaurants = (
+        Restaurant.query.all()
+    )
+
+    # ========================================================
+    # DELIVERY PERSONS
+    # ========================================================
 
     delivery_persons = (
+
         DeliveryPerson.query
-        .order_by(DeliveryPerson.name)
+
+        .order_by(
+            DeliveryPerson.name
+        )
+
         .all()
+
     )
 
     # ========================================================
@@ -19590,117 +17422,38 @@ def employee_dashboard():
     # ========================================================
 
     return render_template(
+
         "employee_dashboard.html",
 
+        # All currently displayed orders
         orders=orders,
 
+        # Separate sections
         today_orders=today_orders,
+
         yesterday_orders=yesterday_orders,
+
         older_orders=older_orders,
 
+        # Pagination objects
         today_pagination=today_pagination,
+
         yesterday_pagination=yesterday_pagination,
+
         older_pagination=older_pagination,
 
+        # Other data
         delivery_persons=delivery_persons,
+
         stats=stats,
+
         restaurants=restaurants,
+
         employee=emp,
-        timedelta=timedelta,
 
-        # New location data for the template
-        assigned_locations=assigned_locations
+        timedelta=timedelta
+
     )
-
-@app.route("/employee/api/order-location-search")
-def employee_order_location_search():
-
-    # Require a valid employee session
-    if not session.get("employee_id"):
-        return jsonify({
-            "success": False,
-            "message": "Please log in again."
-        }), 401
-
-    emp = db.session.get(
-        Employee,
-        session.get("employee_id")
-    )
-
-    if not emp or not emp.is_active or not emp.is_logged_in:
-        session.clear()
-        return jsonify({
-            "success": False,
-            "message": "Employee session expired."
-        }), 401
-
-    # Search all locations, not just assigned locations
-    search_text = (
-        request.args.get("q", "").strip()
-    )
-
-    if len(search_text) < 2:
-        return jsonify({
-            "success": True,
-            "results": [],
-            "truncated": False
-        })
-
-    # Order IDs are displayed with # in the dashboard,
-    # but the database may store the ID without #.
-    order_search = search_text.lstrip("#").strip()
-
-    pattern = f"%{search_text}%"
-    order_pattern = f"%{order_search}%"
-
-    matches = (
-        Order.query
-        .outerjoin(Order.restaurant)
-        .filter(
-            or_(
-                Order.order_id.ilike(order_pattern),
-                Order.customer_name.ilike(pattern),
-                Order.phone.ilike(pattern),
-                Restaurant.name.ilike(pattern),
-                Restaurant.location.ilike(pattern)
-            )
-        )
-        .order_by(Order.created_at.desc())
-        .limit(11)
-        .all()
-    )
-
-    # Return at most 10 results
-    truncated = len(matches) > 10
-    matches = matches[:10]
-
-    results = []
-
-    for order in matches:
-        restaurant = order.restaurant
-
-        results.append({
-            "order_id": order.order_id,
-            "restaurant_name": (
-                restaurant.name if restaurant else None
-            ),
-            "location": (
-                restaurant.location
-                if restaurant and restaurant.location
-                else None
-            ),
-            "status": order.status,
-            "created_at": (
-                order.created_at.strftime("%d-%m-%Y %I:%M %p")
-                if order.created_at else None
-            )
-        })
-
-    return jsonify({
-        "success": True,
-        "results": results,
-        "truncated": truncated
-    })
 
 import random
 from datetime import datetime
@@ -20081,6 +17834,7 @@ def employee_assign_delivery(order_id):
     # WHATSAPP: DELIVERY OTP
     # ========================================================
 
+
     try:
         sent = send_delivery_otp_whatsapp(order)
 
@@ -20097,7 +17851,6 @@ def employee_assign_delivery(order_id):
 
     except Exception as e:
         print("❌ DELIVERY OTP WHATSAPP ERROR:", e)
-
 
     db.session.commit()
 
@@ -20323,205 +18076,35 @@ def admin_employees():
     if not session.get("admin_logged_in"):
         return redirect(url_for("admin_login"))
 
-    # Always load locations from the database
-    locations = [
-        row[0].strip()
-        for row in (
-            db.session.query(Restaurant.location)
-            .filter(
-                Restaurant.location.isnot(None),
-                Restaurant.location != ""
-            )
-            .distinct()
-            .order_by(Restaurant.location.asc())
-            .all()
-        )
-        if row[0] and row[0].strip()
-    ]
-
     if request.method == "POST":
-        name = (request.form.get("name") or "").strip()
-        phone = (request.form.get("phone") or "").strip()
-        role = (request.form.get("role") or "staff").strip()
+        name = request.form.get("name")
+        phone = request.form.get("phone")
+        role = request.form.get("role")
 
-        selected_locations = list(dict.fromkeys(
-            value.strip()
-            for value in request.form.getlist("locations")
-            if value.strip()
-        ))
-
-        if not name or not phone:
-            flash("Name and phone are required.", "error")
-            return redirect(url_for("admin_employees"))
-
-        if not selected_locations:
-            flash("Select at least one location.", "error")
-            return redirect(url_for("admin_employees"))
-
+        # ❌ Prevent duplicate
         existing = Employee.query.filter_by(phone=phone).first()
-
         if existing:
-            flash("Employee already exists.", "error")
+            flash("Employee already exists", "error")
             return redirect(url_for("admin_employees"))
 
-        valid_locations = set(locations)
-
-        if not set(selected_locations).issubset(valid_locations):
-            flash("Invalid location selection.", "error")
-            return redirect(url_for("admin_employees"))
-
-        try:
-            emp = Employee(
-                name=name,
-                phone=phone,
-                role=role,
-                is_active=True
-            )
-
-            db.session.add(emp)
-            db.session.flush()
-
-            for location in selected_locations:
-                db.session.add(
-                    EmployeeLocationAssignment(
-                        employee_id=emp.id,
-                        location=location,
-                        is_active=True
-                    )
-                )
-
-            db.session.commit()
-            flash("Employee created with assigned locations.", "success")
-
-        except Exception:
-            db.session.rollback()
-            app.logger.exception("Employee creation failed")
-            flash("Unable to create employee.", "error")
-
-        return redirect(url_for("admin_employees"))
-
-    employees = Employee.query.order_by(
-        Employee.id.desc()
-    ).all()
-
-    assignments = EmployeeLocationAssignment.query.filter_by(
-        is_active=True
-    ).all()
-
-    employee_locations = {}
-
-    for assignment in assignments:
-        employee_locations.setdefault(
-            assignment.employee_id, []
-        ).append(assignment.location)
-
-    return render_template(
-        "admin_employees.html",
-        employees=employees,
-        locations=locations,
-        employee_locations=employee_locations
-    )
-
-
-@app.route(
-    "/admin/employees/<int:employee_id>/locations",
-    methods=["GET", "POST"]
-)
-def admin_employee_locations(employee_id):
-    if not session.get("admin_logged_in"):
-        return redirect(url_for("admin_login"))
-
-    emp = db.session.get(Employee, employee_id)
-
-    if not emp:
-        flash("Employee not found.", "error")
-        return redirect(url_for("admin_employees"))
-
-    locations = [
-        row[0].strip()
-        for row in (
-            db.session.query(Restaurant.location)
-            .filter(
-                Restaurant.location.isnot(None),
-                Restaurant.location != ""
-            )
-            .distinct()
-            .order_by(Restaurant.location.asc())
-            .all()
-        )
-        if row[0] and row[0].strip()
-    ]
-
-    if request.method == "POST":
-        selected_locations = list(dict.fromkeys(
-            value.strip()
-            for value in request.form.getlist("locations")
-            if value.strip()
-        ))
-
-        if not set(selected_locations).issubset(set(locations)):
-            flash("Invalid location selection.", "error")
-            return redirect(
-                url_for(
-                    "admin_employee_locations",
-                    employee_id=employee_id
-                )
-            )
-
-        try:
-            # Deactivate previous assignments rather than deleting them.
-            # This preserves assignment history.
-            EmployeeLocationAssignment.query.filter_by(
-                employee_id=emp.id,
-                is_active=True
-            ).update(
-                {"is_active": False},
-                synchronize_session=False
-            )
-
-            # Reactivate an existing assignment or create a new one.
-            for location in selected_locations:
-                assignment = EmployeeLocationAssignment.query.filter_by(
-                    employee_id=emp.id,
-                    location=location
-                ).first()
-
-                if assignment:
-                    assignment.is_active = True
-                    assignment.assigned_at = datetime.utcnow()
-                else:
-                    db.session.add(
-                        EmployeeLocationAssignment(
-                            employee_id=emp.id,
-                            location=location,
-                            is_active=True
-                        )
-                    )
-
-            db.session.commit()
-            flash("Employee locations updated.", "success")
-
-        except Exception:
-            db.session.rollback()
-            app.logger.exception("Location assignment update failed")
-            flash("Unable to update locations.", "error")
-
-        return redirect(url_for("admin_employees"))
-
-    current_locations = [
-        assignment.location
-        for assignment in EmployeeLocationAssignment.query.filter_by(
-            employee_id=emp.id,
+        emp = Employee(
+            name=name,
+            phone=phone,
+            role=role,
             is_active=True
-        ).all()
-    ]
+        )
 
-    return render_template(
-        "admin_employee_locations.html",
-        employee=emp,
-        locations=locations,
-        current_locations=current_locations
-    )
+        db.session.add(emp)
+        db.session.commit()
+
+        flash("✅ Employee added successfully", "success")
+        return redirect(url_for("admin_employees"))
+
+    # GET → show all employees
+    employees = Employee.query.order_by(Employee.id.desc()).all()
+
+    return render_template("admin_employees.html", employees=employees)
+
 
 @app.route("/admin/delete-employee/<int:id>")
 def delete_employee(id):
@@ -20652,80 +18235,39 @@ def latest_orders():
             "created_at": o.created_at.strftime('%d-%m-%Y %I:%M %p')
         } for o in orders]
     })
-
-from sqlalchemy import func
-from flask import request, jsonify
-
 @app.route("/get-stores")
 def get_stores():
-    category = (request.args.get("type") or "").strip().lower()
-    location = (request.args.get("location") or "").strip()
+
+    category = request.args.get("type", "").strip().lower()
+    location = request.args.get("location", "").strip()
 
     print("API HIT → category:", category)
     print("API HIT → location:", location)
 
+    # ✅ validate category
     allowed = ["restaurant", "bakery", "grocery", "pharmacy", "meat"]
-
     if category not in allowed:
         return jsonify([])
 
-    # Match category without case or surrounding-space differences.
-    query = Restaurant.query.filter(
-        func.lower(func.trim(Restaurant.category_type)) == category
-    )
+    query = Restaurant.query.filter(Restaurant.category_type == category)
 
-    # Restrict results to the selected service area.
+    # ✅ FILTER LOCATION
     if location:
-        query = query.filter(
-            func.lower(func.trim(Restaurant.location))
-            == location.lower()
-        )
+        query = query.filter(Restaurant.location == location)
 
     stores = query.all()
 
     print("RESULT COUNT:", len(stores))
 
-    result = []
-
-    for s in stores:
-        # Use available model fields without assuming every model has them.
-        image_url = (
-            getattr(s, "image_url", None)
-            or getattr(s, "image", None)
-            or getattr(s, "logo", None)
-        )
-
-        # Prefer the actual availability field, if your model defines one.
-        open_value = getattr(s, "is_open", None)
-
-        if open_value is None:
-            open_value = getattr(s, "is_accepting_orders", None)
-
-        if open_value is None:
-            open_value = getattr(s, "is_active", None)
-
-        if isinstance(open_value, bool):
-            is_open = open_value
-        elif open_value is None:
-            # Unknown status: don't claim the store is open.
-            is_open = False
-        else:
-            is_open = str(open_value).strip().lower() in {
-                "1", "true", "yes", "open", "active", "accepting"
-            }
-
-        result.append({
+    return jsonify([
+        {
             "id": s.id,
             "name": s.name,
             "category": s.category_type,
-            "location": s.location,
-            "image_url": image_url,
-            "is_open": is_open,
-        })
-
-    return jsonify(result)
-
-
+            "location": s.location
+        }
+        for s in stores
+    ])
 import requests
 import csv
 from io import StringIO
@@ -25672,261 +23214,115 @@ def _server_cart_variant(menu_item, requested_weight=None):
         "weight": weight or None,
     }
 
-"""Offer helpers for the RucHiGo cart-validation and order routes."""
-
-
-def get_active_item_offers(restaurant_id):
-    """Return active, date-valid offers for the given restaurant."""
-    now = datetime.utcnow()
-    return (
-        RestaurantOffer.query
-        .filter(
-            RestaurantOffer.restaurant_id == restaurant_id,
-            RestaurantOffer.is_active.is_(True),
-            db.or_(RestaurantOffer.start_date.is_(None), RestaurantOffer.start_date <= now),
-            db.or_(RestaurantOffer.end_date.is_(None), RestaurantOffer.end_date >= now),
-        )
-        .order_by(RestaurantOffer.id.desc())
-        .all()
-    )
-
-
-def get_applicable_item_offer(item, offers, cart_subtotal=None):
-    """Choose the first applicable percent/flat offer for an item.
-
-    If cart_subtotal is provided, min_order_amount is checked against the
-    full original subtotal before discounts. Free-delivery offers never alter
-    item prices. selected_items offers only apply to selected menu items.
-    """
-    for offer in offers:
-        offer_type = str(offer.offer_type or "").strip().lower()
-        if offer_type not in ("percent", "flat"):
-            continue
-
-        if cart_subtotal is not None:
-            minimum = max(float(offer.min_order_amount or 0), 0.0)
-            if cart_subtotal + 0.009 < minimum:
-                continue
-
-        scope = str(offer.offer_scope or "all_items").strip().lower()
-        if scope == "all_items":
-            return offer
-        if scope == "selected_items" and any(
-            selected.id == item.id for selected in offer.selected_items
-        ):
-            return offer
-
-    return None
-
-
-def calculate_item_offer_price(original_price, offer):
-    """Return final unit price after a percent/flat offer, rounded to paise."""
-    original_price = max(float(original_price or 0), 0.0)
-    if offer is None:
-        return round(original_price, 2)
-
-    value = max(float(offer.offer_value or 0), 0.0)
-    offer_type = str(offer.offer_type or "").strip().lower()
-    if offer_type == "percent":
-        discount = min(original_price * value / 100.0, original_price)
-    elif offer_type == "flat":
-        discount = min(value, original_price)
-    else:
-        discount = 0.0
-
-    return round(original_price - discount, 2)
-
-
-
 
 @app.route(
-
     "/api/validate-cart",
-
     methods=["POST"],
-
 )
-
 def api_validate_cart():
 
     data = request.get_json(
-
         silent=True
-
     ) or {}
 
     restaurant_id = data.get(
-
         "restaurant_id"
-
     )
 
     client_items = (
-
         data.get("items")
-
         or []
-
     )
 
     try:
-
         restaurant_id = int(
-
             restaurant_id
-
         )
-
     except (TypeError, ValueError):
-
         return jsonify({
-
             "success": False,
-
             "message": "Invalid restaurant."
-
         }), 400
 
     if (
-
         not isinstance(
-
             client_items,
-
             list
-
         )
-
         or not client_items
-
     ):
-
         return jsonify({
-
             "success": False,
-
             "message": "Your cart is empty."
-
         }), 400
 
     restaurant = db.session.get(
-
         Restaurant,
-
         restaurant_id
-
     )
 
     if not restaurant:
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "Restaurant/store is no longer available."
-
         }), 404
 
     if (
-
         getattr(
-
             restaurant,
-
             "can_accept_orders",
-
             True
-
         )
-
         is False
-
     ):
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "This restaurant/store is not accepting orders right now."
-
         }), 409
 
     # Keep your existing open/closed rules.
-
     now = datetime.now(
-
         ZoneInfo("Asia/Kolkata")
-
     ).time()
 
     opening_time = getattr(
-
         restaurant,
-
         "opening_time",
-
         None
-
     )
 
     closing_time = getattr(
-
         restaurant,
-
         "closing_time",
-
         None
-
     )
 
     # If opening/closing values exist, validate them.
-
     if opening_time and closing_time:
-
         if opening_time <= closing_time:
-
             is_open = (
-
                 opening_time
-
                 <= now
-
                 <= closing_time
-
             )
-
         else:
-
             is_open = (
-
                 now >= opening_time
-
                 or now <= closing_time
-
             )
 
         if not is_open:
-
             return jsonify({
-
                 "success": False,
-
                 "message":
-
                     "This restaurant/store is currently closed."
-
             }), 409
 
     # --------------------------------------------------------
-
     # NORMALIZE CLIENT CART.
-
     # IMPORTANT: key = menu item id + selected weight
-
     # --------------------------------------------------------
 
     requested = []
@@ -25934,740 +23330,519 @@ def api_validate_cart():
     ids = set()
 
     for raw in client_items:
-
         if not isinstance(
-
             raw,
-
             dict
-
         ):
-
             continue
 
         try:
-
             item_id = int(
-
                 raw.get("id")
-
             )
 
             quantity = int(
-
                 raw.get(
-
                     "quantity",
-
                     1
-
                 )
-
             )
-
         except (
-
             TypeError,
-
             ValueError,
-
         ):
-
             continue
 
         if quantity < 1:
-
             continue
 
         quantity = min(
-
             quantity,
-
             99
-
         )
 
         weight = (
-
             str(
-
                 raw.get("weight")
-
                 or ""
-
             )
-
             .strip()
-
         )
 
         cart_key = (
-
             f"{item_id}|{weight}"
-
         )
 
         requested.append({
-
             "id": item_id,
-
             "quantity": quantity,
-
             "weight": weight,
-
             "cart_key": cart_key,
-
             "client_price":
-
                 raw.get(
-
                     "client_price"
-
                 ),
-
         })
 
         ids.add(item_id)
 
     if not requested:
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "No valid items found in cart."
-
         }), 400
 
     menu_items = (
-
         MenuItem.query
-
         .filter(
-
             MenuItem.id.in_(ids),
-
             MenuItem.restaurant_id
-
             == restaurant_id
-
         )
-
         .all()
-
     )
 
     menu_by_id = {
-
         item.id: item
-
         for item in menu_items
-
     }
 
     validated_items = []
     unavailable_cart_keys = []
     unavailable_item_ids = []
+
     cart_changed = False
-    original_subtotal = 0.0
     server_subtotal = 0.0
-    candidates = []
 
-    active_offers = get_active_item_offers(restaurant.id)
-
-    # PASS 1: Validate availability/variants and calculate original subtotal.
     for request_item in requested:
+
         item_id = request_item["id"]
-        item = menu_by_id.get(item_id)
-        cart_key = request_item["cart_key"]
-            # 🔍 DEBUG: Check why cart items become unavailable
-        print("CART DEBUG:", {
-            "restaurant_id": restaurant_id,
-            "item_id": item_id,
-            "item_found": item is not None,
-            "item_name": item.name if item else None,
-            "availability": repr(item.availability) if item else None,
-            "item_type": getattr(item, "item_type", None) if item else None,
-            "weight": request_item.get("weight"),
-        }, flush=True)
+
+        item = menu_by_id.get(
+            item_id
+        )
+
+        cart_key = request_item[
+            "cart_key"
+        ]
+
         if item is None:
-            unavailable_cart_keys.append(cart_key)
-            unavailable_item_ids.append(item_id)
+            unavailable_cart_keys.append(
+                cart_key
+            )
+            unavailable_item_ids.append(
+                item_id
+            )
             cart_changed = True
             continue
 
         availability = str(
-            getattr(item, "availability", "yes") or ""
+            getattr(
+                item,
+                "availability",
+                "yes"
+            )
+            or ""
         ).strip().lower()
 
-        if availability not in ("yes", "true", "1"):
-            unavailable_cart_keys.append(cart_key)
-            unavailable_item_ids.append(item_id)
+        if availability not in (
+            "yes",
+            "true",
+            "1",
+        ):
+            unavailable_cart_keys.append(
+                cart_key
+            )
+            unavailable_item_ids.append(
+                item_id
+            )
             cart_changed = True
             continue
 
-        variant = _server_cart_variant(item, request_item.get("weight"))
-        if variant is None:
-            unavailable_cart_keys.append(cart_key)
-            unavailable_item_ids.append(item_id)
-            cart_changed = True
-            continue
-
-        original_price = round(float(variant["price"]), 2)
-        quantity = request_item["quantity"]
-        original_subtotal += original_price * quantity
-
-        candidates.append({
-            "request": request_item,
-            "item": item,
-            "variant": variant,
-            "original_price": original_price,
-            "mrp": float(variant["mrp"]),
-            "quantity": quantity,
-        })
-
-    original_subtotal = round(original_subtotal, 2)
-
-    # PASS 2: Apply offers against the ORIGINAL full-cart subtotal.
-    for candidate in candidates:
-        request_item = candidate["request"]
-        item = candidate["item"]
-        variant = candidate["variant"]
-        original_price = candidate["original_price"]
-        quantity = candidate["quantity"]
-
-        offer = get_applicable_item_offer(
+        variant = _server_cart_variant(
             item,
-            active_offers,
-            cart_subtotal=original_subtotal,
+            request_item.get("weight")
         )
-        server_price = calculate_item_offer_price(original_price, offer)
 
-        client_price = request_item.get("client_price")
+        if variant is None:
+            unavailable_cart_keys.append(
+                cart_key
+            )
+            cart_changed = True
+            continue
+
+        server_price = float(
+            variant["price"]
+        )
+
+        server_mrp = float(
+            variant["mrp"]
+        )
+
+        quantity = request_item[
+            "quantity"
+        ]
+
+        client_price = request_item.get(
+            "client_price"
+        )
+
         try:
-            client_price = float(client_price)
-        except (TypeError, ValueError):
+            client_price = float(
+                client_price
+            )
+        except (
+            TypeError,
+            ValueError,
+        ):
             client_price = None
 
-        if client_price is None or abs(client_price - server_price) > 0.009:
+        if (
+            client_price is None
+            or abs(
+                client_price
+                - server_price
+            )
+            > 0.009
+        ):
             cart_changed = True
 
-        line_total = round(server_price * quantity, 2)
-        server_subtotal += line_total
-        has_offer = bool(offer is not None and server_price < original_price)
+        line_total = (
+            server_price
+            * quantity
+        )
+
+        server_subtotal += (
+            line_total
+        )
 
         validated_items.append({
-            "cart_key": request_item["cart_key"],
-            "id": item.id,
-            "name": item.name,
-            "price": server_price,
-            "mrp": candidate["mrp"],
-            "quantity": quantity,
-            "weight": variant["weight"],
-            "original_price": original_price,
-            "offer_price": server_price if has_offer else None,
-            "has_offer": has_offer,
-            "offer_id": offer.id if has_offer else None,
-            "offer_title": offer.title if has_offer else None,
-            "offer_min_order_amount": float(offer.min_order_amount or 0) if offer else 0,
-            "unit": getattr(item, "unit", "") or "",
-            "category": item.category or "Others",
-            "item_type": getattr(item, "item_type", "") or "",
-            "line_total": line_total,
+            "cart_key":
+                cart_key,
+
+            "id":
+                item.id,
+
+            "name":
+                item.name,
+
+            "price":
+                server_price,
+
+            "mrp":
+                server_mrp,
+
+            "quantity":
+                quantity,
+
+            "weight":
+                variant["weight"],
+
+            "unit":
+                getattr(
+                    item,
+                    "unit",
+                    ""
+                )
+                or "",
+
+            "category":
+                item.category
+                or "Others",
+
+            "item_type":
+                getattr(
+                    item,
+                    "item_type",
+                    ""
+                )
+                or "",
+
+            "line_total":
+                round(
+                    line_total,
+                    2
+                ),
         })
 
-    server_subtotal = round(server_subtotal, 2)
-    
     if not validated_items:
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "The items in your cart are no longer available.",
-
             "cart_changed": True,
-
             "items": [],
-
             "unavailable_cart_keys":
-
                 unavailable_cart_keys,
-
             "unavailable_item_ids":
-
                 list(
-
                     set(
-
                         unavailable_item_ids
-
                     )
-
                 ),
-
             "server_subtotal": 0,
-
         }), 409
 
     return jsonify({
-
         "success": True,
 
         "message": (
-
             "Cart updated with latest prices and availability."
-
             if cart_changed
-
             else "Cart is valid."
-
         ),
 
         "restaurant_id":
-
             restaurant.id,
 
         "cart_changed":
-
             cart_changed,
 
         "items":
-
             validated_items,
 
         "unavailable_cart_keys":
-
             unavailable_cart_keys,
 
         # Kept for older Flutter builds.
-
         "unavailable_item_ids":
-
             list(
-
                 set(
-
                     unavailable_item_ids
-
                 )
-
             ),
 
         "server_subtotal":
-
             round(
-
                 server_subtotal,
-
                 2
-
             ),
-
     }), 200
-
 # ============================================================
-
 # RUCHIGO FLUTTER ORDER API
-
 #
-
 # Add this route to app.py.
-
 #
-
 # It is separate from your existing website /place_order route.
-
 #
-
 # Supports:
-
 # - Restaurant items
-
 # - Grocery base-price items
-
 # - Grocery selected weight variants
-
 # - Server-authoritative prices
-
 # - COD / existing payment_type value
-
 # - Existing Order / OrderItem models
-
 #
-
 # REQUIRES existing project helpers/models:
-
 # Restaurant, MenuItem, Order, OrderItem, db
-
 # calculate_distance_km
-
 # calculate_delivery_charge
-
 # generate_map_link
-
 # generate_otp
-
 # generate_order_code
-
 # current_user
-
 # datetime
-
 #
-
 # Also copy:
-
 # _parse_grocery_weight_options
-
 # _server_cart_variant
-
 # from flask_validate_cart_grocery_variants.py
-
 # above this route (or import them).
-
 # ============================================================
 
 @app.route(
-
     "/api/place-order",
-
     methods=["POST"],
-
 )
-
 def api_place_order():
 
     data = request.get_json(
-
         silent=True
-
     ) or {}
 
     # ========================================================
-
     # BASIC INPUT
-
     # ========================================================
 
     try:
-
         restaurant_id = int(
-
             data.get(
-
                 "restaurant_id"
-
             )
-
         )
-
     except (
-
         TypeError,
-
         ValueError,
-
     ):
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "Invalid restaurant/store."
-
         }), 400
 
     name = (
-
         data.get("name")
-
         or ""
-
     ).strip()
 
     phone = (
-
         data.get("phone")
-
         or ""
-
     ).strip()
 
     email = (
-
         data.get("email")
-
         or ""
-
     ).strip()
 
     alt_phone = (
-
         data.get("alt_phone")
-
         or ""
-
     ).strip()
 
     house_no = (
-
         data.get("house_no")
-
         or ""
-
     ).strip()
 
     landmark = (
-
         data.get("landmark")
-
         or ""
-
     ).strip()
 
     city = (
-
         data.get("city")
-
         or ""
-
     ).strip()
 
     state = (
-
         data.get("state")
-
         or ""
-
     ).strip()
 
     pincode = (
-
         data.get("pincode")
-
         or ""
-
     ).strip()
 
     address_type = (
-
         data.get("address_type")
-
         or "Home"
-
     ).strip()
 
     delivery_note = (
-
         data.get("delivery_note")
-
         or ""
-
     ).strip()
 
     payment_type = (
-
         data.get("payment_type")
-
         or "COD"
-
     ).strip()
 
     order_type = (
-
         data.get("order_type")
-
         or "Delivery"
-
     ).strip()
 
     client_items = (
-
         data.get("items")
-
         or []
-
     )
 
-    # ========================================================
-
-    # BASIC VALIDATION
-
-    # ========================================================
-
     if not name:
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "Customer name is required."
-
         }), 400
 
     normalized_phone = (
-
         phone
-
         .replace("+91", "")
-
         .replace(" ", "")
-
         .strip()
-
     )
 
     if (
-
         not normalized_phone.isdigit()
-
-        or len(normalized_phone) != 10
-
+        or len(normalized_phone)
+        != 10
     ):
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "Enter a valid 10 digit phone number."
-
         }), 400
 
     if (
-
         not isinstance(
-
             client_items,
-
             list
-
         )
-
         or not client_items
-
     ):
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "Your cart is empty."
-
         }), 400
 
     # ========================================================
-
-    # CUSTOMER LOCATION
-
+    # LOCATION
     # ========================================================
 
     try:
-
         customer_lat = float(
-
             data.get("latitude")
-
         )
 
         customer_lng = float(
-
             data.get("longitude")
-
         )
-
     except (
-
         TypeError,
-
         ValueError,
-
     ):
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "Please confirm delivery location."
-
         }), 400
 
     # ========================================================
-
     # STORE
-
     # ========================================================
 
     restaurant = db.session.get(
-
         Restaurant,
-
         restaurant_id
-
     )
 
     if not restaurant:
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "Restaurant/store not found."
-
         }), 404
 
-    # ========================================================
-
-    # ACCEPTING ORDERS
-
-    # ========================================================
-
     if (
-
         getattr(
-
             restaurant,
-
             "can_accept_orders",
-
             True
-
         )
-
         is False
-
     ):
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "This restaurant/store is not accepting orders."
-
         }), 409
 
     # ========================================================
-
     # LOAD + VERIFY ITEMS
-
     # ========================================================
 
     ids = set()
@@ -26677,975 +23852,500 @@ def api_place_order():
     for raw in client_items:
 
         if not isinstance(
-
             raw,
-
             dict
-
         ):
-
             continue
 
         try:
-
             item_id = int(
-
                 raw.get("id")
-
             )
 
             qty = int(
-
                 raw.get(
-
                     "quantity",
-
                     1
-
                 )
-
             )
-
         except (
-
             TypeError,
-
             ValueError,
-
         ):
-
             continue
 
         if qty <= 0:
-
             continue
 
         qty = min(
-
             qty,
-
             99
-
         )
 
         weight = (
-
             str(
-
                 raw.get("weight")
-
                 or ""
-
             )
-
             .strip()
-
         )
 
         normalized_items.append({
-
             "id":
-
                 item_id,
-
             "quantity":
-
                 qty,
-
             "weight":
-
                 weight,
-
         })
 
         ids.add(
-
             item_id
-
         )
 
     if not normalized_items:
-
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "No valid items in cart."
-
         }), 400
 
-    # ========================================================
-
-    # LOAD MENU ITEMS FROM DATABASE
-
-    # ========================================================
-
     db_items = (
-
         MenuItem.query
-
         .filter(
-
             MenuItem.id.in_(ids),
-
             MenuItem.restaurant_id
-
             == restaurant_id
-
         )
-
         .all()
-
     )
 
     by_id = {
-
         item.id: item
-
         for item in db_items
-
     }
 
     verified_items = []
-    items_total = 0.0
-    original_subtotal = 0.0
-    candidates = []
-    active_offers = get_active_item_offers(restaurant.id)
 
-    # PASS 1: Verify all items/variants and calculate original subtotal.
+    items_total = 0.0
+
     for requested in normalized_items:
-        menu_item = by_id.get(requested["id"])
+
+        menu_item = by_id.get(
+            requested["id"]
+        )
 
         if not menu_item:
             return jsonify({
                 "success": False,
-                "message": "One of the cart items is no longer available.",
+                "message":
+                    "One of the cart items is no longer available."
             }), 409
 
         availability = str(
-            getattr(menu_item, "availability", "yes") or ""
+            getattr(
+                menu_item,
+                "availability",
+                "yes"
+            )
+            or ""
         ).strip().lower()
 
-        if availability not in ("yes", "true", "1"):
+        if availability not in (
+            "yes",
+            "true",
+            "1",
+        ):
             return jsonify({
                 "success": False,
-                "message": f"{menu_item.name} is currently unavailable.",
+                "message":
+                    f"{menu_item.name} is currently unavailable."
             }), 409
 
-        variant = _server_cart_variant(menu_item, requested.get("weight"))
+        variant = _server_cart_variant(
+            menu_item,
+            requested.get(
+                "weight"
+            )
+        )
+
         if variant is None:
             return jsonify({
                 "success": False,
-                "message": f"Selected pack for {menu_item.name} is no longer available.",
+                "message":
+                    f"Selected pack for {menu_item.name} is no longer available."
             }), 409
 
-        quantity = requested["quantity"]
-        original_price = round(float(variant["price"]), 2)
-        original_subtotal += original_price * quantity
+        qty = requested[
+            "quantity"
+        ]
 
-        candidates.append({
-            "menu_item": menu_item,
-            "quantity": quantity,
-            "variant": variant,
-            "original_price": original_price,
-            "mrp": float(variant["mrp"]),
-        })
-
-    original_subtotal = round(original_subtotal, 2)
-
-    # PASS 2: Recalculate eligible offers server-side before order creation.
-    for candidate in candidates:
-        menu_item = candidate["menu_item"]
-        quantity = candidate["quantity"]
-        variant = candidate["variant"]
-        original_price = candidate["original_price"]
-        offer = get_applicable_item_offer(
-            menu_item,
-            active_offers,
-            cart_subtotal=original_subtotal,
+        price = float(
+            variant["price"]
         )
-        price = calculate_item_offer_price(original_price, offer)
-        line_total = round(price * quantity, 2)
-        items_total += line_total
+
+        mrp = float(
+            variant["mrp"]
+        )
+
+        line_total = (
+            price * qty
+        )
+
+        items_total += (
+            line_total
+        )
 
         verified_items.append({
-            "menu_item": menu_item,
-            "quantity": quantity,
-            "price": price,
-            "mrp": candidate["mrp"],
-            "weight": variant["weight"],
-            "unit": getattr(menu_item, "unit", "") or "",
-            "category": menu_item.category or "Others",
-            "item_type": getattr(menu_item, "item_type", "") or "",
-            "original_price": original_price,
-            "offer_id": offer.id if offer else None,
-            "offer_title": offer.title if offer else None,
+            "menu_item":
+                menu_item,
+
+            "quantity":
+                qty,
+
+            "price":
+                price,
+
+            "mrp":
+                mrp,
+
+            "weight":
+                variant["weight"],
+
+            "unit":
+                getattr(
+                    menu_item,
+                    "unit",
+                    ""
+                )
+                or "",
+
+            "category":
+                menu_item.category
+                or "Others",
+
+            "item_type":
+                getattr(
+                    menu_item,
+                    "item_type",
+                    ""
+                )
+                or "",
         })
 
-    # Order.get_final_total() subtracts restaurant_offer_discount from the
-    # original item subtotal. Keep that accounting convention here so offers
-    # are not subtracted twice and dashboard earnings remain correct.
-    discounted_items_total = round(items_total, 2)
-    restaurant_offer_discount = round(
-        max(original_subtotal - discounted_items_total, 0.0),
-        2,
-    )
-    restaurant_offer_id = next(
-        (
-            verified.get("offer_id")
-            for verified in verified_items
-            if verified.get("offer_id") is not None
-        ),
-        None,
-    )
-    items_total = round(original_subtotal, 2)
-
-    # DISTANCE + LOCATION-WISE DELIVERY
-
-
+    # ========================================================
+    # DISTANCE + DELIVERY
     # ========================================================
 
-    # --------------------------------------------------------
-
-    # RESTAURANT COORDINATES
-
-    # --------------------------------------------------------
-
-    if (
-
-        restaurant.latitude is None
-
-        or restaurant.longitude is None
-
-    ):
-
-        return jsonify({
-
-            "success": False,
-
-            "message":
-
-                "Restaurant delivery location is unavailable."
-
-        }), 400
-
-    # --------------------------------------------------------
-
-    # CALCULATE CUSTOMER DISTANCE
-
-    # --------------------------------------------------------
-
-    distance_km = calculate_distance_km(
-
-        restaurant.latitude,
-
-        restaurant.longitude,
-
-        customer_lat,
-
-        customer_lng
-
+    distance_km = (
+        calculate_distance_km(
+            restaurant.latitude,
+            restaurant.longitude,
+            customer_lat,
+            customer_lng,
+        )
     )
-
-    if distance_km is None:
-
-        return jsonify({
-
-            "success": False,
-
-            "distance_km": None,
-
-            "delivery_charge": None,
-
-            "message": "Unable to calculate delivery distance. Please try again."
-
-        }), 503
-
-    # --------------------------------------------------------
-
-    # RESTAURANT DELIVERY RADIUS
-
-    #
-
-    # This controls whether delivery is allowed.
-
-    #
-
-    # Delivery slabs control HOW MUCH to charge.
-
-    # --------------------------------------------------------
-
-    if (
-
-        restaurant.delivery_radius_km is not None
-
-        and distance_km > restaurant.delivery_radius_km
-
-    ):
-
-        return jsonify({
-
-            "success": False,
-
-            "distance_km": round(distance_km, 2),
-
-            "delivery_charge": None,
-
-            "max_delivery_km": float(
-
-                restaurant.delivery_radius_km
-
-            ),
-
-            "message": (
-
-                "🚫 This restaurant is not delivering to your location.\n"
-
-                f"Delivery is available up to "
-
-                f"{restaurant.delivery_radius_km:g} km.\n"
-
-                "Need help? Please contact RucHiGo Management."
-
-            )
-
-        }), 400
-
-    # --------------------------------------------------------
-
-    # LOCATION-WISE DELIVERY CHARGE
-
-    # --------------------------------------------------------
 
     (
-
         delivery_charge,
-
         delivery_msg,
-
     ) = calculate_delivery_charge(
-
-        distance_km=distance_km,
-
-        items_total=items_total,
-
-        restaurant=restaurant
-
+        distance_km,
+        items_total,
+        restaurant,
     )
 
-    # --------------------------------------------------------
-
-    # DELIVERY UNAVAILABLE
-
-    #
-
-    # IMPORTANT:
-
-    # Never convert None to ₹0.
-
-    # --------------------------------------------------------
-
-    if delivery_charge is None:
-
-        return jsonify({
-
-            "success": False,
-
-            "distance_km": round(
-
-                distance_km,
-
-                2
-
-            ),
-
-            "delivery_charge": None,
-
-            "message": delivery_msg
-
-        }), 400
-
-    # ========================================================
-
-    # FINAL MONEY VALUES
-
-    # ========================================================
-
     items_total = round(
-
         items_total,
-
         2
-
     )
 
     delivery_charge = round(
-
-        float(delivery_charge),
-
+        float(
+            delivery_charge
+            or 0
+        ),
         2
-
     )
 
     final_total = round(
-        items_total + delivery_charge - restaurant_offer_discount,
-        2,
+        items_total
+        + delivery_charge,
+        2
     )
 
     # ========================================================
-
     # MAP LINK
-
     # ========================================================
 
     map_link = generate_map_link(
-
         customer_lat,
-
         customer_lng,
-
         house_no,
-
         landmark,
-
         city,
-
         state,
-
         pincode,
-
     )
 
     # ========================================================
-
     # PAYMENT / ORDER STATUS
-
     # ========================================================
 
     if payment_type == "Online":
-
         order_status = (
-
             "Pending Payment"
-
         )
 
         payment_source = (
-
             "Checkout"
-
         )
-
     else:
-
         order_status = (
-
             "Pending"
-
         )
 
         payment_source = (
-
             "COD"
-
         )
 
     # ========================================================
-
     # CREATE ORDER + ITEMS
-
     # ========================================================
 
     try:
-
         new_order = Order(
-
             restaurant_id=
-
                 restaurant_id,
 
-            delivery_location_id=restaurant.delivery_location_id,
-
             customer_id=(
-
                 current_user.id
-
                 if current_user.is_authenticated
-
                 else None
-
             ),
 
             customer_name=
-
                 name,
 
             phone=
-
                 normalized_phone,
 
             email=
-
                 email,
 
             alt_phone=
-
                 alt_phone,
 
             house_no=
-
                 house_no,
 
             landmark=
-
                 landmark,
 
             city=
-
                 city,
 
             state=
-
                 state,
 
             pincode=
-
                 pincode,
 
             address_type=
-
                 address_type,
 
             delivery_note=
-
                 delivery_note,
 
             payment_type=
-
                 payment_type,
 
             payment_status=
-
                 "Pending",
 
             payment_verified=
-
                 False,
 
             status=
-
                 order_status,
 
             payment_source=
-
                 payment_source,
 
             order_type=
-
                 order_type,
 
             items_total=
-
                 items_total,
 
-            # ================================================
-
-            # SERVER CALCULATED DELIVERY CHARGE
-
-            # ================================================
-
             delivery_charge=
-
                 delivery_charge,
 
             final_total=
-
                 final_total,
 
             latitude=
-
                 customer_lat,
 
             longitude=
-
                 customer_lng,
 
             distance_km=
-
                 round(
-
                     distance_km,
-
                     2
-
                 ),
 
             map_link=
-
                 map_link,
 
             otp=
-
                 generate_otp(),
 
             created_at=
-
                 datetime.utcnow(),
-
         )
-
-        # Persist the restaurant offer details. The Order model's
-        # get_final_total() subtracts this from the original items subtotal.
-        new_order.restaurant_offer_discount = restaurant_offer_discount
-        if restaurant_offer_id is not None:
-            new_order.restaurant_offer_id = restaurant_offer_id
 
         db.session.add(
-
             new_order
-
         )
 
-        # ====================================================
-
-        # GET DATABASE ORDER ID
-
-        # ====================================================
-
+        # Flush gets numeric DB id before commit.
         db.session.flush()
 
-        # ====================================================
-
-        # GENERATE PUBLIC ORDER CODE
-
-        # ====================================================
-
         new_order.order_id = (
-
             generate_order_code(
-
                 new_order.id
-
             )
-
         )
-
-        # ====================================================
-
-        # CREATE ORDER ITEMS
-
-        # ====================================================
 
         for verified in verified_items:
 
             menu_item = verified[
-
                 "menu_item"
-
             ]
 
             order_item = OrderItem(
-
                 order_id=
-
                     new_order.id,
 
                 item_name=
-
                     menu_item.name,
 
                 quantity=
-
                     verified[
-
                         "quantity"
-
                     ],
 
                 price=
-
                     verified[
-
                         "price"
-
                     ],
 
                 weight=(
-
                     verified[
-
                         "weight"
-
                     ]
-
                     or verified[
-
                         "unit"
-
                     ]
-
                     or ""
-
                 ),
 
                 category=
-
                     verified[
-
                         "category"
-
                     ],
-
             )
 
-            # =================================================
-
-            # OPTIONAL MRP
-
-            # =================================================
-
+            # These fields are saved automatically IF you later
+            # add them to OrderItem model. The route remains
+            # compatible with your current model without them.
             if hasattr(
-
                 OrderItem,
-
                 "mrp"
-
             ):
-
                 order_item.mrp = (
-
                     verified[
-
                         "mrp"
-
                     ]
-
                 )
 
-            # =================================================
-
-            # OPTIONAL UNIT
-
-            # =================================================
-
             if hasattr(
-
                 OrderItem,
-
                 "unit"
-
             ):
-
                 order_item.unit = (
-
                     verified[
-
                         "unit"
-
                     ]
-
                 )
 
-            # =================================================
-
-            # OPTIONAL ITEM TYPE
-
-            # =================================================
-
             if hasattr(
-
                 OrderItem,
-
                 "item_type"
-
             ):
-
                 order_item.item_type = (
-
                     verified[
-
                         "item_type"
-
                     ]
-
                 )
 
             db.session.add(
-
                 order_item
-
             )
-
-        # ====================================================
-
-        # ONE FINAL COMMIT
-
-        # ====================================================
 
         db.session.commit()
 
     except Exception as e:
-
         db.session.rollback()
 
         print(
-
             "APP ORDER CREATE ERROR:",
-
             e
-
         )
 
         return jsonify({
-
             "success": False,
-
             "message":
-
                 "Unable to create order."
-
         }), 500
 
     # ========================================================
-
-    # FIRST-ORDER WHATSAPP CONFIRMATION — COD ONLY
-
-    # ========================================================
-
-    if (
-
-        str(new_order.payment_type or "").strip().lower() == "cod"
-
-        and str(new_order.status or "").strip().lower() == "pending"
-
-    ):
-
-        try:
-
-            if is_first_customer_order(new_order):
-
-                # Save pending state before sending.
-
-                new_order.whatsapp_confirmation_status = "pending"
-
-                new_order.whatsapp_confirmation_sent_at = None
-
-                new_order.whatsapp_confirmation_expires_at = (
-
-                    datetime.utcnow() + timedelta(minutes=5)
-
-                )
-
-                new_order.whatsapp_confirmation_responded_at = None
-
-                db.session.commit()
-
-                # Send the approved Meta WhatsApp template.
-
-                sent = send_whatsapp_first_order_confirmation(new_order)
-
-                if sent:
-
-                    new_order.whatsapp_confirmation_sent_at = datetime.utcnow()
-
-                    db.session.commit()
-
-                    print(
-
-                        "📱 FIRST-ORDER WHATSAPP SENT:",
-
-                        new_order.order_id
-
-                    )
-
-                else:
-
-                    new_order.whatsapp_confirmation_status = "send_failed"
-
-                    new_order.whatsapp_confirmation_sent_at = None
-
-                    db.session.commit()
-
-                    print(
-
-                        "❌ FIRST-ORDER WHATSAPP SEND FAILED:",
-
-                        new_order.order_id
-
-                    )
-
-        except Exception as e:
-
-            db.session.rollback()
-
-            print("❌ FIRST-ORDER WHATSAPP ERROR:", e)
-
-    # ========================================================
-
     # RESPONSE
-
     # ========================================================
 
     return jsonify({
-
-        "success":
-
-            True,
+        "success": True,
 
         "message":
-
             "Order placed successfully.",
 
         "order_id":
-
             new_order.order_id,
 
         "db_order_id":
-
             new_order.id,
 
         "items_total":
-
             items_total,
 
-        "restaurant_offer_discount": restaurant_offer_discount,
-
         "delivery_charge":
-
             delivery_charge,
 
         "delivery_message":
-
             delivery_msg,
 
         "final_total":
-
             final_total,
 
-        "distance_km":
-
-            round(
-
-                distance_km,
-
-                2
-
-            ),
-
         "category_type":
-
             getattr(
-
                 restaurant,
-
                 "category_type",
-
                 ""
-
-            ) or "",
-
+            )
+            or "",
     }), 201
 # ============================================================
 # RUCHIGO APP - RAZORPAY API ADAPTERS
@@ -30276,7 +26976,6 @@ def api_delivery_reject_order(order_id):
             "message":
                 "Unable to reject the order."
         }), 500
-    
 @app.route(
     "/api/delivery/order/<int:order_id>/start",
     methods=["POST"]
@@ -33363,8 +30062,6 @@ def submit_rider_application():
                 "Unable to submit application right now."
 
         }), 500
-
-    
 from werkzeug.security import check_password_hash
 
 @app.route(
@@ -34487,9 +31184,7 @@ def approve_rider_application(application_id):
                 str(e)
 
         }), 500
-# ==========================================================
-# RIDER APPLICATION STATUS
-# ==========================================================
+
 
 @app.route(
     "/api/delivery/application-status",
@@ -35189,121 +31884,216 @@ def api_rider_change_password():
 # ==========================================================
 # RIDER REQUEST PASSWORD RESET OTP
 # ==========================================================
+
 @app.route(
     "/api/delivery/auth/password-reset/request",
     methods=["POST"]
 )
 def api_rider_password_reset_request():
+
     try:
+
         data = request.get_json(silent=True) or {}
-        phone = _normalize_phone(data.get("phone"))
+
+        # ======================================================
+        # PHONE
+        # ======================================================
+
+        phone = _normalize_phone(
+            data.get("phone")
+        )
 
         if len(phone) != 10:
+
             return jsonify({
                 "success": False,
-                "message": "Enter a valid 10-digit mobile number."
+                "message":
+                    "Enter a valid 10-digit mobile number."
             }), 400
 
-        account = RiderAuthAccount.query.filter_by(
-            phone=phone
-        ).first()
+        # ======================================================
+        # FIND AUTH ACCOUNT
+        # ======================================================
 
-        if not account:
-            return jsonify({
-                "success": False,
-                "message": "No delivery partner account found for this number."
-            }), 404
-
-        if not account.is_active or not account.password_is_set:
-            return jsonify({
-                "success": False,
-                "message": "Your delivery partner account is not active."
-            }), 403
-
-        rider = db.session.get(DeliveryPerson, account.rider_id)
-
-        if not rider:
-            return jsonify({
-                "success": False,
-                "message": "Delivery partner profile not found."
-            }), 404
-
-        now = datetime.utcnow()
-
-        # Prevent repeated OTP requests within 30 seconds.
-        latest = (
-            RiderPasswordResetRequest.query
-            .filter_by(rider_id=rider.id)
-            .order_by(
-                RiderPasswordResetRequest.requested_at.desc()
-            )
+        account = (
+            RiderAuthAccount.query
+            .filter_by(phone=phone)
             .first()
         )
 
-        if latest and (now - latest.requested_at).total_seconds() < 30:
+        if not account:
+
             return jsonify({
                 "success": False,
-                "message": "Please wait 30 seconds before requesting another OTP."
-            }), 429
+                "message":
+                    "No delivery partner account found for this number."
+            }), 404
 
-        # Invalidate all previous requests.
-        RiderPasswordResetRequest.query.filter_by(
-            rider_id=rider.id,
-            used=False
+        # ======================================================
+        # CHECK ACCOUNT
+        # ======================================================
+
+        if (
+            not account.is_active
+            or not account.password_is_set
+        ):
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "Your delivery partner account is not active."
+            }), 403
+
+        # ======================================================
+        # FIND RIDER
+        # ======================================================
+
+        rider = db.session.get(
+            DeliveryPerson,
+            account.rider_id
+        )
+
+        if not rider:
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "Delivery partner profile not found."
+            }), 404
+
+        # ======================================================
+        # CURRENT SERVER TIME
+        # ======================================================
+
+        now = datetime.utcnow()
+
+        # ======================================================
+        # INVALIDATE ALL OLD OTP REQUESTS
+        # ======================================================
+
+        RiderPasswordResetRequest.query.filter(
+            RiderPasswordResetRequest.rider_id == rider.id,
+            RiderPasswordResetRequest.used.is_(False)
         ).update(
-            {"used": True},
+            {
+                "used": True
+            },
             synchronize_session=False
         )
 
+        # ======================================================
+        # GENERATE NEW 6 DIGIT OTP
+        # ======================================================
+
         otp = f"{secrets.randbelow(1000000):06d}"
+
+        # ======================================================
+        # HASH OTP
+        # ======================================================
+
         otp_hash = hashlib.sha256(
             otp.encode("utf-8")
         ).hexdigest()
-        expires_at = now + timedelta(minutes=5)
+
+        # ======================================================
+        # OTP VALID FOR 5 MINUTES
+        # ======================================================
+
+        expires_at = (
+            now + timedelta(minutes=5)
+        )
+
+        # ======================================================
+        # CREATE RESET REQUEST
+        # ======================================================
 
         reset_request = RiderPasswordResetRequest(
+
             rider_id=rider.id,
+
             phone=phone,
-            # Do not store the real OTP in plaintext.
-            # This placeholder is for the legacy non-null column.
-            otp_code="000000",
+
+            otp_code=otp,
+
             otp_hash=otp_hash,
+
             expires_at=expires_at,
+
             requested_at=now,
+
             used=False
         )
 
-        db.session.add(reset_request)
+        db.session.add(
+            reset_request
+        )
+
         db.session.commit()
 
-        try:
-            send_rider_whatsapp_otp(phone, otp)
-        except Exception:
-            app.logger.exception(
-                "Could not send rider password-reset WhatsApp OTP"
-            )
-            reset_request.used = True
-            db.session.commit()
+        # ======================================================
+        # LOCAL TEST LOG
+        # ======================================================
 
-            return jsonify({
-                "success": False,
-                "message": "Unable to send OTP on WhatsApp. Please try again later."
-            }), 502
+        print("")
+        print("==============================================")
+        print("🔐 PASSWORD RESET OTP")
+        print("==============================================")
+        print("Rider ID     :", rider.id)
+        print("Phone        :", phone)
+        print("OTP          :", otp)
+        print("Requested At :", now.isoformat())
+        print("Expires At   :", expires_at.isoformat())
+        print("Valid For    : 300 seconds")
+        print("==============================================")
+        print("")
+
+        # ======================================================
+        # IMPORTANT
+        # RETURN BOTH expires_at AND expires_in
+        # ======================================================
 
         return jsonify({
+
             "success": True,
-            "message": "OTP sent to your registered WhatsApp number.",
-            "expires_in": 300,
-            "expires_at": expires_at.isoformat()
+
+            "message":
+                "Password reset OTP generated. Please contact RucHiGo admin.",
+
+            "request_id":
+                reset_request.id,
+
+            "otp_valid_for":
+                300,
+
+            "expires_in":
+                300,
+
+            "expires_at":
+                expires_at.isoformat(),
+
+            "server_time":
+                now.isoformat()
+
         }), 200
 
-    except Exception:
+    except Exception as e:
+
         db.session.rollback()
-        app.logger.exception("Rider password reset request failed")
+
+        app.logger.exception(
+            "Rider password reset request failed"
+        )
 
         return jsonify({
+
             "success": False,
-            "message": "Unable to create password reset request."
+
+            "message":
+                "Unable to create password reset request.",
+
+            "error":
+                str(e)
+
         }), 500
 # ==========================================================
 # ADMIN VIEW PASSWORD RESET REQUESTS
@@ -35346,7 +32136,8 @@ def admin_rider_password_reset_requests():
                     rider.name if rider else "Delivery Partner",
                 "phone":
                     row.phone,
-
+                "otp":
+                    row.otp_code,
                 "expires_at":
                     row.expires_at.isoformat(),
                 "requested_at":
@@ -37255,2167 +34046,53 @@ def save_customer_fcm_token():
         "success": True,
         "customer_id": customer.id
     })
+# ==========================================================
+# RIDER APPLICATION ROUTE REGISTRATION
+# ==========================================================
+@app.route("/test-whatsapp-production")
+def test_whatsapp_production():
+    import os
+    import requests
 
-@app.route("/admin/restaurant-control")
-@admin_required
-def restaurant_control():
+    token = os.getenv("WHATSAPP_ACCESS_TOKEN")
+    phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
 
-    platform = PlatformControl.query.first()
+    url = f"https://graph.facebook.com/v25.0/{phone_number_id}/messages"
 
-    if not platform:
-        platform = PlatformControl()
-        db.session.add(platform)
-        db.session.commit()
-
-    restaurants = (
-        Restaurant.query
-        .order_by(
-            Restaurant.homepage_position.asc(),
-            Restaurant.name.asc()
-        )
-        .all()
-    )
-
-    locations = (
-        DeliveryLocationSettings.query
-        .order_by(
-            DeliveryLocationSettings.location.asc()
-        )
-        .all()
-    )
-
-    return render_template(
-        "admin/restaurant_control/index.html",
-        platform=platform,
-        restaurants=restaurants,
-        locations=locations
-    )
-
-@app.route(
-    "/admin/restaurant-control/global/stop",
-    methods=["POST"]
-)
-@admin_required
-def restaurant_control_global_stop():
-
-    platform = PlatformControl.query.first()
-
-    if not platform:
-        platform = PlatformControl()
-        db.session.add(platform)
-
-    old_value = platform.restaurant_ordering_enabled
-
-    reason = (
-        request.form.get("reason")
-        or "Stopped by Super Admin"
-    )
-
-    platform.restaurant_ordering_enabled = False
-    platform.restaurant_ordering_stop_reason = reason
-
-    resume_at_raw = request.form.get(
-        "resume_at"
-    )
-
-    if resume_at_raw:
-        try:
-            platform.restaurant_ordering_resume_at = (
-                datetime.strptime(
-                    resume_at_raw,
-                    "%Y-%m-%dT%H:%M"
-                )
-            )
-        except ValueError:
-            platform.restaurant_ordering_resume_at = None
-    else:
-        platform.restaurant_ordering_resume_at = None
-
-    db.session.add(
-        AdminControlLog(
-            admin_user_id=session.get("admin_id"),
-            action="GLOBAL_STOP_RESTAURANT_ORDERS",
-            target_type="platform",
-            target_id=platform.id,
-            old_value=str(old_value),
-            new_value="False",
-            reason=reason
-        )
-    )
-
-    db.session.commit()
-
-    flash(
-        "All restaurant ordering has been stopped.",
-        "success"
-    )
-
-    return redirect(
-        url_for("restaurant_control")
-    )
-
-@app.route(
-    "/admin/restaurant-control/global/start",
-    methods=["POST"]
-)
-@admin_required
-def restaurant_control_global_start():
-
-    platform = PlatformControl.query.first()
-
-    if not platform:
-        platform = PlatformControl()
-        db.session.add(platform)
-
-    old_value = platform.restaurant_ordering_enabled
-
-    platform.restaurant_ordering_enabled = True
-    platform.restaurant_ordering_resume_at = None
-    platform.restaurant_ordering_stop_reason = None
-
-    db.session.add(
-        AdminControlLog(
-            admin_user_id=session.get("admin_id"),
-            action="GLOBAL_START_RESTAURANT_ORDERS",
-            target_type="platform",
-            target_id=platform.id,
-            old_value=str(old_value),
-            new_value="True",
-            reason="Started by Super Admin"
-        )
-    )
-
-    db.session.commit()
-
-    flash(
-        "Restaurant ordering has been enabled globally.",
-        "success"
-    )
-
-    return redirect(
-        url_for("restaurant_control")
-    )
-
-
-@app.route(
-    "/admin/restaurant-control/platform/maintenance",
-    methods=["POST"]
-)
-@admin_required
-def restaurant_control_maintenance():
-
-    platform = PlatformControl.query.first()
-
-    if not platform:
-        platform = PlatformControl()
-        db.session.add(platform)
-
-    enabled = request.form.get(
-        "enabled"
-    ) == "1"
-
-    platform.maintenance_mode = enabled
-
-    db.session.add(
-        AdminControlLog(
-            admin_user_id=session.get("admin_id"),
-            action=(
-                "ENABLE_MAINTENANCE"
-                if enabled
-                else "DISABLE_MAINTENANCE"
-            ),
-            target_type="platform",
-            target_id=platform.id,
-            old_value=None,
-            new_value=str(enabled),
-            reason=request.form.get("reason")
-        )
-    )
-
-    db.session.commit()
-
-    flash(
-        "Maintenance mode updated.",
-        "success"
-    )
-
-    return redirect(
-        url_for("restaurant_control")
-    )
-
-@app.route(
-    "/admin/restaurant-control/restaurant/<int:restaurant_id>"
-)
-@admin_required
-def restaurant_control_restaurant(
-    restaurant_id
-):
-
-    restaurant = db.get_or_404(
-        Restaurant,
-        restaurant_id
-    )
-
-    locations = (
-        DeliveryLocationSettings.query
-        .order_by(
-            DeliveryLocationSettings.location.asc()
-        )
-        .all()
-    )
-
-    status = get_restaurant_order_control(
-        restaurant
-    )
-
-    return render_template(
-        "admin/restaurant_control/restaurant.html",
-        restaurant=restaurant,
-        locations=locations,
-        control_status=status
-    )
-
-@app.route(
-    "/admin/restaurant-control/restaurant/<int:restaurant_id>/update",
-    methods=["POST"]
-)
-@admin_required
-def restaurant_control_restaurant_update(
-    restaurant_id
-):
-
-    restaurant = db.get_or_404(
-        Restaurant,
-        restaurant_id
-    )
-
-    old_data = {
-        "status": restaurant.status,
-        "is_accepting_orders": restaurant.is_accepting_orders,
-        "admin_order_override": restaurant.admin_order_override,
-        "opening_time": (
-            restaurant.opening_time.isoformat()
-            if restaurant.opening_time
-            else None
-        ),
-        "closing_time": (
-            restaurant.closing_time.isoformat()
-            if restaurant.closing_time
-            else None
-        ),
-        "delivery_radius_km": restaurant.delivery_radius_km,
-        "homepage_position": restaurant.homepage_position,
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
     }
 
-    # ========================================================
-    # ORDER OVERRIDE
-    # ========================================================
-
-    override = request.form.get(
-        "admin_order_override",
-        "inherit"
-    )
-
-    if override not in (
-        "inherit",
-        "force_on",
-        "force_off"
-    ):
-        override = "inherit"
-
-    restaurant.admin_order_override = override
-
-    # ========================================================
-    # RESTAURANT NORMAL ORDER SETTING
-    # ========================================================
-
-    restaurant.is_accepting_orders = (
-        request.form.get("is_accepting_orders")
-        == "1"
-    )
-
-    # ========================================================
-    # STATUS
-    # ========================================================
-
-    status = request.form.get(
-        "status",
-        "active"
-    )
-
-    if status not in (
-        "active",
-        "coming_soon",
-        "suspended"
-    ):
-        status = "active"
-
-    restaurant.status = status
-
-    # ========================================================
-    # TIMES
-    # ========================================================
-
-    opening_time = request.form.get(
-        "opening_time"
-    )
-
-    closing_time = request.form.get(
-        "closing_time"
-    )
-
-    accept_orders_until = request.form.get(
-        "accept_orders_until"
-    )
-
-    if opening_time:
-        restaurant.opening_time = datetime.strptime(
-            opening_time,
-            "%H:%M"
-        ).time()
-
-    if closing_time:
-        restaurant.closing_time = datetime.strptime(
-            closing_time,
-            "%H:%M"
-        ).time()
-
-    if accept_orders_until:
-        restaurant.accept_orders_until = (
-            datetime.strptime(
-                accept_orders_until,
-                "%H:%M"
-            ).time()
-        )
-    else:
-        restaurant.accept_orders_until = None
-
-    # ========================================================
-    # DELIVERY RADIUS
-    # ========================================================
-
-    radius = request.form.get(
-        "delivery_radius_km"
-    )
-
-    if radius:
-        try:
-            restaurant.delivery_radius_km = float(radius)
-        except ValueError:
-            pass
-
-    # ========================================================
-    # LOCATION
-    # ========================================================
-
-    location_id = request.form.get(
-        "delivery_location_id"
-    )
-
-    if location_id:
-        restaurant.delivery_location_id = int(
-            location_id
-        )
-    else:
-        restaurant.delivery_location_id = None
-
-    # ========================================================
-    # HOMEPAGE POSITION
-    # ========================================================
-
-    position = request.form.get(
-        "homepage_position"
-    )
-
-    if position:
-        try:
-            restaurant.homepage_position = int(
-                position
-            )
-        except ValueError:
-            pass
-
-    new_data = {
-        "status": restaurant.status,
-        "is_accepting_orders": restaurant.is_accepting_orders,
-        "admin_order_override": restaurant.admin_order_override,
-        "opening_time": (
-            restaurant.opening_time.isoformat()
-            if restaurant.opening_time
-            else None
-        ),
-        "closing_time": (
-            restaurant.closing_time.isoformat()
-            if restaurant.closing_time
-            else None
-        ),
-        "delivery_radius_km": restaurant.delivery_radius_km,
-        "homepage_position": restaurant.homepage_position,
+    data = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": "919676382650",
+        "type": "text",
+        "text": {
+            "body": "Hello from RucHiGo local test 🚀"
+        }
     }
 
-    db.session.add(
-        AdminControlLog(
-            admin_user_id=session.get("admin_id"),
-            action="UPDATE_RESTAURANT_CONTROL",
-            target_type="restaurant",
-            target_id=restaurant.id,
-            old_value=json.dumps(
-                old_data,
-                default=str
-            ),
-            new_value=json.dumps(
-                new_data,
-                default=str
-            ),
-            reason=request.form.get("reason")
-        )
-    )
-
-    db.session.commit()
-
-    flash(
-        f"{restaurant.name} updated successfully.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "restaurant_control_restaurant",
-            restaurant_id=restaurant.id
-        )
-    )
-
-@app.route(
-    "/admin/restaurant-control/location/<int:location_id>"
-)
-@admin_required
-def restaurant_control_location(
-    location_id
-):
-
-    location = db.get_or_404(
-        DeliveryLocationSettings,
-        location_id
-    )
-
-    restaurants = (
-        Restaurant.query
-        .filter(
-            Restaurant.delivery_location_id
-            == location.id
-        )
-        .order_by(
-            Restaurant.name.asc()
-        )
-        .all()
-    )
-
-    return render_template(
-        "admin/restaurant_control/location.html",
-        location=location,
-        restaurants=restaurants
-    )
-
-@app.route(
-    "/admin/restaurant-control/location/<int:location_id>/update",
-    methods=["POST"]
-)
-@admin_required
-def restaurant_control_location_update(
-    location_id
-):
-
-    location = db.get_or_404(
-        DeliveryLocationSettings,
-        location_id
-    )
-
-    old_data = {
-        "is_active": location.is_active,
-        "restaurant_ordering_enabled":
-            location.restaurant_ordering_enabled,
-        "delivery_enabled":
-            location.delivery_enabled
-    }
-
-    location.is_active = (
-        request.form.get("is_active")
-        == "1"
-    )
-
-    location.restaurant_ordering_enabled = (
-        request.form.get(
-            "restaurant_ordering_enabled"
-        ) == "1"
-    )
-
-    location.delivery_enabled = (
-        request.form.get(
-            "delivery_enabled"
-        ) == "1"
-    )
-
-    location.ordering_disabled_message = (
-        request.form.get(
-            "ordering_disabled_message"
-        ) or None
-    )
-
-    location.delivery_disabled_message = (
-        request.form.get(
-            "delivery_disabled_message"
-        ) or None
-    )
-
-    new_data = {
-        "is_active": location.is_active,
-        "restaurant_ordering_enabled":
-            location.restaurant_ordering_enabled,
-        "delivery_enabled":
-            location.delivery_enabled
-    }
-
-    db.session.add(
-        AdminControlLog(
-            admin_user_id=session.get("admin_id"),
-            action="UPDATE_LOCATION_CONTROL",
-            target_type="location",
-            target_id=location.id,
-            old_value=json.dumps(old_data),
-            new_value=json.dumps(new_data),
-            reason=request.form.get("reason")
-        )
-    )
-
-    db.session.commit()
-
-    flash(
-        f"{location.location} settings updated.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "restaurant_control_location",
-            location_id=location.id
-        )
-    )
-
-@app.route(
-    "/admin/restaurant-control/location/<int:location_id>/stop-orders",
-    methods=["POST"]
-)
-@admin_required
-def restaurant_control_location_stop_orders(
-    location_id
-):
-
-    location = db.get_or_404(
-        DeliveryLocationSettings,
-        location_id
-    )
-
-    location.restaurant_ordering_enabled = False
-
-    db.session.add(
-        AdminControlLog(
-            admin_user_id=session.get("admin_id"),
-            action="LOCATION_STOP_RESTAURANT_ORDERS",
-            target_type="location",
-            target_id=location.id,
-            old_value="True",
-            new_value="False",
-            reason=request.form.get("reason")
-            or "Stopped by Super Admin"
-        )
-    )
-
-    db.session.commit()
-
-    flash(
-        f"Restaurant ordering stopped in {location.location}.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "restaurant_control"
-        )
-    )
-
-
-@app.route(
-    "/admin/restaurant-control/location/<int:location_id>/start-orders",
-    methods=["POST"]
-)
-@admin_required
-def restaurant_control_location_start_orders(
-    location_id
-):
-
-    location = db.get_or_404(
-        DeliveryLocationSettings,
-        location_id
-    )
-
-    location.restaurant_ordering_enabled = True
-
-    db.session.add(
-        AdminControlLog(
-            admin_user_id=session.get("admin_id"),
-            action="LOCATION_START_RESTAURANT_ORDERS",
-            target_type="location",
-            target_id=location.id,
-            old_value="False",
-            new_value="True",
-            reason="Started by Super Admin"
-        )
-    )
-
-    db.session.commit()
-
-    flash(
-        f"Restaurant ordering enabled in {location.location}.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "restaurant_control"
-        )
-    )
-# ============================================================
-# HOMEPAGE RESTAURANT RANKING + SPONSORED BANNERS
-# ============================================================
-
-@app.route("/admin/homepage-restaurant-ranking")
-@admin_required
-def homepage_restaurant_ranking():
-
-    # --------------------------------------------------------
-    # Selected location
-    # --------------------------------------------------------
-
-    selected_location = request.args.get(
-        "location",
-        type=int
-    )
-
-    # --------------------------------------------------------
-    # USE EXISTING DELIVERY LOCATION SYSTEM
-    # NOT the old Location table
-    # --------------------------------------------------------
-
-    locations = (
-        DeliveryLocationSettings.query
-        .filter(
-            DeliveryLocationSettings.is_active == True
-        )
-        .order_by(
-            DeliveryLocationSettings.location.asc()
-        )
-        .all()
-    )
-
-    restaurants = []
-
-    rankings_by_restaurant = {}
-
-    if selected_location:
-
-        # ----------------------------------------------------
-        # Only restaurants belonging to selected location
-        # ----------------------------------------------------
-
-        restaurants = (
-
-
-            Restaurant.query
-            .filter(
-                Restaurant.delivery_location_id == selected_location
-            )
-            .order_by(
-                Restaurant.category_type.asc(),
-                Restaurant.name.asc()
-            )
-            .all()
-        )
-        # ----------------------------------------------------
-        # Get rankings for this location
-        # ----------------------------------------------------
-
-        rankings = (
-            RestaurantHomepageRanking.query
-            .filter(
-                RestaurantHomepageRanking.location_id
-                == selected_location
-            )
-            .all()
+    try:
+        r = requests.post(
+            url,
+            headers=headers,
+            json=data,
+            timeout=20
         )
 
-        rankings_by_restaurant = {
-            ranking.restaurant_id: ranking
-            for ranking in rankings
+        return {
+            "status_code": r.status_code,
+            "response": r.json()
         }
 
-    return render_template(
-        "admin/homepage_restaurant_ranking.html",
+    except Exception as e:
+        return {
+            "status_code": 500,
+            "error": str(e)
+        }
 
-        locations=locations,
-
-        selected_location=selected_location,
-
-        restaurants=restaurants,
-
-        rankings_by_restaurant=rankings_by_restaurant
-    )
-
-
-# ============================================================
-# SAVE NORMAL + SPONSORED HOMEPAGE SETTINGS
-# ============================================================
-
-@app.route(
-    "/admin/update-homepage-ranking",
-    methods=["POST"]
-)
-@admin_required
-def update_homepage_ranking():
-
-    # --------------------------------------------------------
-    # IDs
-    # --------------------------------------------------------
-
-    restaurant_id = request.form.get(
-        "restaurant_id",
-        type=int
-    )
-
-    location_id = request.form.get(
-        "location_id",
-        type=int
-    )
-
-    if not restaurant_id or not location_id:
-
-        flash(
-            "Restaurant and location are required.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "homepage_restaurant_ranking",
-                location=location_id
-            )
-        )
-
-    # --------------------------------------------------------
-    # Validate location
-    # --------------------------------------------------------
-
-    location = (
-        DeliveryLocationSettings.query
-        .filter_by(
-            id=location_id,
-            is_active=True
-        )
-        .first()
-    )
-
-    if not location:
-
-        flash(
-            "Invalid or inactive location.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "homepage_restaurant_ranking"
-            )
-        )
-
-    # --------------------------------------------------------
-    # Validate restaurant
-    # --------------------------------------------------------
-
-    restaurant = (
-        Restaurant.query
-        .filter_by(
-            id=restaurant_id
-        )
-        .first()
-    )
-
-    if not restaurant:
-
-        flash(
-            "Restaurant not found.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "homepage_restaurant_ranking",
-                location=location_id
-            )
-        )
-
-    # --------------------------------------------------------
-    # IMPORTANT:
-    # Restaurant must belong to selected location
-    # --------------------------------------------------------
-
-    if restaurant.delivery_location_id != location_id:
-
-        flash(
-            "Restaurant does not belong to the selected location.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "homepage_restaurant_ranking",
-                location=location_id
-            )
-        )
-
-    # --------------------------------------------------------
-    # Find existing ranking
-    # --------------------------------------------------------
-
-    ranking = (
-        RestaurantHomepageRanking.query
-        .filter_by(
-            restaurant_id=restaurant_id,
-            location_id=location_id
-        )
-        .first()
-    )
-
-    # --------------------------------------------------------
-    # Create if missing
-    # --------------------------------------------------------
-
-    if not ranking:
-
-        ranking = RestaurantHomepageRanking(
-            restaurant_id=restaurant_id,
-            location_id=location_id,
-            position=999,
-            sponsored_enabled=False,
-            sponsored_position=999,
-            sponsored_payment_status="pending",
-            sponsored_impressions=0,
-            sponsored_clicks=0
-        )
-
-        db.session.add(ranking)
-
-    # ========================================================
-    # NORMAL HOMEPAGE POSITION
-    # ========================================================
-
-    position = request.form.get(
-        "position",
-        type=int
-    )
-
-    if not position or position < 1:
-        position = 999
-
-    # --------------------------------------------------------
-    # IMPORTANT:
-    # Homepage positions are independent for each service page.
-    #
-    # Same location can have:
-    #   FOOD    -> position 1, 2, 3...
-    #   BAKERY  -> position 1, 2, 3...
-    #   GROCERY -> position 1, 2, 3...
-    #
-    # Therefore position uniqueness/shift is scoped to:
-    #     location_id + category_type
-    # --------------------------------------------------------
-
-    service_type = (restaurant.category_type or "").strip().lower()
-    old_position = ranking.position or 999
-
-    if position != old_position and position < 999:
-
-        if old_position < 999:
-
-            if position < old_position:
-                # Moving UP, e.g. Food position 5 -> 2.
-                # Only restaurants in the SAME location AND
-                # SAME service/category are shifted.
-                (
-                    RestaurantHomepageRanking.query
-                    .join(
-                        Restaurant,
-                        Restaurant.id
-                        == RestaurantHomepageRanking.restaurant_id,
-                    )
-                    .filter(
-                        RestaurantHomepageRanking.location_id
-                        == location_id,
-                        RestaurantHomepageRanking.id != ranking.id,
-                        RestaurantHomepageRanking.position >= position,
-                        RestaurantHomepageRanking.position < old_position,
-                        Restaurant.category_type == service_type,
-                    )
-                    .update(
-                        {
-                            RestaurantHomepageRanking.position:
-                                RestaurantHomepageRanking.position + 1
-                        },
-                        synchronize_session=False,
-                    )
-                )
-
-            elif position > old_position:
-                # Moving DOWN, e.g. Bakery position 2 -> 5.
-                # Only Bakery restaurants in this location shift.
-                (
-                    RestaurantHomepageRanking.query
-                    .join(
-                        Restaurant,
-                        Restaurant.id
-                        == RestaurantHomepageRanking.restaurant_id,
-                    )
-                    .filter(
-                        RestaurantHomepageRanking.location_id
-                        == location_id,
-                        RestaurantHomepageRanking.id != ranking.id,
-                        RestaurantHomepageRanking.position > old_position,
-                        RestaurantHomepageRanking.position <= position,
-                        Restaurant.category_type == service_type,
-                    )
-                    .update(
-                        {
-                            RestaurantHomepageRanking.position:
-                                RestaurantHomepageRanking.position - 1
-                        },
-                        synchronize_session=False,
-                    )
-                )
-
-        else:
-            # Previously unranked (999).
-            # Insert into this service page only.
-            (
-                RestaurantHomepageRanking.query
-                .join(
-                    Restaurant,
-                    Restaurant.id
-                    == RestaurantHomepageRanking.restaurant_id,
-                )
-                .filter(
-                    RestaurantHomepageRanking.location_id
-                    == location_id,
-                    RestaurantHomepageRanking.id != ranking.id,
-                    RestaurantHomepageRanking.position >= position,
-                    RestaurantHomepageRanking.position < 999,
-                    Restaurant.category_type == service_type,
-                )
-                .update(
-                    {
-                        RestaurantHomepageRanking.position:
-                            RestaurantHomepageRanking.position + 1
-                    },
-                    synchronize_session=False,
-                )
-            )
-
-    ranking.position = position
-
-    # ========================================================
-    # SPONSORED ENABLED
-    # ========================================================
-
-    ranking.sponsored_enabled = (
-        request.form.get(
-            "sponsored_enabled"
-        ) == "on"
-    )
-
-    # ========================================================
-    # SPONSORED POSITION
-    # ========================================================
-
-    sponsored_position = request.form.get(
-        "sponsored_position",
-        type=int
-    )
-
-    if not sponsored_position or sponsored_position < 1:
-        sponsored_position = 999
-
-    ranking.sponsored_position = sponsored_position
-
-    # ========================================================
-    # SPONSORED BANNER
-    # ========================================================
-
-    banner_url = (
-        request.form.get(
-            "sponsored_banner_url"
-        ) or ""
-    ).strip()
-
-    ranking.sponsored_banner_url = (
-        banner_url or None
-    )
-
-    # ========================================================
-    # SPONSORED TITLE
-    # ========================================================
-
-    title = (
-        request.form.get(
-            "sponsored_title"
-        ) or ""
-    ).strip()
-
-    ranking.sponsored_title = (
-        title or None
-    )
-
-    # ========================================================
-    # SPONSORED SUBTITLE
-    # ========================================================
-
-    subtitle = (
-        request.form.get(
-            "sponsored_subtitle"
-        ) or ""
-    ).strip()
-
-    ranking.sponsored_subtitle = (
-        subtitle or None
-    )
-
-    # ========================================================
-    # PAYMENT STATUS
-    # ========================================================
-
-    payment_status = (
-        request.form.get(
-            "sponsored_payment_status"
-        ) or "pending"
-    ).strip().lower()
-
-    allowed_payment_statuses = {
-        "pending",
-        "paid",
-        "failed",
-        "refunded"
-    }
-
-    if payment_status not in allowed_payment_statuses:
-
-        payment_status = "pending"
-
-    ranking.sponsored_payment_status = (
-        payment_status
-    )
-
-    # ========================================================
-    # START DATE
-    # ========================================================
-
-    start_value = (
-        request.form.get(
-            "sponsored_start_at"
-        ) or ""
-    ).strip()
-
-    # ========================================================
-    # END DATE
-    # ========================================================
-
-    end_value = (
-        request.form.get(
-            "sponsored_end_at"
-        ) or ""
-    ).strip()
-
-    try:
-
-        if start_value:
-
-            ranking.sponsored_start_at = (
-                datetime.fromisoformat(
-                    start_value
-                )
-            )
-
-        else:
-
-            ranking.sponsored_start_at = None
-
-        if end_value:
-
-            ranking.sponsored_end_at = (
-                datetime.fromisoformat(
-                    end_value
-                )
-            )
-
-        else:
-
-            ranking.sponsored_end_at = None
-
-    except ValueError:
-
-        db.session.rollback()
-
-        flash(
-            "Invalid sponsored campaign date.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "homepage_restaurant_ranking",
-                location=location_id
-            )
-        )
-
-    # ========================================================
-    # VALIDATE DATE RANGE
-    # ========================================================
-
-    if (
-        ranking.sponsored_start_at
-        and ranking.sponsored_end_at
-        and ranking.sponsored_end_at
-        < ranking.sponsored_start_at
-    ):
-
-        db.session.rollback()
-
-        flash(
-            "Sponsored campaign end date cannot be before start date.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "homepage_restaurant_ranking",
-                location=location_id
-            )
-        )
-
-    # ========================================================
-    # SAVE
-    # ========================================================
-
-    try:
-
-        db.session.commit()
-
-    except Exception:
-
-        db.session.rollback()
-
-        flash(
-            "Failed to update homepage ranking.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "homepage_restaurant_ranking",
-                location=location_id
-            )
-        )
-
-    flash(
-        "Homepage ranking and sponsored settings updated.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "homepage_restaurant_ranking",
-            location=location_id
-        )
-    )
-
-
-# ============================================================
-# ONE-TIME NORMAL HOMEPAGE POSITION CLEANUP
-# ============================================================
-#
-# Positions are independent for:
-#     location + category_type
-#
-# Example:
-#     Location 1 / restaurant:
-#         1, 2, 3...
-#
-#     Location 1 / bakery:
-#         1, 2, 3...
-#
-#     Location 1 / grocery:
-#         1, 2, 3...
-#
-# Existing duplicate positions are repaired independently inside
-# each location/service group.
-# ============================================================
-
-@app.route(
-    "/admin/fix-homepage-ranking-positions",
-    methods=["POST"]
-)
-@admin_required
-def fix_homepage_ranking_positions():
-
-    try:
-        locations = (
-            DeliveryLocationSettings.query
-            .filter(
-                DeliveryLocationSettings.is_active == True
-            )
-            .order_by(
-                DeliveryLocationSettings.id.asc()
-            )
-            .all()
-        )
-
-        total_updated = 0
-
-        for location in locations:
-
-            # Get only rankings belonging to this location.
-            rankings = (
-                RestaurantHomepageRanking.query
-                .join(
-                    Restaurant,
-                    Restaurant.id
-                    == RestaurantHomepageRanking.restaurant_id,
-                )
-                .filter(
-                    RestaurantHomepageRanking.location_id
-                    == location.id
-                )
-                .order_by(
-                    Restaurant.category_type.asc(),
-                    RestaurantHomepageRanking.position.asc(),
-                    RestaurantHomepageRanking.id.asc(),
-                )
-                .all()
-            )
-
-            # Separate sequence for each service/category.
-            next_position_by_service = {}
-
-            for ranking in rankings:
-
-                restaurant = ranking.restaurant
-
-                service_type = (
-                    (restaurant.category_type or "")
-                    .strip()
-                    .lower()
-                )
-
-                # Keep unranked records at 999.
-                if (ranking.position or 999) >= 999:
-                    continue
-
-                next_position = (
-                    next_position_by_service
-                    .get(service_type, 0)
-                    + 1
-                )
-
-                if ranking.position != next_position:
-                    ranking.position = next_position
-                    total_updated += 1
-
-                next_position_by_service[service_type] = next_position
-
-        db.session.commit()
-
-        flash(
-            f"Homepage positions repaired successfully. "
-            f"{total_updated} ranking records updated.",
-            "success"
-        )
-
-    except Exception:
-        db.session.rollback()
-
-        flash(
-            "Failed to repair homepage ranking positions.",
-            "error"
-        )
-
-    return redirect(
-        url_for(
-            "homepage_restaurant_ranking"
-        )
-    )
-
-
-# ============================================================
-# MOBILE API
-# GET SPONSORED RESTAURANTS
-# ============================================================
-
-@app.route(
-    "/api/app/home/sponsored-restaurants",
-    methods=["GET"]
-)
-def api_sponsored_restaurants():
-
-    # --------------------------------------------------------
-    # Location
-    # --------------------------------------------------------
-
-    location_id = request.args.get(
-        "location_id",
-        type=int
-    )
-
-    if not location_id:
-
-        return jsonify({
-            "success": False,
-            "message": "Location required",
-            "restaurants": []
-        }), 400
-
-    # --------------------------------------------------------
-    # Service
-    # restaurant = food
-    # bakery   = bakery
-    # grocery  = grocery
-    # --------------------------------------------------------
-
-    service = (
-        request.args.get("service", "restaurant")
-        .strip()
-        .lower()
-    )
-
-    allowed_services = {"restaurant", "bakery", "grocery"}
-
-    if service not in allowed_services:
-        return jsonify({
-            "success": False,
-            "message": "Invalid service. Use restaurant, bakery or grocery.",
-            "restaurants": []
-        }), 400
-
-    # --------------------------------------------------------
-    # Validate location
-    # --------------------------------------------------------
-
-    location = (
-        DeliveryLocationSettings.query
-        .filter_by(
-            id=location_id,
-            is_active=True
-        )
-        .first()
-    )
-
-    if not location:
-
-        return jsonify({
-            "success": False,
-            "message": "Invalid or inactive location",
-            "restaurants": []
-        }), 400
-
-    # --------------------------------------------------------
-    # Current time
-    # --------------------------------------------------------
-
-    now = datetime.utcnow()
-
-    # --------------------------------------------------------
-    # Sponsored restaurants
-    # --------------------------------------------------------
-
-    rankings = (
-        RestaurantHomepageRanking.query
-        .join(
-            Restaurant,
-            Restaurant.id
-            == RestaurantHomepageRanking.restaurant_id
-        )
-        .filter(
-
-            # Location
-            RestaurantHomepageRanking.location_id
-            == location_id,
-
-            # Restaurant must belong to location
-            Restaurant.delivery_location_id
-            == location_id,
-
-            # Restaurant active
-            Restaurant.status == "active",
-
-            # Service/category
-            Restaurant.category_type == service,
-
-            # Sponsored enabled
-            RestaurantHomepageRanking.sponsored_enabled
-            == True,
-
-            # Payment completed
-            RestaurantHomepageRanking.sponsored_payment_status
-            == "paid",
-
-            # Start date
-            or_(
-                RestaurantHomepageRanking.sponsored_start_at
-                == None,
-
-                RestaurantHomepageRanking.sponsored_start_at
-                <= now
-            ),
-
-            # End date
-            or_(
-                RestaurantHomepageRanking.sponsored_end_at
-                == None,
-
-                RestaurantHomepageRanking.sponsored_end_at
-                >= now
-            )
-        )
-        .order_by(
-            RestaurantHomepageRanking.sponsored_position.asc(),
-            RestaurantHomepageRanking.id.asc()
-        )
-        .limit(10)
-        .all()
-    )
-
-    # --------------------------------------------------------
-    # Response
-    # --------------------------------------------------------
-
-    result = []
-
-    for ranking in rankings:
-
-        restaurant = ranking.restaurant
-
-        # Count impression
-        ranking.sponsored_impressions = (
-            (ranking.sponsored_impressions or 0)
-            + 1
-        )
-
-        result.append({
-
-            "ranking_id": ranking.id,
-
-            "restaurant_id": restaurant.id,
-
-            "restaurant_name": restaurant.name,
-
-            "category_type": restaurant.category_type,
-
-            "banner_url": (
-                ranking.sponsored_banner_url
-            ),
-
-            "title": (
-                ranking.sponsored_title
-            ),
-
-            "subtitle": (
-                ranking.sponsored_subtitle
-            ),
-
-            "sponsored_position": (
-                ranking.sponsored_position
-            ),
-
-            "rating": getattr(
-                restaurant,
-                "rating",
-                None
-            ),
-
-            "delivery_time": getattr(
-                restaurant,
-                "delivery_time",
-                None
-            ),
-
-            "is_veg": getattr(
-                restaurant,
-                "is_veg",
-                None
-            )
-        })
-
-    # --------------------------------------------------------
-    # Save impression counts
-    # --------------------------------------------------------
-
-    try:
-
-        db.session.commit()
-
-    except Exception:
-
-        db.session.rollback()
-
-    return jsonify({
-
-        "success": True,
-
-        "location_id": location_id,
-
-        "location": location.location,
-
-        "service": service,
-
-        "count": len(result),
-
-        "restaurants": result
-    })
-
-
-# ============================================================
-# ADMIN PAGE
-# ============================================================
-
-@app.route(
-    "/restaurant/<int:restaurant_id>/menu-alerts",
-    methods=["GET"]
-)
-def restaurant_menu_alerts(restaurant_id):
-
-    restaurant = Restaurant.query.get_or_404(
-        restaurant_id
-    )
-
-    alerts = (
-        RestaurantMenuAlert.query
-        .filter_by(
-            restaurant_id=restaurant.id
-        )
-        .order_by(
-            RestaurantMenuAlert.updated_at.desc()
-        )
-        .all()
-    )
-
-    categories = (
-        db.session.query(
-            MenuItem.category
-        )
-        .filter(
-            MenuItem.restaurant_id == restaurant.id,
-            MenuItem.category.isnot(None),
-            MenuItem.category != ""
-        )
-        .distinct()
-        .order_by(
-            MenuItem.category.asc()
-        )
-        .all()
-    )
-
-    categories = [
-        row[0].strip()
-        for row in categories
-        if row[0]
-    ]
-
-    return render_template(
-        "restaurant_menu_alerts.html",
-        restaurant=restaurant,
-        alerts=alerts,
-        categories=categories
-    )
-
-@app.route(
-    "/restaurant/<int:restaurant_id>/menu-alerts/save",
-    methods=["POST"]
-)
-def save_restaurant_menu_alert(restaurant_id):
-
-    restaurant = Restaurant.query.get_or_404(
-        restaurant_id
-    )
-
-    enabled = (
-        request.form.get("enabled")
-        == "on"
-    )
-
-    scope = (
-        request.form.get("scope")
-        or "restaurant"
-    ).strip()
-
-    category = (
-        request.form.get("category")
-        or ""
-    ).strip()
-
-    title = (
-        request.form.get("title")
-        or "Important Notice"
-    ).strip()
-
-    message = (
-        request.form.get("message")
-        or ""
-    ).strip()
-
-    severity = (
-        request.form.get("severity")
-        or "warning"
-    ).strip()
-
-    expires_raw = (
-        request.form.get("expires_at")
-        or ""
-    ).strip()
-
-    # ------------------------------------------
-    # VALIDATION
-    # ------------------------------------------
-
-    if scope not in [
-        "restaurant",
-        "category"
-    ]:
-        flash(
-            "Invalid alert scope.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "restaurant_menu_alerts",
-                restaurant_id=restaurant.id
-            )
-        )
-
-    if severity not in [
-        "info",
-        "warning",
-        "emergency"
-    ]:
-        flash(
-            "Invalid severity.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "restaurant_menu_alerts",
-                restaurant_id=restaurant.id
-            )
-        )
-
-    if not message:
-        flash(
-            "Alert message is required.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "restaurant_menu_alerts",
-                restaurant_id=restaurant.id
-            )
-        )
-
-    if scope == "category" and not category:
-
-        flash(
-            "Please select a category.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "restaurant_menu_alerts",
-                restaurant_id=restaurant.id
-            )
-        )
-
-    if scope == "restaurant":
-        category = None
-
-    # ------------------------------------------
-    # EXPIRY
-    # ------------------------------------------
-
-    expires_at = None
-
-    if expires_raw:
-
-        try:
-
-            expires_at = datetime.strptime(
-                expires_raw,
-                "%Y-%m-%dT%H:%M"
-            )
-
-        except ValueError:
-
-            flash(
-                "Invalid expiry date.",
-                "error"
-            )
-
-            return redirect(
-                url_for(
-                    "restaurant_menu_alerts",
-                    restaurant_id=restaurant.id
-                )
-            )
-
-    # ------------------------------------------
-    # FIND EXISTING ALERT
-    # ------------------------------------------
-
-    query = (
-        RestaurantMenuAlert.query
-        .filter_by(
-            restaurant_id=restaurant.id,
-            scope=scope
-        )
-    )
-
-    if scope == "category":
-
-        query = query.filter(
-            db.func.lower(
-                RestaurantMenuAlert.category
-            )
-            == category.lower()
-        )
-
-    else:
-
-        query = query.filter(
-            RestaurantMenuAlert.category.is_(None)
-        )
-
-    alert = query.first()
-
-    if not alert:
-
-        alert = RestaurantMenuAlert(
-            restaurant_id=restaurant.id,
-            scope=scope,
-            category=category,
-            created_by="restaurant"
-        )
-
-        db.session.add(alert)
-
-    alert.enabled = enabled
-    alert.scope = scope
-    alert.category = category
-    alert.title = title
-    alert.message = message
-    alert.severity = severity
-    alert.expires_at = expires_at
-
-    db.session.commit()
-
-    flash(
-        "Menu alert saved successfully.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "restaurant_menu_alerts",
-            restaurant_id=restaurant.id
-        )
-    )
-
-@app.route(
-    "/restaurant/menu-alerts/<int:alert_id>/disable",
-    methods=["POST"]
-)
-def disable_restaurant_menu_alert(alert_id):
-
-    alert = RestaurantMenuAlert.query.get_or_404(
-        alert_id
-    )
-
-    alert.enabled = False
-
-    db.session.commit()
-
-    flash(
-        "Menu alert disabled.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "restaurant_menu_alerts",
-            restaurant_id=alert.restaurant_id
-        )
-    )
-@app.route(
-    "/restaurant/menu-alerts/<int:alert_id>/delete",
-    methods=["POST"]
-)
-def delete_restaurant_menu_alert(alert_id):
-
-    alert = RestaurantMenuAlert.query.get_or_404(
-        alert_id
-    )
-
-    restaurant_id = alert.restaurant_id
-
-    db.session.delete(alert)
-
-    db.session.commit()
-
-    flash(
-        "Menu alert deleted.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "restaurant_menu_alerts",
-            restaurant_id=restaurant_id
-        )
-    )
-
-@app.route(
-    "/admin/menu-alerts",
-    methods=["GET"]
-)
-def admin_menu_alerts():
-
-    restaurants = (
-        Restaurant.query
-        .order_by(
-            Restaurant.name.asc()
-        )
-        .all()
-    )
-
-    selected_id = request.args.get(
-        "restaurant_id",
-        type=int
-    )
-
-    selected_restaurant = None
-    alerts = []
-    categories = []
-
-    if selected_id:
-
-        selected_restaurant = (
-            Restaurant.query.get(
-                selected_id
-            )
-        )
-
-        if selected_restaurant:
-
-            alerts = (
-                RestaurantMenuAlert.query
-                .filter_by(
-                    restaurant_id=
-                        selected_restaurant.id
-                )
-                .order_by(
-                    RestaurantMenuAlert.updated_at.desc()
-                )
-                .all()
-            )
-
-            category_rows = (
-                db.session.query(
-                    MenuItem.category
-                )
-                .filter(
-                    MenuItem.restaurant_id
-                    == selected_restaurant.id,
-
-                    MenuItem.category.isnot(None),
-
-                    MenuItem.category != ""
-                )
-                .distinct()
-                .order_by(
-                    MenuItem.category.asc()
-                )
-                .all()
-            )
-
-            categories = [
-                row[0].strip()
-                for row in category_rows
-                if row[0]
-            ]
-
-    return render_template(
-        "admin_menu_alerts.html",
-        restaurants=restaurants,
-        selected_restaurant=
-            selected_restaurant,
-        alerts=alerts,
-        categories=categories
-    )
-
-
-@app.route(
-    "/admin/menu-alerts/save",
-    methods=["POST"]
-)
-def admin_save_menu_alert():
-
-    restaurant_id = request.form.get(
-        "restaurant_id",
-        type=int
-    )
-
-    if not restaurant_id:
-
-        flash(
-            "Restaurant is required.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "admin_menu_alerts"
-            )
-        )
-
-    restaurant = Restaurant.query.get_or_404(
-        restaurant_id
-    )
-
-    enabled = (
-        request.form.get("enabled")
-        == "on"
-    )
-
-    scope = (
-        request.form.get("scope")
-        or "restaurant"
-    ).strip()
-
-    category = (
-        request.form.get("category")
-        or ""
-    ).strip()
-
-    title = (
-        request.form.get("title")
-        or "Important Notice"
-    ).strip()
-
-    message = (
-        request.form.get("message")
-        or ""
-    ).strip()
-
-    severity = (
-        request.form.get("severity")
-        or "warning"
-    ).strip()
-
-    expires_raw = (
-        request.form.get("expires_at")
-        or ""
-    ).strip()
-
-    if scope not in (
-        "restaurant",
-        "category"
-    ):
-        flash(
-            "Invalid scope.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "admin_menu_alerts",
-                restaurant_id=restaurant.id
-            )
-        )
-
-    if severity not in (
-        "info",
-        "warning",
-        "emergency"
-    ):
-        flash(
-            "Invalid severity.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "admin_menu_alerts",
-                restaurant_id=restaurant.id
-            )
-        )
-
-    if not message:
-
-        flash(
-            "Message is required.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "admin_menu_alerts",
-                restaurant_id=restaurant.id
-            )
-        )
-
-    if scope == "category" and not category:
-
-        flash(
-            "Category is required.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "admin_menu_alerts",
-                restaurant_id=restaurant.id
-            )
-        )
-
-    if scope == "restaurant":
-        category = None
-
-    expires_at = None
-
-    if expires_raw:
-
-        try:
-
-            expires_at = datetime.strptime(
-                expires_raw,
-                "%Y-%m-%dT%H:%M"
-            )
-
-        except ValueError:
-
-            flash(
-                "Invalid expiry date.",
-                "error"
-            )
-
-            return redirect(
-                url_for(
-                    "admin_menu_alerts",
-                    restaurant_id=restaurant.id
-                )
-            )
-
-    query = (
-        RestaurantMenuAlert.query
-        .filter_by(
-            restaurant_id=restaurant.id,
-            scope=scope
-        )
-    )
-
-    if scope == "category":
-
-        query = query.filter(
-            db.func.lower(
-                RestaurantMenuAlert.category
-            )
-            == category.lower()
-        )
-
-    else:
-
-        query = query.filter(
-            RestaurantMenuAlert.category.is_(None)
-        )
-
-    alert = query.first()
-
-    if not alert:
-
-        alert = RestaurantMenuAlert(
-            restaurant_id=restaurant.id,
-            scope=scope,
-            category=category,
-            created_by="admin"
-        )
-
-        db.session.add(alert)
-
-    alert.enabled = enabled
-    alert.category = category
-    alert.title = title
-    alert.message = message
-    alert.severity = severity
-    alert.expires_at = expires_at
-    alert.created_by = "admin"
-
-    db.session.commit()
-
-    flash(
-        "Admin menu alert saved.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "admin_menu_alerts",
-            restaurant_id=restaurant.id
-        )
-    )
-
-@app.route(
-    "/admin/menu-alerts/<int:alert_id>/disable",
-    methods=["POST"]
-)
-def admin_disable_menu_alert(alert_id):
-
-    alert = RestaurantMenuAlert.query.get_or_404(
-        alert_id
-    )
-
-    alert.enabled = False
-
-    db.session.commit()
-
-    flash(
-        "Alert disabled.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "admin_menu_alerts",
-            restaurant_id=alert.restaurant_id
-        )
-    )
-
-@app.route("/privacy-policy")
-def privacy_policy():
-    return render_template("privacy_policy.html")
 
 # ============================================================
 # 📱 WHATSAPP META WEBHOOK
@@ -39455,441 +34132,404 @@ def verify_whatsapp_webhook():
     print("❌ WhatsApp webhook verification failed")
     return "Verification failed", 403
 
+# ============================================================
+# 📱 WHATSAPP INCOMING MESSAGE WEBHOOK
+# ============================================================
+
+# ============================================================
+# 📱 WHATSAPP INCOMING MESSAGE WEBHOOK
+# ============================================================
+
 @app.route("/webhooks/whatsapp", methods=["POST"])
 def whatsapp_webhook():
     """
-    Process Meta WhatsApp first-order confirmation replies.
+    WhatsApp interactive confirmation handler.
 
-    YES, CONFIRM:
-        whatsapp_confirmation_status = confirmed
-        Order.status = Confirmed
+    YES:
+        RUCHIGO_CONFIRM_<order_id>
 
     CANCEL:
-        whatsapp_confirmation_status = cancelled
-        Order.status = Cancelled
+        RUCHIGO_CANCEL_<order_id>
 
-    Supports interactive.button_reply and button messages.
-    Rejects expired confirmations and duplicate replies.
+    Confirmation is valid only while:
+        whatsapp_confirmation_status == "pending"
+        AND
+        current time < whatsapp_confirmation_expires_at
     """
 
-    from datetime import datetime
-    import traceback
-
     try:
-        data = request.get_json(silent=True) or {}
+        data = request.get_json(silent=True)
 
-        print("=" * 65)
-        print("WHATSAPP WEBHOOK RECEIVED")
-        print("=" * 65)
+        print("\n" + "=" * 70)
+        print("📱 WHATSAPP WEBHOOK RECEIVED")
+        print("=" * 70)
 
-        for entry in data.get("entry", []):
-            for change in entry.get("changes", []):
+        if not data:
+            print("⚠️ Empty webhook payload")
+            return "EVENT_RECEIVED", 200
+
+        print("Webhook data:")
+        print(data)
+
+        # ----------------------------------------------------
+        # Basic WhatsApp webhook validation
+        # ----------------------------------------------------
+
+        if data.get("object") != "whatsapp_business_account":
+            print("⚠️ Not a WhatsApp Business Account webhook")
+            return "EVENT_RECEIVED", 200
+
+        entries = data.get("entry", [])
+
+        for entry in entries:
+
+            changes = entry.get("changes", [])
+
+            for change in changes:
+
                 value = change.get("value", {})
 
-                for message in value.get("messages", []):
-                    message_type = str(
-                        message.get("type", "")
-                    ).strip().lower()
+                messages = value.get("messages", [])
+
+                if not messages:
+                    continue
+
+                for message in messages:
+
+                    print("\n📨 Incoming WhatsApp message")
 
                     message_id = message.get("id")
-
-                    from_phone = "".join(
-                        char
-                        for char in str(message.get("from", ""))
-                        if char.isdigit()
-                    )
+                    from_phone = message.get("from")
+                    message_type = message.get("type")
 
                     print("Message ID:", message_id)
                     print("Customer phone:", from_phone)
                     print("Message type:", message_type)
 
-                    # --------------------------------------------
-                    # EXTRACT BUTTON RESPONSE
-                    # --------------------------------------------
-                    button_id = ""
-                    button_title = ""
+                    # ------------------------------------------------
+                    # We only need interactive button replies here
+                    # ------------------------------------------------
 
-                    if message_type == "interactive":
-                        interactive = message.get("interactive", {})
-
-                        if interactive.get("type") != "button_reply":
-                            continue
-
-                        reply = interactive.get("button_reply", {})
-
-                        button_id = str(
-                            reply.get("id", "")
-                        ).strip()
-
-                        button_title = str(
-                            reply.get("title", "")
-                        ).strip()
-
-                    elif message_type == "button":
-                        button = message.get("button", {})
-
-                        button_id = str(
-                            button.get("payload", "")
-                        ).strip()
-
-                        button_title = str(
-                            button.get("text", "")
-                        ).strip()
-
-                    else:
-                        # Ignore ordinary messages and status receipts.
+                    if message_type != "interactive":
                         continue
 
-                    button_id_upper = button_id.upper()
-                    button_title_upper = button_title.upper()
+                    interactive = message.get("interactive", {})
 
-                    raw_choice = (
-                        f"{button_id_upper} {button_title_upper}"
+                    interactive_type = interactive.get("type")
+
+                    print("Interactive type:", interactive_type)
+
+                    if interactive_type != "button_reply":
+                        continue
+
+                    button_reply = interactive.get(
+                        "button_reply",
+                        {}
                     )
 
-                    print("Button ID/Payload:", button_id)
-                    print("Button title/text:", button_title)
+                    button_id = button_reply.get("id")
+                    button_title = button_reply.get("title")
 
-                    # --------------------------------------------
-                    # IDENTIFY DECISION
-                    # --------------------------------------------
-                    if "CANCEL" in raw_choice:
-                        decision = "cancelled"
+                    print("\n" + "-" * 60)
+                    print("🔘 WHATSAPP BUTTON CLICK")
+                    print("-" * 60)
+                    print("Customer:", from_phone)
+                    print("Button ID:", button_id)
+                    print("Button title:", button_title)
+                    print("-" * 60)
 
-                    elif (
-                        "CONFIRM" in raw_choice
-                        or button_title_upper == "YES"
-                        or button_id_upper == "YES"
-                    ):
-                        decision = "confirmed"
+                    if not button_id:
+                        print("⚠️ Missing button ID")
+                        continue
+
+                    # ------------------------------------------------
+                    # Determine action
+                    # ------------------------------------------------
+
+                    action = None
+                    order_id = None
+
+                    if button_id.startswith("RUCHIGO_CONFIRM_"):
+
+                        action = "confirm"
+
+                        order_id = button_id.replace(
+                            "RUCHIGO_CONFIRM_",
+                            "",
+                            1
+                        )
+
+                    elif button_id.startswith("RUCHIGO_CANCEL_"):
+
+                        action = "cancel"
+
+                        order_id = button_id.replace(
+                            "RUCHIGO_CANCEL_",
+                            "",
+                            1
+                        )
 
                     else:
-                        print("Unknown WhatsApp button; ignored.")
+
+                        print(
+                            "⚠️ Unknown WhatsApp button ID:",
+                            button_id
+                        )
+
                         continue
 
-                    print("Recognized decision:", decision)
+                    print("Action:", action)
+                    print("Order ID:", order_id)
 
-                    if len(from_phone) < 10:
-                        print("Invalid sender phone; ignored.")
+                    # ------------------------------------------------
+                    # Find order
+                    # ------------------------------------------------
+
+                    order = Order.query.filter_by(
+                        order_id=order_id
+                    ).first()
+
+                    if not order:
+
+                        print(
+                            "❌ Order not found:",
+                            order_id
+                        )
+
                         continue
 
-                    # --------------------------------------------
-                    # OPTIONAL ORDER ID IN BUTTON PAYLOAD
-                    # --------------------------------------------
-                    requested_order_id = None
-
-                    if button_id_upper.startswith("RUCHIGO_CONFIRM_"):
-                        requested_order_id = button_id[
-                            len("RUCHIGO_CONFIRM_"):
-                        ].strip()
-
-                    elif button_id_upper.startswith("RUCHIGO_CANCEL_"):
-                        requested_order_id = button_id[
-                            len("RUCHIGO_CANCEL_"):
-                        ].strip()
-
-                    # --------------------------------------------
-                    # FIND MATCHING PENDING CONFIRMATIONS
-                    # --------------------------------------------
-                    query = Order.query.filter_by(
-                        whatsapp_confirmation_status="pending"
+                    print(
+                        "✅ Order found:",
+                        order.order_id
                     )
 
-                    if requested_order_id:
-                        query = query.filter_by(
-                            order_id=requested_order_id
-                        )
+                    # ------------------------------------------------
+                    # Normalize phone numbers
+                    # ------------------------------------------------
 
-                    candidates = query.all()
-                    eligible = []
-                    expired_changed = False
+                    webhook_phone = "".join(
+                        c for c in str(from_phone)
+                        if c.isdigit()
+                    )
 
-                    for candidate in candidates:
-                        # Only process a message recorded as sent.
-                        if not candidate.whatsapp_confirmation_sent_at:
-                            continue
+                    order_phone = "".join(
+                        c for c in str(order.phone or "")
+                        if c.isdigit()
+                    )
 
-                        # Match the sender with the order phone.
-                        order_phone = "".join(
-                            char
-                            for char in str(candidate.phone or "")
-                            if char.isdigit()
-                        )
+                    # Convert Indian local number to 91 format
+                    if len(order_phone) == 10:
+                        order_phone = "91" + order_phone
 
-                        if len(order_phone) < 10:
-                            continue
+                    if len(webhook_phone) == 10:
+                        webhook_phone = "91" + webhook_phone
 
-                        if from_phone[-10:] != order_phone[-10:]:
-                            continue
+                    print("Webhook phone:", webhook_phone)
+                    print("Order phone:", order_phone)
 
-                        current_status = str(
-                            candidate.status or ""
-                        ).strip().lower()
+                    # ------------------------------------------------
+                    # SECURITY:
+                    # Make sure the button was clicked by the
+                    # same phone number used for the order.
+                    # ------------------------------------------------
 
-                        # Customer response applies only while the
-                        # order is still awaiting confirmation.
-                        if current_status != "pending":
-                            print(
-                                "Order is no longer Pending; ignored:",
-                                candidate.order_id,
-                                candidate.status,
-                            )
-                            continue
+                    if webhook_phone != order_phone:
 
-                        # ----------------------------------------
-                        # CHECK EXPIRY
-                        # ----------------------------------------
-                        expires_at = (
-                            candidate.whatsapp_confirmation_expires_at
-                        )
-
-                        if expires_at is None:
-                            candidate.whatsapp_confirmation_status = (
-                                "expired"
-                            )
-                            expired_changed = True
-
-                            print(
-                                "Missing confirmation expiry:",
-                                candidate.order_id,
-                            )
-                            continue
-
-                        if (
-                            getattr(expires_at, "tzinfo", None) is not None
-                            and expires_at.utcoffset() is not None
-                        ):
-                            now_for_expiry = datetime.now(
-                                expires_at.tzinfo
-                            )
-                        else:
-                            now_for_expiry = datetime.utcnow()
-
-                        if now_for_expiry >= expires_at:
-                            candidate.whatsapp_confirmation_status = (
-                                "expired"
-                            )
-                            expired_changed = True
-
-                            print(
-                                "Expired WhatsApp confirmation:",
-                                candidate.order_id,
-                            )
-                            continue
-
-                        eligible.append(candidate)
-
-                    if expired_changed:
-                        db.session.commit()
-
-                    # Static buttons do not contain an order ID.
-                    # Never guess when multiple orders match the phone.
-                    if len(eligible) != 1:
+                        print("\n❌ PHONE MISMATCH")
                         print(
-                            "WhatsApp reply ignored: expected exactly "
-                            "one eligible pending order; found",
-                            len(eligible),
+                            "WhatsApp phone does not match order phone."
                         )
+
                         continue
 
-                    order = eligible[0]
+                    print("✅ Phone verification passed")
 
-                    # --------------------------------------------
-                    # RECHECK BEFORE UPDATING
-                    # --------------------------------------------
-                    if order.whatsapp_confirmation_status != "pending":
-                        print("Confirmation already processed; ignored.")
-                        continue
+                    # ------------------------------------------------
+                    # Check confirmation status
+                    # ------------------------------------------------
 
-                    if str(order.status or "").strip().lower() != "pending":
+                    confirmation_status = (
+                        order.whatsapp_confirmation_status
+                    )
+
+                    print(
+                        "Current confirmation status:",
+                        confirmation_status
+                    )
+
+                    if confirmation_status != "pending":
+
                         print(
-                            "Order status changed before processing; ignored:",
-                            order.order_id,
-                            order.status,
+                            "⚠️ Confirmation already processed."
                         )
+
                         continue
+
+                    # ------------------------------------------------
+                    # Check expiry
+                    # ------------------------------------------------
 
                     now = datetime.utcnow()
-                    expires_at = order.whatsapp_confirmation_expires_at
 
-                    if expires_at is None:
-                        order.whatsapp_confirmation_status = "expired"
-                        db.session.commit()
-                        print("Confirmation has expired or has no expiry.")
-                        continue
+                    expires_at = (
+                        order.whatsapp_confirmation_expires_at
+                    )
 
-                    if (
-                        getattr(expires_at, "tzinfo", None) is not None
-                        and expires_at.utcoffset() is not None
-                    ):
-                        now_for_expiry = datetime.now(expires_at.tzinfo)
-                    else:
-                        now_for_expiry = now
-
-                    if now_for_expiry >= expires_at:
-                        order.whatsapp_confirmation_status = "expired"
-                        db.session.commit()
+                    if not expires_at:
 
                         print(
-                            "Expired WhatsApp confirmation; ignored:",
-                            order.order_id,
+                            "⚠️ Confirmation expiry time missing."
                         )
+
                         continue
 
-                    # --------------------------------------------
-                    # UPDATE BOTH CONFIRMATION AND ORDER STATUS
-                    # --------------------------------------------
-                    if decision == "confirmed":
-                        order.whatsapp_confirmation_status = "confirmed"
+                    print("Current UTC time:", now)
+                    print("Expires at:", expires_at)
+
+                    if now > expires_at:
+
+                        print(
+                            "⏰ WhatsApp confirmation window expired."
+                        )
+
+                        # Mark it expired so another button click
+                        # cannot change the order.
+                        order.whatsapp_confirmation_status = (
+                            "expired"
+                        )
+
+                        db.session.commit()
+
+                        continue
+
+                    # ------------------------------------------------
+                    # Prevent confirmation of an already completed/
+                    # cancelled order.
+                    # ------------------------------------------------
+
+                    if order.status in [
+                        "Cancelled",
+                        "Canceled",
+                        "Rejected",
+                        "Declined",
+                        "Delivered"
+                    ]:
+
+                        print(
+                            "⚠️ Order can no longer be confirmed."
+                        )
+
+                        order.whatsapp_confirmation_status = (
+                            "already_closed"
+                        )
+
+                        db.session.commit()
+
+                        continue
+
+                    # ------------------------------------------------
+                    # PROCESS YES
+                    # ------------------------------------------------
+
+                    if action == "confirm":
+
+                        print("\n" + "=" * 60)
+                        print("✅ WHATSAPP CONFIRMATION ACCEPTED")
+                        print("=" * 60)
+
                         order.status = "Confirmed"
 
-                        print(
-                            "Customer confirmed order:",
-                            order.order_id,
+                        order.whatsapp_confirmation_status = (
+                            "confirmed"
                         )
 
-                    else:
-                        order.whatsapp_confirmation_status = "cancelled"
+                        order.whatsapp_confirmation_responded_at = (
+                            datetime.utcnow()
+                        )
+
+                        db.session.commit()
+
+                        print(
+                            "Order status changed to:",
+                            order.status
+                        )
+
+                        print(
+                            "WhatsApp confirmation status:",
+                            order.whatsapp_confirmation_status
+                        )
+
+                        print("=" * 60)
+
+                    # ------------------------------------------------
+                    # PROCESS CANCEL
+                    # ------------------------------------------------
+
+                    elif action == "cancel":
+
+                        print("\n" + "=" * 60)
+                        print("❌ WHATSAPP ORDER CANCELLED")
+                        print("=" * 60)
+
                         order.status = "Cancelled"
 
-                        if not order.cancel_reason:
-                            order.cancel_reason = (
-                                "Customer cancelled via WhatsApp confirmation"
-                            )
-
-                        # First-order confirmations should normally be
-                        # received before rider assignment. Clear any
-                        # unexpected assignment for a cancelled order.
-                        previous_rider_id = getattr(
-                            order,
-                            "delivery_person_id",
-                            None,
+                        order.whatsapp_confirmation_status = (
+                            "cancelled"
                         )
 
-                        if previous_rider_id:
-                            order.delivery_person_id = None
+                        order.whatsapp_confirmation_responded_at = (
+                            datetime.utcnow()
+                        )
 
-                            if hasattr(order, "assigned_at"):
-                                order.assigned_at = None
-
-                            try:
-                                rider = db.session.get(
-                                    DeliveryPerson,
-                                    previous_rider_id,
-                                )
-
-                                if rider:
-                                    if hasattr(rider, "is_available"):
-                                        rider.is_available = True
-
-                                    if hasattr(rider, "last_assignment"):
-                                        rider.last_assignment = None
-
-                            except Exception as rider_error:
-                                print(
-                                    "Unable to release rider:",
-                                    rider_error,
-                                )
-
-                        if hasattr(order, "delivery_status"):
-                            order.delivery_status = "Cancelled"
+                        db.session.commit()
 
                         print(
-                            "Customer cancelled order:",
-                            order.order_id,
+                            "Order status changed to:",
+                            order.status
                         )
 
-                    order.whatsapp_confirmation_responded_at = now
-
-                    # Save the state change first.
-                    db.session.commit()
-
-                    print("=" * 65)
-                    print("WHATSAPP DECISION PROCESSED")
-                    print("Order:", order.order_id)
-                    print(
-                        "Confirmation:",
-                        order.whatsapp_confirmation_status,
-                    )
-                    print("Updated order status:", order.status)
-                    print("=" * 65)
-
-                    # --------------------------------------------
-                    # EMIT LIVE ORDER STATUS UPDATE
-                    # --------------------------------------------
-                    try:
-                        socketio.emit(
-                            "order_status_update",
-                            {
-                                "order_id": order.order_id,
-                                "status": order.status,
-                                "delivery_person_id": getattr(
-                                    order,
-                                    "delivery_person_id",
-                                    None,
-                                ),
-                            },
-                            room=f"order_{order.order_id}",
-                        )
-                    except Exception as socket_error:
                         print(
-                            "WhatsApp status socket error:",
-                            socket_error,
+                            "WhatsApp confirmation status:",
+                            order.whatsapp_confirmation_status
                         )
 
-                    # --------------------------------------------
-                    # CUSTOMER NOTIFICATIONS
-                    # --------------------------------------------
-                    try:
-                        if decision == "confirmed":
-                            title = "✅ Order Confirmed!"
-                            body = (
-                                f"Your RucHiGo order {order.order_id} "
-                                "is confirmed."
-                            )
-                        else:
-                            title = "❌ Order Cancelled"
-                            body = (
-                                f"Your RucHiGo order {order.order_id} "
-                                "has been cancelled."
-                            )
+                        print("=" * 60)
 
-                        send_order_push_to_customer(
-                            order=order,
-                            title=title,
-                            body=body,
-                        )
-
-                    except Exception as notification_error:
-                        print(
-                            "WhatsApp decision push notification error:",
-                            notification_error,
-                        )
+        print("\n" + "=" * 70)
+        print("✅ WhatsApp webhook processed")
+        print("=" * 70)
 
         return "EVENT_RECEIVED", 200
 
-    except Exception:
-        db.session.rollback()
+    except Exception as e:
+
+        print("\n" + "=" * 70)
+        print("❌ WHATSAPP WEBHOOK ERROR")
+        print("=" * 70)
+
+        print(str(e))
+
+        import traceback
         traceback.print_exc()
 
-        # Let Meta retry if processing fails.
-        return "Webhook processing failed", 500
+        print("=" * 70)
+
+        # Always return 200 to Meta so it does not repeatedly
+        # resend the same webhook.
+        return "EVENT_RECEIVED", 200
 
 
 @app.route("/delivery-privacy-policy")
 def delivery_privacy_policy():
     return render_template("delivery_privacy_policy.html")
 
+@app.route("/privacy-policy")
+def privacy_policy():
+    return render_template("privacy_policy.html")
 
 @app.route("/delete-account")
 def delete_account_page():
     return render_template("delete_account.html")
-
-
-# ==========================================================
-# RIDER APPLICATION ROUTE REGISTRATION
-# ==========================================================
-
 # ------------------ DB INIT ------------------
 
 # ------------------ RUN 
