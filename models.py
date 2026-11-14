@@ -9,11 +9,14 @@ from sqlalchemy import CheckConstraint
 from flask_login import UserMixin
 from sqlalchemy import Enum   # 👈 ADD THIS AT TOP
 from extensions import db   # ✅ ONLY ONE db, coming from extensions.py
+from sqlalchemy import Index, text
+from users.restaurant_control import get_restaurant_order_control
 restaurant_categories = db.Table(
     "restaurant_categories",
     db.Column("restaurant_id", db.Integer, db.ForeignKey("restaurant.id")),
     db.Column("category_id", db.Integer, db.ForeignKey("category.id"))
 )
+
 class Restaurant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
@@ -31,7 +34,23 @@ class Restaurant(db.Model):
     is_fast_delivery = db.Column(db.Boolean, nullable=False, server_default="0")
     # ================= CATEGORY =================
     
+        # ================= RESTAURANT BREAK SCHEDULE =================
+    break_enabled = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False,
+        server_default="0"
+    )
 
+    break_start_time = db.Column(
+        db.Time,
+        nullable=True
+    )
+
+    break_end_time = db.Column(
+        db.Time,
+        nullable=True
+    )
     category_type = db.Column(db.String(20), nullable=False)
         # ================= CARD DETAILS =================
     is_veg = db.Column(db.Boolean, default=True)
@@ -42,7 +61,20 @@ class Restaurant(db.Model):
     # ================= ORDER ACCEPTANCE =================
     is_accepting_orders = db.Column(db.Boolean, default=True, nullable=False)
     accept_orders_until = db.Column(db.Time, nullable=True)
+        # ========================================================
+    # SUPER ADMIN ORDER OVERRIDE
+    #
+    # inherit    = follow normal restaurant rules
+    # force_on   = admin explicitly enables
+    # force_off  = admin explicitly disables
+    # ========================================================
 
+    admin_order_override = db.Column(
+        db.String(20),
+        nullable=False,
+        default="inherit",
+        server_default="inherit"
+    )
     popular_items = db.Column(
         db.String(255),
         default="Biryani • Pizza • Rolls • Chinese"
@@ -70,6 +102,22 @@ class Restaurant(db.Model):
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
     delivery_radius_km = db.Column(db.Float, default=5)
+    # LOCATION-WISE DELIVERY PRICING
+    # ============================================================
+
+    delivery_location_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            "delivery_location_settings.id"
+        ),
+        nullable=True,
+        index=True
+    )
+
+    delivery_location_settings = db.relationship(
+        "DeliveryLocationSettings",
+        back_populates="restaurants"
+    )
     # ================= HOMEPAGE ORDER =================
     homepage_position = db.Column(db.Integer, default=999)
     # ================= 🔥 LIMITED DROP =================
@@ -115,54 +163,14 @@ class Restaurant(db.Model):
 
     from datetime import datetime, date
     import pytz
-
     @property
     def can_accept_orders(self):
-        # 🌍 Local time (for opening hours)
-        tz = pytz.timezone(self.timezone or "Asia/Kolkata")
-        now_local = datetime.now(tz)
-        now_time = now_local.time()
+        result = get_restaurant_order_control(self)
+        return result["allowed"]
 
-        # ❌ Sold out
-        if self.is_limited_drop and self.sold_out:
-            return False
-
-        # ❌ Manual OFF
-        if not self.is_accepting_orders:
-            return False
-
-        # ❌ Suspended
-        if self.status == "suspended":
-            return False
-
-        # ❌ Coming soon
-        if self.status == "coming_soon":
-            if not self.start_date or date.today() < self.start_date:
-                return False
-
-        # 🕒 LIMITED DROP (UTC ONLY — FIXED)
-        if self.is_limited_drop and self.limited_start_datetime and self.limited_end_datetime:
-            now_utc = datetime.utcnow()
-            if not (self.limited_start_datetime <= now_utc <= self.limited_end_datetime):
-                return False
-
-        # 🕒 Opening & closing hours (LOCAL)
-        if self.opening_time and self.closing_time:
-            if self.opening_time < self.closing_time:
-                if not (self.opening_time <= now_time <= self.closing_time):
-                    return False
-            else:
-                # Overnight
-                if not (now_time >= self.opening_time or now_time <= self.closing_time):
-                    return False
-
-        # ⏸ Accept orders until
-        if self.accept_orders_until and now_time > self.accept_orders_until:
-            return False
-
-        return True
-
-
+    @property
+    def order_control_status(self):
+        return get_restaurant_order_control(self)
     # ================= LIMITED DROP HELPERS =================
     @property
     def sold_out(self):
@@ -558,6 +566,7 @@ class RiderPasswordResetRequest(db.Model):
     expires_at = db.Column(db.DateTime, nullable=False, index=True)
     requested_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     used = db.Column(db.Boolean, nullable=False, default=False, index=True)
+
 class Order(db.Model):
    
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -580,15 +589,27 @@ class Order(db.Model):
     device_fingerprint = db.Column(db.Text, nullable=True)
 
     restaurant_offer_discount = db.Column(db.Float, default=0)
+    
     # ---------------- ORDER STATUS ----------------
     status = db.Column(db.String(50), default="Pending")    # Pending / Completed / Cancelled
     otp = db.Column(db.String(10))
-
+    preparation_started_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
     # ---------------- PAYMENT & ORDER TYPE ----------------
     payment_type = db.Column(db.String(20), nullable=True)  # COD / Online
     # ---------------- PAYMENT & ORDER TYPE ----------------
 
- 
+    # =====================================================
+    # DELIVERY PRICING LOCATION
+    # =====================================================
+
+    delivery_location_id = db.Column(
+        db.Integer,
+        nullable=True,
+        index=True
+    )
 
     payment_status = db.Column(
         db.String(20),
@@ -774,9 +795,26 @@ class Order(db.Model):
     profit_amount = db.Column(db.Float, default=0.0)
     admin_notes = db.Column(db.String(300)) 
     
-    
+    whatsapp_confirmation_status = db.Column(
+        db.String(30),
+        default="not_required",
+        nullable=False
+    )
+
+    whatsapp_confirmation_sent_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    whatsapp_confirmation_responded_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
   
- 
+    whatsapp_confirmation_expires_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
     restaurant_offer_id = db.Column(
         db.Integer,
         db.ForeignKey('restaurant_offer.id'),
@@ -906,10 +944,18 @@ class OrderItem(db.Model):
     quantity = db.Column(db.Integer)
     price = db.Column(db.Float)
 
+    # Original menu price before any offer/discount
+    original_unit_price = db.Column(db.Float, nullable=True)
+
     # Future-proof fields
     weight = db.Column(db.String(50), nullable=True)
     category = db.Column(db.String(100), nullable=True)
-
+    is_special = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False,
+        server_default=db.false()
+    )
     mrp = db.Column(db.Float, nullable=True)
     discount = db.Column(db.Float, default=0)
 
@@ -1050,6 +1096,7 @@ class FoodItem(db.Model):
     # ✅ ADD THESE
     restaurant = db.relationship("Restaurant", backref="food_items")
     category = db.relationship("Category", backref="food_items")
+    
 # ----------------- Customer / App User -----------------
 class Customer(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1291,45 +1338,83 @@ class User(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow) 
     coins = db.Column(db.Integer, default=0)
-
 class DeliverySettings(db.Model):
     __tablename__ = "delivery_settings"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
 
-    # ================= DELIVERY CHARGES =================
-    base_distance = db.Column(db.Float, default=3)
-    base_charge = db.Column(db.Integer, default=30)
+    # Keep old pricing temporarily
+    base_distance = db.Column(
+        db.Float,
+        default=3
+    )
 
-    slab_1_upto = db.Column(db.Float, default=6)
-    slab_1_charge = db.Column(db.Integer, default=40)
+    base_charge = db.Column(
+        db.Integer,
+        default=30
+    )
 
-    slab_2_upto = db.Column(db.Float, default=9)
-    slab_2_charge = db.Column(db.Integer, default=55)
+    slab_1_upto = db.Column(
+        db.Float,
+        default=6
+    )
 
-    slab_3_upto = db.Column(db.Float, default=12)
-    slab_3_charge = db.Column(db.Integer, default=70)
+    slab_1_charge = db.Column(
+        db.Integer,
+        default=40
+    )
 
-    max_charge = db.Column(db.Integer, default=90)
+    slab_2_upto = db.Column(
+        db.Float,
+        default=9
+    )
 
-    # ================= FREE DELIVERY =================
-    free_delivery_min_order = db.Column(db.Integer, default=499)
+    slab_2_charge = db.Column(
+        db.Integer,
+        default=55
+    )
 
-    # ================= NIGHT SURGE =================
-    night_surge = db.Column(db.Integer, default=0)
-    is_night_surge_active = db.Column(db.Boolean, default=False)
+    slab_3_upto = db.Column(
+        db.Float,
+        default=12
+    )
 
-    # =====================================================
-    # NEW - DELIVERY ASSIGNMENT SETTINGS
-    # =====================================================
+    slab_3_charge = db.Column(
+        db.Integer,
+        default=70
+    )
+
+    max_charge = db.Column(
+        db.Integer,
+        default=90
+    )
+
+    free_delivery_min_order = db.Column(
+        db.Integer,
+        default=499
+    )
+
+    night_surge = db.Column(
+        db.Integer,
+        default=0
+    )
+
+    is_night_surge_active = db.Column(
+        db.Boolean,
+        default=False
+    )
+
+    # ========================================================
+    # RIDER ASSIGNMENT
+    # ========================================================
 
     assignment_mode = db.Column(
         db.String(30),
         default="auto_override"
     )
-    # manual
-    # auto
-    # auto_override
 
     auto_assign_enabled = db.Column(
         db.Boolean,
@@ -1467,43 +1552,141 @@ class Offer(db.Model):
 class Location(db.Model):
     __tablename__ = "location"
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    name = db.Column(
+        db.String(100),
+        nullable=False
+    )
 
-    # relationship (optional but good)
-    rankings = db.relationship(
-        "RestaurantHomepageRanking",
-        backref="location",
-        lazy=True
-    ) 
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
 class RestaurantHomepageRanking(db.Model):
     __tablename__ = "restaurant_homepage_ranking"
 
     id = db.Column(db.Integer, primary_key=True)
 
+    # =========================================================
+    # RESTAURANT
+    # =========================================================
     restaurant_id = db.Column(
         db.Integer,
         db.ForeignKey("restaurant.id"),
         nullable=False
     )
 
+    # =========================================================
+    # EXISTING RucHiGo LOCATION SYSTEM
+    # =========================================================
     location_id = db.Column(
         db.Integer,
-        db.ForeignKey("location.id"),
+        db.ForeignKey("delivery_location_settings.id"),
         nullable=False
     )
 
-    position = db.Column(db.Integer, default=999)
-
-    # relationships
-    restaurant = db.relationship("Restaurant", backref="homepage_rankings")
-
-    __table_args__ = (
-        db.UniqueConstraint('restaurant_id', 'location_id', name='unique_restaurant_location'),
+    # =========================================================
+    # NORMAL HOMEPAGE POSITION
+    # =========================================================
+    position = db.Column(
+        db.Integer,
+        default=999,
+        nullable=False
     )
 
+    # =========================================================
+    # SPONSORED / PAID BANNER
+    # =========================================================
+
+    sponsored_enabled = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False
+    )
+
+    sponsored_position = db.Column(
+        db.Integer,
+        default=999,
+        nullable=False
+    )
+
+    sponsored_banner_url = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    sponsored_title = db.Column(
+        db.String(200),
+        nullable=True
+    )
+
+    sponsored_subtitle = db.Column(
+        db.String(300),
+        nullable=True
+    )
+
+    sponsored_start_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    sponsored_end_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    sponsored_payment_status = db.Column(
+        db.String(30),
+        default="pending",
+        nullable=False
+    )
+
+    # =========================================================
+    # ANALYTICS
+    # =========================================================
+
+    sponsored_impressions = db.Column(
+        db.Integer,
+        default=0,
+        nullable=False
+    )
+
+    sponsored_clicks = db.Column(
+        db.Integer,
+        default=0,
+        nullable=False
+    )
+
+    # =========================================================
+    # RELATIONSHIPS
+    # =========================================================
+
+    restaurant = db.relationship(
+        "Restaurant",
+        backref="homepage_rankings"
+    )
+
+    location = db.relationship(
+        "DeliveryLocationSettings",
+        backref="homepage_rankings"
+    )
+
+    # =========================================================
+    # ONE RESTAURANT PER LOCATION
+    # =========================================================
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "restaurant_id",
+            "location_id",
+            name="unique_restaurant_location"
+        ),
+    )
 
 class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -2093,4 +2276,820 @@ class HomeAnnouncementTarget(db.Model):
             "targets",
             cascade="all, delete-orphan"
         )
+    )
+
+# ============================================================
+# DELIVERY LOCATION SETTINGS
+# ============================================================
+
+DEFAULT_DELIVERY_SLABS = [
+    {
+        "upto": 3,
+        "charge": 30
+    },
+    {
+        "upto": 6,
+        "charge": 40
+    },
+    {
+        "upto": 9,
+        "charge": 55
+    },
+    {
+        "upto": 12,
+        "charge": 70
+    }
+]
+
+
+class DeliveryLocationSettings(db.Model):
+    __tablename__ = "delivery_location_settings"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    # ========================================================
+    # LOCATION
+    # ========================================================
+
+    location = db.Column(
+        db.String(100),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    is_active = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        server_default="1"
+    )
+        # ========================================================
+    # LOCATION RESTAURANT ORDER CONTROL
+    # ========================================================
+
+    restaurant_ordering_enabled = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        server_default="1"
+    )
+
+    # ========================================================
+    # LOCATION DELIVERY CONTROL
+    # ========================================================
+
+    delivery_enabled = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        server_default="1"
+    )
+
+    # Customer-facing message
+    ordering_disabled_message = db.Column(
+        db.String(500),
+        nullable=True
+    )
+
+    delivery_disabled_message = db.Column(
+        db.String(500),
+        nullable=True
+    )
+    # ========================================================
+    # FLEXIBLE DELIVERY SLOTS
+    #
+    # Example:
+    #
+    # [
+    #   {"upto": 3, "charge": 30},
+    #   {"upto": 6, "charge": 40},
+    #   {"upto": 9, "charge": 55},
+    #   {"upto": 12, "charge": 70}
+    # ]
+    #
+    # Can later contain 5, 6, 10, 20 slots without
+    # changing the database structure.
+    # ========================================================
+
+    delivery_slabs = db.Column(
+        db.JSON,
+        nullable=False,
+        default=lambda: [
+            {
+                "upto": 3,
+                "charge": 30
+            },
+            {
+                "upto": 6,
+                "charge": 40
+            },
+            {
+                "upto": 9,
+                "charge": 55
+            },
+            {
+                "upto": 12,
+                "charge": 70
+            }
+        ]
+    )
+
+    # ========================================================
+    # FALLBACK / LAST DISTANCE CHARGE
+    #
+    # Example:
+    # Last slot = 12 km
+    # Distance = 14 km
+    # max_charge = 90
+    #
+    # Charge = ₹90
+    # ========================================================
+
+    max_charge = db.Column(
+        db.Integer,
+        nullable=False,
+        default=90
+    )
+
+    # ========================================================
+    # FREE DELIVERY
+    #
+    # Kept for future/configuration.
+    #
+    # IMPORTANT:
+    # Your current business logic says free delivery should
+    # come from an active offer, so this field is NOT used
+    # by calculate_delivery_charge().
+    # ========================================================
+
+    free_delivery_min_order = db.Column(
+        db.Integer,
+        nullable=False,
+        default=499
+    )
+
+    # ========================================================
+    # NIGHT SURGE
+    # ========================================================
+
+    night_surge = db.Column(
+        db.Integer,
+        nullable=False,
+        default=0
+    )
+
+    is_night_surge_active = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False,
+        server_default="0"
+    )
+
+    # ========================================================
+    # TIMESTAMP
+    # ========================================================
+
+    updated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # ========================================================
+    # RELATIONSHIP
+    # ========================================================
+
+    restaurants = db.relationship(
+        "Restaurant",
+        back_populates="delivery_location_settings"
+    )
+
+    def __repr__(self):
+        return (
+            f"<DeliveryLocationSettings "
+            f"id={self.id} "
+            f"location='{self.location}'>"
+        )
+
+
+# ============================================================
+# GLOBAL PLATFORM CONTROL
+# ============================================================
+
+class PlatformControl(db.Model):
+    __tablename__ = "platform_controls"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    # ========================================================
+    # GLOBAL PLATFORM
+    # ========================================================
+
+    platform_enabled = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        server_default="1"
+    )
+
+    maintenance_mode = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False,
+        server_default="0"
+    )
+
+    # ========================================================
+    # GLOBAL RESTAURANT ORDERING
+    # ========================================================
+
+    restaurant_ordering_enabled = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        server_default="1"
+    )
+
+    # Optional automatic restart
+    restaurant_ordering_resume_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    restaurant_ordering_stop_reason = db.Column(
+        db.String(500),
+        nullable=True
+    )
+
+    # ========================================================
+    # GLOBAL DELIVERY
+    # ========================================================
+
+    delivery_enabled = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        server_default="1"
+    )
+
+    # ========================================================
+    # CUSTOMER MESSAGES
+    # ========================================================
+
+    ordering_disabled_message = db.Column(
+        db.String(500),
+        nullable=False,
+        default=(
+            "Restaurants are temporarily not accepting "
+            "new orders."
+        )
+    )
+
+    delivery_disabled_message = db.Column(
+        db.String(500),
+        nullable=False,
+        default=(
+            "Delivery service is temporarily unavailable."
+        )
+    )
+
+    maintenance_message = db.Column(
+        db.String(500),
+        nullable=False,
+        default=(
+            "We are currently performing maintenance."
+        )
+    )
+
+    # ========================================================
+    # TIMESTAMP
+    # ========================================================
+
+    updated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    def __repr__(self):
+        return f"<PlatformControl id={self.id}>"
+
+# ============================================================
+# ADMIN CONTROL AUDIT LOG
+# ============================================================
+
+class AdminControlLog(db.Model):
+    __tablename__ = "admin_control_logs"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    admin_user_id = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    action = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    target_type = db.Column(
+        db.String(50),
+        nullable=False
+    )
+
+    target_id = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    old_value = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    new_value = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    reason = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+class RestaurantMenuAlert(db.Model):
+    __tablename__ = "restaurant_menu_alerts"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    restaurant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant.id"),
+        nullable=False,
+        index=True
+    )
+
+    # ON / OFF
+    enabled = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False
+    )
+
+    # restaurant / category
+    scope = db.Column(
+        db.String(20),
+        default="restaurant",
+        nullable=False
+    )
+
+    # Used only when scope = category
+    category = db.Column(
+        db.String(150),
+        nullable=True
+    )
+
+    title = db.Column(
+        db.String(150),
+        nullable=False,
+        default="Important Notice"
+    )
+
+    message = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    # info / warning / emergency
+    severity = db.Column(
+        db.String(20),
+        default="warning",
+        nullable=False
+    )
+
+    # Optional expiry
+    expires_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    # restaurant / admin
+    created_by = db.Column(
+        db.String(30),
+        nullable=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )
+
+    restaurant = db.relationship(
+        "Restaurant",
+        backref=db.backref(
+            "menu_alerts",
+            lazy=True
+        )
+    )
+
+
+
+class RestaurantPartnerDeviceToken(db.Model):
+    __tablename__ = "restaurant_partner_device_tokens"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant_user.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    restaurant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("restaurant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    token = db.Column(
+        db.String(512),
+        nullable=False,
+        unique=True
+    )
+
+    platform = db.Column(
+        db.String(24),
+        nullable=False,
+        default="android"
+    )
+
+    is_active = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        index=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    def __repr__(self):
+        return (
+            f"<RestaurantPartnerDeviceToken "
+            f"user_id={self.user_id} "
+            f"restaurant_id={self.restaurant_id}>"
+        )
+
+
+
+class EmployeeLocationAssignment(db.Model):
+    __tablename__ = "employee_location_assignment"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    employee_id = db.Column(
+        db.Integer,
+        db.ForeignKey("employee.id"),
+        nullable=False,
+        index=True
+    )
+
+    location = db.Column(
+        db.String(100),
+        nullable=False,
+        index=True
+    )
+
+    is_active = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        server_default="1"
+    )
+
+    assigned_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "employee_id",
+            "location",
+            name="uq_employee_location"
+        ),
+    )
+# Add this class to models.py (after db is initialized and after Order/DeliveryPerson).
+# Ensure models.py has: from datetime import datetime
+
+class DeliveryAssignmentAttempt(db.Model):
+    """Persistent history of each order offered to a delivery rider."""
+    __tablename__ = "delivery_assignment_attempts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, nullable=False, index=True)
+    rider_id = db.Column(db.Integer, nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=False, default="Pending", index=True)
+    assigned_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=True)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+
+    __table_args__ = (
+        db.Index(
+            "ix_delivery_assignment_order_rider_status",
+            "order_id",
+            "rider_id",
+            "status",
+        ),
+    )
+
+
+
+class SettlementLine(db.Model):
+    __tablename__ = "settlement_line"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("order.id"), nullable=False, index=True)
+    order_item_id = db.Column(db.Integer, db.ForeignKey("order_item.id"), nullable=False, unique=True)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurant.id"), nullable=False, index=True)
+    quantity = db.Column(db.Integer, nullable=False)
+    restaurant_unit_price = db.Column(db.Numeric(12, 2), nullable=False)
+    customer_unit_price = db.Column(db.Numeric(12, 2), nullable=False)
+    commission_percent = db.Column(db.Numeric(5, 2), nullable=False)
+    restaurant_gross = db.Column(db.Numeric(12, 2), nullable=False)
+    customer_item_value = db.Column(db.Numeric(12, 2), nullable=False)
+    markup_amount = db.Column(db.Numeric(12, 2), nullable=False)
+    commission_amount = db.Column(db.Numeric(12, 2), nullable=False)
+    restaurant_payable = db.Column(db.Numeric(12, 2), nullable=False)
+    snapshot_created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    settlement_id = db.Column(db.BigInteger, db.ForeignKey("restaurant_settlement.id"), nullable=True, index=True)
+
+
+class RestaurantSettlement(db.Model):
+    __tablename__ = "restaurant_settlement"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurant.id"), nullable=False, index=True)
+    period_start = db.Column(db.Date, nullable=False)
+    period_end = db.Column(db.Date, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="draft")
+    order_count = db.Column(db.Integer, nullable=False, default=0)
+    food_gross = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    customer_item_value = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    markup_total = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    commission_total = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    adjustment_total = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    payout_total = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    missing_snapshot_count = db.Column(db.Integer, nullable=False, default=0)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    approved_at = db.Column(db.DateTime)
+    approved_by = db.Column(db.String(120))
+    paid_at = db.Column(db.DateTime)
+
+    restaurant = db.relationship("Restaurant", lazy="joined")
+    lines = db.relationship("SettlementLine", backref="settlement", lazy="select")
+
+
+class SettlementPayout(db.Model):
+    __tablename__ = "settlement_payout"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    settlement_id = db.Column(db.BigInteger, db.ForeignKey("restaurant_settlement.id"), nullable=False, unique=True)
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
+    payment_method = db.Column(db.String(40), nullable=False, default="bank_transfer")
+    payment_reference = db.Column(db.String(160), nullable=False)
+    paid_on = db.Column(db.Date, nullable=False)
+    notes = db.Column(db.Text)
+    recorded_by = db.Column(db.String(120))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    settlement = db.relationship("RestaurantSettlement", lazy="joined")
+
+
+class CODCollection(db.Model):
+    __tablename__ = "cod_collection"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("order.id"), nullable=False, unique=True)
+    expected_amount = db.Column(db.Numeric(12, 2), nullable=False)
+    collected_amount = db.Column(db.Numeric(12, 2), nullable=False)
+    collected_by = db.Column(db.String(80), nullable=False, default="rider")
+    handover_reference = db.Column(db.String(160))
+    notes = db.Column(db.Text)
+    reconciled_by = db.Column(db.String(120))
+    reconciled_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    status = db.Column(db.String(20), nullable=False, default="reconciled")
+
+
+class RestaurantSettlementTerms(db.Model):
+    __tablename__ = "restaurant_settlement_terms"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurant.id"), nullable=False, unique=True)
+    commission_percent = db.Column(db.Numeric(5, 2), nullable=False, default=10)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by = db.Column(db.String(120))
+
+    restaurant = db.relationship("Restaurant", lazy="joined")
+class CODCollectionAudit(db.Model):
+    __tablename__ = "cod_collection_audit"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+
+    order_id = db.Column(
+        db.Integer, db.ForeignKey("order.id"),
+        nullable=False, index=True
+    )
+    batch_id = db.Column(
+        db.BigInteger, db.ForeignKey("cod_handover_batch.id"),
+        nullable=False, index=True
+    )
+
+    previous_status = db.Column(db.String(20))
+    previous_expected_amount = db.Column(db.Numeric(12, 2))
+    previous_collected_amount = db.Column(db.Numeric(12, 2))
+    previous_reference = db.Column(db.String(160))
+
+    new_status = db.Column(db.String(20), nullable=False)
+    changed_by = db.Column(db.String(120), nullable=False)
+    reason = db.Column(db.Text, nullable=False)
+
+    created_at = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow
+    )
+
+
+
+class CODHandoverBatch(db.Model):
+    __tablename__ = "cod_handover_batch"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+
+    rider_id = db.Column(
+        db.Integer,
+        db.ForeignKey("delivery_person.id"),
+        nullable=False,
+        index=True,
+    )
+
+    business_date = db.Column(db.Date, nullable=False, index=True)
+
+    expected_total = db.Column(
+        db.Numeric(12, 2), nullable=False, default=0
+    )
+    received_amount = db.Column(
+        db.Numeric(12, 2), nullable=True
+    )
+    difference_amount = db.Column(
+        db.Numeric(12, 2), nullable=True
+    )
+
+    status = db.Column(
+        db.String(20), nullable=False, default="draft", index=True
+    )
+
+    handover_reference = db.Column(db.String(160))
+    notes = db.Column(db.Text)
+
+    created_by = db.Column(db.String(120), nullable=False)
+    received_by = db.Column(db.String(120))
+    created_at = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow
+    )
+    received_at = db.Column(db.DateTime)
+
+    rider = db.relationship("DeliveryPerson", lazy="joined")
+    items = db.relationship(
+        "CODHandoverBatchItem",
+        backref="batch",
+        lazy="select",
+        order_by="CODHandoverBatchItem.id",
+    )
+
+
+class CODHandoverBatchItem(db.Model):
+    __tablename__ = "cod_handover_batch_item"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+
+    batch_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey("cod_handover_batch.id"),
+        nullable=False,
+        index=True,
+    )
+
+    order_id = db.Column(
+        db.Integer,
+        db.ForeignKey("order.id"),
+        nullable=False,
+        index=True,
+    )
+
+    expected_amount = db.Column(
+        db.Numeric(12, 2), nullable=False
+    )
+
+    added_at = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow
+    )
+
+    # Set when an unreceived batch is cancelled.
+    # The historical item is retained for audit purposes.
+    released_at = db.Column(db.DateTime)
+
+    order = db.relationship("Order", lazy="joined")
+
+
+# An order can belong to only one active batch.
+# Cancelled batches can release orders without deleting history.
+Index(
+    "uq_cod_handover_item_active_order",
+    CODHandoverBatchItem.order_id,
+    unique=True,
+    postgresql_where=text("released_at IS NULL"),
+)
+
+
+# Add this class to models.py AFTER `db = SQLAlchemy(...)` is initialized.
+# Do not create a second db object.
+from datetime import datetime
+from sqlalchemy import CheckConstraint, UniqueConstraint, Index
+
+class RestaurantReview(db.Model):
+    __tablename__ = "restaurant_reviews"
+
+    id = db.Column(db.Integer, primary_key=True)
+    restaurant_id = db.Column(
+        db.Integer, db.ForeignKey("restaurant.id"), nullable=False, index=True
+    )
+    # Keep location_id nullable only for legacy data if needed. New reviews
+    # are rejected by the route if the order has no location.
+    location_id = db.Column(
+        db.Integer, db.ForeignKey("delivery_location_settings.id"),
+        nullable=False, index=True
+    )
+    order_id = db.Column(
+        db.Integer, db.ForeignKey("order.id"), nullable=False, index=True
+    )
+    customer_id = db.Column(
+        db.Integer, db.ForeignKey("customer.id"), nullable=True, index=True
+    )
+    customer_name = db.Column(db.String(120), nullable=False, default="Customer")
+    phone = db.Column(db.String(20), nullable=False, index=True)
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    __table_args__ = (
+        CheckConstraint("rating >= 1 AND rating <= 5", name="ck_restaurant_review_rating"),
+        UniqueConstraint("order_id", name="uq_restaurant_review_order"),
+        Index("ix_restaurant_review_restaurant_location", "restaurant_id", "location_id"),
     )
