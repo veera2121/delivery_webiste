@@ -4130,6 +4130,44 @@ box-shadow:
 
     </div>
 
+<!-- DELIVERY RADIUS POPUP -->
+<div id="deliveryRadiusPopup"
+     style="display:none; position:fixed; inset:0; z-index:99999;
+            background:rgba(0,0,0,.65); align-items:center;
+            justify-content:center; padding:20px;">
+
+    <div style="background:white; width:100%; max-width:360px;
+                border-radius:20px; padding:25px 20px;
+                text-align:center; box-shadow:0 15px 45px #0003;">
+
+        <div style="font-size:45px; margin-bottom:10px;">🚫</div>
+
+        <h3 style="color:#dc2626; margin-bottom:12px;">
+            Outside Delivery Area
+        </h3>
+
+        <p id="deliveryRadiusMessage"
+           style="white-space:pre-line; color:#374151;
+                  line-height:1.7; font-size:14px; margin-bottom:20px;">
+        </p>
+
+        <button type="button"
+                onclick="changeDeliveryLocationFromPopup()"
+                style="width:100%; padding:13px; border:0;
+                       border-radius:12px; background:#16a34a;
+                       color:white; font-size:15px; font-weight:700;">
+            🗺️ Change Location
+        </button>
+
+        <button type="button"
+                onclick="closeDeliveryRadiusPopup()"
+                style="width:100%; padding:12px; border:0;
+                       background:white; color:#64748b; margin-top:8px;">
+            Close
+        </button>
+    </div>
+</div>
+
 </div>
 <!-- SINGLE SOURCE OF TRUTH -->
 <input type="hidden" name="latitude" id="latitude">
@@ -4224,7 +4262,7 @@ box-shadow:
             
 
 
-             {% if active_offer %}
+            {% if active_offer and active_offer.offer_scope != "selected_items" %}
                 <div id="offer-section">
 
                     {% if offer_already_used %}
@@ -4816,10 +4854,13 @@ if (cart && cart.restaurantName) {
 let restaurantOffer = {{ active_offer.offer_value if active_offer else 0 }};
 let offerType = "{{ active_offer.offer_type if active_offer else '' }}";
 let minOrder = {{ active_offer.min_order_amount if active_offer else 0 }};
+let offerScope = "{{ active_offer.offer_scope if active_offer else '' }}";
 let offerAlreadyUsed = {{ 'true' if offer_already_used else 'false' }};
 
 let couponApplied = false;
 let couponDiscount = 0;
+
+// Restaurant-level claim offer starts OFF
 let offerApplied = false;
 let offerDiscount = 0;
 /* ============================================================
@@ -5040,6 +5081,33 @@ function removeCartItem(i) {
     // Refresh cart UI
     renderCart();
 }
+
+
+let deliveryRadiusBlocked = false;
+
+function showDeliveryRadiusPopup(message) {
+    document.getElementById("deliveryRadiusMessage").textContent =
+        message || "This restaurant does not deliver to your location.";
+
+    document.getElementById("deliveryRadiusPopup").style.display = "flex";
+}
+
+function closeDeliveryRadiusPopup() {
+    document.getElementById("deliveryRadiusPopup").style.display = "none";
+}
+
+function changeDeliveryLocationFromPopup() {
+    closeDeliveryRadiusPopup();
+
+    const section = document.getElementById("delivery-map-section");
+
+    if (section && getComputedStyle(section).display === "none") {
+        toggleDeliveryMapSection();
+    }
+
+    enableManualLocationMode();
+}
+
 /* ============================================================
    DELIVERY FROM BACKEND
 ============================================================ */
@@ -5180,17 +5248,61 @@ async function fetchDistanceDelivery(itemsTotal) {
         // BACKEND ERROR
         // ====================================================
 
-        if (
-            !res.ok ||
-            data.success === false
-        ) {
 
-            throw new Error(
-                data.error ||
-                "Unable to calculate delivery"
-            );
+if (!res.ok || data.success === false) {
 
+    // Restaurant delivery radius exceeded
+    if (
+        data.max_delivery_km != null &&
+        data.message
+    ) {
+        deliveryRadiusBlocked = true;
+
+        currentDeliveryCharge = 0;
+
+        const deliveryChargeElement =
+            document.getElementById("delivery-charge");
+
+        const deliveryMsg =
+            document.getElementById("delivery-msg");
+
+        if (deliveryChargeElement) {
+            deliveryChargeElement.innerText = "Unavailable";
         }
+
+        if (deliveryMsg) {
+            deliveryMsg.innerText =
+                "🚫 Outside restaurant delivery area";
+        }
+
+        const confirmBtn =
+            document.getElementById("confirm-order-btn");
+
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.classList.add("disabled");
+        }
+
+        showDeliveryRadiusPopup(data.message);
+        return;
+    }
+
+    throw new Error(
+        data.message || data.error || "Unable to calculate delivery"
+    );
+}
+
+// A successful response means this location passed validation.
+deliveryRadiusBlocked = false;
+
+const confirmBtn =
+    document.getElementById("confirm-order-btn");
+
+if (confirmBtn) {
+    confirmBtn.disabled = false;
+    confirmBtn.classList.remove("disabled");
+}
+
 
 
         // ====================================================
@@ -7997,7 +8109,14 @@ function validateCart() {
 
     }
 
+if (deliveryRadiusBlocked) {
+    showDeliveryRadiusPopup(
+        "🚫 This restaurant is not delivering to your location.\n" +
+        "Please change your delivery location to continue."
+    );
 
+    return false;
+}
     // LOCATION
     if (!locationSelected) {
 
