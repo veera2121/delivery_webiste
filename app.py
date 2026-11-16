@@ -3218,20 +3218,44 @@ def home():
     # ========================================================
 
     location_from_url = request.args.get(
-        "location",
-        "",
-        type=str
+        "location", "", type=str
     ).strip()
 
-    # Save selected location in session
     if location_from_url:
         session["selected_location"] = location_from_url
 
-    # Keep selected location when customer
-    # returns from Search / Profile / etc.
     selected_location = session.get(
-        "selected_location",
-        ""
+        "selected_location", ""
+    )
+
+    # ========================================================
+    # RESOLVE DELIVERY LOCATION ID
+    # ========================================================
+
+    selected_delivery_location = None
+    selected_delivery_location_id = None
+
+    if selected_location:
+
+        selected_delivery_location = (
+            DeliveryLocationSettings.query
+            .filter(
+                func.lower(
+                    func.trim(DeliveryLocationSettings.location)
+                ) == selected_location.lower()
+            )
+            .first()
+        )
+
+        if selected_delivery_location:
+            selected_delivery_location_id = (
+                selected_delivery_location.id
+            )
+
+    print(
+        "[HOME LOCATION DEBUG]",
+        "Selected:", repr(selected_location),
+        "Delivery ID:", selected_delivery_location_id
     )
 
     checkpoint("LOCATION")
@@ -3241,12 +3265,9 @@ def home():
     # ========================================================
 
     service_from_url = request.args.get(
-        "service",
-        "",
-        type=str
+        "service", "", type=str
     ).strip().lower()
 
-    # Website names → database names
     service_map = {
         "food": "restaurant",
         "restaurant": "restaurant",
@@ -3259,14 +3280,11 @@ def home():
         session["selected_service"] = selected_service
     else:
         selected_service = session.get(
-            "selected_service",
-            "restaurant"
+            "selected_service", "restaurant"
         )
 
     if selected_service not in (
-        "restaurant",
-        "bakery",
-        "grocery"
+        "restaurant", "bakery", "grocery"
     ):
         selected_service = "restaurant"
 
@@ -3274,7 +3292,6 @@ def home():
 
     # ========================================================
     # BADGE COUNTS
-    # CACHED VERSION
     # ========================================================
 
     badge_counts = get_badge_counts()
@@ -3291,26 +3308,16 @@ def home():
 
     coins = 0
     earned_coins = 0
-
     customer = None
-
     badge = "No Badge"
-
     next_badge = None
-
     coins_to_next_badge = 0
-
     progress_percent = 0
 
     if current_user.is_authenticated:
 
         customer = current_user
-
         coins = customer.coins or 0
-
-        # ----------------------------------------------------
-        # KEEP BADGE UPDATED
-        # ----------------------------------------------------
 
         update_customer_badge(customer)
 
@@ -3320,41 +3327,25 @@ def home():
             else "No Badge"
         )
 
-        # ----------------------------------------------------
-        # ONE-TIME COINS ANIMATION
-        # ----------------------------------------------------
-
         if (
             customer.last_reward_coins
             and customer.last_reward_coins > 0
         ):
-
             earned_coins = customer.last_reward_coins
-
             customer.last_reward_coins = 0
 
-        # Commit badge/reward changes together
         db.session.commit()
-
-        # ----------------------------------------------------
-        # BADGE PROGRESS
-        # ----------------------------------------------------
 
         badges = (
             RewardBadge.query
             .filter_by(active=True)
-            .order_by(
-                RewardBadge.required_coins.asc()
-            )
+            .order_by(RewardBadge.required_coins.asc())
             .all()
         )
 
         for b in badges:
-
             if customer.coins < b.required_coins:
-
                 next_badge = b
-
                 break
 
         if next_badge:
@@ -3365,44 +3356,27 @@ def home():
                 else 0
             )
 
-            span = (
-                next_badge.required_coins
-                - current_min
-            )
+            span = next_badge.required_coins - current_min
 
             if span > 0:
-
                 progress_percent = int(
                     (
-                        (
-                            customer.coins
-                            - current_min
-                        )
+                        (customer.coins - current_min)
                         / span
-                    )
-                    * 100
+                    ) * 100
                 )
 
             progress_percent = max(
-                0,
-                min(
-                    progress_percent,
-                    100
-                )
+                0, min(progress_percent, 100)
             )
 
             coins_to_next_badge = max(
                 0,
-                (
-                    next_badge.required_coins
-                    - customer.coins
-                )
+                next_badge.required_coins - customer.coins
             )
 
         else:
-
             progress_percent = 100
-
             coins_to_next_badge = 0
 
     checkpoint("CUSTOMER_DATA")
@@ -3412,7 +3386,6 @@ def home():
     # ========================================================
 
     user_lat = session.get("user_lat")
-
     user_lng = session.get("user_lng")
 
     user_location_set = (
@@ -3424,41 +3397,48 @@ def home():
 
     # ========================================================
     # FETCH RESTAURANTS + BAKERIES
+    # DELIVERY LOCATION ID FILTER
     # ========================================================
 
     restaurant_query = (
         Restaurant.query
         .options(
-            joinedload(
-                Restaurant.categories
-            )
+            joinedload(Restaurant.categories)
         )
         .filter(
-            Restaurant.category_type.in_(
-                [
-                    "restaurant",
-                    "bakery"
-                ]
-            )
+            Restaurant.category_type.in_([
+                "restaurant",
+                "bakery"
+            ])
         )
     )
 
     if selected_location:
 
-        restaurant_query = (
-            restaurant_query
-            .filter(
-                Restaurant.location
-                == selected_location
-            )
-        )
+        if selected_delivery_location_id is not None:
 
-    restaurants = (
-        restaurant_query.all()
-    )
+            restaurant_query = restaurant_query.filter(
+                Restaurant.delivery_location_id
+                == selected_delivery_location_id
+            )
+
+        else:
+            restaurant_query = restaurant_query.filter(
+                Restaurant.id == -1
+            )
+
+    restaurants = restaurant_query.all()
 
     checkpoint(
         f"RESTAURANTS_QUERY ({len(restaurants)} restaurants)"
+    )
+
+    print(
+        "[HOME RESTAURANT DEBUG]",
+        [
+            (r.id, r.name, r.delivery_location_id)
+            for r in restaurants
+        ]
     )
 
     # ========================================================
@@ -3467,35 +3447,29 @@ def home():
 
     grocery_shops = []
 
-    # --------------------------------------------------------
-    # LOCATION MANUALLY SELECTED
-    # --------------------------------------------------------
-
     if selected_location:
 
-        grocery_shops = (
-            Restaurant.query
-            .filter(
-                Restaurant.location
-                == selected_location,
-                Restaurant.category_type
-                == "grocery"
-            )
-            .all()
-        )
+        if selected_delivery_location_id is not None:
 
-    # --------------------------------------------------------
-    # NO LOCATION FILTER
-    # ONLY SHOW NEARBY GROCERY USING GPS
-    # --------------------------------------------------------
+            grocery_shops = (
+                Restaurant.query
+                .filter(
+                    Restaurant.delivery_location_id
+                    == selected_delivery_location_id,
+                    Restaurant.category_type == "grocery"
+                )
+                .all()
+            )
+
+        else:
+            grocery_shops = []
 
     elif user_location_set:
 
         all_grocery = (
             Restaurant.query
             .filter(
-                Restaurant.category_type
-                == "grocery"
+                Restaurant.category_type == "grocery"
             )
             .all()
         )
@@ -3517,7 +3491,6 @@ def home():
             )
 
             if dist <= g.delivery_radius_km:
-
                 grocery_shops.append(g)
 
     checkpoint(
@@ -3528,9 +3501,7 @@ def home():
     # CATEGORIES
     # ========================================================
 
-    categories = (
-        Category.query.all()
-    )
+    categories = Category.query.all()
 
     checkpoint(
         f"CATEGORIES_QUERY ({len(categories)} categories)"
@@ -3541,9 +3512,7 @@ def home():
     # ========================================================
 
     grocery_category_query = (
-        db.session.query(
-            MenuItem.category
-        )
+        db.session.query(MenuItem.category)
         .join(
             Restaurant,
             Restaurant.id == MenuItem.restaurant_id
@@ -3556,23 +3525,28 @@ def home():
         )
     )
 
-    # Same selected-location filtering as grocery shops
     if selected_location:
 
-        grocery_category_query = (
-            grocery_category_query
-            .filter(
-                Restaurant.location
-                == selected_location
-            )
-        )
+        if selected_delivery_location_id is not None:
 
-    # Only categories belonging to currently visible grocery stores
+            grocery_category_query = (
+                grocery_category_query
+                .filter(
+                    Restaurant.delivery_location_id
+                    == selected_delivery_location_id
+                )
+            )
+
+        else:
+            grocery_category_query = (
+                grocery_category_query
+                .filter(Restaurant.id == -1)
+            )
+
     if grocery_shops:
 
         grocery_shop_ids = [
-            g.id
-            for g in grocery_shops
+            g.id for g in grocery_shops
         ]
 
         grocery_category_query = (
@@ -3585,15 +3559,12 @@ def home():
         )
 
     else:
-
         grocery_shop_ids = []
 
     grocery_category_rows = (
         grocery_category_query
         .distinct()
-        .order_by(
-            MenuItem.category.asc()
-        )
+        .order_by(MenuItem.category.asc())
         .all()
     )
 
@@ -3608,7 +3579,7 @@ def home():
     )
 
     # ========================================================
-    # WHICH CATEGORIES EACH GROCERY SHOP HAS
+    # GROCERY STORE CATEGORIES
     # ========================================================
 
     grocery_store_categories = {}
@@ -3640,11 +3611,8 @@ def home():
             category = category.strip()
 
             grocery_store_categories.setdefault(
-                store_id,
-                []
-            ).append(
-                category
-            )
+                store_id, []
+            ).append(category)
 
     checkpoint("GROCERY_STORE_CATEGORIES")
 
@@ -3653,78 +3621,57 @@ def home():
     # ========================================================
 
     restaurant_lookup = {
-        r.id: r
-        for r in restaurants
+        r.id: r for r in restaurants
     }
 
     popular_items_raw = (
         db.session.query(
-            Restaurant.id.label(
-                "restaurant_id"
-            ),
-
-            Restaurant.name.label(
-                "restaurant_name"
-            ),
-
-            Restaurant.category_type.label(
-                "source_type"
-            ),
-
+            Restaurant.id.label("restaurant_id"),
+            Restaurant.name.label("restaurant_name"),
+            Restaurant.category_type.label("source_type"),
             OrderItem.item_name,
-
             func.sum(
                 OrderItem.quantity
-            ).label(
-                "total_orders"
-            ),
-
+            ).label("total_orders"),
             func.max(
                 MenuItem.price
-            ).label(
-                "current_price"
-            ),
-
+            ).label("current_price"),
             func.max(
                 MenuItem.image_url
-            ).label(
-                "item_image"
-            )
+            ).label("item_image")
         )
         .join(
             Order,
-            Order.id
-            == OrderItem.order_id
+            Order.id == OrderItem.order_id
         )
         .join(
             Restaurant,
-            Restaurant.id
-            == Order.restaurant_id
+            Restaurant.id == Order.restaurant_id
         )
         .outerjoin(
             MenuItem,
             db.and_(
-                MenuItem.restaurant_id
-                == Restaurant.id,
-
-                MenuItem.name
-                == OrderItem.item_name
+                MenuItem.restaurant_id == Restaurant.id,
+                MenuItem.name == OrderItem.item_name
             )
         )
     )
 
-    # Only restaurants currently shown
     if restaurant_lookup:
 
         popular_items_raw = (
             popular_items_raw
             .filter(
                 Restaurant.id.in_(
-                    list(
-                        restaurant_lookup.keys()
-                    )
+                    list(restaurant_lookup.keys())
                 )
             )
+        )
+
+    else:
+        popular_items_raw = (
+            popular_items_raw
+            .filter(Restaurant.id == -1)
         )
 
     popular_items_raw = (
@@ -3736,9 +3683,7 @@ def home():
             OrderItem.item_name
         )
         .order_by(
-            func.sum(
-                OrderItem.quantity
-            ).desc()
+            func.sum(OrderItem.quantity).desc()
         )
         .limit(30)
         .all()
@@ -3752,23 +3697,14 @@ def home():
 
     for item in popular_items_raw:
 
-        restaurant = (
-            restaurant_lookup.get(
-                item.restaurant_id
-            )
+        restaurant = restaurant_lookup.get(
+            item.restaurant_id
         )
 
         if not restaurant:
             continue
 
-        price = (
-            item.current_price
-            or 0
-        )
-
-        # ----------------------------------------------------
-        # BAKERY WEIGHT PRICE FALLBACK
-        # ----------------------------------------------------
+        price = item.current_price or 0
 
         if (
             item.source_type == "bakery"
@@ -3778,76 +3714,47 @@ def home():
             menu = (
                 MenuItem.query
                 .filter_by(
-                    restaurant_id=
-                        item.restaurant_id,
-                    name=
-                        item.item_name
+                    restaurant_id=item.restaurant_id,
+                    name=item.item_name
                 )
                 .first()
             )
 
             if menu:
 
-                extra = (
-                    menu.extra_data
-                    or {}
-                )
+                extra = menu.extra_data or {}
 
-                weight_prices = (
-                    extra.get(
-                        "weight_prices",
-                        ""
-                    )
+                weight_prices = extra.get(
+                    "weight_prices", ""
                 )
 
                 if weight_prices:
-
                     try:
-
                         price = float(
                             weight_prices
                             .split(",")[0]
                             .split(":")[1]
                         )
-
                     except (
                         ValueError,
                         IndexError,
                         TypeError
                     ):
-
                         pass
 
-        # Don't show tiny addon items
         if price < 30:
             continue
 
         popular_sorted.append({
 
-            "restaurant_id":
-                item.restaurant_id,
-
-            "restaurant_name":
-                item.restaurant_name,
-
-            "source_type":
-                item.source_type,
-
-            "item_name":
-                item.item_name,
-
-            "total_orders":
-                item.total_orders,
-
-            "price":
-                price,
-
-            "item_image":
-                item.item_image,
-
-            "restaurant":
-                restaurant,
-
+            "restaurant_id": item.restaurant_id,
+            "restaurant_name": item.restaurant_name,
+            "source_type": item.source_type,
+            "item_name": item.item_name,
+            "total_orders": item.total_orders,
+            "price": price,
+            "item_image": item.item_image,
+            "restaurant": restaurant,
             "can_order": False
 
         })
@@ -3866,8 +3773,7 @@ def home():
     # ========================================================
 
     restaurant_ids = [
-        r.id
-        for r in restaurants
+        r.id for r in restaurants
     ]
 
     if restaurant_ids:
@@ -3878,18 +3784,13 @@ def home():
                 MenuItem.restaurant_id.in_(
                     restaurant_ids
                 ),
-                MenuItem.availability
-                == "yes",
-                MenuItem.price.between(
-                    69,
-                    159
-                )
+                MenuItem.availability == "yes",
+                MenuItem.price.between(69, 159)
             )
             .all()
         )
 
     else:
-
         budget_items = []
 
     checkpoint(
@@ -3901,51 +3802,40 @@ def home():
     # ========================================================
 
     one_week_ago = (
-        datetime.utcnow()
-        - timedelta(days=7)
+        datetime.utcnow() - timedelta(days=7)
     )
 
     top_query = (
         db.session.query(
             Restaurant,
-            func.count(
-                Order.id
-            ).label(
-                "orders_count"
-            )
+            func.count(Order.id).label("orders_count")
         )
         .join(
             Order,
-            Restaurant.id
-            == Order.restaurant_id
+            Restaurant.id == Order.restaurant_id
         )
         .filter(
-            Order.created_at
-            >= one_week_ago,
-            Order.status
-            == "Delivered"
+            Order.created_at >= one_week_ago,
+            Order.status == "Delivered"
         )
     )
 
     if selected_location:
 
-        top_query = (
-            top_query
-            .filter(
-                Restaurant.location
-                == selected_location
+        top_query = top_query.filter(
+            Restaurant.delivery_location_id
+            == (
+                selected_delivery_location_id
+                if selected_delivery_location_id is not None
+                else -1
             )
         )
 
     top_restaurants_raw = (
         top_query
-        .group_by(
-            Restaurant.id
-        )
+        .group_by(Restaurant.id)
         .order_by(
-            func.count(
-                Order.id
-            ).desc()
+            func.count(Order.id).desc()
         )
         .limit(20)
         .all()
@@ -3955,20 +3845,12 @@ def home():
         f"TOP_RESTAURANTS_QUERY ({len(top_restaurants_raw)} rows)"
     )
 
-    top_restaurants = []
+    top_restaurants = [
+        (restaurant, count)
+        for restaurant, count in top_restaurants_raw
+    ]
 
-    for restaurant, count in top_restaurants_raw:
-
-        top_restaurants.append(
-            (
-                restaurant,
-                count
-            )
-        )
-
-    section_title = (
-        "🔥 This Week's Most Ordered"
-    )
+    section_title = "🔥 This Week's Most Ordered"
 
     # ========================================================
     # FALLBACK TOP RESTAURANTS
@@ -3979,59 +3861,44 @@ def home():
         fallback_query = (
             db.session.query(
                 Restaurant,
-                func.count(
-                    Order.id
-                ).label(
-                    "orders_count"
-                )
+                func.count(Order.id).label("orders_count")
             )
             .join(
                 Order,
-                Restaurant.id
-                == Order.restaurant_id
+                Restaurant.id == Order.restaurant_id
             )
             .filter(
-                Order.status
-                == "Delivered"
+                Order.status == "Delivered"
             )
         )
 
         if selected_location:
 
-            fallback_query = (
-                fallback_query
-                .filter(
-                    Restaurant.location
-                    == selected_location
+            fallback_query = fallback_query.filter(
+                Restaurant.delivery_location_id
+                == (
+                    selected_delivery_location_id
+                    if selected_delivery_location_id is not None
+                    else -1
                 )
             )
 
         fallback_restaurants = (
             fallback_query
-            .group_by(
-                Restaurant.id
-            )
+            .group_by(Restaurant.id)
             .order_by(
-                func.count(
-                    Order.id
-                ).desc()
+                func.count(Order.id).desc()
             )
             .limit(20)
             .all()
         )
 
         top_restaurants = [
-            (
-                restaurant,
-                count
-            )
-            for restaurant, count
-            in fallback_restaurants
+            (restaurant, count)
+            for restaurant, count in fallback_restaurants
         ]
 
-        section_title = (
-            "🏆 Most Ordered Restaurants"
-        )
+        section_title = "🏆 Most Ordered Restaurants"
 
     checkpoint("TOP_RESTAURANTS_PROCESSING")
 
@@ -4039,15 +3906,13 @@ def home():
     # LOCATION DROPDOWN
     # ========================================================
 
-    all_locations = (
-        get_all_locations()
-    )
+    all_locations = get_all_locations()
 
     checkpoint("LOCATIONS")
 
-    # ==========================================
-    # FIND PENDING ONLINE PAYMENT
-    # ==========================================
+    # ========================================================
+    # PENDING ONLINE PAYMENT
+    # ========================================================
 
     pending_payment_order = (
         Order.query
@@ -4056,17 +3921,15 @@ def home():
             Order.payment_status == "Pending",
             Order.status == "Pending Payment"
         )
-        .order_by(
-            Order.created_at.desc()
-        )
+        .order_by(Order.created_at.desc())
         .first()
     )
 
     checkpoint("PENDING_PAYMENT_QUERY")
 
-    # ==========================================
-    # CHECK RAZORPAY BEFORE SHOWING BUTTON
-    # ==========================================
+    # ========================================================
+    # CHECK RAZORPAY
+    # ========================================================
 
     if pending_payment_order:
 
@@ -4094,7 +3957,6 @@ def home():
                     "✅ Pending payment was actually Paid"
                 )
 
-                # Don't show Complete Payment button
                 pending_payment_order = None
 
     checkpoint("PAYMENT_CHECK")
@@ -4103,19 +3965,17 @@ def home():
     # TRENDING ITEMS
     # ========================================================
 
-    if selected_location:
+    if (
+        selected_location
+        and selected_delivery_location_id is not None
+    ):
 
         trending_items = (
-            db.session.query(
-                FoodItem
-            )
-            .join(
-                Restaurant
-            )
+            db.session.query(FoodItem)
+            .join(Restaurant)
             .filter(
-                Restaurant.location
-                == selected_location,
-
+                Restaurant.delivery_location_id
+                == selected_delivery_location_id,
                 FoodItem.order_count > 0
             )
             .order_by(
@@ -4126,7 +3986,6 @@ def home():
         )
 
     else:
-
         trending_items = []
 
     checkpoint(
@@ -4155,10 +4014,7 @@ def home():
             r.is_limited_drop
             and r.can_accept_orders
         ):
-
-            limited_restaurants.append(
-                r
-            )
+            limited_restaurants.append(r)
 
     print(
         "[HOME PERF] PROCESS_RESTAURANTS:",
@@ -4167,7 +4023,6 @@ def home():
 
     # ========================================================
     # PROCESS GROCERY SHOPS
-    # SAME STATUS / DELIVERY LOGIC
     # ========================================================
 
     process_start = time.perf_counter()
@@ -4189,16 +4044,13 @@ def home():
 
     # ========================================================
     # POPULAR ITEM AVAILABILITY
-    # Now restaurant state has been processed
     # ========================================================
 
     availability_start = time.perf_counter()
 
     for item in popular_sorted:
 
-        restaurant = (
-            item["restaurant"]
-        )
+        restaurant = item["restaurant"]
 
         item["can_order"] = (
             restaurant.can_accept_orders
@@ -4213,9 +4065,7 @@ def home():
         )
     )
 
-    popular_items = (
-        popular_sorted[:25]
-    )
+    popular_items = popular_sorted[:25]
 
     print(
         "[HOME PERF] POPULAR_AVAILABILITY:",
@@ -4230,10 +4080,8 @@ def home():
 
     for item in budget_items:
 
-        restaurant = (
-            restaurant_lookup.get(
-                item.restaurant_id
-            )
+        restaurant = restaurant_lookup.get(
+            item.restaurant_id
         )
 
         item.can_order = bool(
@@ -4250,31 +4098,20 @@ def home():
         )
     )
 
-    # Max 3 budget items per restaurant
     restaurant_items = {}
 
     for item in budget_items:
 
         restaurant_items.setdefault(
-            item.restaurant_id,
-            []
-        ).append(
-            item
-        )
+            item.restaurant_id, []
+        ).append(item)
 
     final_budget_items = []
 
-    for items in (
-        restaurant_items.values()
-    ):
+    for items in restaurant_items.values():
+        final_budget_items.extend(items[:3])
 
-        final_budget_items.extend(
-            items[:3]
-        )
-
-    budget_items = (
-        final_budget_items[:27]
-    )
+    budget_items = final_budget_items[:27]
 
     print(
         "[HOME PERF] BUDGET_PROCESSING:",
@@ -4283,7 +4120,6 @@ def home():
 
     # ========================================================
     # SORT RESTAURANTS
-    # NEW + OPEN + DELIVERABLE FIRST
     # ========================================================
 
     restaurants.sort(
@@ -4350,30 +4186,24 @@ def home():
 
     # ========================================================
     # SORT TOP RESTAURANTS
-    # OPEN FIRST + HIGH ORDER COUNT
     # ========================================================
 
     processed_restaurants = {
-        r.id: r
-        for r in restaurants
+        r.id: r for r in restaurants
     }
 
     cleaned_top_restaurants = []
 
     for restaurant, count in top_restaurants:
 
-        processed = (
-            processed_restaurants.get(
-                restaurant.id
-            )
+        processed = processed_restaurants.get(
+            restaurant.id
         )
 
         if processed:
-
             restaurant = processed
 
         else:
-
             process_store(
                 restaurant,
                 user_lat,
@@ -4389,10 +4219,7 @@ def home():
         )
 
         cleaned_top_restaurants.append(
-            (
-                restaurant,
-                count
-            )
+            (restaurant, count)
         )
 
     cleaned_top_restaurants.sort(
@@ -4402,9 +4229,7 @@ def home():
         )
     )
 
-    top_restaurants = (
-        cleaned_top_restaurants[:10]
-    )
+    top_restaurants = cleaned_top_restaurants[:10]
 
     checkpoint("FINAL_PROCESSING")
 
@@ -4433,9 +4258,7 @@ def home():
 
     else:
 
-        seo_title = (
-            "Online Food Delivery | RuchiGo"
-        )
+        seo_title = "Online Food Delivery | RuchiGo"
 
         seo_description = (
             "Order food online from trusted "
@@ -4453,9 +4276,7 @@ def home():
     # ========================================================
 
     if (
-        request.headers.get(
-            "X-Requested-With"
-        )
+        request.headers.get("X-Requested-With")
         == "XMLHttpRequest"
     ):
 
@@ -4473,85 +4294,53 @@ def home():
         return response
 
     # ========================================================
-    # PERFORMANCE DEBUG
+    # FULL PAGE
     # ========================================================
 
     checkpoint("BEFORE_FULL_RENDER")
 
-    # ========================================================
-    # FULL PAGE
-    # ========================================================
-
     response = render_template(
         "index.html",
 
-        # Stores
         restaurants=restaurants,
-
         grocery_shops=grocery_shops,
-
         limited_restaurants=limited_restaurants,
 
-        # Grocery category system
         grocery_categories=grocery_categories,
         grocery_store_categories=grocery_store_categories,
 
-        # Location
         all_locations=all_locations,
-
         selected_location=selected_location,
-
         user_location_set=user_location_set,
 
-        # Discovery sections
         trending_items=trending_items,
-
         popular_items=popular_items,
-
         budget_items=budget_items,
-
         top_restaurants=top_restaurants,
-
         section_title=section_title,
 
-        # Current time
         now=now,
 
-        # SEO
         seo_title=seo_title,
-
         seo_description=seo_description,
-
         seo_keywords=seo_keywords,
 
-        # Customer rewards
         coins=coins,
-
         customer=customer,
-
         badge=badge,
-
         earned_coins=earned_coins,
-
         next_badge=next_badge,
-
         coins_to_next_badge=coins_to_next_badge,
 
         silver_count=silver_count,
-
         gold_count=gold_count,
-
         platinum_count=platinum_count,
-
         progress_percent=progress_percent,
 
         pending_payment_order=pending_payment_order,
 
-        # Categories
         categories=categories,
-
         announcements=announcements,
-
         selected_service=selected_service,
 
     )
@@ -4559,7 +4348,6 @@ def home():
     checkpoint("AFTER_FULL_RENDER")
 
     return response
-
 
 
 def get_active_home_announcements(
