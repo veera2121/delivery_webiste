@@ -19189,11 +19189,26 @@ def employee_dashboard():
         )
 
         if not assigned_locations:
-            # No assignment means no orders.
             return query.filter(db.false())
 
-        return query.filter(
-            Restaurant.location.in_(assigned_locations)
+        # Match employee's assigned location names against
+        # DeliveryLocationSettings, not Restaurant.location.
+        return (
+            query
+            .join(
+                DeliveryLocationSettings,
+                Restaurant.delivery_location_id
+                == DeliveryLocationSettings.id
+            )
+            .filter(
+                func.lower(
+                    func.trim(DeliveryLocationSettings.location)
+                ).in_([
+                    location.strip().lower()
+                    for location in assigned_locations
+                    if location and location.strip()
+                ])
+            )
         )
 
     # ========================================================
