@@ -17917,7 +17917,7 @@ from flask import request, jsonify
 def live_order_count():
     location = (request.args.get("location") or "").strip()
 
-    # Website: count all orders, as your existing route does.
+    # Website: Count all orders.
     if not location:
         total_orders = db.session.query(Order).count()
 
@@ -17928,27 +17928,46 @@ def live_order_count():
             "timestamp": datetime.utcnow().isoformat()
         })
 
-    # Flutter: count orders belonging to the selected location.
-    query = (
+    # Find the actual delivery location.
+    delivery_location = (
+        DeliveryLocationSettings.query
+        .filter(
+            func.lower(func.trim(DeliveryLocationSettings.location))
+            == location.lower()
+        )
+        .first()
+    )
+
+    # Location does not exist.
+    if not delivery_location:
+        return jsonify({
+            "count": 0,
+            "visible": False,
+            "location": location,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+
+    # Count orders using delivery_location_id.
+    total_orders = (
         db.session.query(func.count(Order.id))
         .join(Restaurant, Restaurant.id == Order.restaurant_id)
         .filter(
-            func.lower(func.trim(Restaurant.location))
-            == location.lower()
+            Restaurant.delivery_location_id == delivery_location.id
         )
+        .scalar()
     )
 
-    total_orders = int(query.scalar() or 0)
+    total_orders = int(total_orders or 0)
 
-    # Display the momentum count only when the location has 10+ orders.
     visible = total_orders >= 10
 
     return jsonify({
         "count": total_orders if visible else 0,
         "visible": visible,
-        "location": location,
+        "location": delivery_location.location,
         "timestamp": datetime.utcnow().isoformat()
     })
+
 @app.route("/redeem_checkout", methods=["POST"])
 def redeem_checkout():
     customer_id = session.get("customer_id")
