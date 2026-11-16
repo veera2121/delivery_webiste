@@ -15169,75 +15169,37 @@ def edit_restaurant_card(restaurant_id):
                 ""
             ).strip()
 
-            # =================================================
-            # LOCATION
-            # =================================================
 
-            location = request.form.get(
-                "location",
-                ""
-            ).strip()
+            # ============================================================
+            # LOCATION - PRESERVE EXISTING DELIVERY LOCATION
+            # ============================================================
 
-            # Clean extra spaces
-            location = " ".join(
-                location.split()
-            )
+            location_raw = request.form.get("location")
 
-            # Standardize location
-            if location:
+            # Update location only when a non-empty value is submitted.
+            if location_raw is not None and location_raw.strip():
+
+                location = " ".join(location_raw.strip().split())
                 location = location.title()
 
-            restaurant.location = location
+                location_settings = get_or_create_delivery_location(location)
 
-            # =================================================
-            # LOCATION-WISE DELIVERY PRICING
-            # =================================================
-            #
-            # Example:
-            #
-            # Restaurant location = Machilipatnam
-            #
-            # Find:
-            # DeliveryLocationSettings
-            # location = Machilipatnam
-            #
-            # Then:
-            # restaurant.delivery_location_id = that ID
-            #
-            # If location does not exist, it is automatically
-            # created with the default 4 delivery slots.
-            # =================================================
-
-            if location:
-
-                location_settings = (
-                    get_or_create_delivery_location(
-                        location
-                    )
-                )
-
-                if location_settings:
-
-                    restaurant.delivery_location_id = (
-                        location_settings.id
+                if not location_settings:
+                    raise ValueError(
+                        f"Could not find or create delivery location: {location}"
                     )
 
-                    print(
-                        "DELIVERY LOCATION:",
-                        location_settings.location
-                    )
+                restaurant.location = location
+                restaurant.delivery_location_id = location_settings.id
 
-                    print(
-                        "DELIVERY LOCATION ID:",
-                        location_settings.id
-                    )
+                print("DELIVERY LOCATION:", location_settings.location)
+                print("DELIVERY LOCATION ID:", location_settings.id)
 
             else:
-
-                restaurant.delivery_location_id = None
-
                 print(
-                    "WARNING: Restaurant has no delivery pricing location."
+                    "LOCATION NOT SUBMITTED OR EMPTY - "
+                    "PRESERVING EXISTING DELIVERY LOCATION:",
+                    restaurant.delivery_location_id
                 )
 
             # =================================================
