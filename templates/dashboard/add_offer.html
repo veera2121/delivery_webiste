@@ -1,107 +1,475 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-  <head>
-    <style>
-.dashboard-page { max-width: 600px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
-.form-group { margin-bottom: 15px; }
-.form-control { width: 100%; padding: 8px; }
-.form-actions { display: flex; gap: 10px; }
-.btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; text-decoration: none; }
-.btn-primary { background: #007bff; color: #fff; }
-.btn-secondary { background: #6c757d; color: #fff; } 
-a.button, button {
-    padding: 8px 14px;
-    background: #3498db;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    text-decoration: none;
-    cursor: pointer;
-}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-a.button:hover, button:hover {
-    background: #2980b9;
-}
-</style>
+  <title>Add Offer</title>
 
-  </head>
-  <body>
-    
-<div class="dashboard-page"> 
-  <a href="{{ url_for('restaurant_dashboard') }}" class="button">← Back to Dashboard</a>
+  <style>
+    .dashboard-page {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: #007bff;
+      color: #fff;
+      border: none;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: #fff;
+    }
+
+    a.button,
+    button {
+      padding: 8px 14px;
+      background: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    a.button:hover,
+    button:hover {
+      background: #2980b9;
+    }
+
+    .offer-item-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+
+    #offerItemsList {
+      max-height: 350px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="dashboard-page">
+
+  <a href="{{ url_for('restaurant_dashboard') }}" class="button">
+    ← Back to Dashboard
+  </a>
+
   <h2>➕ Add Offer – {{ restaurant.name }}</h2>
-   
+
   <form method="POST">
 
+    <!-- TITLE -->
     <div class="form-group">
       <label>Offer Title</label>
-      <input type="text" name="title" class="form-control" placeholder="FLAT 50 OFF" required>
+
+      <input
+        type="text"
+        name="title"
+        class="form-control"
+        placeholder="20% OFF"
+        required
+      >
     </div>
 
+
+    <!-- DESCRIPTION -->
     <div class="form-group">
       <label>Description</label>
-      <textarea name="description" class="form-control" placeholder="On orders above ₹299"></textarea>
+
+      <textarea
+        name="description"
+        class="form-control"
+        placeholder="Get 20% off on selected items"
+      ></textarea>
     </div>
 
+
+    <!-- OFFER TYPE -->
     <div class="form-group">
       <label>Offer Type</label>
-      <select name="offer_type" id="offer_type" class="form-control" required>
-        <option value="flat">Flat Discount</option>
-        <option value="percent">Percentage</option>
-        
+
+      <select
+        name="offer_type"
+        id="offer_type"
+        class="form-control"
+        required
+      >
+
+        <option value="flat">
+          Flat Discount
+        </option>
+
+        <option value="percent">
+          Percentage
+        </option>
+
+        <option value="free_delivery">
+          Free Delivery
+        </option>
+
       </select>
     </div>
 
-    <!-- Offer Value (used only for flat/percent) -->
+
+    <!-- OFFER VALUE -->
     <div class="form-group" id="offer_value_group">
+
       <label>Offer Value</label>
-      <input type="number" name="offer_value" class="form-control" step="0.01" placeholder="50">
+
+      <input
+        type="number"
+        name="offer_value"
+        class="form-control"
+        step="0.01"
+        placeholder="20"
+      >
+
     </div>
 
-    <!-- Optional custom free delivery threshold -->
-    <div class="form-group" id="free_delivery_limit_group">
-      <label>Custom Free Delivery Limit (optional)</label>
-      <input type="number" name="custom_free_delivery_limit" class="form-control" step="0.01" placeholder="{{ restaurant.free_delivery_limit }}">
-      <small>If left empty, restaurant's default free delivery limit (₹{{ restaurant.free_delivery_limit }}) will be used.</small>
+
+    <!-- ============================
+         OFFER SCOPE
+    ============================= -->
+
+    <div class="form-group" id="offer_scope_group">
+
+      <label>
+        <strong>Apply Offer To</strong>
+      </label>
+
+      <div style="margin-top:10px;">
+
+        <label style="margin-right:20px;">
+
+          <input
+            type="radio"
+            name="offer_scope"
+            value="all_items"
+            checked
+            onchange="toggleItemSelection()"
+          >
+
+          All Items
+
+        </label>
+
+
+        <label>
+
+          <input
+            type="radio"
+            name="offer_scope"
+            value="selected_items"
+            onchange="toggleItemSelection()"
+          >
+
+          Selected Items
+
+        </label>
+
+      </div>
+
     </div>
 
+
+    <!-- ============================
+         SELECTED ITEMS
+    ============================= -->
+
+    <div
+      class="form-group"
+      id="selected_items_box"
+      style="display:none;"
+    >
+
+      <label>
+        <strong>Select Menu Items</strong>
+      </label>
+
+      <input
+        type="text"
+        id="itemSearch"
+        class="form-control"
+        placeholder="Search menu item..."
+        onkeyup="filterOfferItems()"
+        style="margin-bottom:12px;"
+      >
+
+
+      <div id="offerItemsList">
+
+        {% for item in menu_items %}
+
+          <label
+            class="offer-item-row"
+            data-name="{{ item.name|lower }}"
+          >
+
+            <input
+              type="checkbox"
+              name="selected_items"
+              value="{{ item.id }}"
+            >
+
+
+            <div style="flex:1;">
+
+              <strong>
+                {{ item.name }}
+              </strong>
+
+              {% if item.category %}
+
+                <div
+                  style="
+                    font-size:12px;
+                    color:#777;
+                    margin-top:2px;
+                  "
+                >
+                  {{ item.category }}
+                </div>
+
+              {% endif %}
+
+            </div>
+
+
+            {% if item.price is not none %}
+
+              <span>
+                ₹{{ "%.0f"|format(item.price) }}
+              </span>
+
+            {% endif %}
+
+          </label>
+
+        {% else %}
+
+          <p style="color:#777;">
+            No menu items found.
+          </p>
+
+        {% endfor %}
+
+      </div>
+
+    </div>
+
+
+    <!-- MINIMUM ORDER -->
     <div class="form-group">
+
       <label>Minimum Order Amount</label>
-      <input type="number" name="min_order_amount" class="form-control" step="0.01" placeholder="299">
+
+      <input
+        type="number"
+        name="min_order_amount"
+        class="form-control"
+        step="0.01"
+        placeholder="299"
+      >
+
     </div>
 
+
+    <!-- START DATE -->
     <div class="form-group">
+
       <label>Start Date</label>
-      <input type="date" name="start_date" class="form-control">
+
+      <input
+        type="date"
+        name="start_date"
+        class="form-control"
+      >
+
     </div>
 
+
+    <!-- END DATE -->
     <div class="form-group">
+
       <label>End Date</label>
-      <input type="date" name="end_date" class="form-control">
+
+      <input
+        type="date"
+        name="end_date"
+        class="form-control"
+      >
+
     </div>
 
+
+    <!-- ACTIONS -->
     <div class="form-actions">
-      <button type="submit" class="btn btn-primary">Add Offer</button>
-      <a href="{{ url_for('manage_offers', restaurant_id=restaurant.id) }}" class="btn btn-secondary">Cancel</a>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+      >
+        Add Offer
+      </button>
+
+      <a
+        href="{{ url_for('manage_offers', restaurant_id=restaurant.id) }}"
+        class="btn btn-secondary"
+      >
+        Cancel
+      </a>
+
     </div>
 
   </form>
+
 </div>
 
+
 <script>
+
 function toggleOfferFields() {
-  const type = document.getElementById("offer_type").value;
-  document.getElementById("offer_value_group").style.display = (type === "free_delivery") ? "none" : "block";
-  document.getElementById("free_delivery_limit_group").style.display = (type === "free_delivery") ? "block" : "none";
+
+    const type =
+        document.getElementById("offer_type").value;
+
+    const valueGroup =
+        document.getElementById("offer_value_group");
+
+    const scopeGroup =
+        document.getElementById("offer_scope_group");
+
+
+    if (type === "free_delivery") {
+
+        valueGroup.style.display = "none";
+
+        scopeGroup.style.display = "none";
+
+    } else {
+
+        valueGroup.style.display = "block";
+
+        scopeGroup.style.display = "block";
+
+    }
+
+    toggleItemSelection();
 }
 
-document.getElementById("offer_type").addEventListener("change", toggleOfferFields);
-toggleOfferFields();
-</script>
 
+function toggleItemSelection() {
+
+    const type =
+        document.getElementById("offer_type").value;
+
+    const selectedScope =
+        document.querySelector(
+            'input[name="offer_scope"]:checked'
+        );
+
+    const box =
+        document.getElementById(
+            "selected_items_box"
+        );
+
+
+    if (
+        type !== "free_delivery" &&
+        selectedScope &&
+        selectedScope.value === "selected_items"
+    ) {
+
+        box.style.display = "block";
+
+    } else {
+
+        box.style.display = "none";
+
+    }
+}
+
+
+function filterOfferItems() {
+
+    const search =
+        document
+            .getElementById("itemSearch")
+            .value
+            .toLowerCase()
+            .trim();
+
+    const rows =
+        document.querySelectorAll(
+            ".offer-item-row"
+        );
+
+
+    rows.forEach(row => {
+
+        const name =
+            row.dataset.name || "";
+
+        row.style.display =
+            name.includes(search)
+                ? "flex"
+                : "none";
+
+    });
+
+}
+
+
+document
+    .getElementById("offer_type")
+    .addEventListener(
+        "change",
+        toggleOfferFields
+    );
+
+
+toggleOfferFields();
+
+</script>
 
 </body>
 </html>

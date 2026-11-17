@@ -10358,6 +10358,56 @@ body.grocery-mode {
      RUCHIGO HOME ANNOUNCEMENTS
 ========================================================= -->
 
+<!-- =========================================================
+     END RUCHIGO HOME ANNOUNCEMENTS
+========================================================= -->
+
+
+<div id="foodUI">
+
+<section id="food-categories" class="fc-mini-section">
+
+    <h2 class="fc-section-title">Explore by Category</h2>
+
+    <div class="fc-mini-grid">
+
+        <!-- ALL -->
+ <!-- ALL -->
+<div class="fc-mini-card selected" data-category-id="all">
+    <div class="fc-mini-icon all-icon">ALL</div>
+    <span></span>
+</div>
+
+
+{% for cat in categories %}
+<div class="fc-mini-card" data-category-id="{{ cat.id }}">
+
+    {% if cat.image and cat.image|string|trim %}
+        <img
+            src="{{ url_for('static', filename=cat.image|string|trim) }}"
+            alt="{{ cat.name }}"
+            loading="lazy"
+        >
+    {% else %}
+        <img
+            src="{{ url_for('static', filename='images/default-category.jpg') }}"
+            alt="{{ cat.name }}"
+            loading="lazy"
+        >
+    {% endif %}
+
+    <span>{{ cat.name }}</span>
+
+</div>
+{% endfor %}
+
+
+    </div>
+
+</section> 
+
+
+
 {% if announcements %}
 
 <!-- ================= EMERGENCY ================= -->
@@ -10515,53 +10565,6 @@ body.grocery-mode {
 
 {% endif %}
 
-<!-- =========================================================
-     END RUCHIGO HOME ANNOUNCEMENTS
-========================================================= -->
-
-
-<div id="foodUI">
-
-<section id="food-categories" class="fc-mini-section">
-
-    <h2 class="fc-section-title">Explore by Category</h2>
-
-    <div class="fc-mini-grid">
-
-        <!-- ALL -->
- <!-- ALL -->
-<div class="fc-mini-card selected" data-category-id="all">
-    <div class="fc-mini-icon all-icon">ALL</div>
-    <span></span>
-</div>
-
-
-{% for cat in categories %}
-<div class="fc-mini-card" data-category-id="{{ cat.id }}">
-
-    {% if cat.image and cat.image|string|trim %}
-        <img
-            src="{{ url_for('static', filename=cat.image|string|trim) }}"
-            alt="{{ cat.name }}"
-            loading="lazy"
-        >
-    {% else %}
-        <img
-            src="{{ url_for('static', filename='images/default-category.jpg') }}"
-            alt="{{ cat.name }}"
-            loading="lazy"
-        >
-    {% endif %}
-
-    <span>{{ cat.name }}</span>
-
-</div>
-{% endfor %}
-
-
-    </div>
-
-</section>  
 {% include "restaurant_mini.html" %}
 
 {% if popular_items %}
