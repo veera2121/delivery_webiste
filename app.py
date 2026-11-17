@@ -38987,10 +38987,7 @@ def admin_save_menu_alert():
         restaurant_id
     )
 
-    enabled = (
-        request.form.get("enabled")
-        == "on"
-    )
+    enabled = request.form.get("enabled") == "1"
 
     scope = (
         request.form.get("scope")
