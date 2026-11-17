@@ -138,7 +138,24 @@
 
         <label>Address</label>
         <textarea name="address">{{ restaurant.address }}</textarea>
+    <label>Location</label>
 
+    <input
+        type="text"
+        name="location"
+        value="{{ restaurant.location or '' }}"
+        placeholder="Example: Machilipatnam"
+        required
+    >
+
+    <small style="
+        display:block;
+        margin-top:5px;
+        color:#6b7280;
+        font-size:12px;
+    ">
+        Delivery pricing is automatically linked to this location.
+    </small>
         <label>Phone</label>
         <input type="text" name="phone" value="{{ restaurant.phone }}">
 

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settlement Reports | RucHiGO</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:22px;background:#f4f6fb;color:#172033;font-family:Inter,system-ui,sans-serif}.wrap{max-width:1200px;margin:auto}.top{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}.panel{background:#fff;border:1px solid #e5e9f2;border-radius:14px;padding:18px;margin:16px 0;overflow-x:auto}h1{margin:0}.muted{color:#657089;font-size:13px}.btn{display:inline-block;padding:9px 13px;background:#142b52;color:#fff;border-radius:8px;text-decoration:none;font-weight:650}select,button{padding:10px;border:1px solid #d9dfeb;border-radius:8px}button{background:#142b52;color:white;cursor:pointer}table{width:100%;border-collapse:collapse;min-width:850px}th,td{padding:12px;text-align:left;border-bottom:1px solid #e5e9f2;font-size:13px}th{background:#f8faff}.status{padding:5px 8px;border-radius:20px;background:#eef2f9}.paid{background:#e3f8ed;color:#087748}.empty{text-align:center;padding:24px;color:#657089}@media(max-width:700px){body{padding:12px}}
+</style>
+</head>
+<body><div class="wrap">
+<div class="top"><div><h1>Settlement Reports & Payment History</h1><p class="muted">Historical settlement and payout records by location.</p></div><a class="btn" href="{{ url_for('admin_settlements', location_id=location_filter) }}">← Back to Settlements</a></div>
+<div class="panel">
+<form method="get" class="top" action="{{ url_for('admin_settlement_reports') }}">
+<label for="location_id">Location
+<select id="location_id" name="location_id">
+<option value="all" {% if location_filter == 'all' %}selected{% endif %}>All locations</option>
+{% for loc in locations %}<option value="{{ loc.id }}" {% if location_filter|string == loc.id|string %}selected{% endif %}>{{ loc.location }}</option>{% endfor %}
+<option value="unassigned" {% if location_filter == 'unassigned' %}selected{% endif %}>Unassigned restaurants</option>
+</select></label>
+<button type="submit">Apply filter</button>
+</form>
+<table><thead><tr><th>ID</th><th>Restaurant</th><th>Period</th><th>Food Gross</th><th>Commission</th><th>Restaurant Payout</th><th>Status</th><th>Details</th></tr></thead><tbody>
+{% for s in settlements %}
+<tr><td>{{ s.id }}</td><td>{{ s.restaurant.name if s.restaurant else s.restaurant_id }}</td><td>{{ s.period_start }} – {{ s.period_end }}</td><td>₹{{ "%.2f"|format(s.food_gross or 0) }}</td><td>₹{{ "%.2f"|format(s.commission_total or 0) }}</td><td>₹{{ "%.2f"|format(s.payout_total or 0) }}</td><td><span class="status {{ s.status }}">{{ s.status|upper }}</span></td><td><a href="{{ url_for('admin_settlement_detail', settlement_id=s.id) }}">View</a></td></tr>
+{% else %}<tr><td colspan="8" class="empty">No settlement records found for this location.</td></tr>{% endfor %}
+</tbody></table>
+</div></div></body></html>

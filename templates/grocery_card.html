@@ -1,0 +1,1376 @@
+<div id="appContent">
+{% if grocery_categories %}
+
+<div class="home-grocery-categories">
+
+    <div class="home-grocery-category-header">
+        <h2>Shop by Category</h2>
+        <p>Choose what you need</p>
+    </div>
+
+    <div class="home-grocery-category-scroll">
+
+        <button
+            type="button"
+            class="home-grocery-category active"
+            data-category="all"
+        >
+            <div class="home-grocery-category-icon">
+                🛒
+            </div>
+
+            <span>All</span>
+        </button>
+
+
+        {% for category in grocery_categories %}
+
+        <button
+            type="button"
+            class="home-grocery-category"
+            data-category="{{ category }}"
+        >
+
+            <div class="home-grocery-category-icon">
+
+                {% if "fruit" in category|lower %}
+                    🍎
+
+                {% elif "vegetable" in category|lower %}
+                    🥦
+
+                {% elif "milk" in category|lower or "dairy" in category|lower %}
+                    🥛
+
+                {% elif "beverage" in category|lower or "drink" in category|lower %}
+                    🥤
+
+                {% elif "snack" in category|lower %}
+                    🍪
+
+                {% elif "combo" in category|lower %}
+                    🛍️
+
+                {% else %}
+                    🛒
+                {% endif %}
+
+            </div>
+
+            <span>{{ category }}</span>
+
+        </button>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endif %}
+    <div class="grocery-row">
+
+<div
+    class="grocery-card-modern
+    {% if not g.deliverable or not g.is_open or not g.is_accepting_orders %}
+        disabled
+    {% endif %}
+    "
+    data-store-id="{{ g.id }}"
+    data-categories="{{ grocery_store_categories.get(g.id, []) | join(',') }}"
+>
+
+            <!-- =========================
+                 IMAGE AREA
+            ========================== -->
+            <div class="grocery-cover">
+
+                <img
+                    src="/static/images/restaurants/{{ g.id }}.jpg"
+                    alt="{{ g.name }}"
+                    loading="lazy"
+                    onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';"
+                >
+
+                <!-- IMAGE GRADIENT -->
+                <div class="grocery-cover-shade"></div>
+
+
+                <!-- TOP LEFT DELIVERY TIME -->
+                <div class="grocery-time-pill">
+                    ⚡ {{ g.delivery_time or "10–20 mins" }}
+                </div>
+
+
+                <!-- STATUS BADGE -->
+                {% if g.is_limited_drop %}
+
+                    <div class="grocery-status-badge coming">
+                        🚀 Coming Soon
+                    </div>
+
+                {% elif not g.deliverable %}
+
+                    <div class="grocery-status-badge unavailable">
+                        Out of Area
+                    </div>
+
+                {% elif not g.is_open %}
+
+                    <div class="grocery-status-badge closed">
+                        Closed
+                    </div>
+
+                {% elif not g.is_accepting_orders %}
+
+                    <div class="grocery-status-badge unavailable">
+                        Paused
+                    </div>
+
+                {% endif %}
+
+
+                <!-- STORE NAME OVER IMAGE -->
+                <div class="grocery-cover-title">
+
+                    <h3>
+                        {{ g.name }}
+                    </h3>
+
+                    <div class="grocery-cover-sub">
+                        Grocery • Daily Essentials
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 CONTENT
+            ========================== -->
+            <div class="grocery-modern-content">
+
+                <!-- RATING + DELIVERY -->
+                <div class="grocery-meta-row">
+
+                    <div class="grocery-rating-pill">
+                        <span class="rating-star">★</span>
+                        {{ g.rating or 4.2 }}
+                    </div>
+
+                    <div class="grocery-meta-time">
+                        ⏱ {{ g.delivery_time or "10–20 mins" }}
+                    </div>
+
+                </div>
+
+
+                <!-- CATEGORY -->
+<div class="grocery-category-text">
+    {{ grocery_store_categories.get(g.id, []) | join(' • ') }}
+</div>
+
+
+                <!-- OFFER -->
+                <div class="grocery-offer-modern">
+
+                    <div class="offer-icon">
+                        %
+                    </div>
+
+                    <div class="offer-content">
+
+                        <span class="offer-title">
+                            {{ g.offer_text or "Best Prices Everyday" }}
+                        </span>
+
+                        <span class="offer-sub">
+                            Save more on your grocery order
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- DELIVERY INFO -->
+                <div class="grocery-delivery-row">
+
+                    {% if g.free_delivery_limit and g.free_delivery_limit > 0 %}
+
+                        <div class="grocery-delivery-free">
+                            <span>🚚</span>
+
+                            <div>
+                                <strong>Free Delivery</strong>
+                                <small>
+                                    On orders above ₹{{ g.free_delivery_limit }}
+                                </small>
+                            </div>
+                        </div>
+
+                    {% else %}
+
+                        <div class="grocery-delivery-paid">
+                            <span>🚚</span>
+
+                            <div>
+                                <strong>
+                                    ₹{{ g.delivery_charge or 20 }} Delivery
+                                </strong>
+
+                                <small>
+                                    Charges may vary by distance
+                                </small>
+                            </div>
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- UNAVAILABLE INFORMATION -->
+                {% if not g.deliverable %}
+
+                    <div class="grocery-warning">
+                        🚫 Delivery is currently unavailable at your location.
+                    </div>
+
+                {% elif not g.is_open %}
+
+                    <div class="grocery-warning">
+                        ⏳ This store is currently closed.
+                    </div>
+
+                {% elif not g.is_accepting_orders %}
+
+                    <div class="grocery-warning">
+                        🚫 This store has temporarily paused orders.
+                    </div>
+
+                {% endif %}
+
+
+                <!-- BUTTON -->
+                <div class="grocery-card-footer">
+
+                    {% if not g.deliverable or not g.is_open or not g.is_accepting_orders %}
+
+                        <span class="grocery-modern-disabled">
+                            Unavailable
+                        </span>
+
+                    {% else %}
+
+        <a
+    href="/grocery/{{ g.id }}"
+    class="grocery-modern-btn shop-link grocery-shop-link"
+    data-id="{{ g.id }}"
+    data-store-id="{{ g.id }}"
+>
+                            <span>Shop Now</span>
+
+                            <span class="shop-arrow">
+                                →
+                            </span>
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+
+/* =====================================================
+   GROCERY MODERN QUICK-COMMERCE CARD
+===================================================== */
+
+.grocery-row {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fill, minmax(285px, 1fr));
+
+    gap: 22px;
+
+    padding: 14px;
+
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   CARD
+===================================================== */
+
+.grocery-card-modern {
+
+    position: relative;
+
+    width: 100%;
+
+    background: #ffffff;
+
+    border-radius: 22px;
+
+    overflow: hidden;
+
+    border: 1px solid rgba(0, 0, 0, 0.06);
+
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.05),
+        0 12px 30px rgba(0, 0, 0, 0.06);
+
+    transition:
+        transform 0.28s ease,
+        box-shadow 0.28s ease;
+
+}
+
+.grocery-card-modern:hover {
+
+    transform: translateY(-5px);
+
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.10),
+        0 18px 40px rgba(22, 163, 74, 0.08);
+
+}
+
+
+/* =====================================================
+   IMAGE
+===================================================== */
+
+.grocery-cover {
+
+    position: relative;
+
+    height: 205px;
+
+    overflow: hidden;
+
+    background: #f3f4f6;
+
+}
+
+.grocery-cover img {
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    display: block;
+
+    transition: transform 0.45s ease;
+
+}
+
+.grocery-card-modern:hover .grocery-cover img {
+
+    transform: scale(1.045);
+
+}
+
+
+/* IMAGE DARK GRADIENT */
+
+.grocery-cover-shade {
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.72) 0%,
+            rgba(0, 0, 0, 0.15) 48%,
+            rgba(0, 0, 0, 0.03) 100%
+        );
+
+    pointer-events: none;
+
+}
+
+
+/* =====================================================
+   DELIVERY TIME PILL
+===================================================== */
+
+.grocery-time-pill {
+
+    position: absolute;
+
+    top: 12px;
+    left: 12px;
+
+    z-index: 4;
+
+    padding: 7px 11px;
+
+    border-radius: 50px;
+
+    background: rgba(255, 255, 255, 0.94);
+
+    color: #166534;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.10);
+
+    backdrop-filter: blur(6px);
+
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+.grocery-status-badge {
+
+    position: absolute;
+
+    top: 12px;
+    right: 12px;
+
+    z-index: 4;
+
+    padding: 7px 11px;
+
+    border-radius: 50px;
+
+    color: #ffffff;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.12);
+
+}
+
+.grocery-status-badge.coming {
+    background: #7c3aed;
+}
+
+.grocery-status-badge.closed {
+    background: #f59e0b;
+    color: #111827;
+}
+
+.grocery-status-badge.unavailable {
+    background: #dc2626;
+}
+
+
+/* =====================================================
+   STORE NAME ON IMAGE
+===================================================== */
+
+.grocery-cover-title {
+
+    position: absolute;
+
+    left: 16px;
+    right: 16px;
+    bottom: 15px;
+
+    z-index: 4;
+
+}
+
+.grocery-cover-title h3 {
+
+    margin: 0;
+
+    color: #ffffff;
+
+    font-size: 22px;
+    font-weight: 800;
+
+    line-height: 1.15;
+
+    letter-spacing: -0.3px;
+
+}
+
+.grocery-cover-sub {
+
+    margin-top: 5px;
+
+    color: rgba(255, 255, 255, 0.88);
+
+    font-size: 11px;
+    font-weight: 500;
+
+}
+
+
+/* =====================================================
+   CONTENT
+===================================================== */
+
+.grocery-modern-content {
+
+    padding: 16px;
+
+}
+
+
+/* =====================================================
+   RATING + DELIVERY
+===================================================== */
+
+.grocery-meta-row {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin-bottom: 10px;
+
+}
+
+.grocery-rating-pill {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 4px;
+
+    background: #ecfdf3;
+
+    color: #15803d;
+
+    border-radius: 50px;
+
+    padding: 5px 9px;
+
+    font-size: 12px;
+    font-weight: 800;
+
+}
+
+.rating-star {
+
+    font-size: 11px;
+
+}
+
+.grocery-meta-time {
+
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 600;
+
+}
+
+
+/* =====================================================
+   CATEGORY TEXT
+===================================================== */
+
+.grocery-category-text {
+
+    color: #64748b;
+
+    font-size: 12px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    margin-bottom: 13px;
+
+}
+
+
+/* =====================================================
+   OFFER BLOCK
+===================================================== */
+
+.grocery-offer-modern {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 10px 11px;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f0fdf4,
+            #dcfce7
+        );
+
+    border:
+        1px solid rgba(22, 163, 74, 0.12);
+
+    margin-bottom: 13px;
+
+}
+
+.offer-icon {
+
+    width: 30px;
+    height: 30px;
+
+    min-width: 30px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: #16a34a;
+
+    color: #ffffff;
+
+    font-size: 15px;
+    font-weight: 900;
+
+}
+
+.offer-content {
+
+    display: flex;
+
+    flex-direction: column;
+
+    min-width: 0;
+
+}
+
+.offer-title {
+
+    color: #166534;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+}
+
+.offer-sub {
+
+    color: #4b7d5b;
+
+    font-size: 10px;
+
+    margin-top: 2px;
+
+}
+
+
+/* =====================================================
+   DELIVERY
+===================================================== */
+
+.grocery-delivery-row {
+
+    padding: 3px 0 12px;
+
+}
+
+.grocery-delivery-free,
+.grocery-delivery-paid {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    font-size: 13px;
+
+}
+
+.grocery-delivery-free > span,
+.grocery-delivery-paid > span {
+
+    font-size: 18px;
+
+}
+
+.grocery-delivery-free div,
+.grocery-delivery-paid div {
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+.grocery-delivery-free strong {
+
+    color: #15803d;
+
+    font-size: 12px;
+
+}
+
+.grocery-delivery-paid strong {
+
+    color: #be123c;
+
+    font-size: 12px;
+
+}
+
+.grocery-delivery-free small,
+.grocery-delivery-paid small {
+
+    color: #94a3b8;
+
+    font-size: 10px;
+
+    margin-top: 2px;
+
+}
+
+
+/* =====================================================
+   WARNING
+===================================================== */
+
+.grocery-warning {
+
+    padding: 9px 10px;
+
+    margin-bottom: 11px;
+
+    border-radius: 10px;
+
+    background: #fef2f2;
+
+    color: #b91c1c;
+
+    font-size: 11px;
+    font-weight: 600;
+
+}
+
+
+/* =====================================================
+   FOOTER / BUTTON
+===================================================== */
+
+.grocery-card-footer {
+
+    margin-top: 2px;
+
+}
+
+.grocery-modern-btn {
+
+    width: 100%;
+
+    min-height: 46px;
+
+    box-sizing: border-box;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    padding: 12px 16px;
+
+    border-radius: 14px;
+
+    text-decoration: none;
+
+    background:
+        linear-gradient(
+            135deg,
+            #16a34a,
+            #22c55e
+        );
+
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    box-shadow:
+        0 6px 16px rgba(22, 163, 74, 0.22);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+
+}
+
+.grocery-modern-btn:hover {
+
+    background:
+        linear-gradient(
+            135deg,
+            #15803d,
+            #16a34a
+        );
+
+    box-shadow:
+        0 8px 20px rgba(22, 163, 74, 0.30);
+
+}
+
+.grocery-modern-btn:active {
+
+    transform: scale(0.98);
+
+}
+
+.shop-arrow {
+
+    font-size: 19px;
+
+    line-height: 1;
+
+    transition:
+        transform 0.2s ease;
+
+}
+
+.grocery-modern-btn:hover .shop-arrow {
+
+    transform: translateX(4px);
+
+}
+
+
+/* =====================================================
+   DISABLED BUTTON
+===================================================== */
+
+.grocery-modern-disabled {
+
+    width: 100%;
+
+    min-height: 46px;
+
+    box-sizing: border-box;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 14px;
+
+    background: #e5e7eb;
+
+    color: #6b7280;
+
+    font-size: 13px;
+    font-weight: 700;
+
+}
+
+
+/* =====================================================
+   DISABLED CARD
+===================================================== */
+
+.grocery-card-modern.disabled {
+
+    opacity: 0.70;
+
+}
+
+.grocery-card-modern.disabled .grocery-cover img {
+
+    filter: grayscale(25%);
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 768px) {
+
+    .grocery-row {
+
+        grid-template-columns: 1fr;
+
+        gap: 16px;
+
+        padding: 10px 12px 20px;
+
+    }
+
+    .grocery-card-modern {
+
+        border-radius: 20px;
+
+    }
+
+    .grocery-cover {
+
+        height: 195px;
+
+    }
+
+    .grocery-cover-title h3 {
+
+        font-size: 21px;
+
+    }
+
+    .grocery-modern-content {
+
+        padding: 14px;
+
+    }
+
+}
+
+
+/* =====================================================
+   VERY SMALL MOBILE
+===================================================== */
+
+@media (max-width: 380px) {
+
+    .grocery-cover {
+
+        height: 180px;
+
+    }
+
+    .grocery-cover-title h3 {
+
+        font-size: 19px;
+
+    }
+
+    .grocery-time-pill {
+
+        padding: 6px 9px;
+
+        font-size: 10px;
+
+    }
+
+} 
+/* =========================================
+   HOME GROCERY CATEGORIES
+========================================= */
+
+.home-grocery-categories{
+    padding:16px 12px 8px;
+}
+
+.home-grocery-category-header{
+    margin-bottom:12px;
+}
+
+.home-grocery-category-header h2{
+    margin:0;
+    font-size:20px;
+    font-weight:900;
+    color:#14532d;
+}
+
+.home-grocery-category-header p{
+    margin:3px 0 0;
+    font-size:12px;
+    color:#64748b;
+}
+
+
+/* CATEGORY SCROLLER */
+.home-grocery-category-scroll{
+    display:flex;
+    gap:12px;
+
+    overflow-x:auto;
+
+    padding:3px 2px 10px;
+
+    scroll-behavior:smooth;
+    scrollbar-width:none;
+}
+
+.home-grocery-category-scroll::-webkit-scrollbar{
+    display:none;
+}
+
+
+/* CATEGORY BUTTON */
+.home-grocery-category{
+    min-width:76px;
+
+    border:none;
+    background:transparent;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+    gap:6px;
+
+    padding:0;
+
+    color:#374151;
+
+    font-size:11px;
+    font-weight:700;
+
+    cursor:pointer;
+
+    -webkit-tap-highlight-color:transparent;
+}
+
+
+/* CATEGORY ICON */
+.home-grocery-category-icon{
+    width:64px;
+    height:64px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:18px;
+
+    background:linear-gradient(
+        145deg,
+        #ffffff,
+        #dcfce7
+    );
+
+    border:1px solid rgba(22,163,74,.12);
+
+    font-size:28px;
+
+    box-shadow:
+        0 5px 14px rgba(22,163,74,.10);
+
+    transition:
+        transform .2s ease,
+        background .2s ease,
+        box-shadow .2s ease;
+}
+
+
+/* ACTIVE CATEGORY */
+.home-grocery-category.active
+.home-grocery-category-icon{
+
+    background:linear-gradient(
+        135deg,
+        #15803d,
+        #22c55e
+    );
+
+    box-shadow:
+        0 7px 18px rgba(22,163,74,.28);
+
+    transform:translateY(-2px);
+}
+
+.home-grocery-category.active span{
+    color:#15803d;
+    font-weight:900;
+}
+
+
+/* PRESS */
+.home-grocery-category:active
+.home-grocery-category-icon{
+    transform:scale(.94);
+}
+
+
+/* MOBILE */
+@media(max-width:600px){
+
+    .home-grocery-categories{
+        padding-right:0;
+    }
+
+    .home-grocery-category-header{
+        padding-right:12px;
+    }
+
+    .home-grocery-category{
+        min-width:72px;
+    }
+
+    .home-grocery-category-icon{
+        width:60px;
+        height:60px;
+
+        font-size:26px;
+
+        border-radius:17px;
+    }
+}
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+    let cart = JSON.parse(localStorage.getItem("cart")) || {};
+    let cartShop = localStorage.getItem("cart_shop");
+
+    // ================= INIT =================
+    updateCartCount();
+    restoreUI();
+
+    // ================= CLICK HANDLER =================
+    document.addEventListener("click", function(e) {
+
+        const addBtn = e.target.closest(".add-btn");
+        const plusBtn = e.target.closest(".plus");
+        const minusBtn = e.target.closest(".minus");
+
+        // ===== ADD BUTTON =====
+        if (addBtn) {
+
+            const itemCard = addBtn.closest(".home-item-card, .item-card");
+            const itemId = addBtn.dataset.id;
+            const shopId = addBtn.dataset.shop;
+
+            // 🚨 SHOP CONFLICT
+            if (cartShop && cartShop !== shopId) {
+                if (!confirm("Cart contains items from another store. Replace cart?")) {
+                    return;
+                }
+                cart = {};
+            }
+
+            cartShop = shopId;
+            localStorage.setItem("cart_shop", shopId);
+
+            // add item
+            cart[itemId] = 1;
+            saveCart();
+
+            // UI change → show stepper
+            showStepper(itemCard, itemId);
+
+            updateCartCount();
+        }
+
+        // ===== PLUS BUTTON =====
+        if (plusBtn) {
+            const itemCard = plusBtn.closest(".home-item-card, .item-card");
+            const itemId = itemCard.querySelector(".add-btn")?.dataset.id 
+                        || itemCard.dataset.id;
+
+            cart[itemId] = (cart[itemId] || 0) + 1;
+            saveCart();
+
+            updateStepper(itemCard, itemId);
+            updateCartCount();
+        }
+
+        // ===== MINUS BUTTON =====
+        if (minusBtn) {
+            const itemCard = minusBtn.closest(".home-item-card, .item-card");
+            const itemId = itemCard.querySelector(".add-btn")?.dataset.id 
+                        || itemCard.dataset.id;
+
+            if (cart[itemId]) {
+                cart[itemId]--;
+
+                if (cart[itemId] <= 0) {
+                    delete cart[itemId];
+                    resetToAdd(itemCard);
+                } else {
+                    updateStepper(itemCard, itemId);
+                }
+
+                saveCart();
+                updateCartCount();
+            }
+        }
+
+    });
+
+    // ================= FUNCTIONS =================
+
+    function saveCart() {
+        localStorage.setItem("cart", JSON.stringify(cart));
+    }
+
+    function updateCartCount() {
+        let total = 0;
+        Object.values(cart).forEach(qty => total += qty);
+
+        const el = document.getElementById("cart-count");
+        if (el) el.innerText = total;
+    }
+
+    function showStepper(card, itemId) {
+        const addBtn = card.querySelector(".add-btn");
+        let stepper = card.querySelector(".stepper");
+
+        if (!stepper) {
+            stepper = document.createElement("div");
+            stepper.className = "stepper";
+
+            stepper.innerHTML = `
+                <button class="minus">−</button>
+                <span class="qty">1</span>
+                <button class="plus">+</button>
+            `;
+
+            card.appendChild(stepper);
+        }
+
+        addBtn.style.display = "none";
+        stepper.style.display = "flex";
+
+        updateStepper(card, itemId);
+    }
+
+    function updateStepper(card, itemId) {
+        const qtyEl = card.querySelector(".qty");
+        if (qtyEl) {
+            qtyEl.innerText = cart[itemId] || 1;
+        }
+    }
+
+    function resetToAdd(card) {
+        const addBtn = card.querySelector(".add-btn");
+        const stepper = card.querySelector(".stepper");
+
+        if (addBtn) addBtn.style.display = "block";
+        if (stepper) stepper.style.display = "none";
+    }
+
+    function restoreUI() {
+        document.querySelectorAll(".home-item-card, .item-card").forEach(card => {
+
+            const addBtn = card.querySelector(".add-btn");
+            if (!addBtn) return;
+
+            const itemId = addBtn.dataset.id;
+
+            if (cart[itemId]) {
+                showStepper(card, itemId);
+            }
+        });
+    }
+
+});
+</script> 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const categoryButtons =
+        document.querySelectorAll(".home-grocery-category");
+
+    categoryButtons.forEach(button => {
+
+        button.addEventListener("click", function () {
+
+            const category =
+                this.dataset.category || "all";
+
+            categoryButtons.forEach(btn => {
+                btn.classList.remove("active");
+            });
+
+            this.classList.add("active");
+
+            // ALL stays on homepage
+            if (category === "all") {
+                return;
+            }
+
+            // Find first shop that really has this category
+            const shops =
+                document.querySelectorAll(".grocery-card-modern");
+
+            let shop = null;
+
+            shops.forEach(card => {
+
+                const categories =
+                    (card.dataset.categories || "")
+                    .split(",")
+                    .map(c => c.trim())
+                    .filter(Boolean);
+
+                if (
+                    categories.includes(category) &&
+                    !shop
+                ) {
+                    shop = card;
+                }
+
+            });
+
+            if (!shop) {
+                console.warn(
+                    "No grocery shop found for:",
+                    category
+                );
+                return;
+            }
+
+            const storeId =
+                shop.dataset.storeId;
+
+            if (!storeId) {
+                console.error(
+                    "Missing data-store-id"
+                );
+                return;
+            }
+
+            window.location.href =
+                `/grocery/${storeId}?category=` +
+                encodeURIComponent(category);
+
+        });
+
+    });
+
+});
+</script>

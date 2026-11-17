@@ -124,17 +124,36 @@
       <label>Address</label>
       <input type="text" name="address">
 
-      <label>Location</label>
-      <input type="text" name="location" required>
+ <label>Location</label>
 
-      <!-- ✅ FIXED BUSINESS TYPE -->
+<input
+  type="text"
+  name="location"
+  placeholder="Example: Machilipatnam"
+  required
+>
+
+<small style="
+  display:block;
+  margin-top:-8px;
+  margin-bottom:15px;
+  color:#6b7280;
+  font-size:12px;
+  line-height:1.5;
+">
+  Delivery pricing will be automatically linked to this location.
+  You can manage distance slots later from Delivery Settings.
+</small>
+
 <label>Category</label>
 <select name="category_type" required>
-    <option value="">Select Category</option>
-    <option value="restaurant">Restaurant</option>
-    <option value="bakery">Bakery</option>
+    <option value="">-- Select Category --</option>
+    <option value="restaurant">🍔 Restaurant</option>
+    <option value="grocery">🛒 Grocery</option>
+    <option value="bakery">🧁 Bakery</option>
+    <option value="pharmacy">💊 Pharmacy</option>
+    <option value="meat">🥩 Meat & Fish</option>
 </select>
-
       <label>Google Sheet URL</label>
       <input type="text" name="sheet_url" required>
 

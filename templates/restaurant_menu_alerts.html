@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu Alerts - {{ restaurant.name }}</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;padding:24px;font-family:Arial,sans-serif;
+    background:#f5f7fa;color:#111827;
+}
+.container{max-width:1200px;margin:auto}
+.header{
+    background:#111827;color:#fff;border-radius:18px;
+    padding:24px;margin-bottom:20px;
+}
+.header h1{margin:0;font-size:25px}
+.header p{margin:7px 0 0;color:#cbd5e1}
+
+.card{
+    background:#fff;border:1px solid #e5e7eb;border-radius:18px;
+    padding:22px;margin-bottom:20px;box-shadow:0 5px 20px rgba(0,0,0,.05);
+}
+.card-head{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    gap:15px;margin-bottom:18px;
+}
+.card-head h2{margin:0;font-size:19px}
+.muted{color:#6b7280;font-size:13px}
+
+.restaurant-info{
+    display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;
+}
+.chip{
+    padding:7px 11px;border-radius:999px;background:#f3f4f6;
+    color:#374151;font-size:12px;font-weight:700;
+}
+.chip.location{background:#e0f2fe;color:#075985}
+
+.stats{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;
+}
+.stat{
+    background:#fff;border:1px solid #e5e7eb;border-radius:15px;padding:18px;
+}
+.stat-label{font-size:11px;font-weight:800;color:#6b7280}
+.stat-value{font-size:28px;font-weight:800;margin-top:5px}
+
+.alert-card{
+    border:1px solid #e5e7eb;border-radius:15px;padding:17px;margin-bottom:12px;
+}
+.alert-card.disabled{background:#fafafa;opacity:.86}
+.alert-top{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:15px;
+}
+.alert-title{font-size:16px;font-weight:800}
+.alert-message{margin-top:9px;color:#374151;line-height:1.5}
+.badges{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.badge{
+    display:inline-flex;align-items:center;padding:5px 9px;
+    border-radius:999px;font-size:11px;font-weight:800;
+}
+.active{background:#dcfce7;color:#166534}
+.disabled{background:#f3f4f6;color:#6b7280}
+.restaurant-scope{background:#dbeafe;color:#1d4ed8}
+.category-scope{background:#ede9fe;color:#6d28d9}
+.info{background:#dbeafe;color:#1e40af}
+.warning{background:#fef3c7;color:#92400e}
+.emergency{background:#fee2e2;color:#991b1b}
+.expiry{background:#f3f4f6;color:#4b5563}
+
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}
+button{
+    border:0;border-radius:9px;padding:10px 15px;cursor:pointer;font-weight:700;
+}
+.disable-btn{background:#fef3c7;color:#92400e}
+
+.empty{
+    text-align:center;padding:32px 15px;background:#f9fafb;
+    border-radius:12px;color:#6b7280;
+}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{margin-bottom:2px}
+.full{grid-column:1/-1}
+label{
+    display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;
+}
+input,select,textarea{
+    width:100%;padding:11px 12px;border:1px solid #d1d5db;
+    border-radius:10px;font-size:14px;background:#fff;
+}
+textarea{min-height:110px;resize:vertical}
+input:focus,select:focus,textarea:focus{
+    outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.10);
+}
+.status-box{
+    display:flex;align-items:center;gap:10px;padding:12px;
+    border:1px solid #e5e7eb;background:#f8fafc;border-radius:10px;
+}
+.status-box input{width:18px;height:18px}
+.status-box label{margin:0;cursor:pointer}
+.category-field{display:none}
+.category-field.show{display:block}
+.help{
+    margin-top:6px;font-size:11px;color:#6b7280;line-height:1.4;
+}
+.save{
+    background:#111827;color:#fff;padding:11px 18px;
+}
+.flash{
+    padding:13px 15px;border-radius:10px;background:#ecfdf5;
+    color:#166534;margin-bottom:15px;
+}
+.section-note{
+    margin-top:-10px;margin-bottom:16px;color:#6b7280;font-size:12px;
+}
+
+@media(max-width:700px){
+    body{padding:12px}
+    .stats{grid-template-columns:1fr}
+    .form-grid{grid-template-columns:1fr}
+    .full{grid-column:auto}
+    .card{padding:16px}
+    .alert-top{flex-direction:column}
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="header">
+    <h1>🚨 Menu Alert Management</h1>
+    <p>{{ restaurant.name }} · Control customer-facing menu notices</p>
+
+    <div class="restaurant-info">
+        <span class="chip">🏪 {{ restaurant.name }}</span>
+
+        {% if restaurant.id %}
+        <span class="chip">Restaurant #{{ restaurant.id }}</span>
+        {% endif %}
+
+        {% if restaurant.category_type %}
+        <span class="chip">🍽️ {{ restaurant.category_type|capitalize }}</span>
+        {% endif %}
+
+        {# Show whichever location field exists in your Restaurant model. #}
+        {% if restaurant.city %}
+        <span class="chip location">📍 {{ restaurant.city }}</span>
+        {% elif restaurant.location %}
+        <span class="chip location">📍 {{ restaurant.location }}</span>
+        {% elif restaurant.address %}
+        <span class="chip location">📍 {{ restaurant.address }}</span>
+        {% endif %}
+    </div>
+</div>
+
+{% with messages = get_flashed_messages() %}
+    {% for message in messages %}
+    <div class="flash">{{ message }}</div>
+    {% endfor %}
+{% endwith %}
+
+{% set active_count = alerts|selectattr("enabled", "equalto", true)|list|length %}
+{% set disabled_count = alerts|selectattr("enabled", "equalto", false)|list|length %}
+{% set total_count = alerts|length %}
+
+<div class="stats">
+    <div class="stat">
+        <div class="stat-label">ACTIVE</div>
+        <div class="stat-value">{{ active_count }}</div>
+        <div class="muted">Customers can see these alerts.</div>
+    </div>
+
+    <div class="stat">
+        <div class="stat-label">DISABLED</div>
+        <div class="stat-value">{{ disabled_count }}</div>
+        <div class="muted">Stored but not shown to customers.</div>
+    </div>
+
+    <div class="stat">
+        <div class="stat-label">TOTAL</div>
+        <div class="stat-value">{{ total_count }}</div>
+        <div class="muted">All alerts for this restaurant.</div>
+    </div>
+</div>
+
+<!-- ACTIVE -->
+<div class="card">
+    <div class="card-head">
+        <div>
+            <h2>🟢 Active Alerts</h2>
+            <div class="muted">Only these alerts are currently eligible to appear on the customer menu.</div>
+        </div>
+    </div>
+
+    {% if active_count > 0 %}
+        {% for alert in alerts %}
+            {% if alert.enabled %}
+            <div class="alert-card">
+
+                <div class="alert-top">
+                    <div>
+                        <div class="alert-title">
+                            {% if alert.severity == "emergency" %}🚨
+                            {% elif alert.severity == "warning" %}⚠️
+                            {% else %}ℹ️{% endif %}
+                            {{ alert.title }}
+                        </div>
+
+                        <div class="badges">
+                            <span class="badge active">● ACTIVE</span>
+
+                            {% if alert.scope == "category" %}
+                            <span class="badge category-scope">
+                                📂 CATEGORY: {{ alert.category }}
+                            </span>
+                            {% else %}
+                            <span class="badge restaurant-scope">
+                                🏪 ENTIRE RESTAURANT
+                            </span>
+                            {% endif %}
+
+                            {% if alert.severity == "emergency" %}
+                            <span class="badge emergency">🚨 EMERGENCY</span>
+                            {% elif alert.severity == "warning" %}
+                            <span class="badge warning">⚠️ WARNING</span>
+                            {% else %}
+                            <span class="badge info">ℹ️ INFORMATION</span>
+                            {% endif %}
+
+                            {% if alert.expires_at %}
+                            <span class="badge expiry">
+                                ⏱ {{ alert.expires_at.strftime('%d %b %Y, %I:%M %p') }}
+                            </span>
+                            {% else %}
+                            <span class="badge expiry">♾ NO EXPIRY</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert-message">{{ alert.message }}</div>
+
+                <div class="actions">
+                    <form method="POST"
+                          action="{{ url_for('disable_restaurant_menu_alert', alert_id=alert.id) }}">
+                        <button class="disable-btn" type="submit"
+                                onclick="return confirm('Disable this alert? Customers will no longer see it.')">
+                            ⏸ Disable Alert
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <div class="empty">
+            <div style="font-size:32px">🟢</div>
+            <strong>No active alerts</strong>
+            <div style="margin-top:5px">Customers are currently not seeing a menu alert.</div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- DISABLED -->
+<div class="card">
+    <div class="card-head">
+        <div>
+            <h2>⚪ Disabled Alerts</h2>
+            <div class="muted">These alerts remain in the database but are not shown to customers.</div>
+        </div>
+    </div>
+
+    {% if disabled_count > 0 %}
+        {% for alert in alerts %}
+            {% if not alert.enabled %}
+            <div class="alert-card disabled">
+
+                <div class="alert-top">
+                    <div>
+                        <div class="alert-title">
+                            {% if alert.severity == "emergency" %}🚨
+                            {% elif alert.severity == "warning" %}⚠️
+                            {% else %}ℹ️{% endif %}
+                            {{ alert.title }}
+                        </div>
+
+                        <div class="badges">
+                            <span class="badge disabled">● DISABLED</span>
+
+                            {% if alert.scope == "category" %}
+                            <span class="badge category-scope">
+                                📂 CATEGORY: {{ alert.category }}
+                            </span>
+                            {% else %}
+                            <span class="badge restaurant-scope">
+                                🏪 ENTIRE RESTAURANT
+                            </span>
+                            {% endif %}
+
+                            {% if alert.severity == "emergency" %}
+                            <span class="badge emergency">🚨 EMERGENCY</span>
+                            {% elif alert.severity == "warning" %}
+                            <span class="badge warning">⚠️ WARNING</span>
+                            {% else %}
+                            <span class="badge info">ℹ️ INFORMATION</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert-message">{{ alert.message }}</div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <div class="empty">
+            No disabled alerts.
+        </div>
+    {% endif %}
+</div>
+
+<!-- CREATE -->
+<div class="card">
+    <div class="card-head">
+        <div>
+            <h2>➕ Create New Alert</h2>
+            <div class="muted">Choose the target first, then define what customers should see.</div>
+        </div>
+    </div>
+
+    <form method="POST"
+          action="{{ url_for('save_restaurant_menu_alert', restaurant_id=restaurant.id) }}">
+
+        <div class="form-grid">
+
+            <div class="field full">
+                <label>Alert Status</label>
+
+                <div class="status-box">
+                    <input type="checkbox" name="enabled" id="enabled" value="1" checked>
+                    <label for="enabled">
+                        <strong>Enable immediately</strong>
+                        <div class="help">If enabled, the alert can appear to customers immediately.</div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Apply To</label>
+
+                <select name="scope" id="scope">
+                    <option value="restaurant">🏪 Entire Restaurant</option>
+                    <option value="category">📂 Specific Category</option>
+                </select>
+
+                <div class="help">
+                    Restaurant = every menu category. Category = only the selected category.
+                </div>
+            </div>
+
+            <div class="field category-field" id="categoryField">
+                <label>Category</label>
+
+                <select name="category" id="categorySelect">
+                    <option value="">-- Select Category --</option>
+
+                    {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Severity</label>
+
+                <!-- Only ONE severity input is used. -->
+                <select name="severity" id="severity">
+                    <option value="info">ℹ️ Information</option>
+                    <option value="warning" selected>⚠️ Warning</option>
+                    <option value="emergency">🚨 Emergency</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Alert Title</label>
+
+                <input type="text"
+                       name="title"
+                       maxlength="150"
+                       value="Preparation Delay"
+                       placeholder="Example: Preparation Delay"
+                       required>
+            </div>
+
+            <div class="field full">
+                <label>Customer Message</label>
+
+                <textarea name="message"
+                          maxlength="1000"
+                          placeholder="Example: Biryani preparation may take an additional 20 minutes due to high demand."
+                          required></textarea>
+            </div>
+
+            <div class="field">
+                <label>Expires At</label>
+
+                <input type="datetime-local" name="expires_at" id="expiresAt">
+
+                <div class="help">
+                    Leave empty if this alert should have no expiry.
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Quick Expiry</label>
+
+                <select id="quickExpiry">
+                    <option value="">No quick expiry</option>
+                    <option value="30">30 minutes</option>
+                    <option value="60">1 hour</option>
+                    <option value="120">2 hours</option>
+                    <option value="360">6 hours</option>
+                    <option value="1440">24 hours</option>
+                </select>
+            </div>
+
+            <div class="field full">
+                <button class="save" type="submit">💾 Save Alert</button>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+</div>
+
+<script>
+const scope = document.getElementById("scope");
+const categoryField = document.getElementById("categoryField");
+const categorySelect = document.getElementById("categorySelect");
+
+function updateCategory(){
+    const isCategory = scope.value === "category";
+
+    categoryField.classList.toggle("show", isCategory);
+    categorySelect.required = isCategory;
+
+    if(!isCategory){
+        categorySelect.value = "";
+    }
+}
+
+scope.addEventListener("change", updateCategory);
+updateCategory();
+
+const quickExpiry = document.getElementById("quickExpiry");
+const expiresAt = document.getElementById("expiresAt");
+
+quickExpiry.addEventListener("change", function(){
+    const minutes = parseInt(this.value, 10);
+
+    if(!minutes){
+        expiresAt.value = "";
+        return;
+    }
+
+    const date = new Date(Date.now() + minutes * 60 * 1000);
+
+    const pad = n => String(n).padStart(2, "0");
+
+    expiresAt.value =
+        date.getFullYear() + "-" +
+        pad(date.getMonth() + 1) + "-" +
+        pad(date.getDate()) + "T" +
+        pad(date.getHours()) + ":" +
+        pad(date.getMinutes());
+});
+</script>
+
+</body>
+</html>

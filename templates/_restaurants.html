@@ -21,10 +21,10 @@
     {% if is_new_restaurant(r) %}
         <span class="corner-badge new-badge">NEW</span>
     {% endif %}
-                <img
+               <img 
                     src="/static/images/restaurants/{{ r.id }}.jpg"
                     alt="{{ r.name }}"
-                    onerror="this.onerror=null;this.src='/static/images/restaurants/img1.jpg';"
+                    onerror="this.onerror=null;this.src='/static/images/restaurants/img1.webp';"
                 >
 
                 <div class="mini-name two-line">{{ r.name }}</div>
@@ -212,7 +212,7 @@ data-category-ids="{{ r.categories | map(attribute='id') | join(',') }}">
     <span class="view-btn disabled-btn">🚫 Not Accepting Orders</span>
 
 {% else %}
-    <a href="/menu/{{ r.id }}" class="view-btn">
+    <a href="/menu/{{ r.id }}" class="view-btn view-menu-btn">
         {{ 'View Cakes' if is_bakery else 'View Menu' }}
     </a>
 {% endif %}

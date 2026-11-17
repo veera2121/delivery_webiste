@@ -1801,7 +1801,7 @@ a {
 <tr
     data-order-id="{{ order.id }}"
     data-order-number="{{ order.order_id or '' }}"
-    data-location-name="{{ order.restaurant.location if order.restaurant and order.restaurant.location else '' }}"
+    data-location-name="{{ order.restaurant.delivery_location_settings.location if order.restaurant and order.restaurant.delivery_location_settings else '' }}"
     data-restaurant-name="{{ order.restaurant.name if order.restaurant else '' }}"
     data-status="{{ order.status }}"
     class="{% if order.status == 'Pending' %}new-order{% endif %}"
@@ -1831,16 +1831,16 @@ a {
                 🍽️ {{ order.restaurant.name }}
             </strong>
 
-            {% if order.restaurant.location %}
-                <div class="restaurant-location-badge">
-                    <span>📍</span>
-                    <span>{{ order.restaurant.location }}</span>
-                </div>
-            {% else %}
-                <div class="restaurant-location-missing">
-                    Location not set
-                </div>
-            {% endif %}
+{% if order.restaurant and order.restaurant.delivery_location_settings %}
+    <div class="restaurant-location-badge">
+        <span>📍</span>
+        <span>{{ order.restaurant.delivery_location_settings.location }}</span>
+    </div>
+{% else %}
+    <div class="restaurant-location-missing">
+        Location not set
+    </div>
+{% endif %}
 
         </div>
 

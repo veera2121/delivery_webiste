@@ -431,8 +431,196 @@ td[data-label="Feedback"] {
 }
 
 .price-tag {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
     background:#fef3c7;
     color:#92400e;
+    white-space: nowrap;
+}
+
+/* Original unit price (struck through) + discounted unit price */
+.item-price-pair {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.item-original-price {
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 500;
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+}
+
+.item-offer-price {
+    color: #047857;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.item-regular-price {
+    color: #92400e;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.qty-price-line {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 2px 0 5px;
+    white-space: nowrap;
+}
+
+.qty-price-original {
+    color: #64748b;
+    font-size: 12px;
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+}
+
+.qty-price-final {
+    color: #047857;
+    font-weight: 800;
+}
+
+/* ===== ORDER TOTAL BREAKDOWN ===== */
+.order-total-cell {
+    min-width: 205px;
+    text-align: left !important;
+    vertical-align: top;
+    padding: 10px !important;
+}
+
+.order-total-card {
+    width: 100%;
+    min-width: 185px;
+    padding: 11px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 2px 7px rgba(15, 23, 42, 0.045);
+    color: #334155;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.order-total-title {
+    margin: 0 0 7px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #0f172a;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.order-total-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 4px 0;
+}
+
+.order-total-line > span:last-child {
+    flex-shrink: 0;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.order-total-label {
+    min-width: 0;
+    color: #64748b;
+}
+
+.order-total-note {
+    display: block;
+    margin-top: 2px;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.order-total-discount > span:last-child {
+    color: #15803d;
+    font-weight: 750;
+}
+
+.order-total-r-offer {
+    margin: 5px -4px 3px;
+    padding: 8px 7px;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    background: #f0fdf4;
+}
+
+.order-total-r-offer .order-total-label {
+    color: #166534;
+    font-weight: 800;
+}
+
+.order-total-r-offer .order-total-note {
+    color: #15803d;
+}
+
+.order-total-divider {
+    border: 0;
+    border-top: 1px dashed #cbd5e1;
+    margin: 8px 0;
+}
+
+.order-total-final {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 10px;
+    margin: 0 -2px -2px;
+    padding: 9px 8px;
+    border-radius: 8px;
+    background: #0f766e;
+    color: #ffffff;
+}
+
+.order-total-final-label {
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.order-total-final-note {
+    display: block;
+    margin-top: 2px;
+    color: #ccfbf1;
+    font-size: 9px;
+    font-weight: 500;
+}
+
+.order-total-final-value {
+    flex-shrink: 0;
+    font-size: 15px;
+    font-weight: 850;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .order-total-cell {
+        min-width: 195px;
+        padding: 8px !important;
+    }
+
+    .order-total-card {
+        min-width: 175px;
+        padding: 9px;
+    }
 }
 
 /* =========================================================
@@ -624,7 +812,11 @@ td[data-label="Feedback"] {
            class="btn reports">
             📊 Reports
         </a>
-
+<a href="{{ url_for('restaurant_menu_alerts', restaurant_id=restaurant_id) }}"
+   class="btn reports">
+    <span>⚠️</span>
+    <span>Menu Alerts</span>
+</a>
         <a href="{{ url_for('restaurant_logout') }}"
            class="btn logout">
             Logout
@@ -670,7 +862,7 @@ td[data-label="Feedback"] {
             <option value="">All Status</option>
 
             <option value="Pending">Pending</option>
-
+<option value="Confirmed">Confirmed</option>
             <option value="Accepted">Accepted</option>
 
             <option value="Preparing">Preparing</option>
@@ -895,8 +1087,17 @@ td[data-label="Feedback"] {
                                 ×{{ item.quantity }}
                             </span>
 
+                            {% set item_current_price = item.price|default(0, true)|float %}
+                            {% set item_original_price = item.original_unit_price|default(0, true)|float %}
                             <span class="tag price-tag">
-                                ₹{{ item.price }}
+                                {% if item_original_price > item_current_price %}
+                                    <span class="item-price-pair">
+                                        <del class="item-original-price">₹{{ "%.2f"|format(item_original_price) }}</del>
+                                        <strong class="item-offer-price">₹{{ "%.2f"|format(item_current_price) }}</strong>
+                                    </span>
+                                {% else %}
+                                    <strong class="item-regular-price">₹{{ "%.2f"|format(item_current_price) }}</strong>
+                                {% endif %}
                             </span>
 
                         </div>
@@ -908,36 +1109,96 @@ td[data-label="Feedback"] {
                     <td data-label="Qty×Price">
 
                         {% for item in order.items %}
-                            {{ item.quantity }} × ₹{{ item.price }}<br>
+                            {% set qty_current_price = item.price|default(0, true)|float %}
+                            {% set qty_original_price = item.original_unit_price|default(0, true)|float %}
+                            <span class="qty-price-line">
+                                <span>{{ item.quantity }} ×</span>
+                                {% if qty_original_price > qty_current_price %}
+                                    <del class="qty-price-original">₹{{ "%.2f"|format(qty_original_price) }}</del>
+                                    <strong class="qty-price-final">₹{{ "%.2f"|format(qty_current_price) }}</strong>
+                                {% else %}
+                                    <strong>₹{{ "%.2f"|format(qty_current_price) }}</strong>
+                                {% endif %}
+                            </span><br>
                         {% endfor %}
 
                     </td>
 
-                    <td data-label="Total" style="text-align:left;">
+                    <td data-label="Total" class="order-total-cell">
+                        {% set r_offer_amount = order.restaurant_offer_discount|default(0, true)|float %}
+                        {% set coupon_discount_amount = order.discount|default(0, true)|float %}
+                        {% set coins_discount_amount = order.coins_discount_amount|default(0, true)|float %}
+                        {% set manual_discount_amount = order.manual_discount|default(0, true)|float %}
+                        {% set extra_charge_amount = order.extra_charge|default(0, true)|float %}
 
-                        <strong>Items:</strong>
-                        ₹{{ order.items_total }}<br>
+                        <div class="order-total-card">
+                            <div class="order-total-title">Order breakdown</div>
 
-                        <strong>Delivery:</strong>
-                        ₹{{ order.delivery_charge or 0 }}<br>
+                            <div class="order-total-line">
+                                <span class="order-total-label">Items subtotal</span>
+                                <span>₹{{ "%.2f"|format(order.items_total|default(0, true)|float) }}</span>
+                            </div>
 
-                        <strong>Discount:</strong>
-                        ₹{{ order.discount or 0 }}
+                            <div class="order-total-line">
+                                <span class="order-total-label">Delivery fee</span>
+                                <span>₹{{ "%.2f"|format(order.delivery_charge|default(0, true)|float) }}</span>
+                            </div>
 
-                        {% if order.coupon_used %}
-                            ({{ order.coupon_used }})
-                        {% endif %}
+                            {% if extra_charge_amount > 0 %}
+                            <div class="order-total-line">
+                                <span class="order-total-label">Extra charge</span>
+                                <span>₹{{ "%.2f"|format(extra_charge_amount) }}</span>
+                            </div>
+                            {% endif %}
 
-                        <br>
+                            {% if coupon_discount_amount > 0 %}
+                            <div class="order-total-line order-total-discount">
+                                <span class="order-total-label">
+                                    Coupon / promo discount
+                                    {% if order.coupon_used %}
+                                    <small class="order-total-note">{{ order.coupon_used }}</small>
+                                    {% endif %}
+                                </span>
+                                <span>− ₹{{ "%.2f"|format(coupon_discount_amount) }}</span>
+                            </div>
+                            {% endif %}
 
-                        <strong>R-Offer:</strong>
-                        ₹{{ order.restaurant_offer_discount or 0 }}
+                            <div class="order-total-line order-total-discount order-total-r-offer">
+                                <span class="order-total-label">
+                                    🏷️ Restaurant offer
+                                    {% if r_offer_amount > 0 %}
+                                    <small class="order-total-note">R-Offer savings applied</small>
+                                    {% else %}
+                                    <small class="order-total-note">No R-Offer discount</small>
+                                    {% endif %}
+                                </span>
+                                <span>{% if r_offer_amount > 0 %}− {% endif %}₹{{ "%.2f"|format(r_offer_amount) }}</span>
+                            </div>
 
-                        <hr style="margin:4px 0;">
+                            {% if coins_discount_amount > 0 %}
+                            <div class="order-total-line order-total-discount">
+                                <span class="order-total-label">Reward coins</span>
+                                <span>− ₹{{ "%.2f"|format(coins_discount_amount) }}</span>
+                            </div>
+                            {% endif %}
 
-                        <strong>Total:</strong>
-                        ₹{{ order.final_total }}
+                            {% if manual_discount_amount > 0 %}
+                            <div class="order-total-line order-total-discount">
+                                <span class="order-total-label">Manual discount</span>
+                                <span>− ₹{{ "%.2f"|format(manual_discount_amount) }}</span>
+                            </div>
+                            {% endif %}
 
+                            <hr class="order-total-divider">
+
+                            <div class="order-total-final">
+                                <span>
+                                    <span class="order-total-final-label">Total payable</span>
+                                    <small class="order-total-final-note">Final order amount</small>
+                                </span>
+                                <span class="order-total-final-value">₹{{ "%.2f"|format(order.final_total|default(0, true)|float) }}</span>
+                            </div>
+                        </div>
                     </td>
 
                     <td data-label="Status">
@@ -1023,64 +1284,70 @@ td[data-label="Feedback"] {
                             action="{{ url_for('update_status', order_id=order.id) }}"
                         >
 
-                            <select name="status">
+<select name="status">
 
-                                <option value="Pending"
-                                    {% if order.status == 'Pending' %}selected{% endif %}>
-                                    Pending
-                                </option>
+    <option value="Pending"
+        {% if order.status == 'Pending' %}selected{% endif %}>
+        Pending
+    </option>
 
-                                <option value="Accepted"
-                                    {% if order.status == 'Accepted' %}selected{% endif %}>
-                                    Accepted
-                                </option>
+    <option value="Confirmed"
+        {% if order.status == 'Confirmed' %}selected{% endif %}>
+        ✅ Customer Confirmed
+    </option>
 
-                                <option value="Preparing"
-                                    {% if order.status == 'Preparing' %}selected{% endif %}>
-                                    Preparing
-                                </option>
+    <option value="Accepted"
+        {% if order.status == 'Accepted' %}selected{% endif %}>
+        Accepted
+    </option>
 
-                                <option value="Ready"
-                                    {% if order.status == 'Ready' %}selected{% endif %}>
-                                    Ready
-                                </option>
+    <option value="Preparing"
+        {% if order.status == 'Preparing' %}selected{% endif %}>
+        Preparing
+    </option>
 
-                                <option value="Assignment Pending"
-                                    {% if order.status == 'Assignment Pending' %}selected{% endif %}
-                                    disabled>
-                                    ⏳ Waiting for Rider
-                                </option>
+    <option value="Ready"
+        {% if order.status == 'Ready' %}selected{% endif %}>
+        Ready
+    </option>
 
-                                <option value="Out for Delivery"
-                                    {% if order.status == 'Out for Delivery' %}selected{% endif %}
-                                    disabled>
-                                    🚴 Out for Delivery (Auto)
-                                </option>
+    <option value="Assignment Pending"
+        {% if order.status == 'Assignment Pending' %}selected{% endif %}
+        disabled>
+        ⏳ Waiting for Rider
+    </option>
 
-                                <option value="Picked Up"
-                                    {% if order.status == 'Picked Up' %}selected{% endif %}
-                                    disabled>
-                                    📦 Picked Up (Auto)
-                                </option>
+    <option value="Out for Delivery"
+        {% if order.status == 'Out for Delivery' %}selected{% endif %}
+        disabled>
+        🚴 Out for Delivery (Auto)
+    </option>
 
-                                <option value="Started"
-                                    {% if order.status == 'Started' %}selected{% endif %}
-                                    disabled>
-                                    🚚 Delivery Started
-                                </option>
+    <option value="Picked Up"
+        {% if order.status == 'Picked Up' %}selected{% endif %}
+        disabled>
+        📦 Picked Up (Auto)
+    </option>
 
-                                <option value="Delivered"
-                                    {% if order.status == 'Delivered' %}selected{% endif %}
-                                    disabled>
-                                    ✔ Delivered
-                                </option>
+    <option value="Started"
+        {% if order.status == 'Started' %}selected{% endif %}
+        disabled>
+        🚚 Delivery Started
+    </option>
 
-                                <option value="Cancelled"
-                                    {% if order.status == 'Cancelled' %}selected{% endif %}>
-                                    Cancelled
-                                </option>
+    <option value="Delivered"
+        {% if order.status == 'Delivered' %}selected{% endif %}
+        disabled>
+        ✔ Delivered
+    </option>
 
-                            </select>
+    <option value="Cancelled"
+        {% if order.status == 'Cancelled' %}selected{% endif %}>
+        Cancelled
+    </option>
+
+</select>
+
 
                             <button type="submit" class="update-btn">
                                 Update
@@ -1323,8 +1590,17 @@ td[data-label="Feedback"] {
                                 ×{{ item.quantity }}
                             </span>
 
+                            {% set item_current_price = item.price|default(0, true)|float %}
+                            {% set item_original_price = item.original_unit_price|default(0, true)|float %}
                             <span class="tag price-tag">
-                                ₹{{ item.price }}
+                                {% if item_original_price > item_current_price %}
+                                    <span class="item-price-pair">
+                                        <del class="item-original-price">₹{{ "%.2f"|format(item_original_price) }}</del>
+                                        <strong class="item-offer-price">₹{{ "%.2f"|format(item_current_price) }}</strong>
+                                    </span>
+                                {% else %}
+                                    <strong class="item-regular-price">₹{{ "%.2f"|format(item_current_price) }}</strong>
+                                {% endif %}
                             </span>
 
                         </div>
@@ -1336,36 +1612,96 @@ td[data-label="Feedback"] {
                     <td data-label="Qty×Price">
 
                         {% for item in order.items %}
-                            {{ item.quantity }} × ₹{{ item.price }}<br>
+                            {% set qty_current_price = item.price|default(0, true)|float %}
+                            {% set qty_original_price = item.original_unit_price|default(0, true)|float %}
+                            <span class="qty-price-line">
+                                <span>{{ item.quantity }} ×</span>
+                                {% if qty_original_price > qty_current_price %}
+                                    <del class="qty-price-original">₹{{ "%.2f"|format(qty_original_price) }}</del>
+                                    <strong class="qty-price-final">₹{{ "%.2f"|format(qty_current_price) }}</strong>
+                                {% else %}
+                                    <strong>₹{{ "%.2f"|format(qty_current_price) }}</strong>
+                                {% endif %}
+                            </span><br>
                         {% endfor %}
 
                     </td>
 
-                    <td data-label="Total" style="text-align:left;">
+                    <td data-label="Total" class="order-total-cell">
+                        {% set r_offer_amount = order.restaurant_offer_discount|default(0, true)|float %}
+                        {% set coupon_discount_amount = order.discount|default(0, true)|float %}
+                        {% set coins_discount_amount = order.coins_discount_amount|default(0, true)|float %}
+                        {% set manual_discount_amount = order.manual_discount|default(0, true)|float %}
+                        {% set extra_charge_amount = order.extra_charge|default(0, true)|float %}
 
-                        <strong>Items:</strong>
-                        ₹{{ order.items_total }}<br>
+                        <div class="order-total-card">
+                            <div class="order-total-title">Order breakdown</div>
 
-                        <strong>Delivery:</strong>
-                        ₹{{ order.delivery_charge or 0 }}<br>
+                            <div class="order-total-line">
+                                <span class="order-total-label">Items subtotal</span>
+                                <span>₹{{ "%.2f"|format(order.items_total|default(0, true)|float) }}</span>
+                            </div>
 
-                        <strong>Discount:</strong>
-                        ₹{{ order.discount or 0 }}
+                            <div class="order-total-line">
+                                <span class="order-total-label">Delivery fee</span>
+                                <span>₹{{ "%.2f"|format(order.delivery_charge|default(0, true)|float) }}</span>
+                            </div>
 
-                        {% if order.coupon_used %}
-                            ({{ order.coupon_used }})
-                        {% endif %}
+                            {% if extra_charge_amount > 0 %}
+                            <div class="order-total-line">
+                                <span class="order-total-label">Extra charge</span>
+                                <span>₹{{ "%.2f"|format(extra_charge_amount) }}</span>
+                            </div>
+                            {% endif %}
 
-                        <br>
+                            {% if coupon_discount_amount > 0 %}
+                            <div class="order-total-line order-total-discount">
+                                <span class="order-total-label">
+                                    Coupon / promo discount
+                                    {% if order.coupon_used %}
+                                    <small class="order-total-note">{{ order.coupon_used }}</small>
+                                    {% endif %}
+                                </span>
+                                <span>− ₹{{ "%.2f"|format(coupon_discount_amount) }}</span>
+                            </div>
+                            {% endif %}
 
-                        <strong>R-Offer:</strong>
-                        ₹{{ order.restaurant_offer_discount or 0 }}
+                            <div class="order-total-line order-total-discount order-total-r-offer">
+                                <span class="order-total-label">
+                                    🏷️ Restaurant offer
+                                    {% if r_offer_amount > 0 %}
+                                    <small class="order-total-note">R-Offer savings applied</small>
+                                    {% else %}
+                                    <small class="order-total-note">No R-Offer discount</small>
+                                    {% endif %}
+                                </span>
+                                <span>{% if r_offer_amount > 0 %}− {% endif %}₹{{ "%.2f"|format(r_offer_amount) }}</span>
+                            </div>
 
-                        <hr style="margin:4px 0;">
+                            {% if coins_discount_amount > 0 %}
+                            <div class="order-total-line order-total-discount">
+                                <span class="order-total-label">Reward coins</span>
+                                <span>− ₹{{ "%.2f"|format(coins_discount_amount) }}</span>
+                            </div>
+                            {% endif %}
 
-                        <strong>Total:</strong>
-                        ₹{{ order.final_total }}
+                            {% if manual_discount_amount > 0 %}
+                            <div class="order-total-line order-total-discount">
+                                <span class="order-total-label">Manual discount</span>
+                                <span>− ₹{{ "%.2f"|format(manual_discount_amount) }}</span>
+                            </div>
+                            {% endif %}
 
+                            <hr class="order-total-divider">
+
+                            <div class="order-total-final">
+                                <span>
+                                    <span class="order-total-final-label">Total payable</span>
+                                    <small class="order-total-final-note">Final order amount</small>
+                                </span>
+                                <span class="order-total-final-value">₹{{ "%.2f"|format(order.final_total|default(0, true)|float) }}</span>
+                            </div>
+                        </div>
                     </td>
 
                     <td data-label="Status">
@@ -1751,8 +2087,17 @@ td[data-label="Feedback"] {
                                 ×{{ item.quantity }}
                             </span>
 
+                            {% set item_current_price = item.price|default(0, true)|float %}
+                            {% set item_original_price = item.original_unit_price|default(0, true)|float %}
                             <span class="tag price-tag">
-                                ₹{{ item.price }}
+                                {% if item_original_price > item_current_price %}
+                                    <span class="item-price-pair">
+                                        <del class="item-original-price">₹{{ "%.2f"|format(item_original_price) }}</del>
+                                        <strong class="item-offer-price">₹{{ "%.2f"|format(item_current_price) }}</strong>
+                                    </span>
+                                {% else %}
+                                    <strong class="item-regular-price">₹{{ "%.2f"|format(item_current_price) }}</strong>
+                                {% endif %}
                             </span>
 
                         </div>
@@ -1764,36 +2109,96 @@ td[data-label="Feedback"] {
                     <td data-label="Qty×Price">
 
                         {% for item in order.items %}
-                            {{ item.quantity }} × ₹{{ item.price }}<br>
+                            {% set qty_current_price = item.price|default(0, true)|float %}
+                            {% set qty_original_price = item.original_unit_price|default(0, true)|float %}
+                            <span class="qty-price-line">
+                                <span>{{ item.quantity }} ×</span>
+                                {% if qty_original_price > qty_current_price %}
+                                    <del class="qty-price-original">₹{{ "%.2f"|format(qty_original_price) }}</del>
+                                    <strong class="qty-price-final">₹{{ "%.2f"|format(qty_current_price) }}</strong>
+                                {% else %}
+                                    <strong>₹{{ "%.2f"|format(qty_current_price) }}</strong>
+                                {% endif %}
+                            </span><br>
                         {% endfor %}
 
                     </td>
 
-                    <td data-label="Total" style="text-align:left;">
+                    <td data-label="Total" class="order-total-cell">
+                        {% set r_offer_amount = order.restaurant_offer_discount|default(0, true)|float %}
+                        {% set coupon_discount_amount = order.discount|default(0, true)|float %}
+                        {% set coins_discount_amount = order.coins_discount_amount|default(0, true)|float %}
+                        {% set manual_discount_amount = order.manual_discount|default(0, true)|float %}
+                        {% set extra_charge_amount = order.extra_charge|default(0, true)|float %}
 
-                        <strong>Items:</strong>
-                        ₹{{ order.items_total }}<br>
+                        <div class="order-total-card">
+                            <div class="order-total-title">Order breakdown</div>
 
-                        <strong>Delivery:</strong>
-                        ₹{{ order.delivery_charge or 0 }}<br>
+                            <div class="order-total-line">
+                                <span class="order-total-label">Items subtotal</span>
+                                <span>₹{{ "%.2f"|format(order.items_total|default(0, true)|float) }}</span>
+                            </div>
 
-                        <strong>Discount:</strong>
-                        ₹{{ order.discount or 0 }}
+                            <div class="order-total-line">
+                                <span class="order-total-label">Delivery fee</span>
+                                <span>₹{{ "%.2f"|format(order.delivery_charge|default(0, true)|float) }}</span>
+                            </div>
 
-                        {% if order.coupon_used %}
-                            ({{ order.coupon_used }})
-                        {% endif %}
+                            {% if extra_charge_amount > 0 %}
+                            <div class="order-total-line">
+                                <span class="order-total-label">Extra charge</span>
+                                <span>₹{{ "%.2f"|format(extra_charge_amount) }}</span>
+                            </div>
+                            {% endif %}
 
-                        <br>
+                            {% if coupon_discount_amount > 0 %}
+                            <div class="order-total-line order-total-discount">
+                                <span class="order-total-label">
+                                    Coupon / promo discount
+                                    {% if order.coupon_used %}
+                                    <small class="order-total-note">{{ order.coupon_used }}</small>
+                                    {% endif %}
+                                </span>
+                                <span>− ₹{{ "%.2f"|format(coupon_discount_amount) }}</span>
+                            </div>
+                            {% endif %}
 
-                        <strong>R-Offer:</strong>
-                        ₹{{ order.restaurant_offer_discount or 0 }}
+                            <div class="order-total-line order-total-discount order-total-r-offer">
+                                <span class="order-total-label">
+                                    🏷️ Restaurant offer
+                                    {% if r_offer_amount > 0 %}
+                                    <small class="order-total-note">R-Offer savings applied</small>
+                                    {% else %}
+                                    <small class="order-total-note">No R-Offer discount</small>
+                                    {% endif %}
+                                </span>
+                                <span>{% if r_offer_amount > 0 %}− {% endif %}₹{{ "%.2f"|format(r_offer_amount) }}</span>
+                            </div>
 
-                        <hr style="margin:4px 0;">
+                            {% if coins_discount_amount > 0 %}
+                            <div class="order-total-line order-total-discount">
+                                <span class="order-total-label">Reward coins</span>
+                                <span>− ₹{{ "%.2f"|format(coins_discount_amount) }}</span>
+                            </div>
+                            {% endif %}
 
-                        <strong>Total:</strong>
-                        ₹{{ order.final_total }}
+                            {% if manual_discount_amount > 0 %}
+                            <div class="order-total-line order-total-discount">
+                                <span class="order-total-label">Manual discount</span>
+                                <span>− ₹{{ "%.2f"|format(manual_discount_amount) }}</span>
+                            </div>
+                            {% endif %}
 
+                            <hr class="order-total-divider">
+
+                            <div class="order-total-final">
+                                <span>
+                                    <span class="order-total-final-label">Total payable</span>
+                                    <small class="order-total-final-note">Final order amount</small>
+                                </span>
+                                <span class="order-total-final-value">₹{{ "%.2f"|format(order.final_total|default(0, true)|float) }}</span>
+                            </div>
+                        </div>
                     </td>
 
                     <td data-label="Status">

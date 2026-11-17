@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RucHiGO COD Handover</title>
+
+<style>
+:root {
+    --navy: #142b52;
+    --ink: #172033;
+    --muted: #657089;
+    --line: #e5e9f2;
+    --bg: #f4f6fb;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 22px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Arial, sans-serif;
+}
+
+.wrap {
+    max-width: 1320px;
+    margin: auto;
+}
+
+.panel {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    margin: 16px 0;
+    box-shadow: 0 3px 14px rgba(20, 43, 82, .035);
+}
+
+h1 {
+    margin-bottom: 5px;
+}
+
+h2 {
+    margin-top: 0;
+    font-size: 19px;
+}
+
+.muted {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 8px 0 5px;
+}
+
+input,
+select {
+    padding: 10px;
+    border: 1px solid #d9dfeb;
+    border-radius: 8px;
+    max-width: 100%;
+}
+
+button,
+.btn {
+    background: var(--navy);
+    color: white;
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+}
+
+.light {
+    background: #eef2f9;
+    color: var(--navy);
+}
+
+button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.table-wrap {
+    overflow: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 780px;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 11px;
+    border-bottom: 1px solid #edf0f6;
+    font-size: 13px;
+    vertical-align: top;
+}
+
+th {
+    background: #fafbfe;
+    color: #4e5a72;
+}
+
+.flash {
+    padding: 12px;
+    background: #edf6ff;
+    border-radius: 8px;
+    margin: 8px 0;
+}
+
+.flash.success {
+    background: #e3f8ed;
+    color: #087748;
+}
+
+.flash.warning {
+    background: #fff7df;
+    color: #805400;
+}
+
+.flash.danger {
+    background: #fff0e8;
+    color: #a33d22;
+}
+
+.warning {
+    padding: 12px;
+    background: #fff7df;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.status {
+    padding: 5px 8px;
+    border-radius: 20px;
+    background: #eef2f9;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.reconciled {
+    background: #e3f8ed;
+    color: #087748;
+}
+
+.short,
+.over {
+    background: #fff0e8;
+    color: #a33d22;
+}
+
+.draft {
+    background: #fff7df;
+    color: #805400;
+}
+
+.cancelled {
+    background: #eef2f9;
+    color: #657089;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.metric {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    background: #fcfdff;
+}
+
+.metric strong {
+    display: block;
+    font-size: 20px;
+    margin-top: 6px;
+}
+
+.metric span {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.actions form {
+    margin: 7px 0;
+}
+
+.receipt-form {
+    min-width: 240px;
+    max-width: 320px;
+}
+
+.receipt-form input:not([type=checkbox]) {
+    width: 100%;
+}
+
+.inline-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+    margin: 10px 0;
+}
+
+.inline-check input {
+    margin-top: 2px;
+}
+
+details {
+    margin-top: 8px;
+}
+
+summary {
+    cursor: pointer;
+    color: var(--navy);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.selected {
+    outline: 2px solid #9cc4ff;
+}
+
+@media (max-width: 850px) {
+    body {
+        padding: 12px;
+    }
+
+    .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .panel {
+        padding: 13px;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<h1>Rider COD Handover</h1>
+
+<p class="muted">
+    See which riders delivered COD orders, prepare a cash
+    handover batch, and record what was physically received.
+</p>
+
+<p>
+    <a class="btn light"
+       href="{{ url_for('admin_settlements') }}">
+        ← Restaurant settlements
+    </a>
+</p>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+        <div class="flash {{ category }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endwith %}
+
+<!-- SECTION 1: DATE AND RIDER FILTER -->
+
+<div class="panel">
+    <h2>1. Select business date</h2>
+
+    <form class="toolbar" method="get">
+        <div>
+            <label>Business date</label>
+            <input
+                type="date"
+                name="business_date"
+                value="{{ selected_date.isoformat() }}"
+                required
+            >
+        </div>
+
+        <div>
+            <label>Rider (optional filter)</label>
+
+            <select name="rider_id">
+                <option value="">All riders</option>
+
+                {% for rider in riders %}
+                    <option
+                        value="{{ rider.id }}"
+                        {% if selected_rider|string == rider.id|string %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ rider.name }} (#{{ rider.id }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit">
+            Load rider activity
+        </button>
+    </form>
+
+    <p class="muted">
+        The summary is based on delivered, non-online orders for
+        the selected business date. Orders already reconciled or
+        included in an active batch are not offered for a new draft.
+    </p>
+</div>
+
+<!-- SECTION 2: RIDER ACTIVITY -->
+
+<div class="panel">
+    <h2>
+        2. Rider activity for {{ selected_date.isoformat() }}
+    </h2>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Rider</th>
+                    <th>Available COD orders</th>
+                    <th>Available amount</th>
+                    <th>Open batches</th>
+                    <th>Draft expected</th>
+                    <th>Exceptions</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in rider_summaries %}
+
+                    {% if not selected_rider
+                        or selected_rider|string == row.rider.id|string %}
+
+                        <tr
+                            {% if selected_rider|string == row.rider.id|string %}
+                                class="selected"
+                            {% endif %}
+                        >
+                            <td>
+                                <strong>{{ row.rider.name }}</strong>
+                                <div class="muted">
+                                    Rider #{{ row.rider.id }}
+                                </div>
+                            </td>
+
+                            <td>
+                                {{ row.available_count }}
+                            </td>
+
+                            <td>
+                                <strong>
+                                    ₹{{ '%.2f'|format(
+                                        row.available_amount or 0
+                                    ) }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ row.open_batch_count }}
+                            </td>
+
+                            <td>
+                                ₹{{ '%.2f'|format(
+                                    row.draft_expected or 0
+                                ) }}
+                            </td>
+
+                            <td>
+                                {% if row.exceptions %}
+                                    <span class="status short">
+                                        {{ row.exceptions }} unresolved
+                                    </span>
+                                {% else %}
+                                    <span class="muted">None</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <a
+                                    class="btn light"
+                                    href="{{ url_for(
+                                        'admin_cod_handover',
+                                        rider_id=row.rider.id,
+                                        business_date=selected_date.isoformat()
+                                    ) }}"
+                                >
+                                    View rider
+                                </a>
+                            </td>
+                        </tr>
+
+                    {% endif %}
+
+                {% else %}
+                    <tr>
+                        <td colspan="7">
+                            No riders found.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- SECTION 3: ELIGIBLE ORDERS -->
+
+{% if selected_rider %}
+<div class="panel">
+
+    <h2>
+        3. Available delivered COD orders —
+        rider #{{ selected_rider }}
+    </h2>
+
+    {% if eligible_orders %}
+
+        <div class="cards">
+
+            <div class="metric">
+                <span>Orders available to draft</span>
+                <strong>{{ eligible_orders|length }}</strong>
+            </div>
+
+            <div class="metric">
+                <span>Expected handover</span>
+                <strong>
+                    ₹{{ '%.2f'|format(
+                        eligible_orders|sum(attribute='amount')
+                    ) }}
+                </strong>
+            </div>
+
+            <div class="metric">
+                <span>Business date</span>
+                <strong style="font-size:16px">
+                    {{ selected_date.isoformat() }}
+                </strong>
+            </div>
+
+            <div class="metric">
+                <span>Eligibility</span>
+                <strong style="font-size:16px">
+                    Delivered COD
+                </strong>
+            </div>
+
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Restaurant</th>
+                        <th>Delivered at</th>
+                        <th>Expected COD</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in eligible_orders %}
+                        <tr>
+                            <td>
+                                #{{ item.order.order_id or item.order.id }}
+                                <div class="muted">
+                                    DB ID {{ item.order.id }}
+                                </div>
+                            </td>
+
+                            <td>
+                                {{ item.order.customer_name or '—' }}
+                            </td>
+
+                            <td>
+                                {% if item.order.restaurant %}
+                                    {{ item.order.restaurant.name }}
+                                {% else %}
+                                    {{ item.order.restaurant_id }}
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ item.order.delivered_time
+                                   or item.order.updated_at
+                                   or '—' }}
+                            </td>
+
+                            <td>
+                                <strong>
+                                    ₹{{ '%.2f'|format(item.amount or 0) }}
+                                </strong>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <form
+            method="post"
+            class="toolbar"
+            onsubmit="return confirm(
+                'Create a draft for all eligible COD orders listed above?'
+            );"
+        >
+            <input
+                type="hidden"
+                name="action"
+                value="create"
+            >
+
+            <input
+                type="hidden"
+                name="rider_id"
+                value="{{ selected_rider }}"
+            >
+
+            <input
+                type="hidden"
+                name="business_date"
+                value="{{ selected_date.isoformat() }}"
+            >
+
+            <button type="submit">
+                Create draft batch for
+                {{ eligible_orders|length }} order(s)
+            </button>
+        </form>
+
+        <p class="muted">
+            Creating a draft reserves these orders against another
+            active batch. It does not reconcile COD or record cash received.
+        </p>
+
+    {% else %}
+
+        <p class="muted">
+            No unbatched eligible delivered COD orders for this rider
+            and date. Check the batches below for existing drafts or
+            unresolved exceptions.
+        </p>
+
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- SECTION 4: HANDOVER BATCHES -->
+
+<div class="panel">
+
+    <h2>
+        4. Handover batches — {{ selected_date.isoformat() }}
+    </h2>
+
+    {% if batches %}
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Batch / orders</th>
+                        <th>Rider</th>
+                        <th>Expected</th>
+                        <th>Received</th>
+                        <th>Difference</th>
+                        <th>Status</th>
+                        <th>Next action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for batch in batches %}
+
+                        <tr
+                            {% if focus_batch_id == batch.id %}
+                                class="selected"
+                            {% endif %}
+                        >
+                            <td>
+                                <strong>
+                                    Batch #{{ batch.id }}
+                                </strong>
+
+                                <div class="muted">
+                                    Created {{ batch.created_at }}
+                                </div>
+
+                                <details
+                                    {% if focus_batch_id == batch.id %}
+                                        open
+                                    {% endif %}
+                                >
+                                    <summary>
+                                        View included orders
+                                        ({{ batch_details.get(batch.id, [])|length }})
+                                    </summary>
+
+                                    <div class="table-wrap">
+                                        <table style="min-width:450px">
+                                            <thead>
+                                                <tr>
+                                                    <th>Order</th>
+                                                    <th>Restaurant</th>
+                                                    <th>Expected</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                {% for detail in batch_details.get(batch.id, []) %}
+                                                    <tr>
+                                                        <td>
+                                                            {% if detail.order %}
+                                                                {{ detail.order.order_id
+                                                                   or detail.order.id }}
+                                                            {% else %}
+                                                                {{ detail.item.order_id }}
+                                                            {% endif %}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ detail.restaurant_name }}
+                                                        </td>
+
+                                                        <td>
+                                                            ₹{{ '%.2f'|format(
+                                                                detail.item.expected_amount or 0
+                                                            ) }}
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </details>
+                            </td>
+
+                            <td>
+                                {% if batch.rider %}
+                                    {{ batch.rider.name }}
+                                {% else %}
+                                    {{ batch.rider_id }}
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                ₹{{ '%.2f'|format(batch.expected_total or 0) }}
+                            </td>
+
+                            <td>
+                                {% if batch.received_amount is not none %}
+                                    ₹{{ '%.2f'|format(batch.received_amount) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if batch.difference_amount is not none %}
+                                    ₹{{ '%.2f'|format(batch.difference_amount) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <span class="status {{ batch.status }}">
+                                    {{ batch.status|upper }}
+                                </span>
+                            </td>
+
+                            <td class="actions">
+
+                                {% if batch.status == 'draft' %}
+
+                                    <form
+                                        class="receipt-form"
+                                        method="post"
+                                        action="{{ url_for(
+                                            'admin_cod_handover_receive',
+                                            batch_id=batch.id
+                                        ) }}"
+                                        onsubmit="return confirm(
+                                            'Confirm the amount physically received and the reference are correct?'
+                                        );"
+                                    >
+                                        <label>
+                                            Cash received (₹)
+                                        </label>
+
+                                        <input
+                                            type="number"
+                                            name="received_amount"
+                                            min="0"
+                                            step="0.01"
+                                            required
+                                        >
+
+                                        <label>
+                                            Handover reference
+                                        </label>
+
+                                        <input
+                                            name="handover_reference"
+                                            maxlength="160"
+                                            placeholder="UPI txn ID / cash receipt no."
+                                            required
+                                        >
+
+                                        <label>
+                                            Notes (optional)
+                                        </label>
+
+                                        <input
+                                            name="notes"
+                                            maxlength="500"
+                                            placeholder="Notes"
+                                        >
+
+                                        <label class="inline-check">
+                                            <input
+                                                type="checkbox"
+                                                name="rider_attested_full_collection"
+                                                value="yes"
+                                            >
+
+                                            <span>
+                                                I confirm the rider attested that
+                                                the full amount was collected from
+                                                customers for every order in this batch.
+                                            </span>
+                                        </label>
+
+                                        <button type="submit">
+                                            Record received amount
+                                        </button>
+                                    </form>
+
+                                    <form
+                                        method="post"
+                                        action="{{ url_for(
+                                            'admin_cod_handover_cancel',
+                                            batch_id=batch.id
+                                        ) }}"
+                                        onsubmit="return confirm(
+                                            'Cancel this draft? Orders will be released, and history retained.'
+                                        );"
+                                    >
+                                        <button
+                                            type="submit"
+                                            class="light"
+                                        >
+                                            Cancel draft
+                                        </button>
+                                    </form>
+
+                                {% elif batch.status == 'reconciled' %}
+
+                                    <strong>Handover recorded</strong>
+
+                                    <div class="muted">
+                                        By {{ batch.received_by or '—' }}
+                                        <br>
+                                        Reference:
+                                        {{ batch.handover_reference or '—' }}
+                                        <br>
+                                        {{ batch.received_at or '' }}
+                                    </div>
+
+                                    <div class="muted">
+                                        COD collections are reconciled.
+                                        Restaurant weekly settlement remains separate.
+                                    </div>
+
+                                {% elif batch.status in ['short', 'over'] %}
+
+                                    <strong>
+                                        Exception — investigation required
+                                    </strong>
+
+                                    <div class="muted">
+                                        Recorded by {{ batch.received_by or '—' }}
+                                        <br>
+                                        Reference:
+                                        {{ batch.handover_reference or '—' }}
+                                        <br>
+                                        {{ batch.received_at or '' }}
+                                    </div>
+
+                                    <div class="warning">
+                                        Orders in this batch were not reconciled.
+                                        This version has no exception-resolution action.
+                                        Investigate and resolve through an audited
+                                        process before changing COD collection status.
+                                    </div>
+
+                                {% elif batch.status == 'cancelled' %}
+
+                                    <span class="muted">
+                                        Draft cancelled; order items released.
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="muted">
+                                        No further action available for this status.
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+
+        <p class="muted">
+            No handover batches found for this date
+            {% if selected_rider %}
+                and selected rider
+            {% endif %}.
+        </p>
+
+    {% endif %}
+
+    <div class="warning" style="margin-top:14px">
+        <strong>Important:</strong>
+        Exact totals are reconciled only after the rider full-collection
+        attestation. Short/over batches are recorded as exceptions and
+        do not reconcile individual COD orders. The reference is recorded
+        as entered; this page does not independently verify a UPI transaction
+        or record restaurant payouts.
+    </div>
+
+</div>
+
+</div>
+</body>
+</html>

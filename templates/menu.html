@@ -3312,7 +3312,8 @@ body{
 {% endif %}
 
 <div class="menu-card-accent"
-     data-price="{% if item.offer_price is defined and item.offer_price is not none %}{{ item.offer_price }}{% else %}{{ item['price'] }}{% endif %}">
+     data-price="{% if item.offer_price is defined and item.offer_price is not none %}{{ item.offer_price }}{% else %}{{ item['price'] }}{% endif %}"
+     data-mrp="{{ item.mrp if item.mrp is defined and item.mrp else item['price'] }}">
 
     <!-- 🔥 REORDER TAG -->
     {% if item.reorder_count is defined and item.reorder_count >= 2 %}
@@ -3390,29 +3391,18 @@ body{
             </div>
 
 <div class="item-price">
+    {% set menu_mrp = item.mrp if item.mrp is defined and item.mrp else item['price'] %}
+    {% set menu_selling_price = item.offer_price if item.offer_price is defined and item.offer_price is not none else item['price'] %}
 
-    {% if item.offer_price is defined and item.offer_price is not none %}
-
-        <span class="original-price">
-            ₹{{ "%.0f"|format(item['price']) }}
+    {% if menu_mrp|float > menu_selling_price|float %}
+        <span class="original-price">₹{{ "%.2f"|format(menu_mrp|float) }}</span>
+        <span class="discounted-price">₹{{ "%.2f"|format(menu_selling_price|float) }}</span>
+        <span class="item-offer-badge">
+            {{ "%.0f"|format(((menu_mrp|float - menu_selling_price|float) / menu_mrp|float) * 100) }}% OFF
         </span>
-
-        <span class="discounted-price">
-            ₹{{ "%.0f"|format(item.offer_price) }}
-        </span>
-
-        {% if item.offer_percent is defined and item.offer_percent %}
-            <span class="item-offer-badge">
-                {{ "%.0f"|format(item.offer_percent) }}% OFF
-            </span>
-        {% endif %}
-
     {% else %}
-
-        ₹{{ item['price'] }}
-
+        <span class="discounted-price">₹{{ "%.2f"|format(menu_selling_price|float) }}</span>
     {% endif %}
-
 </div>
 
             <div class="item-desc">
@@ -3442,6 +3432,7 @@ body{
                         data-id="{{ item.id }}"
                         data-name="{{ item['name'] }}"
                         data-price="{% if item.offer_price is defined and item.offer_price is not none %}{{ item.offer_price }}{% else %}{{ item['price'] }}{% endif %}"
+                        data-mrp="{{ item.mrp if item.mrp is defined and item.mrp else item['price'] }}"
                         data-category="{{ item.category }}">
 
                     Add +
@@ -3908,7 +3899,7 @@ function showReplaceModal(onConfirm) {
     };
 }
 /* ================= ADD ITEM FUNCTION ================= */
-function addItemToCart(id, name, price, qty, category) {
+function addItemToCart(id, name, price, qty, category, mrp) {
 
     if (!carts[RESTAURANT_ID]) {
         carts[RESTAURANT_ID] = {
@@ -3929,6 +3920,8 @@ function addItemToCart(id, name, price, qty, category) {
             id: id,
             name: name,
             price: price,
+            mrp: mrp,
+            original_price: mrp,
             quantity: qty,
             category: category
         });
@@ -3967,6 +3960,7 @@ document.querySelectorAll(".add-btn").forEach(btn => {
 
         const name = btn.dataset.name;
         const price = parseFloat(btn.dataset.price);
+        const mrp = parseFloat(btn.dataset.mrp) || price;
         const category = btn.dataset.category || '';
         const qtyBox = btn.closest(".menu-card-accent")?.querySelector(".qty-box");
 
@@ -3979,12 +3973,12 @@ document.querySelectorAll(".add-btn").forEach(btn => {
         if (otherRestaurantIds.length > 0) {
             showReplaceModal(() => {
                 carts = {}; // clear old restaurant cart
-                addItemToCart(id,name, price, qty, category);
+                addItemToCart(id, name, price, qty, category, mrp);
             });
             return;
         }
 
-        addItemToCart(id, name, price, qty, category);
+        addItemToCart(id, name, price, qty, category, mrp);
         updateMenuIncentive();
 
     });

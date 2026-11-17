@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RucHiGO Restaurant Settlements</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#172033;background:#f4f6fb}
+*{box-sizing:border-box}body{margin:0;padding:22px}.wrap{max-width:1240px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+h1{margin:0;font-size:27px}h2{margin:0 0 8px}.muted{color:#657089;font-size:13px}.panel{background:#fff;border:1px solid #e5e9f2;border-radius:16px;padding:18px;margin:18px 0;box-shadow:0 4px 16px #1b31500a}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.metric{background:#f8faff;border:1px solid #e7ebf5;padding:14px;border-radius:12px}.metric strong{display:block;font-size:23px;margin-top:5px}
+form.inline{display:flex;gap:10px;align-items:end;flex-wrap:wrap}label{display:block;font-size:12px;color:#657089;margin-bottom:5px}input,select{border:1px solid #d9dfeb;border-radius:9px;padding:10px;background:white;max-width:100%}
+button,.btn{border:0;border-radius:9px;padding:10px 14px;background:#142b52;color:#fff;text-decoration:none;font-weight:650;cursor:pointer;display:inline-block;font-size:13px}
+.btn-light{background:#eef2f9;color:#142b52}.btn-green{background:#087f69}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:780px}th,td{text-align:left;padding:12px;border-bottom:1px solid #edf0f6;font-size:13px}th{color:#66718a;background:#fafbfe}
+.status{padding:5px 9px;border-radius:30px;background:#eef2f9;font-size:12px}.paid{background:#e3f8ed;color:#087748}.approved{background:#fff2d9;color:#895500}.draft{background:#eaf0ff;color:#2448a3}.warning{color:#a33d22;font-weight:650}
+.flash{padding:12px;border-radius:10px;background:#edf6ff;margin:10px 0}.empty{padding:28px;text-align:center;color:#6a7488}.filter-grid{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.field{min-width:150px}.field select,.field input{width:100%}
+@media(max-width:760px){body{padding:12px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.top{align-items:flex-start}h1{font-size:23px}.panel{padding:13px}}
+</style>
+</head>
+<body><div class="wrap">
+<div class="top">
+ <div><h1>Restaurant Settlements</h1><div class="muted">Weekly payout reconciliation · RucHiGO Admin</div></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap">
+  <a class="btn btn-green" href="{{ url_for('admin_cod_handover') }}">💰 COD Bulk Handover</a>
+  <a class="btn btn-light" href="{{ url_for('admin_settlement_reports', location_id=location_filter) }}">Payment history</a>
+  <a class="btn btn-light" href="{{ url_for('admin_dashboard') }}">← Admin dashboard</a>
+ </div>
+</div>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% for category, message in messages %}<div class="flash">{{ message }}</div>{% endfor %}
+{% endwith %}
+
+<div class="panel">
+ <form class="filter-grid" method="get" action="{{ url_for('admin_settlements') }}">
+  <div class="field"><label for="start">Week start</label><input id="start" type="date" name="start" value="{{ period_start.isoformat() }}" required></div>
+  <div class="field"><label for="end">Week end</label><input id="end" type="date" name="end" value="{{ period_end.isoformat() }}" required></div>
+  <div class="field"><label for="location_id">Restaurant location</label>
+   <select id="location_id" name="location_id">
+    <option value="all" {% if location_filter == 'all' %}selected{% endif %}>All locations</option>
+    {% for loc in locations %}
+    <option value="{{ loc.id }}" {% if location_filter|string == loc.id|string %}selected{% endif %}>{{ loc.location }}</option>
+    {% endfor %}
+    <option value="unassigned" {% if location_filter == 'unassigned' %}selected{% endif %}>Unassigned restaurants</option>
+   </select>
+  </div>
+  <button type="submit">Apply filters</button>
+  <a class="btn btn-light" href="{{ url_for('admin_settlements', start=period_start.isoformat(), end=period_end.isoformat(), location_id='all') }}">Clear location</a>
+ </form>
+ <form class="inline" method="post" style="margin-top:14px">
+  <input type="hidden" name="start" value="{{ period_start.isoformat() }}">
+  <input type="hidden" name="end" value="{{ period_end.isoformat() }}">
+  <input type="hidden" name="location_id" value="{{ location_filter }}">
+  <input type="hidden" name="action" value="generate">
+  <button type="submit" onclick="return confirm('Generate or refresh draft settlements for this date range? The current generator processes all locations.')">Generate / refresh drafts</button>
+  <a class="btn btn-light" href="{{ url_for('admin_settlement_export', start=period_start.isoformat(), end=period_end.isoformat(), location_id=location_filter) }}">Export filtered CSV</a>
+ </form>
+ <p class="muted" style="margin-bottom:0">Location filters apply to the report, commission list, COD pending list, and CSV export. Draft generation currently processes all locations for the selected dates.</p>
+</div>
+
+<div class="cards">
+ <div class="metric"><span class="muted">Restaurants with settlements</span><strong>{{ summary.count }}</strong></div>
+ <div class="metric"><span class="muted">Draft</span><strong>{{ summary.draft }}</strong></div>
+ <div class="metric"><span class="muted">Approved</span><strong>{{ summary.approved }}</strong></div>
+ <div class="metric"><span class="muted">Payout total</span><strong>₹{{ '%.2f'|format(summary.payout) }}</strong><span class="muted">{{ summary.paid }} paid</span></div>
+</div>
+
+<div class="panel">
+ <h2>Weekly restaurant statements</h2>
+ <div class="muted">Only delivered orders with confirmed payment collection and price snapshots are eligible. Review flags must be resolved before approval.</div>
+ <div class="table-wrap"><table>
+ <thead><tr><th>Restaurant</th><th>Orders</th><th>Original food sales</th><th>Markup</th><th>Commission</th><th>Payable</th><th>Status</th><th>Review</th><th></th></tr></thead>
+ <tbody>
+ {% for s in settlements %}
+ <tr>
+  <td><strong>{{ s.restaurant.name if s.restaurant else 'Restaurant #' ~ s.restaurant_id }}</strong><div class="muted">Settlement #{{ s.id }}</div></td>
+  <td>{{ s.order_count or 0 }}</td><td>₹{{ '%.2f'|format(s.food_gross or 0) }}</td><td>₹{{ '%.2f'|format(s.markup_total or 0) }}</td><td>₹{{ '%.2f'|format(s.commission_total or 0) }}</td><td><strong>₹{{ '%.2f'|format(s.payout_total or 0) }}</strong></td>
+  <td><span class="status {{ s.status }}">{{ s.status|upper }}</span></td>
+  <td>{% if s.missing_snapshot_count %}<span class="warning">{{ s.missing_snapshot_count }} item/order(s)</span>{% else %}—{% endif %}</td>
+  <td><a class="btn btn-light" href="{{ url_for('admin_settlement_detail', settlement_id=s.id) }}">Open</a></td>
+ </tr>
+ {% else %}
+ <tr><td colspan="9" class="empty">No settlements for this week and location. Try another filter or generate drafts.</td></tr>
+ {% endfor %}
+ </tbody></table></div>
+</div>
+
+<div class="panel">
+ <h2>Restaurant commission agreements</h2>
+ <div class="muted">Set the agreed commission per restaurant. New order price snapshots should use this rate. Existing snapshots remain unchanged.</div>
+ <div class="table-wrap"><table>
+ <thead><tr><th>Restaurant</th><th>Current commission</th><th>Update rate</th></tr></thead><tbody>
+ {% for restaurant in restaurants %}
+ <tr><td>{{ restaurant.name }}<div class="muted">Restaurant #{{ restaurant.id }}</div></td><td>{{ '%.2f'|format(commission_terms.get(restaurant.id, 10)) }}%</td>
+ <td><form method="post" class="inline">
+ <input type="hidden" name="start" value="{{ period_start.isoformat() }}">
+ <input type="hidden" name="end" value="{{ period_end.isoformat() }}">
+ <input type="hidden" name="location_id" value="{{ location_filter }}">
+ <input type="hidden" name="action" value="save_commission">
+ <input type="hidden" name="restaurant_id" value="{{ restaurant.id }}">
+ <input name="commission_percent" type="number" min="0" max="100" step="0.01" value="{{ '%.2f'|format(commission_terms.get(restaurant.id, 10)) }}" required style="width:110px">
+ <button type="submit">Save</button>
+ </form></td></tr>
+ {% else %}<tr><td colspan="3" class="empty">No restaurants found for this location.</td></tr>{% endfor %}
+ </tbody></table></div>
+</div>
+
+<div class="panel">
+ <h2>COD collection reconciliation</h2>
+ <div class="muted">For delivered COD orders in this week and location, enter the amount physically handed over by the rider. Delivery status alone does not prove cash collection. For many orders, use COD Bulk Handover above.</div>
+ <div class="table-wrap"><table>
+ <thead><tr><th>Order</th><th>Restaurant</th><th>Customer total</th><th>Collected amount / reference</th><th>Action</th></tr></thead>
+ <tbody>
+ {% for order in cod_pending %}
+ <tr><td>{{ order.order_id or order.id }}</td><td>{{ order.restaurant.name if order.restaurant else ('Restaurant #' ~ order.restaurant_id) }}</td>
+ <td>₹{{ '%.2f'|format(order.get_final_total() if order.get_final_total is defined else (order.final_total or 0)) }}</td>
+ <td>
+ <form method="post" action="{{ url_for('admin_reconcile_cod', order_id=order.id) }}" class="inline">
+ <input type="hidden" name="expected_amount" value="{{ order.get_final_total() if order.get_final_total is defined else (order.final_total or 0) }}">
+ <input name="collected_amount" type="number" min="0" step="0.01" required placeholder="Actual cash" style="width:140px">
+ <input name="handover_reference" maxlength="160" placeholder="Handover reference" style="min-width:160px">
+ <input type="hidden" name="collected_by" value="rider">
+ <button type="submit">Reconcile</button>
+ </form></td><td>Manual COD</td></tr>
+ {% else %}<tr><td colspan="5" class="empty">No delivered COD orders awaiting reconciliation for this week and location.</td></tr>{% endfor %}
+ </tbody></table></div>
+</div>
+<div class="muted">Do not approve a settlement until COD handovers, online payment confirmations, and original menu prices have been reconciled.</div>
+</div></body></html>
