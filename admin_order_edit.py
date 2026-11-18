@@ -1,6 +1,9 @@
 import json
+import math
 
 from datetime import datetime
+from sqlalchemy import select
+from models import SettlementLine, CODCollection, CODHandoverBatchItem
 
 from flask import (
     render_template,
@@ -76,6 +79,7 @@ def register_admin_order_edit(
                 "category": item.category,
                 "unit": item.unit,
                 "item_type": item.item_type,
+                "is_removed": bool(item.is_removed),
                 "line_total": item.item_total()
             }
             for item in items
@@ -114,7 +118,7 @@ def register_admin_order_edit(
             "Refunded"
         }
 
-        if order.status in locked_statuses:
+        if str(order.status or "").strip().lower() in {x.lower() for x in locked_statuses}:
 
             flash(
                 "Delivered, cancelled or refunded "
@@ -175,6 +179,31 @@ def register_admin_order_edit(
                 )
             )
 
+        # Serialize concurrent edits to this order and reload its current state.
+        db.session.execute(
+            select(Order.id).where(Order.id == order.id).with_for_update()
+        ).scalar_one()
+        db.session.expire(order)
+
+        # Locking and accounting are handled in the same transaction below.
+        # A snapshot alone is not a reason to block an edit.
+        from models import CODCollection, CODHandoverBatchItem
+        from adjustment_service import record_item_changes, record_customer_balance, new_edit_key
+        has_cod = CODCollection.query.filter_by(order_id=order.id).first() is not None
+        has_handover = CODHandoverBatchItem.query.filter(
+            CODHandoverBatchItem.order_id == order.id,
+            CODHandoverBatchItem.released_at.is_(None)
+        ).first() is not None
+        payment_finalized = (
+            has_cod or has_handover or bool(order.payment_verified)
+            or str(order.payment_status or '').strip().lower()
+            in {'paid', 'success', 'successful', 'completed', 'captured'}
+        )
+        edit_key = new_edit_key()
+        before_items = {
+            x.id: (int(x.quantity or 0), x.price or 0, bool(x.is_removed))
+            for x in order.items
+        }
         old_items = list(order.items)
 
         old_items_snapshot = (
@@ -213,27 +242,30 @@ def register_admin_order_edit(
                     f"remove_item_{order_item.id}"
                 )
 
-                if remove_value == "1":
-
-                    db.session.delete(
-                        order_item
-                    )
-
+                if order_item.is_removed:
                     continue
 
-                new_quantity = safe_int(
-                    request.form.get(
-                        f"quantity_{order_item.id}"
-                    ),
-                    order_item.quantity or 1
-                )
+                if remove_value == "1":
+                    order_item.is_removed = True
+                    continue
 
-                if new_quantity < 1:
-
+                # Require the submitted quantity; never silently reuse the old value.
+                quantity_key = f"quantity_{order_item.id}"
+                quantity_value = request.form.get(quantity_key)
+                if quantity_value is None or not quantity_value.strip():
                     raise ValueError(
-                        f"Quantity for "
-                        f"{order_item.item_name} "
-                        f"must be at least 1."
+                        f"Missing quantity for {order_item.item_name}. "
+                        "Refresh the page and try again."
+                    )
+                try:
+                    new_quantity = int(quantity_value)
+                except (TypeError, ValueError):
+                    raise ValueError(
+                        f"Invalid quantity for {order_item.item_name}."
+                    )
+                if new_quantity < 1:
+                    raise ValueError(
+                        f"Quantity for {order_item.item_name} must be at least 1."
                     )
 
                 order_item.quantity = (
@@ -299,25 +331,20 @@ def register_admin_order_edit(
                         f"is currently unavailable."
                     )
 
-                quantity_value = (
-                    new_quantities[index]
-                    if index < len(
-                        new_quantities
-                    )
-                    else 1
-                )
-
-                quantity = safe_int(
-                    quantity_value,
-                    1
-                )
-
-                if quantity < 1:
-
+                if index >= len(new_quantities):
                     raise ValueError(
-                        f"Quantity for "
-                        f"{selected_menu_item.name} "
-                        f"must be at least 1."
+                        f"Missing quantity for new item {selected_menu_item.name}."
+                    )
+                quantity_value = str(new_quantities[index]).strip()
+                try:
+                    quantity = int(quantity_value)
+                except (TypeError, ValueError):
+                    raise ValueError(
+                        f"Invalid quantity for new item {selected_menu_item.name}."
+                    )
+                if quantity < 1:
+                    raise ValueError(
+                        f"Quantity for {selected_menu_item.name} must be at least 1."
                     )
 
                 new_order_item = OrderItem(
@@ -370,7 +397,8 @@ def register_admin_order_edit(
             remaining_items = (
                 OrderItem.query
                 .filter_by(
-                    order_id=order.id
+                    order_id=order.id,
+                    is_removed=False
                 )
                 .order_by(
                     OrderItem.id.asc()
@@ -410,6 +438,9 @@ def register_admin_order_edit(
                 order.manual_discount or 0
             )
 
+            if not all(math.isfinite(v) for v in (delivery_charge, extra_charge, manual_discount)):
+                raise ValueError("Charges and discounts must be finite numbers.")
+
             if delivery_charge < 0:
 
                 raise ValueError(
@@ -446,11 +477,9 @@ def register_admin_order_edit(
                 2
             )
 
-            order.customer_edit_approved = (
-                request.form.get(
-                    "customer_edit_approved"
-                ) == "1"
-            )
+            # A form checkbox is not proof of customer authorization.
+            # Do not grant approval based on an admin-submitted value.
+            order.customer_edit_approved = False
 
             # =========================================
             # RECALCULATE ITEMS TOTAL
@@ -474,30 +503,21 @@ def register_admin_order_edit(
                 2
             )
 
-            # =========================================
-            # ONLINE PAYMENT SAFETY
-            # =========================================
-
-            is_paid_online = (
-                str(
-                    order.payment_type or ""
-                ).lower() == "online"
-                and str(
-                    order.payment_status or ""
-                ).lower() == "paid"
+            # Record pending refund/collection instead of falsely approving payment.
+            # Gateway and COD ledgers are NOT marked paid/refunded here.
+            after_items = {
+                x.id: (int(x.quantity or 0), x.price or 0, bool(x.is_removed))
+                for x in OrderItem.query.filter_by(order_id=order.id).all()
+            }
+            record_item_changes(
+                db, order, before_items, after_items, edit_reason,
+                str(session.get('admin_username') or 'Super Admin'), edit_key
             )
-
-            if (
-                is_paid_online
-                and amount_difference > 0
-                and not order.customer_edit_approved
-            ):
-
-                raise ValueError(
-                    "Customer approval is required "
-                    "because this paid online order "
-                    "total has increased."
-                )
+            record_customer_balance(
+                db, order, old_final_total, new_final_total, edit_reason,
+                str(session.get('admin_username') or 'Super Admin'),
+                edit_key, payment_finalized
+            )
 
             order.final_total = (
                 new_final_total
