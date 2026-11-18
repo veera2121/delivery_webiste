@@ -767,13 +767,24 @@ class Order(db.Model):
     restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
     delivery_person_id = db.Column(db.Integer, db.ForeignKey('delivery_person.id'), nullable=True)
     delivery_person = db.relationship("DeliveryPerson", backref="orders", lazy=True)
-    items = db.relationship(
-
-
+# All items, including removed ones
+    all_items = db.relationship(
         "OrderItem",
         backref="order",
         lazy=True,
         cascade="all, delete-orphan",
+        order_by="OrderItem.id"
+    )
+
+    # Only active items for dashboards
+    items = db.relationship(
+        "OrderItem",
+        primaryjoin=(
+            "and_(Order.id == OrderItem.order_id, "
+            "OrderItem.is_removed.is_(False))"
+        ),
+        lazy=True,
+        viewonly=True,
         order_by="OrderItem.id"
     )
 
@@ -967,7 +978,13 @@ class OrderItem(db.Model):
     # grocery / restaurant / bakery
 
     food_item_id = db.Column(db.Integer, nullable=True)
+    is_removed = db.Column(
 
+        db.Boolean,
+        nullable=False,
+        default=False,
+        server_default=db.false()
+    )
     def item_total(self):
         return round((self.price or 0) * (self.quantity or 0), 2)
 # ----------------- Category -----------------
@@ -1338,6 +1355,7 @@ class User(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow) 
     coins = db.Column(db.Integer, default=0)
+    
 class DeliverySettings(db.Model):
     __tablename__ = "delivery_settings"
 
@@ -3093,3 +3111,38 @@ class RestaurantReview(db.Model):
         UniqueConstraint("order_id", name="uq_restaurant_review_order"),
         Index("ix_restaurant_review_restaurant_location", "restaurant_id", "location_id"),
     )
+
+class SettlementAdjustment(db.Model):
+    __tablename__ = 'settlement_adjustment'
+    id = db.Column(db.BigInteger, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False, index=True)
+    order_item_id = db.Column(db.Integer, db.ForeignKey('order_item.id'), nullable=True)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'), nullable=False, index=True)
+    source_settlement_line_id = db.Column(db.BigInteger, db.ForeignKey('settlement_line.id'), nullable=True)
+    settlement_id = db.Column(db.BigInteger, db.ForeignKey('restaurant_settlement.id'), nullable=True, index=True)
+    operation_key = db.Column(db.String(100), nullable=False, unique=True)
+    reason = db.Column(db.Text, nullable=False)
+    commission_percent = db.Column(db.Numeric(5, 2), nullable=False)
+    gross_delta = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    customer_item_delta = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    markup_delta = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    commission_delta = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    payable_delta = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    created_by = db.Column(db.String(120), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+class CustomerPaymentAdjustment(db.Model):
+    __tablename__ = 'customer_payment_adjustment'
+    id = db.Column(db.BigInteger, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False, index=True)
+    operation_key = db.Column(db.String(100), nullable=False, unique=True)
+    kind = db.Column(db.String(30), nullable=False)  # refund_due / collection_due
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='pending')  # pending / completed
+    payment_method = db.Column(db.String(40), nullable=True)
+    reference = db.Column(db.String(160), nullable=True)
+    reason = db.Column(db.Text, nullable=False)
+    created_by = db.Column(db.String(120), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    completed_by = db.Column(db.String(120), nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
