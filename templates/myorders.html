@@ -450,6 +450,10 @@ font-size:18px;
 font-weight:800;
 color:#ff5722;
 }
+
+/* Customer order edit details link */
+.edit-details-btn { display:inline-block; margin:12px 0; padding:11px 16px; border-radius:10px; background:#fff3e8; color:#a43c0b; border:1px solid #ffb58b; text-decoration:none; font-weight:700; font-size:14px; }
+.edit-details-btn:hover { background:#ffe4d2; }
 </style>
 
 
@@ -569,6 +573,11 @@ color:#ff5722;
       <strong>Final Total:</strong> ₹{{ order.final_total or 0 }}
     </p>
 
+
+    {% if order.id in edited_order_ids %}
+      <a class="edit-details-btn" href="{{ url_for('customer_order_edit_details', order_id=order.id) }}">📝 View Updated Details</a>
+    {% endif %}
+
     {% if order.delivery_person_id %}
         <a href="{{ url_for('track_order', order_id=order.id) }}"
            class="track-btn">
@@ -631,6 +640,10 @@ color:#ff5722;
           <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
           <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
         </div>
+    {% if order.id in edited_order_ids %}
+      <a class="edit-details-btn" href="{{ url_for('customer_order_edit_details', order_id=order.id) }}">📝 View Updated Details</a>
+    {% endif %}
+
 
         <p class="reason-text">
           ❌ Customer was not available at delivery location
@@ -649,6 +662,10 @@ color:#ff5722;
           <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
           <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
         </div>
+    {% if order.id in edited_order_ids %}
+      <a class="edit-details-btn" href="{{ url_for('customer_order_edit_details', order_id=order.id) }}">📝 View Updated Details</a>
+    {% endif %}
+
 
         <p class="reason-text">❌ Order was cancelled</p>
 
@@ -675,6 +692,10 @@ color:#ff5722;
           <h3 class="order-id">Order ID: {{ order.order_id }}</h3>
           <p class="restaurant-name">🍽 {{ order.restaurant.name }}</p>
         </div>
+    {% if order.id in edited_order_ids %}
+      <a class="edit-details-btn" href="{{ url_for('customer_order_edit_details', order_id=order.id) }}">📝 View Updated Details</a>
+    {% endif %}
+
 
         <p>
           <strong>Delivered At:</strong>

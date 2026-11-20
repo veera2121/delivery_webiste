@@ -99,7 +99,8 @@ from models import (
     Location,
     RestaurantMenuAlert,
     EmployeeLocationAssignment,
-    RestaurantReview
+    RestaurantReview,
+    AndroidAppUpdate
 
 )
 from models import SettlementLine, RestaurantSettlementTerms
@@ -218,7 +219,13 @@ from chatbot_routes import chatbot_bp
 app.register_blueprint(chatbot_bp)
 
 
+from flask_version_policy import version_policy_bp
 
+app.register_blueprint(version_policy_bp)
+
+from app_update_manager import app_updates_bp
+
+app.register_blueprint(app_updates_bp)
 # ================= RESTAURANT PARTNERS FLUTTER API =================
 
 from restaurant_partner_api import register_restaurant_partner_api
@@ -1411,6 +1418,54 @@ def send_delivery_otp_whatsapp(order):
         print("❌ DELIVERY OTP WHATSAPP ERROR:", e)
         return False
 
+
+def send_customer_login_whatsapp_otp(phone, otp):
+    token = os.environ["WHATSAPP_ACCESS_TOKEN"]
+    phone_id = os.environ["WHATSAPP_PHONE_NUMBER_ID"]
+    api_version = os.getenv("WHATSAPP_API_VERSION", "v25.0")
+
+    mobile = _app_normalize_mobile(phone)
+    if not mobile:
+        raise ValueError("Invalid mobile number")
+
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": "91" + mobile,
+        "type": "template",
+        "template": {
+            "name": "ruchigo_customer_verification",
+            "language": {"code": "en"},
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {"type": "text", "text": str(otp)}
+                    ]
+                },
+                {
+                    "type": "button",
+                    "sub_type": "url",
+                    "index": "0",
+                    "parameters": [
+                        {"type": "text", "text": str(otp)}
+                    ]
+                }
+            ]
+        }
+    }
+
+    response = requests.post(
+        f"https://graph.facebook.com/{api_version}/{phone_id}/messages",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=20,
+    )
+
+    response.raise_for_status()
+    return response.json()
 def send_whatsapp_first_order_confirmation(order):
     """
     Send the approved first-order WhatsApp confirmation template.
@@ -7091,22 +7146,30 @@ def normalize_phone(phone):
     return phone[-10:]
 
 
+
 @app.route("/myorders", methods=["GET", "POST"])
 def myorders():
     phone = None
     restaurant_id = None
 
-    ACTIVE = ["Pending","Placed", "Accepted", "Preparing","Ready","Out for Delivery","Started",]
-    HISTORY = ["Delivered", "Cancelled","Customer Not Available"]
+    ACTIVE = [
+        "Pending", "Placed", "Accepted", "Preparing",
+        "Ready", "Out for Delivery", "Started"
+    ]
+
+    HISTORY = [
+        "Delivered", "Cancelled", "Customer Not Available"
+    ]
 
     if request.method == "POST":
-        phone = request.form.get("phone")
+        phone = (request.form.get("phone") or "").strip()
         session["order_phone"] = phone
     else:
         phone = session.get("order_phone")
 
     active_orders = []
     history_orders = []
+    edited_order_ids = set()
 
     if phone:
         active_orders = Order.query.filter(
@@ -7119,23 +7182,43 @@ def myorders():
             Order.status.in_(HISTORY)
         ).order_by(Order.created_at.desc()).all()
 
-        # ===== CONVERT ORDER TIMES TO IST =====
-        ist = pytz.timezone('Asia/Kolkata')
-        for order in active_orders + history_orders:
-            if order.created_at:
-                # Make sure it's timezone-aware UTC
-                if order.created_at.tzinfo is None:
-                    from pytz import UTC
-                    order.created_at = UTC.localize(order.created_at)
-                
-                # Convert to IST
-                order.created_at_ist = order.created_at.astimezone(ist)
-                # Formatted string
-                order.created_at_str = order.created_at_ist.strftime('%d-%m-%Y %I:%M %p')
+        all_orders = active_orders + history_orders
 
-        # Determine restaurant_id
+        # ===== CONVERT ORDER TIMES TO IST =====
+        ist = pytz.timezone("Asia/Kolkata")
+
+        for order in all_orders:
+            if order.created_at:
+                created_at = order.created_at
+
+                if created_at.tzinfo is None:
+                    created_at = pytz.UTC.localize(created_at)
+
+                order.created_at_ist = created_at.astimezone(ist)
+
+                order.created_at_str = (
+                    order.created_at_ist.strftime(
+                        "%d-%m-%Y %I:%M %p"
+                    )
+                )
+
+        # ===== FIND ORDERS WITH EDIT HISTORY =====
+        order_ids = [order.id for order in all_orders]
+
+        if order_ids:
+            edited_order_ids = {
+                row[0]
+                for row in db.session.query(
+                    OrderEditHistory.order_id
+                ).filter(
+                    OrderEditHistory.order_id.in_(order_ids)
+                ).distinct().all()
+            }
+
+        # ===== DETERMINE RESTAURANT ID =====
         if active_orders:
             restaurant_id = active_orders[0].restaurant.id
+
         elif history_orders:
             restaurant_id = history_orders[0].restaurant.id
 
@@ -7143,8 +7226,82 @@ def myorders():
         "myorders.html",
         active_orders=active_orders,
         history_orders=history_orders,
-        restaurant_id=restaurant_id
+        restaurant_id=restaurant_id,
+        edited_order_ids=edited_order_ids
     )
+"""Add these routes/helpers to your existing app.py after Order and OrderEditHistory are imported.
+If your app uses a blueprint, adapt the decorators and url_for endpoint.
+"""
+import json
+from flask import abort, render_template, session
+from sqlalchemy import func
+
+# ADD inside your existing myorders() function, just before render_template(...):
+# all_order_ids = [o.id for o in active_orders + history_orders]
+# edited_order_ids = set()
+# if all_order_ids:
+#     edited_order_ids = {
+#         oid for (oid,) in db.session.query(OrderEditHistory.order_id)
+#         .filter(OrderEditHistory.order_id.in_(all_order_ids))
+#         .distinct().all()
+#     }
+# ALSO pass edited_order_ids=edited_order_ids to render_template("myorders.html", ...)
+
+@app.route("/myorders/<int:order_id>/edit-details", methods=["GET"])
+def customer_order_edit_details(order_id):
+    order = Order.query.get_or_404(order_id)
+
+    # Matches the existing /myorders session mechanism. IMPORTANT: this is NOT
+    # secure identity verification if a visitor can enter any phone number.
+    # Require verified customer authentication/OTP before production use.
+    phone = session.get("order_phone")
+    if not phone or str(order.phone) != str(phone):
+        abort(403)
+
+    history = (OrderEditHistory.query
+               .filter_by(order_id=order.id)
+               .order_by(OrderEditHistory.id.asc())
+               .all())
+    if not history:
+        abort(404)
+
+    def parse_items(raw):
+        try:
+            value = json.loads(raw) if isinstance(raw, str) else raw
+            return value if isinstance(value, list) else []
+        except (ValueError, TypeError):
+            return []
+
+    edits = []
+    for entry in history:
+        old_items = parse_items(entry.old_items)
+        new_items = parse_items(entry.new_items)
+        old_by_id = {str(i.get("id")): i for i in old_items if isinstance(i, dict)}
+        new_by_id = {str(i.get("id")): i for i in new_items if isinstance(i, dict)}
+        changes = []
+        for key in dict.fromkeys([*old_by_id.keys(), *new_by_id.keys()]):
+            before, after = old_by_id.get(key), new_by_id.get(key)
+            was_active = bool(before and not before.get("is_removed", False))
+            is_active = bool(after and not after.get("is_removed", False))
+            if was_active and not is_active:
+                kind = "Removed"
+            elif is_active and not was_active:
+                kind = "Added"
+            elif was_active and is_active and (
+                before.get("quantity") != after.get("quantity")
+                or before.get("price") != after.get("price")
+                or before.get("item_name") != after.get("item_name")
+            ):
+                kind = "Changed"
+            else:
+                continue
+            changes.append({"kind": kind, "before": before, "after": after})
+        edits.append({"entry": entry, "old_items": [i for i in old_items if not i.get("is_removed", False)],
+                      "new_items": [i for i in new_items if not i.get("is_removed", False)],
+                      "changes": changes})
+
+    return render_template("customer_order_edit_details.html", order=order, edits=edits)
+
 from flask import request, jsonify
 from datetime import datetime
 import pytz
@@ -7357,7 +7514,7 @@ def serialize_customer_order(order):
 
         "phone":
             order.phone or "",
-
+        "alt_phone": getattr(order, "alt_phone", "") or "",
         "email":
             order.email or "",
 
@@ -7474,224 +7631,341 @@ def serialize_customer_order(order):
 # /api/app/myorders?phone=9876543210
 # ============================================================
 
-@app.route(
-    "/api/app/myorders",
-    methods=["GET"]
-)
-def api_app_myorders():
+# ============================================================
+# FLUTTER - MY ORDERS + ORDER EDIT HISTORY
+#
+# Keep website /myorders route unchanged.
+#
+# Requires existing:
+# app, db, Order, OrderEditHistory, Customer,
+# serialize_customer_order
+# ============================================================
 
-    phone = (
-        request.args.get(
-            "phone",
-            ""
-        )
-        .strip()
-    )
+import json
 
-    # Keep numbers only
+from flask import request, jsonify
+from flask_login import current_user
+from models import Customer
+
+
+# ============================================================
+# 1. NORMALIZE MOBILE
+# ============================================================
+
+def normalized_indian_mobile(value):
+
     digits = "".join(
-        ch
-        for ch in phone
+        ch for ch in str(value or "")
         if ch.isdigit()
     )
 
-    # Keep last 10 digits
-    if len(digits) > 10:
+    if len(digits) == 10:
+        return digits
 
-        digits = digits[-10:]
+    if len(digits) == 12 and digits.startswith("91"):
+        return digits[2:]
 
-
-    if len(digits) != 10:
-
-        return jsonify({
-
-            "success":
-                False,
-
-            "message":
-                "Enter a valid 10-digit mobile number."
-
-        }), 400
+    return ""
 
 
-    # ========================================================
-    # SUPPORT BOTH OLD + NEW PHONE STORAGE
-    #
-    # 9876543210
-    # +919876543210
-    # ========================================================
+# ============================================================
+# 2. GET LOGGED-IN FLUTTER CUSTOMER
+# ============================================================
 
-    normal_phone = digits
+def get_authenticated_customer():
 
-    india_phone = (
-        "+91" + digits
-    )
+    if not current_user.is_authenticated:
+        return None
 
+    user = current_user._get_current_object()
 
-    ACTIVE = [
-        "Pending Payment",
-        "Pending",
-        "Placed",
-        "Confirmed",
-        "Accepted",
-        "Preparing",
-        "Ready",
-        "Assigned",
-        "Picked Up",
-        "Out for Delivery",
-        "Started"
-    ]
+    if not isinstance(user, Customer):
+        return None
+
+    return user
 
 
-    HISTORY = [
+def verified_customer_phone():
 
-        "Delivered",
-        "Cancelled",
-        "Customer Not Available"
-    ]
+    customer = get_authenticated_customer()
+
+    if customer is None:
+        return None
+
+    return normalized_indian_mobile(
+        customer.mobile
+    ) or None
 
 
-    # ========================================================
-    # ACTIVE ORDERS
-    # ========================================================
+# ============================================================
+# 3. CHECK ORDER OWNERSHIP
+# ============================================================
 
-    active_orders = (
+def customer_owns_order(order):
 
-        Order.query
+    customer = get_authenticated_customer()
 
-        .filter(
+    if customer is None or order is None:
+        return False
 
-            Order.phone.in_([
-                normal_phone,
-                india_phone
-            ]),
+    # Orders explicitly linked to this customer.
+    if (
+        getattr(order, "customer_id", None)
+        == customer.id
+    ):
+        return True
 
-            Order.status.in_(
-                ACTIVE
-            )
+    # Older orders without customer_id.
+    # Match the customer's registered phone.
+    if getattr(order, "customer_id", None) is None:
+
+        order_phone = normalized_indian_mobile(
+            order.phone
         )
 
-        .order_by(
-            Order.created_at.desc()
+        customer_phone = normalized_indian_mobile(
+            customer.mobile
         )
 
-        .all()
-    )
-
-
-    # ========================================================
-    # HISTORY
-    # ========================================================
-
-    history_orders = (
-
-        Order.query
-
-        .filter(
-
-            Order.phone.in_([
-                normal_phone,
-                india_phone
-            ]),
-
-            Order.status.in_(
-                HISTORY
-            )
+        return bool(
+            order_phone
+            and customer_phone
+            and order_phone == customer_phone
         )
 
-        .order_by(
-            Order.created_at.desc()
+    return False
+
+
+# ============================================================
+# 4. PARSE EDIT HISTORY ITEMS
+# ============================================================
+
+def history_item_list(raw):
+
+    try:
+
+        value = (
+            json.loads(raw)
+            if isinstance(raw, str)
+            else raw
         )
 
-        .limit(50)
+        if not isinstance(value, list):
+            return []
 
-        .all()
-    )
-
-
-    return jsonify({
-
-        "success":
-            True,
-
-        "phone":
-            digits,
-
-        "active_count":
-            len(active_orders),
-
-        "history_count":
-            len(history_orders),
-
-        "active_orders": [
-
-            serialize_customer_order(
-                order
-            )
-
-            for order
-            in active_orders
-        ],
-
-        "history_orders": [
-
-            serialize_customer_order(
-                order
-            )
-
-            for order
-            in history_orders
+        return [
+            item
+            for item in value
+            if isinstance(item, dict)
         ]
-    })
+
+    except (ValueError, TypeError):
+        return []
 
 
 # ============================================================
-# FLUTTER - LIVE ONE ORDER TRACKING
-#
-# GET:
-# /api/app/order/123/track
-#
-# Flutter automatically calls this every 8 seconds.
+# 5. DETECT ITEM CHANGES
 # ============================================================
 
-@app.route(
-    "/api/app/order/<int:order_id>/track",
-    methods=["GET"]
-)
-def api_app_track_order(order_id):
+def history_changes(old_items, new_items):
 
-    order = (
-        Order.query
-        .filter_by(
-            id=order_id
+    before = {
+        str(item.get("id")): item
+        for item in old_items
+        if item.get("id") is not None
+    }
+
+    after = {
+        str(item.get("id")): item
+        for item in new_items
+        if item.get("id") is not None
+    }
+
+    changes = []
+
+    for key in dict.fromkeys([
+        *before.keys(),
+        *after.keys()
+    ]):
+
+        old = before.get(key)
+        new = after.get(key)
+
+        old_active = bool(
+            old and not old.get("is_removed", False)
         )
-        .first()
+
+        new_active = bool(
+            new and not new.get("is_removed", False)
+        )
+
+        if old_active and not new_active:
+            kind = "Removed"
+
+        elif new_active and not old_active:
+            kind = "Added"
+
+        elif old_active and new_active and any(
+            old.get(field) != new.get(field)
+            for field in (
+                "quantity",
+                "price",
+                "item_name"
+            )
+        ):
+            kind = "Changed"
+
+        else:
+            continue
+
+        changes.append({
+            "kind": kind,
+            "before": old,
+            "after": new
+        })
+
+    return changes
+
+
+# ============================================================
+# 6. FLUTTER - MY ORDERS
+#
+# GET /api/app/myorders?phone=9876543210
+#
+# Matches website order selection:
+# - Exact Order.phone matching
+# - Same active statuses
+# - Same history statuses
+# - No history limit
+# ============================================================
+# ============================================================
+# 2. CUSTOMER MY ORDERS - ACCOUNT OWNERSHIP ONLY
+# ============================================================
+
+@app.route("/api/app/myorders", methods=["GET"])
+def api_app_myorders():
+    customer = get_authenticated_customer()
+
+    if customer is None:
+        return jsonify({
+            "success": False,
+            "login_required": True,
+            "message": "Please login to view your orders."
+        }), 401
+
+    active_statuses = {
+        "pending", "pending payment", "placed",
+        "confirmed", "accepted", "preparing",
+        "ready", "assigned", "picked up",
+        "picked_up", "out for delivery",
+        "out_for_delivery", "started"
+    }
+
+    history_statuses = {
+        "delivered", "completed", "cancelled",
+        "canceled", "customer not available"
+    }
+
+    customer_orders = (
+        Order.query
+        .filter(Order.customer_id == customer.id)
+        .order_by(Order.created_at.desc())
+        .all()
     )
 
+    active_orders = []
+    history_orders = []
 
-    if not order:
+    for order in customer_orders:
+        status = (order.status or "").strip().lower()
 
-        return jsonify({
+        if status in history_statuses:
+            history_orders.append(order)
+        else:
+            # Unknown statuses remain visible rather than
+            # disappearing from the customer's account.
+            active_orders.append(order)
 
-            "success":
-                False,
+    order_ids = [order.id for order in customer_orders]
+    edited_ids = set()
 
-            "message":
-                "Order not found."
+    if order_ids:
+        edited_ids = {
+            row[0]
+            for row in db.session.query(OrderEditHistory.order_id)
+            .filter(OrderEditHistory.order_id.in_(order_ids))
+            .distinct()
+            .all()
+        }
 
-        }), 404
-
+    def serialize_with_edit_flag(order):
+        data = serialize_customer_order(order)
+        data["id"] = order.id
+        data["has_edit_history"] = order.id in edited_ids
+        return data
 
     return jsonify({
+        "success": True,
+        "phone": customer.mobile,
+        "active_count": len(active_orders),
+        "history_count": len(history_orders),
+        "active_orders": [
+            serialize_with_edit_flag(order)
+            for order in active_orders
+        ],
+        "history_orders": [
+            serialize_with_edit_flag(order)
+            for order in history_orders
+        ],
+    }), 200
 
-        "success":
-            True,
+# ============================================================
+# 3. CUSTOMER ORDER EDIT HISTORY
+# ============================================================
+@app.route("/api/app/orders/<int:order_id>/edit-history", methods=["GET"])
+def api_app_order_edit_history(order_id):
+    customer = get_authenticated_customer()
+    if customer is None:
+        return jsonify({"success": False, "message": "Customer login required."}), 401
 
-        "order":
-            serialize_customer_order(
-                order
-            )
-    })
+    order = db.session.get(Order, order_id)
+    if order is None:
+        return jsonify({"success": False, "message": "Order not found."}), 404
+    if order.customer_id != customer.id:
+        return jsonify({"success": False, "message": "You cannot access this order."}), 403
+
+    entries = (
+        OrderEditHistory.query
+        .filter_by(order_id=order.id)
+        .order_by(OrderEditHistory.id.desc())
+        .all()
+    )
+    edits = []
+    for entry in entries:
+        old_items = history_item_list(entry.old_items)
+        new_items = history_item_list(entry.new_items)
+        created_at = getattr(entry, "created_at", None)
+        edits.append({
+            "id": entry.id,
+            "action": getattr(entry, "action", None) or "Order Updated",
+            "reason": getattr(entry, "reason", None) or "Not specified",
+            "created_at": created_at.isoformat() if created_at else None,
+            "old_items": old_items,
+            "new_items": new_items,
+            "changes": history_changes(old_items, new_items),
+            "old_items_total": float(entry.old_items_total or 0),
+            "new_items_total": float(entry.new_items_total or 0),
+            "old_delivery_charge": float(entry.old_delivery_charge or 0),
+            "new_delivery_charge": float(entry.new_delivery_charge or 0),
+            "old_extra_charge": float(entry.old_extra_charge or 0),
+            "new_extra_charge": float(entry.new_extra_charge or 0),
+            "old_manual_discount": float(entry.old_manual_discount or 0),
+            "new_manual_discount": float(entry.new_manual_discount or 0),
+            "old_final_total": float(entry.old_final_total or 0),
+            "new_final_total": float(entry.new_final_total or 0),
+        })
+    return jsonify({"success": True, "order_id": order.order_id, "edits": edits}), 200
+
 from sqlalchemy import func
 
 from sqlalchemy import func
@@ -23036,6 +23310,8 @@ def global_search_page():
 
 from flask import request, jsonify, url_for
 from sqlalchemy import or_, func, case
+
+
 @app.route("/api/global-menu-search")
 def global_menu_search():
 
@@ -23511,6 +23787,8 @@ def global_menu_search():
 
             match_score.desc(),
 
+            func.coalesce(order_count_subquery.c.order_count, 0).desc(),
+
             highest_similarity.desc(),
 
             MenuItem.name.asc()
@@ -23896,6 +24174,8 @@ def global_menu_search():
             "match_type":
                 match_type,
 
+            "match_score": numeric_match_score,
+
             "similarity_score":
                 round(
                     numeric_similarity,
@@ -23968,16 +24248,8 @@ def global_menu_search():
     # OPEN STORES FIRST
     # =========================================================
 
-    search_items.sort(
-
-        key=lambda item: (
-
-            not item[
-                "restaurant_open"
-            ]
-        )
-    )
-
+    # Preserve SQL relevance and popularity order. Store-open status
+    # remains available for the UI to show and filter.
 
     # =========================================================
     # SMART FOOD COMPARISON
@@ -24467,185 +24739,64 @@ from flask import request, jsonify
 # ============================================================
 
 from flask import request, jsonify
-
-
 @app.route("/api/customer/orders", methods=["GET"])
-def api_customer_orders():
+@app.route("/api/app/customer/orders", methods=["GET"])
+def api_app_customer_orders():
+    customer = get_authenticated_customer()
 
-    phone = (
-        request.args.get("phone", "")
-        .strip()
-        .replace(" ", "")
-    )
-
-    # Accept +91xxxxxxxxxx or plain 10-digit phone.
-    if phone.startswith("+91"):
-        phone = phone[3:]
-
-    if len(phone) != 10 or not phone.isdigit():
+    if customer is None:
         return jsonify({
             "success": False,
-            "message": "Valid 10 digit phone number is required."
-        }), 400
+            "login_required": True,
+            "message": "Please login to view your orders."
+        }), 401
 
     orders = (
         Order.query
-        .filter(Order.phone == phone)
+        .filter(Order.customer_id == customer.id)
         .order_by(Order.created_at.desc())
         .all()
     )
 
+    order_ids = [order.id for order in orders]
+    edited_ids = set()
+
+    if order_ids:
+        edited_ids = {
+            row[0]
+            for row in db.session.query(OrderEditHistory.order_id)
+            .filter(OrderEditHistory.order_id.in_(order_ids))
+            .distinct()
+            .all()
+        }
+
     result = []
 
     for order in orders:
+        data = serialize_customer_order(order)
 
-        restaurant = None
+        data["id"] = order.id
+        data["has_edit_history"] = order.id in edited_ids
 
-        if order.restaurant_id:
-            restaurant = db.session.get(
-                Restaurant,
-                order.restaurant_id
-            )
-
-        item_rows = []
-
-        for item in (order.items or []):
-
-            # These getattr calls keep the API tolerant of slightly
-            # different OrderItem model field names.
-            item_name = (
-                getattr(item, "item_name", None)
-                or getattr(item, "name", None)
-                or getattr(item, "food_name", None)
-                or "Item"
-            )
-
-            quantity = int(
-                getattr(item, "quantity", 1) or 1
-            )
-
-            unit_price = float(
-                getattr(item, "price", 0)
-                or getattr(item, "unit_price", 0)
-                or 0
-            )
-
-            total = float(
-                getattr(item, "total_price", 0)
-                or getattr(item, "total", 0)
-                or (unit_price * quantity)
-            )
-
-            item_rows.append({
-                "name": item_name,
-                "quantity": quantity,
-                "price": round(unit_price, 2),
-                "total": round(total, 2),
-            })
-
-        full_address_parts = [
-            order.house_no,
-            order.landmark,
-            order.city,
-            order.state,
-            order.pincode,
-        ]
-
-        full_address = ", ".join(
-            str(part).strip()
-            for part in full_address_parts
-            if part
+        # Customer / delivery recipient information
+        data["customer_name"] = (
+            getattr(order, "customer_name", None)
+            or getattr(order, "name", None)
+            or ""
         )
 
-        result.append({
-            "id": order.id,
-            "order_id": order.order_id or str(order.id),
+        data["phone"] = (
+            getattr(order, "phone", None)
+            or ""
+        )
 
-            "restaurant_id": order.restaurant_id,
-            "restaurant_name": (
-                restaurant.name
-                if restaurant
-                else "Restaurant"
-            ),
-
-            "status": order.status or "Pending",
-
-            "created_at": (
-                order.created_at.strftime(
-                    "%d %b %Y, %I:%M %p"
-                )
-                if order.created_at
-                else ""
-            ),
-
-            "updated_at": (
-                order.updated_at.isoformat()
-                if order.updated_at
-                else None
-            ),
-
-            "item_count": sum(
-                int(
-                    getattr(item, "quantity", 1)
-                    or 1
-                )
-                for item in (order.items or [])
-            ),
-
-            "items": item_rows,
-
-            "items_total": float(
-                order.items_total or 0
-            ),
-
-            "discount": float(
-                order.discount or 0
-            ),
-
-            "restaurant_offer_discount": float(
-                order.restaurant_offer_discount or 0
-            ),
-
-            "delivery_charge": float(
-                order.delivery_charge or 0
-            ),
-
-            "final_total": float(
-                order.get_final_total()
-                if hasattr(order, "get_final_total")
-                else order.final_total or 0
-            ),
-
-            "payment_type": order.payment_type or "COD",
-            "payment_status": order.payment_status or "Pending",
-
-            "address": (
-                order.address
-                or full_address
-            ),
-
-            "address_type": order.address_type,
-            "delivery_note": order.delivery_note,
-
-            "latitude": order.latitude,
-            "longitude": order.longitude,
-
-            "delivery_person_id":
-                order.delivery_person_id,
-
-            "delivered_time": (
-                order.delivered_time.isoformat()
-                if order.delivered_time
-                else None
-            ),
-        })
+        result.append(data)
 
     return jsonify({
         "success": True,
-        "phone": phone,
+        "phone": customer.mobile,
         "orders": result,
     }), 200
-
 # ============================================================
 # RUCHIGO FLUTTER CUSTOMER ACCOUNT API
 #
@@ -24695,7 +24846,475 @@ def _app_customer_json(customer):
         "mobile": mobile,
     }
 
+# ============================================================
+# CUSTOMER OTP HELPERS
+# ============================================================
 
+CUSTOMER_OTP_EXPIRY = 300
+CUSTOMER_OTP_COOLDOWN = 60
+CUSTOMER_OTP_MAX_ATTEMPTS = 5
+
+
+def customer_otp_hash(mobile, purpose, otp):
+
+    secret = app.config["SECRET_KEY"]
+
+    if isinstance(secret, str):
+        secret = secret.encode("utf-8")
+
+    message = f"{purpose}:{mobile}:{otp}".encode("utf-8")
+
+    return hmac.new(
+        secret,
+        message,
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def find_customer_for_otp(mobile):
+
+    return Customer.query.filter(
+        or_(
+            Customer.mobile == mobile,
+            Customer.mobile == "+91" + mobile,
+        )
+    ).first()
+
+
+def send_customer_whatsapp_otp(mobile, otp):
+
+    token = os.environ["WHATSAPP_ACCESS_TOKEN"]
+    phone_id = os.environ["WHATSAPP_PHONE_NUMBER_ID"]
+
+    version = os.getenv(
+        "WHATSAPP_API_VERSION",
+        "v25.0",
+    )
+
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": "91" + mobile,
+        "type": "template",
+        "template": {
+            "name": "ruchigo_customer_verification",
+            "language": {
+                "code": "en",
+            },
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "text": otp,
+                        }
+                    ],
+                },
+                {
+                    "type": "button",
+                    "sub_type": "url",
+                    "index": "0",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "text": otp,
+                        }
+                    ],
+                },
+            ],
+        },
+    }
+
+    response = requests.post(
+        f"https://graph.facebook.com/{version}/{phone_id}/messages",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=20,
+    )
+
+    response.raise_for_status()
+
+    return response.json()
+
+
+# ============================================================
+# CUSTOMER AUTH - SEND WHATSAPP OTP
+# ============================================================
+
+@app.route(
+    "/api/app/customer/auth/send-otp",
+    methods=["POST"],
+)
+@csrf.exempt
+def api_customer_auth_send_otp():
+
+    data = request.get_json(silent=True) or {}
+
+    mobile = _app_normalize_mobile(
+        data.get("mobile")
+    )
+
+    purpose = str(
+        data.get("purpose") or ""
+    ).strip().lower()
+
+    name = str(
+        data.get("name") or ""
+    ).strip()
+
+    # --------------------------------------------------------
+    # VALIDATION
+    # --------------------------------------------------------
+
+    if not mobile:
+        return jsonify({
+            "success": False,
+            "message": "Enter a valid 10-digit mobile number.",
+        }), 400
+
+    if purpose not in ("login", "signup"):
+        return jsonify({
+            "success": False,
+            "message": "Invalid authentication purpose.",
+        }), 400
+
+    if purpose == "signup" and (
+        not name or len(name) > 200
+    ):
+        return jsonify({
+            "success": False,
+            "message": "Enter a valid customer name.",
+        }), 400
+
+    customer = find_customer_for_otp(mobile)
+
+    if purpose == "login" and not customer:
+        return jsonify({
+            "success": False,
+            "message": "Account not found. Please signup.",
+        }), 404
+
+    if purpose == "signup" and customer:
+        return jsonify({
+            "success": False,
+            "message": "Account already exists. Please login.",
+        }), 409
+
+    # --------------------------------------------------------
+    # CHECK COOLDOWN
+    # --------------------------------------------------------
+
+    otp_purpose = "customer_" + purpose
+    now = datetime.utcnow()
+
+    previous = (
+        OTP.query
+        .filter_by(
+            mobile=mobile,
+            purpose=otp_purpose,
+        )
+        .order_by(
+            OTP.created_at.desc(),
+            OTP.id.desc(),
+        )
+        .first()
+    )
+
+    if previous and previous.resend_after:
+        if now < previous.resend_after:
+
+            remaining = max(
+                1,
+                int(
+                    (
+                        previous.resend_after - now
+                    ).total_seconds()
+                ) + 1,
+            )
+
+            return jsonify({
+                "success": False,
+                "message": "Please wait before resending OTP.",
+                "retry_after": remaining,
+            }), 429
+
+    # --------------------------------------------------------
+    # GENERATE NEW OTP
+    # --------------------------------------------------------
+
+    otp = f"{secrets.randbelow(1000000):06d}"
+
+    # Remove previous OTPs for this purpose.
+    OTP.query.filter_by(
+        mobile=mobile,
+        purpose=otp_purpose,
+    ).delete(synchronize_session=False)
+
+    record = OTP(
+        mobile=mobile,
+        purpose=otp_purpose,
+        otp_hash=customer_otp_hash(
+            mobile,
+            otp_purpose,
+            otp,
+        ),
+        attempts=0,
+        expires_at=now + timedelta(minutes=5),
+        resend_after=now + timedelta(seconds=60),
+        created_at=now,
+    )
+
+    db.session.add(record)
+    db.session.commit()
+
+    # Bind signup details to the requesting session.
+    # Never trust a new name supplied during verification.
+    if purpose == "signup":
+        session["customer_signup_pending"] = {
+            "mobile": mobile,
+            "name": name,
+        }
+
+    # --------------------------------------------------------
+    # SEND WHATSAPP
+    # --------------------------------------------------------
+
+    try:
+        send_customer_whatsapp_otp(mobile, otp)
+
+    except Exception:
+        app.logger.exception(
+            "Customer WhatsApp OTP sending failed"
+        )
+
+        return jsonify({
+            "success": False,
+            "message": "Unable to send OTP. Please try again.",
+            "retry_after": 60,
+        }), 503
+
+    return jsonify({
+        "success": True,
+        "message": "OTP requested on WhatsApp.",
+        "expires_in": 300,
+        "resend_after": 60,
+    }), 200
+
+# ============================================================
+# CUSTOMER AUTH - VERIFY WHATSAPP OTP
+# ============================================================
+
+@app.route(
+    "/api/app/customer/auth/verify-otp",
+    methods=["POST"],
+)
+@csrf.exempt
+def api_customer_auth_verify_otp():
+
+    data = request.get_json(silent=True) or {}
+
+    mobile = _app_normalize_mobile(
+        data.get("mobile")
+    )
+
+    purpose = str(
+        data.get("purpose") or ""
+    ).strip().lower()
+
+    otp = str(
+        data.get("otp") or ""
+    ).strip()
+
+    # --------------------------------------------------------
+    # VALIDATION
+    # --------------------------------------------------------
+
+    if not mobile:
+        return jsonify({
+            "success": False,
+            "message": "Invalid mobile number.",
+        }), 400
+
+    if purpose not in ("login", "signup"):
+        return jsonify({
+            "success": False,
+            "message": "Invalid verification purpose.",
+        }), 400
+
+    if len(otp) != 6 or not otp.isdigit():
+        return jsonify({
+            "success": False,
+            "message": "Enter a valid 6-digit OTP.",
+        }), 400
+
+    otp_purpose = "customer_" + purpose
+
+    # --------------------------------------------------------
+    # FIND OTP
+    # --------------------------------------------------------
+
+    record = (
+        OTP.query
+        .filter_by(
+            mobile=mobile,
+            purpose=otp_purpose,
+        )
+        .order_by(
+            OTP.created_at.desc(),
+            OTP.id.desc(),
+        )
+        .with_for_update()
+        .first()
+    )
+
+    if not record:
+        return jsonify({
+            "success": False,
+            "message": "OTP not found. Request a new OTP.",
+        }), 400
+
+    # --------------------------------------------------------
+    # CHECK EXPIRATION
+    # --------------------------------------------------------
+
+    if datetime.utcnow() >= record.expires_at:
+        return jsonify({
+            "success": False,
+            "message": "OTP expired. Request a new OTP.",
+        }), 400
+
+    # --------------------------------------------------------
+    # CHECK ATTEMPTS
+    # --------------------------------------------------------
+
+    if (record.attempts or 0) >= 5:
+        return jsonify({
+            "success": False,
+            "message": "Too many incorrect attempts.",
+        }), 429
+
+    # --------------------------------------------------------
+    # VERIFY OTP HASH
+    # --------------------------------------------------------
+
+    expected_hash = customer_otp_hash(
+        mobile,
+        otp_purpose,
+        otp,
+    )
+
+    record.attempts = (record.attempts or 0) + 1
+
+    if not hmac.compare_digest(
+        record.otp_hash,
+        expected_hash,
+    ):
+
+        db.session.commit()
+
+        return jsonify({
+            "success": False,
+            "message": "Incorrect OTP.",
+        }), 400
+
+    # --------------------------------------------------------
+    # CUSTOMER LOGIN OR SIGNUP
+    # --------------------------------------------------------
+
+    customer = find_customer_for_otp(mobile)
+
+    if purpose == "login":
+
+        if not customer:
+            db.session.rollback()
+            return jsonify({
+                "success": False,
+                "message": "Customer account not found.",
+            }), 404
+
+    else:
+
+        if customer:
+            db.session.rollback()
+            return jsonify({
+                "success": False,
+                "message": "Account already exists. Please login.",
+            }), 409
+
+        pending = session.get(
+            "customer_signup_pending"
+        ) or {}
+
+        if pending.get("mobile") != mobile:
+            db.session.rollback()
+            return jsonify({
+                "success": False,
+                "message": "Signup session expired. Start again.",
+            }), 400
+
+        verified_name = str(
+            pending.get("name") or ""
+        ).strip()
+
+        if not verified_name:
+            db.session.rollback()
+            return jsonify({
+                "success": False,
+                "message": "Signup details missing.",
+            }), 400
+
+        customer = Customer(
+            mobile="+91" + mobile,
+            name=verified_name,
+        )
+
+        db.session.add(customer)
+
+    # --------------------------------------------------------
+    # CONSUME OTP AND SAVE
+    # --------------------------------------------------------
+
+    db.session.delete(record)
+
+    try:
+        db.session.commit()
+
+    except IntegrityError:
+        db.session.rollback()
+
+        return jsonify({
+            "success": False,
+            "message": "Account conflict. Please try again.",
+        }), 409
+
+    # --------------------------------------------------------
+    # LOGIN AFTER SUCCESSFUL VERIFICATION
+    # --------------------------------------------------------
+
+    session.pop(
+        "customer_signup_pending",
+        None,
+    )
+
+    login_user(
+        customer,
+        remember=False,
+    )
+
+    session.permanent = True
+
+    return jsonify({
+        "success": True,
+        "message": (
+            "Account created successfully."
+            if purpose == "signup"
+            else "Login successful."
+        ),
+        "customer": _app_customer_json(customer),
+    }), 201 if purpose == "signup" else 200   
 # ============================================================
 # CREATE CUSTOMER ACCOUNT
 # POST JSON:
@@ -24703,6 +25322,10 @@ def _app_customer_json(customer):
 #   "name": "Manikanta",
 #   "mobile": "9876543210"
 # }
+# ============================================================
+# ============================================================
+# CUSTOMER SIGNUP - WHATSAPP OTP REQUIRED
+# POST /api/app/customer/signup
 # ============================================================
 
 @app.route(
@@ -24722,17 +25345,29 @@ def api_app_customer_signup():
         data.get("mobile")
     )
 
+    # ========================================================
+    # VALIDATE CUSTOMER NAME
+    # ========================================================
+
     if not name:
         return jsonify({
             "success": False,
             "message": "Please enter your name."
         }), 400
 
+    # ========================================================
+    # VALIDATE MOBILE NUMBER
+    # ========================================================
+
     if not mobile:
         return jsonify({
             "success": False,
             "message": "Please enter a valid 10 digit mobile number."
         }), 400
+
+    # ========================================================
+    # CHECK EXISTING CUSTOMER
+    # ========================================================
 
     normalized = "+91" + mobile
 
@@ -24749,34 +25384,34 @@ def api_app_customer_signup():
             "message": "Account already exists. Please login."
         }), 409
 
-    customer = Customer(
-        mobile=normalized,
-        name=name,
-    )
+    # ========================================================
+    # WHATSAPP OTP VERIFICATION REQUIRED
+    # ========================================================
 
-    db.session.add(customer)
-    db.session.commit()
-
-    login_user(
-        customer,
-        remember=False,
-    )
-
-    session.permanent = True
+    # IMPORTANT:
+    # Do not create Customer here.
+    # Do not call db.session.add(customer).
+    # Do not call login_user(customer).
+    #
+    # Account creation must happen only AFTER OTP verification.
 
     return jsonify({
-        "success": True,
-        "message": "Account created successfully.",
-        "customer": _app_customer_json(customer),
-    }), 201
-
-
+        "success": False,
+        "otp_required": True,
+        "message": "Please verify your WhatsApp number to create an account.",
+        "next_endpoint": "/api/app/customer/auth/send-otp",
+        "verify_endpoint": "/api/app/customer/auth/verify-otp",
+    }), 403
 # ============================================================
 # CUSTOMER LOGIN
 # POST JSON:
 # {
 #   "mobile": "9876543210"
 # }
+# ============================================================
+# ============================================================
+# CUSTOMER LOGIN - WHATSAPP OTP REQUIRED
+# POST /api/app/customer/login
 # ============================================================
 
 @app.route(
@@ -24813,27 +25448,23 @@ def api_app_customer_login():
             "message": "Account not found. Please create an account."
         }), 404
 
-    login_user(
-        customer,
-        remember=False,
-    )
-
-    session.permanent = True
+    # SECURITY:
+    # Do not call login_user() until WhatsApp OTP is verified.
 
     return jsonify({
-        "success": True,
-        "message": "Login successful.",
-        "customer": _app_customer_json(customer),
-    }), 200
-
-
+        "success": False,
+        "otp_required": True,
+        "message": "WhatsApp OTP verification is required.",
+        "next_endpoint": "/api/app/customer/auth/send-otp",
+        "verify_endpoint": "/api/app/customer/auth/verify-otp",
+    }), 403
 # ============================================================
 # CURRENT CUSTOMER PROFILE
 # ============================================================
 
 @app.route(
     "/api/app/customer/profile",
-    methods=["GET"],
+    methods=["GET", "PATCH"],
 )
 def api_app_customer_profile():
 
@@ -24843,13 +25474,58 @@ def api_app_customer_profile():
             "message": "Please login."
         }), 401
 
-    return jsonify({
-        "success": True,
-        "customer": _app_customer_json(
-            current_user
-        )
-    }), 200
+    # GET: Return existing customer details
+    if request.method == "GET":
+        return jsonify({
+            "success": True,
+            "customer": _app_customer_json(current_user)
+        }), 200
 
+    # PATCH: Update customer name only
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({
+            "success": False,
+            "message": "Invalid request data."
+        }), 400
+
+    name = data.get("name")
+
+    if not isinstance(name, str):
+        return jsonify({
+            "success": False,
+            "message": "Please enter a valid name."
+        }), 400
+
+    name = " ".join(name.strip().split())
+
+    if len(name) < 2 or len(name) > 80:
+        return jsonify({
+            "success": False,
+            "message": "Name must contain 2 to 80 characters."
+        }), 400
+
+    try:
+        current_user.name = name
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Name updated successfully.",
+            "customer": _app_customer_json(current_user)
+        }), 200
+
+    except Exception:
+        db.session.rollback()
+
+        app.logger.exception("Customer profile name update failed")
+
+        return jsonify({
+            "success": False,
+            "message": "Unable to update name. Please try again."
+        }), 500
 
 # ============================================================
 # LOGOUT
@@ -24944,68 +25620,150 @@ def _app_order_json(order):
         "id": order.id,
         "order_id": order.order_id or str(order.id),
 
+        # CUSTOMER / DELIVERY RECIPIENT
+        "customer_name": order.customer_name or "",
+        "name": order.customer_name or "",
+        "phone": order.phone or "",
+        "mobile": order.phone or "",
+        "email": order.email or "",
+
+        # RESTAURANT
         "restaurant_id": order.restaurant_id,
         "restaurant_name": (
-            restaurant.name
-            if restaurant
-            else "Restaurant"
+            restaurant.name if restaurant else "Restaurant"
         ),
 
+        # ORDER STATUS
         "status": order.status or "Pending",
 
+        # ORDER DATE
         "created_at": (
-            order.created_at.strftime(
-                "%d %b %Y, %I:%M %p"
-            )
+            (
+                order.created_at.replace(
+                    tzinfo=pytz.UTC
+                )
+                if order.created_at.tzinfo is None
+                else order.created_at
+            ).isoformat()
+            if order.created_at
+            else None
+        ),
+
+        "created_at_str": (
+            (
+                order.created_at.replace(
+                    tzinfo=pytz.UTC
+                )
+                if order.created_at.tzinfo is None
+                else order.created_at
+            ).astimezone(
+                pytz.timezone("Asia/Kolkata")
+            ).strftime("%d-%m-%Y %I:%M %p")
             if order.created_at
             else ""
         ),
 
+        # ITEMS
         "item_count": sum(
-            int(
-                getattr(item, "quantity", 1)
-                or 1
-            )
+            int(getattr(item, "quantity", 1) or 1)
             for item in (order.items or [])
         ),
 
-        "items": item_rows,
+        "items": [
+            {
+                **item,
+                "item_name": item["name"],
+                "item_total": item["total"],
+            }
+            for item in item_rows
+        ],
 
-        "items_total": float(
-            order.items_total or 0
-        ),
-
-        "discount": float(
-            order.discount or 0
-        ),
+        # BILL
+        "items_total": float(order.items_total or 0),
+        "discount": float(order.discount or 0),
 
         "restaurant_offer_discount": float(
-            order.restaurant_offer_discount or 0
+            getattr(
+                order,
+                "restaurant_offer_discount",
+                0
+            ) or 0
         ),
 
         "delivery_charge": float(
             order.delivery_charge or 0
         ),
 
-        "final_total": float(
-            final_total
-        ),
+        "final_total": float(final_total or 0),
 
+        # PAYMENT
         "payment_type": order.payment_type or "COD",
         "payment_status": order.payment_status or "Pending",
 
-        "address": (
-            order.address
-            or full_address
+        "payment_method_used": (
+            getattr(order, "payment_method_used", "") or ""
         ),
 
-        "address_type": order.address_type,
-        "delivery_note": order.delivery_note,
+        "payment_verified": bool(
+            getattr(order, "payment_verified", False)
+        ),
+
+        # DELIVERY ADDRESS
+        "address": order.address or full_address,
+
+        "house_no": order.house_no or "",
+        "landmark": order.landmark or "",
+        "city": order.city or "",
+        "state": order.state or "",
+        "pincode": order.pincode or "",
+
+        "address_type": order.address_type or "",
+        "delivery_note": order.delivery_note or "",
 
         "latitude": order.latitude,
         "longitude": order.longitude,
-    }
 
+        # DELIVERY PARTNER
+        "delivery_person_id": order.delivery_person_id,
+
+        "delivery_person": (
+            {
+                "id": order.delivery_person.id,
+                "name": order.delivery_person.name or "",
+                "phone": (
+                    getattr(
+                        order.delivery_person,
+                        "phone",
+                        None
+                    )
+                    or getattr(
+                        order.delivery_person,
+                        "mobile",
+                        None
+                    )
+                    or ""
+                ),
+            }
+            if order.delivery_person
+            else None
+        ),
+
+        # DELIVERY OTP
+        "otp": str(
+            getattr(order, "otp", "") or ""
+        ),
+
+        # CANCELLATION
+        "cancel_reason": (
+            getattr(order, "cancel_reason", "") or ""
+        ),
+
+        "estimated_time": getattr(
+            order,
+            "estimated_time",
+            None
+        ),
+    }
 
 # ============================================================
 # CURRENT CUSTOMER ORDERS
@@ -25018,50 +25776,6 @@ def _app_order_json(order):
 # customer's registered mobile.
 # ============================================================
 
-@app.route(
-    "/api/app/customer/orders",
-    methods=["GET"],
-)
-def api_app_customer_orders():
-
-    if not current_user.is_authenticated:
-        return jsonify({
-            "success": False,
-            "message": "Please login."
-        }), 401
-
-    raw_mobile = current_user.mobile or ""
-
-    mobile10 = (
-        raw_mobile[3:]
-        if raw_mobile.startswith("+91")
-        else raw_mobile
-    )
-
-    orders = (
-        Order.query
-        .filter(
-            or_(
-                Order.customer_id == current_user.id,
-                Order.phone == raw_mobile,
-                Order.phone == mobile10,
-            )
-        )
-        .order_by(
-            Order.created_at.desc()
-        )
-        .all()
-    )
-
-    return jsonify({
-        "success": True,
-        "orders": [
-            _app_order_json(order)
-            for order in orders
-        ],
-    }), 200
-
-
 # ============================================================
 # FIXED CUSTOMER ORDER TRACKING
 #
@@ -25072,91 +25786,83 @@ def api_app_customer_orders():
 # Also verifies this order belongs to logged-in customer.
 # ============================================================
 
+# ============================================================
+# 4. CUSTOMER ORDER TRACKING - ACCOUNT OWNERSHIP ONLY
+# ============================================================
+
 @app.route(
     "/api/app/customer/orders/<string:order_ref>/track",
-    methods=["GET"],
+    methods=["GET"]
 )
 def api_app_customer_order_track(order_ref):
+    customer = get_authenticated_customer()
 
-    if not current_user.is_authenticated:
+    if customer is None:
         return jsonify({
             "success": False,
-            "message": "Please login."
+            "login_required": True,
+            "message": "Please login to track your order."
         }), 401
 
-    raw_mobile = current_user.mobile or ""
-
-    mobile10 = (
-        raw_mobile[3:]
-        if raw_mobile.startswith("+91")
-        else raw_mobile
-    )
-
-    filters = [
-        Order.order_id == order_ref,
-    ]
+    filters = [Order.order_id == order_ref]
 
     if order_ref.isdigit():
-        filters.append(
-            Order.id == int(order_ref)
+        filters.append(Order.id == int(order_ref))
+
+    order = (
+        Order.query
+        .filter(
+            Order.customer_id == customer.id,
+            or_(*filters)
         )
+        .first()
+    )
 
-    order = Order.query.filter(
-        or_(*filters)
-    ).first()
-
-    if not order:
+    if order is None:
         return jsonify({
             "success": False,
             "message": "Order not found."
         }), 404
 
-    belongs_to_customer = (
-        order.customer_id == current_user.id
-        or order.phone == raw_mobile
-        or order.phone == mobile10
-    )
-
-    if not belongs_to_customer:
-        return jsonify({
-            "success": False,
-            "message": "This order does not belong to your account."
-        }), 403
-
     data = _app_order_json(order)
 
-    # Delivery partner fields
     if order.delivery_person:
-        data["delivery_person_name"] = (
-            getattr(
-                order.delivery_person,
-                "name",
-                None,
-            )
+        partner_name = (
+            getattr(order.delivery_person, "name", None)
+            or ""
+        )
+        partner_phone = (
+            getattr(order.delivery_person, "phone", None)
+            or getattr(order.delivery_person, "mobile", None)
             or ""
         )
 
-        data["delivery_person_phone"] = (
-            getattr(
-                order.delivery_person,
-                "phone",
-                None,
-            )
-            or getattr(
-                order.delivery_person,
-                "mobile",
-                None,
-            )
-            or ""
-        )
+        data["delivery_person_name"] = partner_name
+        data["delivery_person_phone"] = partner_phone
+
+        data["delivery_person"] = {
+            "name": partner_name,
+            "phone": partner_phone
+        }
     else:
         data["delivery_person_name"] = ""
         data["delivery_person_phone"] = ""
+        data["delivery_person"] = None
 
     return jsonify({
         "success": True,
-        "order": data,
+        "order": data
     }), 200
+
+
+# ============================================================
+# SHARED OWNERSHIP HELPER - REPLACE THE OLD IMPLEMENTATION
+# ============================================================
+def customer_owns_order(order):
+    customer = get_authenticated_customer()
+    if customer is None or order is None:
+        return False
+    return order.customer_id == customer.id
 
 # ============================================================
 # FLUTTER APP - GROCERY STORE MENU API
@@ -26114,6 +26820,7 @@ def api_validate_cart():
 
 # ============================================================
 
+
 @app.route(
 
     "/api/place-order",
@@ -26129,6 +26836,17 @@ def api_place_order():
         silent=True
 
     ) or {}
+
+    # ========================================================
+    # MANDATORY VERIFIED CUSTOMER LOGIN
+    # ========================================================
+    authenticated_customer = get_authenticated_customer()
+    if authenticated_customer is None:
+        return jsonify({
+            "success": False,
+            "login_required": True,
+            "message": "Please login or create your RucHiGo account to place an order."
+        }), 401
 
     # ========================================================
 
@@ -26950,15 +27668,7 @@ def api_place_order():
 
             delivery_location_id=restaurant.delivery_location_id,
 
-            customer_id=(
-
-                current_user.id
-
-                if current_user.is_authenticated
-
-                else None
-
-            ),
+            customer_id=authenticated_customer.id,
 
             customer_name=
 
@@ -27429,6 +28139,19 @@ def api_place_order():
             ) or "",
 
     }), 201
+@app.after_request
+def debug_order_redirect(response):
+
+    if request.path == "/api/place-order":
+
+        print("========== PLACE ORDER DEBUG ==========")
+        print("STATUS:", response.status_code)
+        print("REDIRECT:", response.headers.get("Location"))
+        print("ENDPOINT:", request.endpoint)
+        print("AUTHENTICATED:", current_user.is_authenticated)
+        print("=======================================")
+
+    return response
 # ============================================================
 # RUCHIGO APP - RAZORPAY API ADAPTERS
 #
@@ -39664,6 +40387,16 @@ def delivery_privacy_policy():
 def delete_account_page():
     return render_template("delete_account.html")
 
+from flask import send_from_directory
+import os
+
+@app.route("/restaurant/download/windows")
+def download_restaurant_windows():
+    return send_from_directory(
+        os.path.join(app.root_path, "downloads"),
+        "RucHiGo_Restaurant_Partner_Setup_v1.0.0.exe",
+        as_attachment=True
+    )
 
 # ==========================================================
 # RIDER APPLICATION ROUTE REGISTRATION

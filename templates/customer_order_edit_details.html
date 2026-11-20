@@ -1,0 +1,628 @@
+
+{% extends "base.html" %}
+{% block title %}Order Edit History{% endblock %}
+
+{% block content %}
+<style>
+.oe-page {
+    max-width: 1050px;
+    margin: 24px auto;
+    padding: 0 16px 50px;
+    font-family: system-ui, sans-serif;
+    color: #1f2937;
+}
+.oe-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #374151;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+.oe-header {
+    background: linear-gradient(135deg, #172554, #1d4ed8);
+    color: white;
+    border-radius: 18px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+.oe-header h1 {
+    margin: 8px 0;
+    font-size: 26px;
+}
+.oe-header p {
+    margin: 5px 0;
+    color: #dbeafe;
+}
+.oe-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 26px;
+}
+.oe-stat {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 18px;
+}
+.oe-stat small {
+    display: block;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+.oe-stat strong {
+    font-size: 22px;
+}
+.oe-section-title {
+    font-size: 21px;
+    margin: 25px 0 15px;
+}
+.oe-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 17px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    box-shadow: 0 5px 22px rgba(0,0,0,.04);
+}
+.oe-card-head {
+    padding: 18px 22px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.oe-card-head h3 {
+    margin: 0 0 5px;
+    font-size: 18px;
+}
+.oe-muted {
+    color: #6b7280;
+    font-size: 13px;
+}
+.oe-badge {
+    display: inline-block;
+    border-radius: 20px;
+    padding: 5px 11px;
+    font-size: 12px;
+    font-weight: 700;
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+.oe-badge.latest {
+    background: #dcfce7;
+    color: #166534;
+}
+.oe-reason {
+    margin: 20px 22px;
+    padding: 14px 16px;
+    background: #eff6ff;
+    border-left: 4px solid #2563eb;
+    border-radius: 8px;
+    font-size: 14px;
+}
+.oe-body {
+    padding: 0 22px 22px;
+}
+.oe-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+.oe-panel {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.oe-panel-title {
+    padding: 13px 15px;
+    font-weight: 700;
+    font-size: 15px;
+}
+.oe-before .oe-panel-title {
+    background: #fff7ed;
+    color: #9a3412;
+}
+.oe-after .oe-panel-title {
+    background: #ecfdf5;
+    color: #166534;
+}
+.oe-table-wrap {
+    overflow-x: auto;
+}
+.oe-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.oe-table th {
+    background: #f9fafb;
+    color: #6b7280;
+    text-align: left;
+    font-weight: 600;
+}
+.oe-table th,
+.oe-table td {
+    padding: 11px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.oe-table th:last-child,
+.oe-table td:last-child {
+    text-align: right;
+}
+.oe-removed {
+    color: #9ca3af;
+    text-decoration: line-through;
+}
+.oe-removed-tag {
+    display: inline-block;
+    font-size: 10px;
+    color: #b91c1c;
+    background: #fee2e2;
+    border-radius: 5px;
+    padding: 2px 5px;
+    text-decoration: none;
+    margin-left: 5px;
+}
+.oe-change-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+.oe-change {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 15px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.oe-change-icon {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    font-weight: 700;
+}
+.oe-change.added .oe-change-icon {
+    background: #dcfce7;
+    color: #15803d;
+}
+.oe-change.removed .oe-change-icon {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+.oe-change.changed .oe-change-icon {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+.oe-change strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+.oe-change p {
+    margin: 0;
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.6;
+}
+.oe-finance {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 16px;
+}
+.oe-finance h4 {
+    margin: 0 0 12px;
+}
+.oe-finance-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+    align-items: center;
+}
+.oe-finance-row span:nth-child(2) {
+    color: #6b7280;
+}
+.oe-total {
+    margin-top: 16px;
+    padding: 18px;
+    border-radius: 12px;
+    background: #172554;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+.oe-total small {
+    color: #bfdbfe;
+    display: block;
+    margin-bottom: 4px;
+}
+.oe-total strong {
+    font-size: 23px;
+}
+.oe-note {
+    margin-top: 14px;
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.6;
+}
+.oe-empty {
+    text-align: center;
+    padding: 40px 20px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 15px;
+}
+@media (max-width: 700px) {
+    .oe-header { padding: 20px; }
+    .oe-header h1 { font-size: 21px; }
+    .oe-summary { grid-template-columns: 1fr; }
+    .oe-columns { grid-template-columns: 1fr; }
+    .oe-card-head { padding: 15px; }
+    .oe-body { padding: 0 14px 18px; }
+    .oe-reason { margin: 15px 14px; }
+    .oe-finance-row { gap: 6px; font-size: 12px; }
+    .oe-total strong { font-size: 19px; }
+}
+</style>
+
+<div class="oe-page">
+
+    <a class="oe-back" href="{{ url_for('myorders') }}">
+        ← Back to My Orders
+    </a>
+
+    <div class="oe-header">
+        <div>ORDER UPDATE HISTORY</div>
+        <h1>Order #{{ order.order_id }}</h1>
+        <p>See what changed in your order, including items and prices.</p>
+    </div>
+
+    {% set history = edits | reverse | list %}
+
+    {% if history %}
+
+        {% set latest = history[0].entry %}
+
+        <div class="oe-summary">
+            <div class="oe-stat">
+                <small>Total Updates</small>
+                <strong>{{ history | length }}</strong>
+            </div>
+
+            <div class="oe-stat">
+                <small>Original Order Total</small>
+                <strong>
+                    ₹{{ "%.2f"|format(
+                        history[-1].entry.old_final_total|float
+                    ) }}
+                </strong>
+            </div>
+
+            <div class="oe-stat">
+                <small>Latest Updated Total</small>
+                <strong>
+                    ₹{{ "%.2f"|format(
+                        latest.new_final_total|float
+                    ) }}
+                </strong>
+            </div>
+        </div>
+
+        <h2 class="oe-section-title">Order Update Timeline</h2>
+
+        {% for edit in history %}
+
+            {% set h = edit.entry %}
+
+            <section class="oe-card">
+
+                <div class="oe-card-head">
+                    <div>
+                        <h3>
+                            Update {{ history|length - loop.index0 }}
+                        </h3>
+                        <div class="oe-muted">
+                            {{ h.action or "Order Updated" }}
+                        </div>
+                    </div>
+
+                    {% if loop.first %}
+                        <span class="oe-badge latest">
+                            Latest Update
+                        </span>
+                    {% else %}
+                        <span class="oe-badge">
+                            Previous Update
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="oe-reason">
+                    <strong>Why was this order changed?</strong>
+                    <div style="margin-top:5px">
+                        {{ h.reason or "Reason not specified" }}
+                    </div>
+                </div>
+
+                <div class="oe-body">
+
+                    <h4>What changed in this update?</h4>
+
+                    <div class="oe-change-list">
+
+                        {% for c in edit.changes %}
+
+                            {% set kind = c.kind|lower %}
+
+                            <div class="oe-change
+                                {% if kind == 'added' %}added
+                                {% elif kind == 'removed' %}removed
+                                {% else %}changed{% endif %}">
+
+                                <div class="oe-change-icon">
+                                    {% if kind == 'added' %}
+                                        +
+                                    {% elif kind == 'removed' %}
+                                        −
+                                    {% else %}
+                                        ↔
+                                    {% endif %}
+                                </div>
+
+                                <div>
+                                    <strong>
+                                        {% if kind == 'added' %}
+                                            Item Added
+                                        {% elif kind == 'removed' %}
+                                            Item Removed
+                                        {% else %}
+                                            Item Updated
+                                        {% endif %}
+                                    </strong>
+
+                                    {% if kind == 'added' and c.after %}
+                                        <p>
+                                            {{ c.after.item_name }}
+                                            — {{ c.after.quantity }} ×
+                                            ₹{{ "%.2f"|format(c.after.price|float) }}
+                                        </p>
+
+                                    {% elif kind == 'removed' and c.before %}
+                                        <p>
+                                            {{ c.before.item_name }}
+                                            — {{ c.before.quantity }} ×
+                                            ₹{{ "%.2f"|format(c.before.price|float) }}
+                                        </p>
+
+                                    {% elif c.before and c.after %}
+                                        <p>
+                                            {{ c.before.item_name }}:
+                                            {{ c.before.quantity }}
+                                            → {{ c.after.quantity }}
+                                            units
+                                        </p>
+
+                                    {% elif c.after %}
+                                        <p>{{ c.after.item_name }}</p>
+
+                                    {% elif c.before %}
+                                        <p>{{ c.before.item_name }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                        {% else %}
+
+                            <p class="oe-muted">
+                                No item changes. Only charges or
+                                discounts were updated.
+                            </p>
+
+                        {% endfor %}
+
+                    </div>
+
+                    <h4>Items Before and After</h4>
+
+                    <div class="oe-columns">
+
+                        <div class="oe-panel oe-before">
+                            <div class="oe-panel-title">
+                                Before Update
+                            </div>
+
+                            <div class="oe-table-wrap">
+                                <table class="oe-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Qty</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for i in edit.old_items %}
+                                            <tr>
+                                                <td>
+                                                    <span class="{% if i.is_removed %}oe-removed{% endif %}">
+                                                        {{ i.item_name }}
+                                                    </span>
+                                                    {% if i.is_removed %}
+                                                        <span class="oe-removed-tag">
+                                                            Removed
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ i.quantity }}</td>
+                                                <td>
+                                                    ₹{{ "%.2f"|format(i.line_total|float) }}
+                                                </td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="3">No items</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="oe-panel oe-after">
+                            <div class="oe-panel-title">
+                                After Update
+                            </div>
+
+                            <div class="oe-table-wrap">
+                                <table class="oe-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Qty</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for i in edit.new_items %}
+                                            <tr>
+                                                <td>
+                                                    <span class="{% if i.is_removed %}oe-removed{% endif %}">
+                                                        {{ i.item_name }}
+                                                    </span>
+                                                    {% if i.is_removed %}
+                                                        <span class="oe-removed-tag">
+                                                            Removed
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ i.quantity }}</td>
+                                                <td>
+                                                    ₹{{ "%.2f"|format(i.line_total|float) }}
+                                                </td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="3">No items</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="oe-finance">
+
+                        <h4>Price Breakdown</h4>
+
+                        <div class="oe-finance-row">
+                            <strong>Description</strong>
+                            <strong>Before</strong>
+                            <strong>After</strong>
+                        </div>
+
+                        <div class="oe-finance-row">
+                            <span>Items Subtotal</span>
+                            <span>₹{{ "%.2f"|format(h.old_items_total|float) }}</span>
+                            <strong>₹{{ "%.2f"|format(h.new_items_total|float) }}</strong>
+                        </div>
+
+                        <div class="oe-finance-row">
+                            <span>Delivery Charge</span>
+                            <span>₹{{ "%.2f"|format(h.old_delivery_charge|float) }}</span>
+                            <strong>₹{{ "%.2f"|format(h.new_delivery_charge|float) }}</strong>
+                        </div>
+
+                        <div class="oe-finance-row">
+                            <span>Extra Charge</span>
+                            <span>₹{{ "%.2f"|format(h.old_extra_charge|float) }}</span>
+                            <strong>₹{{ "%.2f"|format(h.new_extra_charge|float) }}</strong>
+                        </div>
+
+                        <div class="oe-finance-row">
+                            <span>Manual Discount</span>
+                            <span>₹{{ "%.2f"|format(h.old_manual_discount|float) }}</span>
+                            <strong>₹{{ "%.2f"|format(h.new_manual_discount|float) }}</strong>
+                        </div>
+
+                    </div>
+
+                    <div class="oe-total">
+
+                        <div>
+                            <small>Before Update</small>
+                            <strong>
+                                ₹{{ "%.2f"|format(h.old_final_total|float) }}
+                            </strong>
+                        </div>
+
+                        <div style="font-size:25px">→</div>
+
+                        <div>
+                            <small>After Update</small>
+                            <strong>
+                                ₹{{ "%.2f"|format(h.new_final_total|float) }}
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    {% set difference =
+                        (h.new_final_total|float) -
+                        (h.old_final_total|float)
+                    %}
+
+                    <p class="oe-note">
+                        {% if difference > 0 %}
+                            Order total increased by
+                            ₹{{ "%.2f"|format(difference) }}.
+                        {% elif difference < 0 %}
+                            Order total decreased by
+                            ₹{{ "%.2f"|format(-difference) }}.
+                        {% else %}
+                            The order total did not change.
+                        {% endif %}
+                    </p>
+
+                    <p class="oe-note">
+                        This amount difference does not confirm
+                        that any additional payment or refund
+                        has been completed.
+                    </p>
+
+                </div>
+            </section>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="oe-empty">
+            <h3>No Edit History Available</h3>
+            <p class="oe-muted">
+                This order has no recorded updates yet.
+            </p>
+        </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}

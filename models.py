@@ -1115,48 +1115,109 @@ class FoodItem(db.Model):
     category = db.relationship("Category", backref="food_items")
     
 # ----------------- Customer / App User -----------------
-class Customer(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), default="User")
-    mobile = db.Column(db.String(20), unique=True, nullable=False)
-    email = db.Column(db.String(200), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+# ============================================================
+# CUSTOMER / APP USER
+# NO CHANGES REQUIRED
+# ============================================================
 
-    # 🔥 Reward Coins
+class Customer(UserMixin, db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    name = db.Column(db.String(200), default="User")
+
+    mobile = db.Column(
+        db.String(20),
+        unique=True,
+        nullable=False
+    )
+
+    email = db.Column(db.String(200), nullable=True)
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    # Reward Coins
     coins = db.Column(db.Integer, default=0)
 
-    # ✅ Used ONLY for animation trigger
+    # Used only for animation trigger
     last_reward_coins = db.Column(db.Integer, default=0)
 
     # Orders
-    orders = db.relationship("Order", backref="customer", lazy=True)
+    orders = db.relationship(
+        "Order",
+        backref="customer",
+        lazy=True
+    )
 
     # Coin history
-    coin_logs = db.relationship("CoinLedger", backref="customer", lazy=True)
+    coin_logs = db.relationship(
+        "CoinLedger",
+        backref="customer",
+        lazy=True
+    )
 
     badge_id = db.Column(
         db.Integer,
         db.ForeignKey("reward_badge.id")
     )
+
     badge = db.relationship("RewardBadge")
 
+
+# ============================================================
+# OTP MODEL
+# SUPPORTS CUSTOMER LOGIN, SIGNUP AND ORDER OTP
+# ============================================================
+
 class OTP(db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
 
-    mobile = db.Column(db.String(15), nullable=False, index=True)
+    mobile = db.Column(
+        db.String(15),
+        nullable=False,
+        index=True
+    )
 
-    otp_hash = db.Column(db.String(255), nullable=False)
+    otp_hash = db.Column(
+        db.String(255),
+        nullable=False
+    )
 
-    purpose = db.Column(db.String(30), nullable=False)  # login | order_receive
+    # customer_login | customer_signup | order_receive
+    purpose = db.Column(
+        db.String(30),
+        nullable=False
+    )
 
-    order_id = db.Column(db.Integer, nullable=True)
+    order_id = db.Column(
+        db.Integer,
+        nullable=True
+    )
 
-    attempts = db.Column(db.Integer, default=0)
+    attempts = db.Column(
+        db.Integer,
+        default=0
+    )
 
-    expires_at = db.Column(db.DateTime, nullable=False)
+    expires_at = db.Column(
+        db.DateTime,
+        nullable=False
+    )
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # NEW: 60-second resend cooldown
+    resend_after = db.Column(
+        db.DateTime,
+        nullable=True
+    )
 
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
 
 
 class CouponUsage(db.Model):
@@ -3146,3 +3207,13 @@ class CustomerPaymentAdjustment(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     completed_by = db.Column(db.String(120), nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
+
+
+class AndroidAppUpdate(db.Model):
+    __tablename__ = 'android_app_update_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    enabled = db.Column(db.Boolean, nullable=False, default=True)
+    latest_version = db.Column(db.String(32), nullable=False, default='1.0.0')
+    minimum_version = db.Column(db.String(32), nullable=False, default='1.0.0')
+    update_message = db.Column(db.Text, nullable=False, default='A new RucHiGo version is available.')
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
