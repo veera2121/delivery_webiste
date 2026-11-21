@@ -26056,63 +26056,105 @@ def api_app_grocery_store(store_id):
 
     }), 200
 
+import json
 
 
 def _parse_grocery_weight_options(menu_item):
-    raw = str(
-        (menu_item.extra_data or {}).get(
-            "weight_options",
-            ""
-        )
-        or ""
-    ).strip()
+    extra = getattr(menu_item, "extra_data", None) or {}
+
+    if isinstance(extra, str):
+        try:
+            extra = json.loads(extra)
+        except (TypeError, ValueError):
+            extra = {}
+
+    if not isinstance(extra, dict):
+        extra = {}
 
     options = {}
 
-    if not raw:
-        return options
-
-    for piece in raw.split(","):
-        parts = [
-            part.strip()
-            for part in piece.split(":")
-        ]
-
-        if len(parts) < 2:
-            continue
-
-        label = parts[0]
+    def add_option(label, price, mrp=None):
+        label = str(label or "").strip()
 
         try:
-            price = float(parts[1])
+            price = float(price)
+            mrp = float(mrp) if mrp not in (None, "") else price
         except (TypeError, ValueError):
-            continue
+            return
 
         if not label or price <= 0:
-            continue
-
-        try:
-            mrp = (
-                float(parts[2])
-                if len(parts) >= 3
-                and parts[2]
-                else price
-            )
-        except (TypeError, ValueError):
-            mrp = price
+            return
 
         options[label] = {
             "price": price,
             "mrp": mrp if mrp > 0 else price,
         }
 
+    def parse(raw):
+        if raw is None or raw == "":
+            return
+
+        if isinstance(raw, str):
+            raw = raw.strip()
+            if not raw:
+                return
+
+            try:
+                decoded = json.loads(raw)
+            except (TypeError, ValueError):
+                decoded = None
+
+            if isinstance(decoded, (dict, list)):
+                parse(decoded)
+                return
+
+            # Existing grocery format:
+            # 250g:250:300,500g:450:500
+            for piece in raw.split(","):
+                parts = [part.strip() for part in piece.split(":")]
+                if len(parts) >= 2:
+                    add_option(
+                        parts[0],
+                        parts[1],
+                        parts[2] if len(parts) >= 3 else None,
+                    )
+            return
+
+        if isinstance(raw, list):
+            for entry in raw:
+                if isinstance(entry, dict):
+                    add_option(
+                        entry.get("weight") or entry.get("label"),
+                        entry.get("price"),
+                        entry.get("mrp"),
+                    )
+            return
+
+        if isinstance(raw, dict):
+            for label, value in raw.items():
+                if isinstance(value, dict):
+                    add_option(
+                        value.get("weight") or value.get("label") or label,
+                        value.get("price"),
+                        value.get("mrp"),
+                    )
+                else:
+                    add_option(label, value)
+
+    # Existing grocery configuration takes priority.
+    parse(extra.get("weight_options"))
+
+    # Bakery configuration, if present.
+    if not options:
+        parse(extra.get("weight_prices"))
+
+    if not options:
+        parse(getattr(menu_item, "weight_prices", None))
+
     return options
-
-
 def _server_cart_variant(menu_item, requested_weight=None):
-    item_type = (
-        getattr(menu_item, "item_type", "")
-        or ""
+    item_type = str(
+        getattr(menu_item, "item_type", "") or ""
     ).strip().lower()
 
     weight = (
@@ -26121,45 +26163,52 @@ def _server_cart_variant(menu_item, requested_weight=None):
         else ""
     )
 
-    # Grocery with configured weight variants:
-    # selected weight MUST exist in backend config.
+    # Check configured variants regardless of item_type.
+    # This supports bakery cakes stored as 'custom'.
+    options = _parse_grocery_weight_options(menu_item)
+
+    if options:
+        selected = options.get(weight)
+
+        if selected is None:
+            return None
+
+        price = float(selected["price"])
+        mrp = float(selected.get("mrp") or price)
+
+        if price <= 0:
+            return None
+
+        return {
+            "price": price,
+            "mrp": mrp if mrp > 0 else price,
+            "weight": weight,
+        }
+
+    # If a weight was requested but the backend cannot
+    # find its configured price, reject it safely.
+    if weight:
+        return None
+
+    # Preserve existing grocery variant safety.
     if item_type == "grocery":
-        options = _parse_grocery_weight_options(
-            menu_item
-        )
+        return None
 
-        if options:
-            selected = options.get(weight)
-
-            if selected is None:
-                return None
-
-            return {
-                "price": float(
-                    selected["price"]
-                ),
-                "mrp": float(
-                    selected["mrp"]
-                ),
-                "weight": weight,
-            }
-
-    # Restaurant item OR grocery item with no variants.
-    server_price = float(
-        menu_item.price or 0
-    )
-
+    # Normal restaurant / bakery / custom items
+    # without weight variants.
+    server_price = float(menu_item.price or 0)
     server_mrp = float(
-        getattr(menu_item, "mrp", 0)
-        or server_price
+        getattr(menu_item, "mrp", 0) or server_price
     )
+
+    if server_price <= 0:
+        return None
 
     return {
         "price": server_price,
-        "mrp": server_mrp,
-        "weight": weight or None,
+        "mrp": server_mrp if server_mrp > 0 else server_price,
+        "weight": None,
     }
-
 """Offer helpers for the RucHiGo cart-validation and order routes."""
 
 
@@ -38392,7 +38441,6 @@ def restaurant_control_location_start_orders(
 # ============================================================
 # HOMEPAGE RESTAURANT RANKING + SPONSORED BANNERS
 # ============================================================
-
 @app.route("/admin/homepage-restaurant-ranking")
 @admin_required
 def homepage_restaurant_ranking():
@@ -38647,90 +38695,35 @@ def update_homepage_ranking():
     old_position = ranking.position or 999
 
     if position != old_position and position < 999:
+        same_service_ids = (
+            Restaurant.query.with_entities(Restaurant.id)
+            .filter(Restaurant.category_type == service_type)
+            .statement
+        )
+        rank_column = RestaurantHomepageRanking.position
+        affected_rankings = RestaurantHomepageRanking.query.filter(
+            RestaurantHomepageRanking.location_id == location_id,
+            RestaurantHomepageRanking.restaurant_id != restaurant_id,
+            RestaurantHomepageRanking.restaurant_id.in_(same_service_ids),
+        )
 
-        if old_position < 999:
-
-            if position < old_position:
-                # Moving UP, e.g. Food position 5 -> 2.
-                # Only restaurants in the SAME location AND
-                # SAME service/category are shifted.
-                (
-                    RestaurantHomepageRanking.query
-                    .join(
-                        Restaurant,
-                        Restaurant.id
-                        == RestaurantHomepageRanking.restaurant_id,
-                    )
-                    .filter(
-                        RestaurantHomepageRanking.location_id
-                        == location_id,
-                        RestaurantHomepageRanking.id != ranking.id,
-                        RestaurantHomepageRanking.position >= position,
-                        RestaurantHomepageRanking.position < old_position,
-                        Restaurant.category_type == service_type,
-                    )
-                    .update(
-                        {
-                            RestaurantHomepageRanking.position:
-                                RestaurantHomepageRanking.position + 1
-                        },
-                        synchronize_session=False,
-                    )
-                )
-
-            elif position > old_position:
-                # Moving DOWN, e.g. Bakery position 2 -> 5.
-                # Only Bakery restaurants in this location shift.
-                (
-                    RestaurantHomepageRanking.query
-                    .join(
-                        Restaurant,
-                        Restaurant.id
-                        == RestaurantHomepageRanking.restaurant_id,
-                    )
-                    .filter(
-                        RestaurantHomepageRanking.location_id
-                        == location_id,
-                        RestaurantHomepageRanking.id != ranking.id,
-                        RestaurantHomepageRanking.position > old_position,
-                        RestaurantHomepageRanking.position <= position,
-                        Restaurant.category_type == service_type,
-                    )
-                    .update(
-                        {
-                            RestaurantHomepageRanking.position:
-                                RestaurantHomepageRanking.position - 1
-                        },
-                        synchronize_session=False,
-                    )
-                )
-
-        else:
-            # Previously unranked (999).
-            # Insert into this service page only.
-            (
-                RestaurantHomepageRanking.query
-                .join(
-                    Restaurant,
-                    Restaurant.id
-                    == RestaurantHomepageRanking.restaurant_id,
-                )
-                .filter(
-                    RestaurantHomepageRanking.location_id
-                    == location_id,
-                    RestaurantHomepageRanking.id != ranking.id,
-                    RestaurantHomepageRanking.position >= position,
-                    RestaurantHomepageRanking.position < 999,
-                    Restaurant.category_type == service_type,
-                )
-                .update(
-                    {
-                        RestaurantHomepageRanking.position:
-                            RestaurantHomepageRanking.position + 1
-                    },
-                    synchronize_session=False,
-                )
+        if old_position >= 999 or position < old_position:
+            affected_rankings = affected_rankings.filter(
+                rank_column >= position,
+                rank_column < min(old_position, 999),
             )
+            shift = 1
+        else:
+            affected_rankings = affected_rankings.filter(
+                rank_column > old_position,
+                rank_column <= position,
+            )
+            shift = -1
+
+        affected_rankings.update(
+            {rank_column: rank_column + shift},
+            synchronize_session=False,
+        )
 
     ranking.position = position
 
