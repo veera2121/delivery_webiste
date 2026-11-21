@@ -556,6 +556,7 @@
                             <div id="delivery-slabs">
 
                                 {% for slab in settings.delivery_slabs %}
+                                  {% if slab.get('_type') != 'maximum' %}
 
                                     <div
                                         class="slab-card"
@@ -606,7 +607,23 @@
                                             <div class="field">
 
                                                 <label>
-                                                    Delivery Charge (₹)
+                                                    Original Delivery Charge (₹)
+                                                </label>
+
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    name="slab_original_charge[]"
+                                                    value="{{ slab.original_charge|default(slab.charge, true) }}"
+                                                    required
+                                                >
+
+                                            </div>
+
+                                            <div class="field">
+
+                                                <label>
+                                                    Offer Delivery Charge (₹)
                                                 </label>
 
                                                 <input
@@ -623,6 +640,7 @@
 
                                     </div>
 
+                                  {% endif %}
                                 {% endfor %}
 
                             </div>
@@ -651,16 +669,28 @@
 
                             <div class="section-description">
 
-                                This charge is used when the
-                                customer is farther than the
-                                last configured slot.
+Set the crossed-out original price and the
+                                discounted amount shown at checkout. The
+                                maximum values apply beyond the last distance slot.
 
                             </div>
 
                             <div class="field">
 
                                 <label>
-                                    Maximum Charge (₹)
+                                    Maximum Original Charge (₹)
+                                </label>
+
+                                <input
+                                    type="number"
+                                    min="0"
+                                    name="max_original_charge"
+                                    value="{{ max_original_charge }}"
+                                    required
+                                >
+
+                                <label>
+                                    Maximum Offer Charge (₹)
                                 </label>
 
                                 <input
@@ -916,14 +946,30 @@ function addDeliverySlot() {
             <div class="field">
 
                 <label>
-                    Delivery Charge (₹)
+                    Original Delivery Charge (₹)
+                </label>
+
+                <input
+                    type="number"
+                    min="0"
+                    name="slab_original_charge[]"
+                    placeholder="Example: 35"
+                    required
+                >
+
+            </div>
+
+            <div class="field">
+
+                <label>
+                    Offer Delivery Charge (₹)
                 </label>
 
                 <input
                     type="number"
                     min="0"
                     name="slab_charge[]"
-                    placeholder="Example: 85"
+                    placeholder="Example: 30"
                     required
                 >
 
