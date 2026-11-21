@@ -4520,8 +4520,6 @@ def get_active_home_announcements(
 #   Restaurant, Category, MenuItem, Order, OrderItem,
 #   RewardBadge, FoodItem
 # ============================================================
-
-
 @app.route("/api/app/home", methods=["GET"])
 def api_app_home():
     """
@@ -4875,8 +4873,10 @@ def api_app_home():
     grocery_shops = []
 
     if selected_service == "grocery":
-        grocery_query = Restaurant.query.filter(
-            Restaurant.category_type == "grocery"
+        grocery_query = (
+            Restaurant.query
+            .options(joinedload(Restaurant.categories))
+            .filter(Restaurant.category_type == "grocery")
         )
 
         if selected_location_id:
@@ -5431,94 +5431,60 @@ def api_app_home():
 
     popular_started = perf_counter()
 
-    popular_items_raw = (
-        db.session.query(
-            Restaurant.id.label(
-                "restaurant_id"
-            ),
-
-            Restaurant.name.label(
-                "restaurant_name"
-            ),
-
-            Restaurant.category_type.label(
-                "source_type"
-            ),
-
-            OrderItem.item_name,
-
-            func.sum(
-                OrderItem.quantity
-            ).label(
-                "total_orders"
-            ),
-
-            func.max(
-                MenuItem.price
-            ).label(
-                "current_price"
-            ),
-
-            func.max(
-                MenuItem.image_url
-            ).label(
-                "item_image"
-            ),
-        )
-
-        .join(
-            Order,
-            Order.id
-            == OrderItem.order_id,
-        )
-
-        .join(
-            Restaurant,
-            Restaurant.id
-            == Order.restaurant_id,
-        )
-
-        .outerjoin(
-            MenuItem,
-            db.and_(
-                MenuItem.restaurant_id
-                == Restaurant.id,
-
-                MenuItem.name
-                == OrderItem.item_name,
-            ),
-        )
-    )
+    # Skip this aggregate when there are no restaurants for the selected
+    # location and service.
+    popular_items_raw = []
 
     if restaurant_lookup:
+        # Aggregate order rows before joining menu metadata. This avoids
+        # multiplying order quantities when duplicate menu names exist.
+        ordered_items = (
+            db.session.query(
+                Order.restaurant_id.label("restaurant_id"),
+                OrderItem.item_name.label("item_name"),
+                func.sum(OrderItem.quantity).label("quantity"),
+            )
+            .select_from(OrderItem)
+            .join(Order, Order.id == OrderItem.order_id)
+            .filter(Order.restaurant_id.in_(list(restaurant_lookup.keys())))
+            .group_by(Order.restaurant_id, OrderItem.item_name)
+            .subquery()
+        )
+
+        total_orders = func.sum(ordered_items.c.quantity)
 
         popular_items_raw = (
-            popular_items_raw
-            .filter(
-                Restaurant.id.in_(
-                    list(
-                        restaurant_lookup.keys()
-                    )
-                )
+            db.session.query(
+                Restaurant.id.label("restaurant_id"),
+                Restaurant.name.label("restaurant_name"),
+                Restaurant.category_type.label("source_type"),
+                ordered_items.c.item_name,
+                total_orders.label("total_orders"),
+                func.max(MenuItem.price).label("current_price"),
+                func.max(MenuItem.image_url).label("item_image"),
             )
+            .select_from(ordered_items)
+            .join(
+                Restaurant,
+                Restaurant.id == ordered_items.c.restaurant_id,
+            )
+            .outerjoin(
+                MenuItem,
+                db.and_(
+                    MenuItem.restaurant_id == Restaurant.id,
+                    MenuItem.name == ordered_items.c.item_name,
+                ),
+            )
+            .group_by(
+                Restaurant.id,
+                Restaurant.name,
+                Restaurant.category_type,
+                ordered_items.c.item_name,
+            )
+            .order_by(total_orders.desc())
+            .limit(30)
+            .all()
         )
-
-    popular_items_raw = (
-        popular_items_raw
-        .group_by(
-            Restaurant.id,
-            Restaurant.name,
-            Restaurant.category_type,
-            OrderItem.item_name,
-        )
-        .order_by(
-            func.sum(
-                OrderItem.quantity
-            ).desc()
-        )
-        .limit(30)
-        .all()
-    )
 
     # --------------------------------------------------------
     # PRELOAD BAKERY FALLBACK ITEMS
@@ -16335,8 +16301,7 @@ def update_feedback_status(feedback_id):
 
 
 
-
-def calculate_delivery_charge(
+def calculate_delivery_charge_breakdown(
     distance_km,
     items_total,
     restaurant
@@ -16420,6 +16385,8 @@ def calculate_delivery_charge(
 
             return (
                 30,
+                30,
+                0,
                 "🚚 Delivery charge ₹30"
             )
 
@@ -16465,8 +16432,11 @@ def calculate_delivery_charge(
                 f"🚚 Delivery charge ₹{charge}"
             )
 
+        legacy_charge = max(0, int(charge))
         return (
-            int(charge),
+            legacy_charge,
+            legacy_charge,
+            0,
             message
         )
 
@@ -16485,6 +16455,8 @@ def calculate_delivery_charge(
     ):
         return (
             None,
+            None,
+            0,
             platform_control.delivery_disabled_message
             or
             "🚫 Delivery service is currently unavailable."
@@ -16499,6 +16471,8 @@ def calculate_delivery_charge(
 
         return (
             None,
+            None,
+            0,
             "🚫 Delivery is currently unavailable "
             "for this location."
         )
@@ -16508,6 +16482,8 @@ def calculate_delivery_charge(
 
         return (
             None,
+            None,
+            0,
             location_settings.delivery_disabled_message
             or
             f"🚫 Delivery is currently unavailable "
@@ -16518,44 +16494,53 @@ def calculate_delivery_charge(
     # GET JSON SLOTS
     # ========================================================
 
-    slabs = (
-        location_settings.delivery_slabs
-        or []
-    )
+    slabs = location_settings.delivery_slabs or []
 
     valid_slabs = []
+    maximum_original_charge = max(0, int(location_settings.max_charge or 0))
+    maximum_offer_charge = maximum_original_charge
 
     for slab in slabs:
-
         if not isinstance(slab, dict):
             continue
 
+        if slab.get("_type") == "maximum":
+            try:
+                maximum_original_charge = max(
+                    0,
+                    int(slab.get("original_charge", location_settings.max_charge)),
+                )
+                maximum_offer_charge = max(
+                    0,
+                    int(slab.get("charge", location_settings.max_charge)),
+                )
+            except (TypeError, ValueError):
+                maximum_original_charge = max(0, int(location_settings.max_charge or 0))
+                maximum_offer_charge = maximum_original_charge
+            maximum_offer_charge = min(
+                maximum_offer_charge,
+                maximum_original_charge,
+            )
+            continue
+
         try:
-
-            upto = float(
-                slab.get("upto")
+            upto = float(slab.get("upto"))
+            offer_charge = max(0, int(slab.get("charge")))
+            original_charge = max(
+                0,
+                int(slab.get("original_charge", slab.get("charge"))),
             )
-
-            charge = int(
-                slab.get("charge")
-            )
-
-        except (
-            TypeError,
-            ValueError
-        ):
-
+        except (TypeError, ValueError):
             continue
 
         if upto <= 0:
             continue
 
-        if charge < 0:
-            charge = 0
-
+        offer_charge = min(offer_charge, original_charge)
         valid_slabs.append({
             "upto": upto,
-            "charge": charge
+            "original_charge": original_charge,
+            "charge": offer_charge,
         })
 
     # ========================================================
@@ -16570,21 +16555,14 @@ def calculate_delivery_charge(
     # CALCULATE
     # ========================================================
 
-    if not valid_slabs:
+    original_charge = maximum_original_charge
+    offer_charge = maximum_offer_charge
 
-        charge = location_settings.max_charge
-
-    else:
-
-        charge = location_settings.max_charge
-
-        for slab in valid_slabs:
-
-            if distance_km <= slab["upto"]:
-
-                charge = slab["charge"]
-
-                break
+    for slab in valid_slabs:
+        if distance_km <= slab["upto"]:
+            original_charge = slab["original_charge"]
+            offer_charge = slab["charge"]
+            break
 
     # ========================================================
     # NIGHT SURGE
@@ -16592,33 +16570,37 @@ def calculate_delivery_charge(
 
     if location_settings.is_night_surge_active:
 
-        charge += (
-            location_settings.night_surge
-        )
-
-        message = (
-            f"🌙 Night delivery charge ₹{charge}"
-        )
-
+        surge = max(0, int(location_settings.night_surge or 0))
+        original_charge += surge
+        offer_charge += surge
     else:
+        surge = 0
 
-        message = (
-            f"🚚 Delivery charge ₹{charge}"
-        )
+    original_charge = max(0, int(original_charge))
+    offer_charge = min(max(0, int(offer_charge)), original_charge)
+    delivery_discount = original_charge - offer_charge
 
-    # ========================================================
-    # SAFETY
-    # ========================================================
-
-    charge = max(
-        0,
-        int(charge)
-    )
+    if delivery_discount > 0:
+        message = f"Delivery offer: save ₹{delivery_discount}"
+    elif surge:
+        message = f"🌙 Night delivery charge ₹{offer_charge}"
+    else:
+        message = f"🚚 Delivery charge ₹{offer_charge}"
 
     return (
-        charge,
-        message
+        original_charge,
+        offer_charge,
+        delivery_discount,
+        message,
     )
+
+def calculate_delivery_charge(distance_km, items_total, restaurant):
+    """Return the payable fee and message for existing order callers."""
+    _, payable, _, message = calculate_delivery_charge_breakdown(
+        distance_km, items_total, restaurant
+    )
+    return payable, message
+
 
 @app.route(
     "/calculate_delivery",
@@ -16748,13 +16730,16 @@ def calculate_delivery():
         # DELIVERY CHARGE
         # ====================================================
 
-        delivery_charge, message = (
-            calculate_delivery_charge(
+        (
+            original_delivery_charge,
+            delivery_charge,
+            delivery_discount,
+            message,
+        ) = calculate_delivery_charge_breakdown(
                 distance_km=distance_km,
                 items_total=items_total,
                 restaurant=restaurant
             )
-        )
 
         # ====================================================
         # DELIVERY UNAVAILABLE
@@ -16786,6 +16771,14 @@ def calculate_delivery():
             ),
 
             "delivery_charge": delivery_charge,
+
+            "original_delivery_charge": original_delivery_charge,
+
+            "delivery_discount": delivery_discount,
+
+            "delivery_offer_message": (
+                message if delivery_discount > 0 else ""
+            ),
 
             "message": message
 
@@ -16823,6 +16816,7 @@ def calculate_delivery():
             "message":
                 "Unable to calculate delivery charge"
         }), 500
+
 
 @app.route(
     "/admin/delivery-settings",
@@ -16906,25 +16900,29 @@ def admin_delivery_settings():
                     delivery_slabs=[
                         {
                             "upto": 3,
+                            "original_charge": 30,
                             "charge": 30
                         },
                         {
                             "upto": 6,
+                            "original_charge": 40,
                             "charge": 40
                         },
                         {
                             "upto": 9,
+                            "original_charge": 55,
                             "charge": 55
                         },
                         {
                             "upto": 12,
+                            "original_charge": 70,
                             "charge": 70
                         }
                     ],
 
                     max_charge=90,
 
-                    free_delivery_min_order=499,
+                    free_delivery_min_order=499,  # Free-delivery offer threshold (₹)
 
                     night_surge=0,
 
@@ -17003,6 +17001,9 @@ def admin_delivery_settings():
         slab_charges = request.form.getlist(
             "slab_charge[]"
         )
+        slab_original_charges = request.form.getlist(
+            "slab_original_charge[]"
+        )
 
         delivery_slabs = []
 
@@ -17010,37 +17011,35 @@ def admin_delivery_settings():
         # BUILD JSON
         # ====================================================
 
-        for upto, charge in zip(
-            slab_uptos,
-            slab_charges
+        for index, (upto, charge) in enumerate(
+            zip(slab_uptos, slab_charges)
         ):
-
             try:
-
-                upto_value = float(
-                    upto
+                upto_value = float(upto)
+                offer_charge_value = max(0, int(charge))
+                original_raw = (
+                    slab_original_charges[index]
+                    if index < len(slab_original_charges)
+                    else charge
                 )
-
-                charge_value = int(
-                    charge
-                )
-
-            except (
-                TypeError,
-                ValueError
-            ):
-
+                original_charge_value = max(0, int(original_raw))
+            except (TypeError, ValueError):
                 continue
 
             if upto_value <= 0:
                 continue
 
-            if charge_value < 0:
-                charge_value = 0
+            # Never allow the displayed offer to cost more than its original.
+            offer_charge_value = min(
+                offer_charge_value,
+                original_charge_value,
+            )
 
             delivery_slabs.append({
                 "upto": upto_value,
-                "charge": charge_value
+                "original_charge": original_charge_value,
+                "charge": offer_charge_value,
+                "offer_charge": offer_charge_value,
             })
 
         # ====================================================
@@ -17098,28 +17097,38 @@ def admin_delivery_settings():
         # SAVE SLOTS
         # ====================================================
 
-        settings.delivery_slabs = (
-            delivery_slabs
-        )
-
-        # ====================================================
-        # MAX CHARGE
-        # ====================================================
-
-        max_charge = safe_int(
-            request.form.get(
-                "max_charge"
-            ),
-            settings.max_charge
-        )
-
-        settings.max_charge = max(
+        max_original_charge = max(
             0,
-            max_charge
+            safe_int(
+                request.form.get("max_original_charge"),
+                settings.max_charge,
+            ),
         )
+        max_offer_charge = max(
+            0,
+            safe_int(
+                request.form.get("max_charge"),
+                settings.max_charge,
+            ),
+        )
+        max_offer_charge = min(max_offer_charge, max_original_charge)
+
+        delivery_slabs.append({
+            "_type": "maximum",
+            "original_charge": max_original_charge,
+            "charge": max_offer_charge,
+            "offer_charge": max_offer_charge,
+        })
+
+        settings.delivery_slabs = delivery_slabs
+
+        # Keep the existing database column as the effective offer charge.
+        settings.max_charge = max_original_charge
 
         # ====================================================
-        # FREE DELIVERY CONFIG
+        # FREE DELIVERY OFFER CONFIG
+        # This persists the offer threshold. The /calculate_delivery
+        # and /api/place-order handlers must both apply this same value.
         # ====================================================
 
         free_delivery = safe_int(
@@ -17235,8 +17244,22 @@ def admin_delivery_settings():
             .count()
         )
 
+    max_original_charge = settings.max_charge if settings else 0
+    if settings:
+        for slab in settings.delivery_slabs or []:
+            if isinstance(slab, dict) and slab.get("_type") == "maximum":
+                try:
+                    max_original_charge = max(
+                        0, int(slab.get("original_charge", settings.max_charge))
+                    )
+                except (TypeError, ValueError):
+                    max_original_charge = settings.max_charge
+                break
+
     return render_template(
         "admin_delivery_settings.html",
+
+        max_original_charge=max_original_charge,
 
         locations=locations,
 
@@ -17244,6 +17267,7 @@ def admin_delivery_settings():
 
         restaurant_count=restaurant_count
     )
+
 def safe_float(value, default=0.0):
     try:
         return float(value)
@@ -25550,21 +25574,22 @@ def api_app_customer_logout():
 # ============================================================
 # ORDER SERIALIZER
 # ============================================================
-
 def _app_order_json(order):
+    def saved_amount(record, *field_names):
+        """Read a stored amount, preserving a valid zero price."""
+        for field_name in field_names:
+            value = getattr(record, field_name, None)
+            if value is not None:
+                return round(float(value), 2)
+        return None
 
     restaurant = None
-
     if order.restaurant_id:
-        restaurant = db.session.get(
-            Restaurant,
-            order.restaurant_id,
-        )
+        restaurant = db.session.get(Restaurant, order.restaurant_id)
 
     item_rows = []
 
     for item in (order.items or []):
-
         item_name = (
             getattr(item, "item_name", None)
             or getattr(item, "name", None)
@@ -25572,28 +25597,33 @@ def _app_order_json(order):
             or "Item"
         )
 
-        quantity = int(
-            getattr(item, "quantity", 1)
-            or 1
-        )
+        quantity = int(getattr(item, "quantity", 1) or 1)
 
-        price = float(
-            getattr(item, "price", 0)
-            or getattr(item, "unit_price", 0)
-            or 0
-        )
+        # All prices come from the saved order item.
+        price = saved_amount(item, "price", "unit_price")
+        total = saved_amount(item, "total_price", "total")
+        original_price = saved_amount(item, "mrp", "original_price")
 
-        total = float(
-            getattr(item, "total_price", 0)
-            or getattr(item, "total", 0)
-            or price * quantity
-        )
+        if price is None:
+            price = round(total / quantity, 2) if total is not None else 0.0
+
+        if total is None:
+            total = round(price * quantity, 2)
 
         item_rows.append({
             "name": item_name,
+            "item_name": item_name,
+            "weight": str(getattr(item, "weight", None) or "").strip(),
+            "category": str(getattr(item, "category", None) or "").strip(),
             "quantity": quantity,
-            "price": round(price, 2),
-            "total": round(total, 2),
+
+            # Unit prices
+            "mrp": original_price,
+            "price": price,
+
+            # Total for this quantity
+            "total": total,
+            "item_total": total,
         })
 
     address_parts = [
@@ -25603,168 +25633,102 @@ def _app_order_json(order):
         order.state,
         order.pincode,
     ]
-
     full_address = ", ".join(
-        str(x).strip()
-        for x in address_parts
-        if x
+        str(part).strip() for part in address_parts if part
     )
+
+    created_at = order.created_at
+    if created_at is not None and created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=pytz.UTC)
 
     final_total = (
         order.get_final_total()
         if hasattr(order, "get_final_total")
-        else order.final_total or 0
+        else order.final_total
     )
+
+    partner = order.delivery_person
+    delivery_person = None
+    if partner:
+        delivery_person = {
+            "id": partner.id,
+            "name": partner.name or "",
+            "phone": (
+                getattr(partner, "phone", None)
+                or getattr(partner, "mobile", None)
+                or ""
+            ),
+        }
 
     return {
         "id": order.id,
         "order_id": order.order_id or str(order.id),
 
-        # CUSTOMER / DELIVERY RECIPIENT
+        # Customer / delivery recipient
         "customer_name": order.customer_name or "",
         "name": order.customer_name or "",
         "phone": order.phone or "",
         "mobile": order.phone or "",
         "email": order.email or "",
 
-        # RESTAURANT
+        # Restaurant and status
         "restaurant_id": order.restaurant_id,
-        "restaurant_name": (
-            restaurant.name if restaurant else "Restaurant"
-        ),
-
-        # ORDER STATUS
+        "restaurant_name": restaurant.name if restaurant else "Restaurant",
         "status": order.status or "Pending",
 
-        # ORDER DATE
-        "created_at": (
-            (
-                order.created_at.replace(
-                    tzinfo=pytz.UTC
-                )
-                if order.created_at.tzinfo is None
-                else order.created_at
-            ).isoformat()
-            if order.created_at
-            else None
-        ),
-
+        # Order date
+        "created_at": created_at.isoformat() if created_at else None,
         "created_at_str": (
-            (
-                order.created_at.replace(
-                    tzinfo=pytz.UTC
-                )
-                if order.created_at.tzinfo is None
-                else order.created_at
-            ).astimezone(
+            created_at.astimezone(
                 pytz.timezone("Asia/Kolkata")
             ).strftime("%d-%m-%Y %I:%M %p")
-            if order.created_at
-            else ""
+            if created_at else ""
         ),
 
-        # ITEMS
-        "item_count": sum(
-            int(getattr(item, "quantity", 1) or 1)
-            for item in (order.items or [])
-        ),
+        # Items
+        "item_count": sum(row["quantity"] for row in item_rows),
+        "items": item_rows,
 
-        "items": [
-            {
-                **item,
-                "item_name": item["name"],
-                "item_total": item["total"],
-            }
-            for item in item_rows
-        ],
-
-        # BILL
+        # Bill
         "items_total": float(order.items_total or 0),
         "discount": float(order.discount or 0),
-
-        "restaurant_offer_discount": float(
-            getattr(
-                order,
-                "restaurant_offer_discount",
-                0
-            ) or 0
+        "restaurant_offer_discount": (
+            saved_amount(order, "restaurant_offer_discount") or 0.0
         ),
-
-        "delivery_charge": float(
-            order.delivery_charge or 0
+        "coins_discount_amount": (
+            saved_amount(order, "coins_discount_amount") or 0.0
         ),
-
+        "original_delivery_charge": saved_amount(
+            order, "original_delivery_charge"
+        ),
+        "delivery_charge": float(order.delivery_charge or 0),
         "final_total": float(final_total or 0),
 
-        # PAYMENT
+        # Payment
         "payment_type": order.payment_type or "COD",
         "payment_status": order.payment_status or "Pending",
+        "payment_method_used": getattr(order, "payment_method_used", "") or "",
+        "payment_verified": bool(getattr(order, "payment_verified", False)),
 
-        "payment_method_used": (
-            getattr(order, "payment_method_used", "") or ""
-        ),
-
-        "payment_verified": bool(
-            getattr(order, "payment_verified", False)
-        ),
-
-        # DELIVERY ADDRESS
+        # Delivery address
         "address": order.address or full_address,
-
         "house_no": order.house_no or "",
         "landmark": order.landmark or "",
         "city": order.city or "",
         "state": order.state or "",
         "pincode": order.pincode or "",
-
         "address_type": order.address_type or "",
         "delivery_note": order.delivery_note or "",
-
         "latitude": order.latitude,
         "longitude": order.longitude,
 
-        # DELIVERY PARTNER
+        # Delivery partner, OTP, and cancellation
         "delivery_person_id": order.delivery_person_id,
-
-        "delivery_person": (
-            {
-                "id": order.delivery_person.id,
-                "name": order.delivery_person.name or "",
-                "phone": (
-                    getattr(
-                        order.delivery_person,
-                        "phone",
-                        None
-                    )
-                    or getattr(
-                        order.delivery_person,
-                        "mobile",
-                        None
-                    )
-                    or ""
-                ),
-            }
-            if order.delivery_person
-            else None
-        ),
-
-        # DELIVERY OTP
-        "otp": str(
-            getattr(order, "otp", "") or ""
-        ),
-
-        # CANCELLATION
-        "cancel_reason": (
-            getattr(order, "cancel_reason", "") or ""
-        ),
-
-        "estimated_time": getattr(
-            order,
-            "estimated_time",
-            None
-        ),
+        "delivery_person": delivery_person,
+        "otp": str(getattr(order, "otp", "") or ""),
+        "cancel_reason": getattr(order, "cancel_reason", "") or "",
+        "estimated_time": getattr(order, "estimated_time", None),
     }
-
 # ============================================================
 # CURRENT CUSTOMER ORDERS
 #
@@ -26869,7 +26833,6 @@ def api_validate_cart():
 
 # ============================================================
 
-
 @app.route(
 
     "/api/place-order",
@@ -27569,19 +27532,14 @@ def api_place_order():
     # --------------------------------------------------------
 
     (
-
+        original_delivery_charge,
         delivery_charge,
-
+        delivery_savings,
         delivery_msg,
-
-    ) = calculate_delivery_charge(
-
+    ) = calculate_delivery_charge_breakdown(
         distance_km=distance_km,
-
         items_total=items_total,
-
-        restaurant=restaurant
-
+        restaurant=restaurant,
     )
 
     # --------------------------------------------------------
@@ -27839,6 +27797,7 @@ def api_place_order():
 
         # Persist the restaurant offer details. The Order model's
         # get_final_total() subtracts this from the original items subtotal.
+        new_order.original_delivery_charge = original_delivery_charge
         new_order.restaurant_offer_discount = restaurant_offer_discount
         if restaurant_offer_id is not None:
             new_order.restaurant_offer_id = restaurant_offer_id
@@ -28157,9 +28116,9 @@ def api_place_order():
 
             delivery_charge,
 
-        "delivery_message":
-
-            delivery_msg,
+        "original_delivery_charge": original_delivery_charge,
+        "delivery_savings": delivery_savings,
+        "delivery_message": delivery_msg,
 
         "final_total":
 
@@ -28188,6 +28147,7 @@ def api_place_order():
             ) or "",
 
     }), 201
+
 @app.after_request
 def debug_order_redirect(response):
 

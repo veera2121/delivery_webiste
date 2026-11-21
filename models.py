@@ -584,6 +584,7 @@ class Order(db.Model):
     items_total = db.Column(db.Float, default=0.0)          # Sum of all items
     discount = db.Column(db.Float, default=0.0)             # FIRST30 discount
     delivery_charge = db.Column(db.Float, default=0.0)
+    original_delivery_charge = db.Column(db.Float, nullable=True)
     final_total = db.Column(db.Float, default=0.0)          # items_total - discount + delivery_charge
     coupon_used = db.Column(db.String(50), nullable=True)
     device_fingerprint = db.Column(db.Text, nullable=True)
@@ -909,7 +910,7 @@ class Order(db.Model):
         delivery_charge = float(
             self.delivery_charge or 0
         )
-
+        
         extra_charge = float(
             self.extra_charge or 0
         )
